@@ -1,0 +1,82 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { User } from '../../entities/user.entity'
+import { TelegramUser } from '../../types/telegram'
+import * as crypto from 'crypto'
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
+
+  async login(initData: string) {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
+    const validated = this.validateInitData(initData);
+    if (!validated) {
+      throw new UnauthorizedException('Invalid Telegram auth data');
+    }
+
+    const { user: tgUser } = validated;
+    let user = await this.usersRepository.findOne({ 
+      where: { telegramId: tgUser.id.toString() } 
+    });
+
+    if (!user) {
+      user = this.usersRepository.create({
+        telegramId: tgUser.id.toString(),
+        username: tgUser.username,
+        avatar: tgUser.photo_url,
+        balance: 0
+      });
+      
+      await this.usersRepository.save(user);
+    } else {
+      // Обновляем данные при каждом входе
+      user.username = tgUser.username ?? null;
+      user.avatar = tgUser.photo_url ?? null;
+      await this.usersRepository.save(user);
+    }
+
+    return {
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        telegramId: user.telegramId
+      })
+    };
+  }
+
+  private validateInitData(initData: string): { user: TelegramUser } | null {
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    const dataToCheck: string[] = [];
+  
+    const sortedParams = Array.from(params.entries())
+      .sort(([key1], [key2]) => key1.localeCompare(key2));
+
+    for (const [key, val] of sortedParams) {
+      if (key !== 'hash') {
+        dataToCheck.push(`${key}=${val}`);
+      }
+    }
+
+    const secret = crypto.createHmac('sha256', 'WebAppData')
+      .update(process.env.BOT_TOKEN!)
+      .digest();
+  
+    const computedHash = crypto.createHmac('sha256', secret)
+      .update(dataToCheck.join('\n'))
+      .digest('hex');
+
+    return hash === computedHash ? { 
+      user: JSON.parse(params.get('user')!) 
+    } : null;
+  }
+}
