@@ -10,7 +10,7 @@ services:
     depends_on:
       - server
     environment:
-      - VITE_APP_URL=http://localhost
+      - VITE_APP_URL=http://nginx
       - VITE_WS_URL=/socket.io
       - VITE_API_URL=/api/v1
 
@@ -18,15 +18,10 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    environment:
-      - POSTGRES_USER=svara_pro
-      - POSTGRES_PASSWORD=securepassword123
-      - POSTGRES_DB=svara_pro_db
-      - JWT_SECRET=your_jwt_secret_here
-      - TON_API_KEY=d46c2bb9062919ee8f432ca146fc05baf86c75ede4ca8cfa90c8cf1847403e17
-      - CENTRAL_WALLET_MNEMONIC=pending
-      - TON_ENDPOINT=https://toncenter.com/api/v2/jsonRPC
-      - BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+    env_file:
+      - ./server/.env
+    ports:
+      - "3000:3000"
     depends_on:
       - postgres
 
@@ -34,18 +29,17 @@ services:
     build:
       context: ./bot
       dockerfile: Dockerfile
-    environment:
-      - BOT_TOKEN=YOUR_BOT_TOKEN_HERE
-      - APP_URL=http://localhost
+    env_file:
+      - ./bot/.env
     depends_on:
       - nginx
 
   postgres:
     image: postgres:15
     environment:
-      - POSTGRES_USER=svara_pro
-      - POSTGRES_PASSWORD=securepassword123
-      - POSTGRES_DB=svara_pro_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:

@@ -1,10 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { User } from '../../entities/user.entity'
-import { TelegramUser } from '../../types/telegram'
-import * as crypto from 'crypto'
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../../entities/user.entity';
+import { TelegramUser } from '../../types/telegram';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -19,9 +19,16 @@ export class AuthService {
       throw new Error('JWT_SECRET is not configured');
     }
 
-    const validated = this.validateInitData(initData);
+    let validated: { user: TelegramUser } | null = this.validateInitData(initData);
     if (!validated) {
-      throw new UnauthorizedException('Invalid Telegram auth data');
+      // Временный обход для мока в DEV
+      if (process.env.NODE_ENV === 'development' && initData.includes('mock-signature')) {
+        console.log('Development mode: Bypassing Telegram auth validation for mock data');
+        const params = new URLSearchParams(initData);
+        validated = { user: JSON.parse(params.get('user')!) };
+      } else {
+        throw new UnauthorizedException('Invalid Telegram auth data');
+      }
     }
 
     const { user: tgUser } = validated;
@@ -36,10 +43,8 @@ export class AuthService {
         avatar: tgUser.photo_url,
         balance: 0
       });
-      
       await this.usersRepository.save(user);
     } else {
-      // Обновляем данные при каждом входе
       user.username = tgUser.username ?? null;
       user.avatar = tgUser.photo_url ?? null;
       await this.usersRepository.save(user);

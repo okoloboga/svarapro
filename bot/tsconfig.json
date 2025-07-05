@@ -9,8 +9,8 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node", "telegraf/typings"],
+    "typeRoots": ["./node_modules/@types", "./src/types", "./node_modules/@telegraf/types"],
+    "types": ["node"],
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
