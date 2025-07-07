@@ -1,12 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://server/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost/api/v1',
   withCredentials: true,
 });
 
-export const apiService = {
+export const apiService = {  
   async login(initData: string): Promise<{ accessToken: string }> {
+    console.log('Request method:', api.getUri({ method: 'POST', url: '/auth/login' }))
     try {
       const response = await api.post('/auth/login', { initData });
       localStorage.setItem('token', response.data.accessToken);

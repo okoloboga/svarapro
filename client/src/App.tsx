@@ -33,6 +33,7 @@ function App() {
         }
       }
       console.log('Sending login request with params:', params.toString());
+      console.log('VITE_API_URL:', import.meta.env.VITE_API_URL)
       apiService.login(params.toString())
         .then((response) => {
           console.log('Login response:', response);
