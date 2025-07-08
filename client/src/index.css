@@ -6,3 +6,22 @@ body {
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
+
+.slide-panel-enter {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+.slide-panel-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.slide-panel-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.slide-panel-exit-active {
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: opacity 300ms, transform 300ms;
+}

@@ -6,7 +6,7 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log'],
+    logger: ['error', 'warn', 'log', 'debug'], // Добавили debug для детализации
   });
 
   app.useGlobalPipes(
@@ -24,9 +24,9 @@ async function bootstrap() {
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
-    console.log('Request received:', req.method, req.url);
-    console.log('Request headers:', JSON.stringify(req.headers)); // Лог всех заголовков
-    console.log('Request body:', JSON.stringify(req.body)); // Лог тела запроса
+    console.log('Request received:', req.method, req.url); // Базовый лог
+    console.log('Request headers:', JSON.stringify(req.headers)); // Заголовки
+    console.log('Request body:', JSON.stringify(req.body)); // Тело
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }

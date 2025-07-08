@@ -28,12 +28,12 @@ function App() {
     if (initData) {
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(initData)) {
-        if (key !== 'hash' && value !== undefined) {
+        if (value !== undefined) { // Убрали условие key !== 'hash'
           params.append(key, typeof value === 'object' ? JSON.stringify(value) : value.toString());
         }
       }
       console.log('Sending login request with params:', params.toString());
-      console.log('VITE_API_URL:', import.meta.env.VITE_API_URL)
+      console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
       apiService.login(params.toString())
         .then((response) => {
           console.log('Login response:', response);

@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
@@ -12,15 +11,15 @@ export default {
         'button-withdraw': '#FF443A',
         'surface': '#f0f0f0',
         'error': '#ef4444',
-        'error-muted': '#fee2e2', // Для ErrorAlert
+        'error-muted': '#fee2e2',
         'warning': '#f59e0b',
-        'warning-muted': '#fefcbf', // Для ErrorAlert
+        'warning-muted': '#fefcbf',
       },
       boxShadow: {
         'lg': '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
       },
       fontFamily: {
-        'roboto': ['Roboto', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'], // Добавили Inter
       },
     },
   },
