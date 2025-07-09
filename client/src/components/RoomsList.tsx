@@ -8,7 +8,8 @@ const rooms = [
 
 export function RoomsList() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mx-auto w-[336px]">
+      <p className="text-white text-center mb-2">Присоединяйтесь к игре прямо сейчас</p>
       {rooms.map((room) => (
         <Room key={room.id} {...room} />
       ))}

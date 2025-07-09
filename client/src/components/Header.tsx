@@ -13,10 +13,26 @@ export function Header({ user, balance }: HeaderProps) {
 
   return (
     <div
-      className="bg-gradient-to-b from-[#36333B] via-[#46434B] to-[#48454D] shadow-lg rounded-lg mx-auto mt-6 w-[336px] h-[108px] flex justify-between items-center p-4"
-      style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)' }}
+      className="shadow-lg mx-auto mt-6 w-[336px] h-[108px] flex justify-between items-center p-4 relative"
+      style={{
+        boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
+        borderRadius: '8px',
+        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)', // Градиент как бордер
+        position: 'relative',
+        overflow: 'hidden', // Чтобы псевдоэлемент не выходил за границы
+      }}
     >
-      <div className="flex flex-col items-center">
+      <div
+        style={{
+          position: 'absolute',
+          inset: '1px', // Толщина бордера 1px
+          background: '#48454D', // Сплошной фон внутри
+          borderRadius: '8px', // Закругление внутреннего слоя
+          pointerEvents: 'none', // Чтобы не мешал кликам
+          zIndex: 0,
+        }}
+      />
+      <div className="flex flex-col items-center relative z-10">
         <img
           src={user?.photo_url || 'https://via.placeholder.com/64'}
           alt="Avatar"
@@ -29,13 +45,13 @@ export function Header({ user, balance }: HeaderProps) {
           {user?.username || 'N/A'}
         </p>
       </div>
-      <div className="text-left">
+      <div className="text-left relative z-10">
         <div
-          className="bg-[rgba(19,18,23,0.34)] text-left px-2 py-1 rounded-lg"
+              className="bg-[#36333B] text-left px-2 py-1 rounded-lg"
           style={{ boxShadow: 'inset 0px 0px 4px rgba(0, 0, 0, 0.25)', width: '185px', height: '30px', position: 'relative', top: '-10px' }}
         >
           <span
-            className="font-inter font-semibold text-[15px] leading-[22px]"
+            className="font-inter font-semibold text-[20px] leading-[22px]"
             style={{ letterSpacing: '-0.011em', color: '#FFFFFF' }}
           >
             {formattedBalance.split('.')[0]} {/* Целая часть */}

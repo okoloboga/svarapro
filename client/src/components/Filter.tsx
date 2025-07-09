@@ -24,9 +24,24 @@ export function Filter() {
   return (
     <div className="mb-4 relative" style={{ zIndex: 10 }}>
       <div
-        className="bg-gradient-to-b from-[#36333B] via-[#46434B] to-[#48454D] shadow-lg rounded-lg mx-auto mt-6 w-[336px] h-[50px] flex items-center p-2"
-        style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)' }}
+        className="shadow-lg rounded-lg mx-auto mt-6 w-[336px] h-[50px] flex items-center p-2 relative"
+        style={{
+          boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)', // Градиент как бордер
+          borderRadius: '8px',
+          // Убрал overflow: hidden для теста
+        }}
       >
+        <div
+          style={{
+            position: 'absolute',
+            inset: '1px', // Толщина бордера 1px
+            background: '#48454D', // Сплошной фон внутри
+            borderRadius: '8px', // Закругление внутреннего слоя
+            pointerEvents: 'none', // Чтобы не перекрывал кликабельные элементы
+            zIndex: 0,
+          }}
+        />
         <div className="relative w-[120px]">
           <input
             type="text"
@@ -41,14 +56,30 @@ export function Filter() {
           />
         </div>
         <button
-          className="bg-gradient-to-b from-[#36333B] via-[#46434B] to-[#48454D] shadow-lg rounded-lg flex flex-col items-center justify-center w-[100px] h-[34px] mx-2"
-          style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)' }}
+          className="flex flex-col items-center justify-center w-[100px] h-[34px] mx-2"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)', // Градиент как бордер
+            borderRadius: '8px',
+            overflow: 'hidden',
+            position: 'relative', // Для управления z-index
+            zIndex: 10, // Поднимаем кнопку над псевдоэлементами
+          }}
           onClick={handleTogglePanel}
         >
-          <span className="text-white text-[12px] leading-[16px] text-center">Ставки</span>
-          <img src={slideDownIcon} alt="Slide down icon" className="w-[15px] h-[7px] mt-1" />
+          <div
+            style={{
+              position: 'absolute',
+              inset: '1px', // Толщина бордера 1px
+              background: '#48454D', // Сплошной фон внутри
+              borderRadius: '8px', // Закругление внутреннего слоя
+              pointerEvents: 'none', // Чтобы не перекрывал кликабельные элементы
+              zIndex: 0,
+            }}
+          />
+          <span className="text-white text-[12px] leading-[16px] text-center z-20">Ставки</span> {/* Поднимаем текст */}
+          <img src={slideDownIcon} alt="Slide down icon" className="w-[15px] h-[7px] mt-1 z-20" /> {/* Поднимаем иконку */}
         </button>
-        <div className="flex items-center">
+        <div className="flex items-center z-20"> {/* Поднимаем весь блок переключателя */}
           <span className="text-white text-[12px] mr-2">Доступны:</span>
           <div
             className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer"
