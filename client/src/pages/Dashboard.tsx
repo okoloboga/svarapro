@@ -5,6 +5,7 @@ import { Header } from '../components/Header';
 import { Filter } from '../components/Filter';
 import { RoomsList } from '../components/RoomsList';
 import { ButtonGroup } from '../components/ButtonGroup';
+import { Footer } from '../components/Footer';
 
 export function Dashboard() {
   const userData: User | undefined = useMemo(() => {
@@ -32,6 +33,7 @@ export function Dashboard() {
       <ButtonGroup />
       <Filter />
       <RoomsList />
+      <Footer />
     </div>
   );
 }

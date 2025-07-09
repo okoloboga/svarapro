@@ -83,7 +83,7 @@ export function Filter() {
           <span className="text-white text-[12px] mr-2">Доступны:</span>
           <div
             className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer"
-            style={{ background: isToggleOn ? 'linear-gradient(0deg, #AF6600 0%, #FFC53F 100%)' : '#2F2E35', transform: 'rotate(-180deg)' }}
+            style={{ background: isToggleOn ? 'linear-gradient(180deg, #AF6600 0%, #FFC53F 100%)' : '#2F2E35' }}
             onClick={handleToggleSwitch}
           >
             <div
