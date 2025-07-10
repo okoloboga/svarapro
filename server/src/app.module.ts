@@ -37,11 +37,7 @@ import * as Joi from 'joi'; // Импортируем ObjectSchema
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: config.get('NODE_ENV') === 'development',
           logging: true, // Включи логи для отладки
-          extra: {
-            ssl: config.get('NODE_ENV') === 'production'
-              ? { rejectUnauthorized: false } // Отключаем строгую проверку SSL
-              : false,
-          },
+          ssl: false, // Явно отключаем SSL
         };
       },
       inject: [ConfigService],
