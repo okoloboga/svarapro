@@ -43,21 +43,14 @@ function App() {
 
     if (!initData) {
       console.warn('No initData found, relying on mock');
-      initData = launchParams.tgWebAppData;
+      initData = launchParams.tgWebAppData; // Это может быть избыточным, убедись, что mock есть
     }
 
     const loadData = async () => {
       if (initData) {
-        const params = new URLSearchParams();
-        for (const [key, value] of Object.entries(initData)) {
-          if (value !== undefined) {
-            params.append(key, typeof value === 'object' ? JSON.stringify(value) : value.toString());
-          }
-        }
-        console.log('Sending login request with params:', params.toString());
-        console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+        console.log('Sending login request with initData:', initData); // Логируем как есть
         try {
-          const response = await apiService.login(params.toString());
+          const response = await apiService.login(initData); // Передаём напрямую
           console.log('Login response:', response);
         } catch (error) {
           const apiError = error as ApiError;
