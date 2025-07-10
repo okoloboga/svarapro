@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import * as Joi from 'joi'; // Импортируем ObjectSchema
+import * as Joi from 'joi';
 
 @Module({
   imports: [
@@ -22,11 +22,13 @@ import * as Joi from 'joi'; // Импортируем ObjectSchema
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService) => {
+        const nodeEnv = config.get('NODE_ENV');
+        console.log('Current NODE_ENV:', nodeEnv);
         console.log('Config loaded:', {
           host: config.get('POSTGRES_HOST'),
           port: config.get('POSTGRES_PORT'),
-          env: config.get('NODE_ENV'),
-        }); // Расширенная отладка
+          env: nodeEnv,
+        });
         return {
           type: 'postgres',
           host: config.get('POSTGRES_HOST'),
@@ -35,9 +37,9 @@ import * as Joi from 'joi'; // Импортируем ObjectSchema
           password: config.get('POSTGRES_PASSWORD'),
           database: config.get('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: config.get('NODE_ENV') === 'development',
-          logging: true, // Включи логи для отладки
-          ssl: false, // Явно отключаем SSL
+          synchronize: true, // Временно включено для отладки
+          logging: true,
+          ssl: false,
         };
       },
       inject: [ConfigService],
