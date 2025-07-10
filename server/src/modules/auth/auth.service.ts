@@ -59,29 +59,35 @@ export class AuthService {
   }
 
   private validateInitData(initData: string): { user: TelegramUser } | null {
-    const params = new URLSearchParams(initData);
+    const params = new URLSearchParams(decodeURIComponent(initData)); // Декодируем URL
     const hash = params.get('hash');
+    if (!hash) throw new UnauthorizedException('Missing hash in initData');
+
     const dataToCheck: string[] = [];
-  
     const sortedParams = Array.from(params.entries())
+      .filter(([key]) => key !== 'hash')
       .sort(([key1], [key2]) => key1.localeCompare(key2));
 
     for (const [key, val] of sortedParams) {
-      if (key !== 'hash') {
-        dataToCheck.push(`${key}=${val}`);
-      }
+      dataToCheck.push(`${key}=${val}`);
     }
 
     const secret = crypto.createHmac('sha256', 'WebAppData')
       .update(process.env.BOT_TOKEN!)
       .digest();
-  
+
     const computedHash = crypto.createHmac('sha256', secret)
       .update(dataToCheck.join('\n'))
       .digest('hex');
 
-    return hash === computedHash ? { 
-      user: JSON.parse(params.get('user')!) 
-    } : null;
+    console.log('Computed hash:', computedHash); // Для отладки
+    console.log('Received hash:', hash); // Для отладки
+
+    if (hash !== computedHash) {
+      console.log('Hash mismatch:', { dataToCheck, computedHash, receivedHash: hash });
+      return null;
+    }
+
+    return { user: JSON.parse(params.get('user')!) };
   }
 }
