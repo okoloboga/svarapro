@@ -7,7 +7,11 @@ import { RoomsList } from '../components/RoomsList';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { Footer } from '../components/Footer';
 
-export function Dashboard() {
+type DashboardProps = {
+  onMoreClick: () => void; // Пропс для перехода на More
+};
+
+export function Dashboard({ onMoreClick }: DashboardProps) {
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;
@@ -33,7 +37,7 @@ export function Dashboard() {
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
         <Header user={userData} balance={profileData.balance} />
-        <ButtonGroup />
+        <ButtonGroup onMoreClick={onMoreClick} />
         <Filter
           onSearchChange={setSearchId}
           onAvailabilityChange={setIsAvailableFilter}

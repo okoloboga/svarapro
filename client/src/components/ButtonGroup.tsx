@@ -5,11 +5,17 @@ import moreIcon from '../assets/more.png';
 type ButtonProps = {
   icon: string;
   label: string;
+  onClick?: () => void; // Добавляем обработчик клика
 };
 
-function Button({ icon, label }: ButtonProps) {
+type ButtonGroupProps = {
+  onMoreClick: () => void; // Пропс для обработки клика на "Ещё"
+};
+
+function Button({ icon, label, onClick }: ButtonProps) {
   return (
     <button
+      onClick={onClick}
       className="shadow-lg rounded-lg flex flex-col items-center justify-center w-[98px] h-[57px] relative"
       style={{
         boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
@@ -33,12 +39,12 @@ function Button({ icon, label }: ButtonProps) {
   );
 }
 
-export function ButtonGroup() {
+export function ButtonGroup({ onMoreClick }: ButtonGroupProps) {
   return (
     <div className="flex justify-between mx-auto mt-6 w-[336px]">
       <Button icon={createIcon} label="Создать" />
       <Button icon={tournamentsIcon} label="Турниры" />
-      <Button icon={moreIcon} label="Ещё" />
+      <Button icon={moreIcon} label="Ещё" onClick={onMoreClick}/>
     </div>
   );
 }

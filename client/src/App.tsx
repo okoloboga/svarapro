@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSignal, isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 import { Dashboard } from './pages/Dashboard';
@@ -6,8 +6,8 @@ import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './pages/LoadingPage';
+import { More } from './pages/More';
 
-// Определение типа ошибки
 type ApiError = {
   message?: string;
   response?: {
@@ -16,11 +16,22 @@ type ApiError = {
   };
 } | string;
 
+type UserData = {
+  id?: number | string;
+  username?: string;
+  photo_url?: string;
+};
+
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'more'>('dashboard');
+  const userData = useMemo(() => {
+    const params = retrieveLaunchParams();
+    return (params.tgWebAppData as { user?: UserData })?.user || {};
+  }, []);
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
@@ -32,8 +43,7 @@ function App() {
 
     if (!initData) {
       console.warn('No initData found, relying on mock');
-      // Здесь можно вызвать mockTelegram, но оно уже должно быть вызвано в main.tsx
-      initData = launchParams.tgWebAppData; // После мока должно быть заполнено
+      initData = launchParams.tgWebAppData;
     }
 
     const loadData = async () => {
@@ -59,15 +69,14 @@ function App() {
         console.error('No initData available after mock check');
         setError('App not running in Telegram context or mock failed');
       }
-      // Принудительная задержка 2 секунды перед завершением загрузки
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsLoading(false); // Завершение загрузки
+      setIsLoading(false);
     };
 
     loadData();
   }, []);
 
-  console.log('Rendering with isLoading:', isLoading, 'error:', error);
+  console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage);
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform={'base'}>
@@ -75,8 +84,10 @@ function App() {
         <LoadingPage isLoading={isLoading} />
       ) : error ? (
         <ErrorAlert code={undefined} customMessage={error} />
+      ) : currentPage === 'more' ? (
+        <More onBack={() => setCurrentPage('dashboard')} userData={userData} />
       ) : (
-        <Dashboard />
+        <Dashboard onMoreClick={() => setCurrentPage('more')} />
       )}
     </AppRoot>
   );
