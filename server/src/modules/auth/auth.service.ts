@@ -21,7 +21,6 @@ export class AuthService {
 
     let validated: { user: TelegramUser } | null = this.validateInitData(initData);
     if (!validated) {
-      // Временный обход для мока в DEV
       if (process.env.NODE_ENV === 'development' && initData.includes('mock-signature')) {
         console.log('Development mode: Bypassing Telegram auth validation for mock data');
         const params = new URLSearchParams(initData);
@@ -32,9 +31,7 @@ export class AuthService {
     }
 
     const { user: tgUser } = validated;
-    let user = await this.usersRepository.findOne({ 
-      where: { telegramId: tgUser.id.toString() } 
-    });
+    let user = await this.usersRepository.findOne({ where: { telegramId: tgUser.id.toString() } });
 
     if (!user) {
       user = this.usersRepository.create({
@@ -59,13 +56,13 @@ export class AuthService {
   }
 
   private validateInitData(initData: string): { user: TelegramUser } | null {
-    const params = new URLSearchParams(decodeURIComponent(initData)); // Декодируем URL
+    const params = new URLSearchParams(decodeURIComponent(initData));
     const hash = params.get('hash');
     if (!hash) throw new UnauthorizedException('Missing hash in initData');
 
     const dataToCheck: string[] = [];
     const sortedParams = Array.from(params.entries())
-      .filter(([key]) => key !== 'hash')
+      .filter(([key]) => key !== 'hash' && key !== 'signature') // Исключаем signature
       .sort(([key1], [key2]) => key1.localeCompare(key2));
 
     for (const [key, val] of sortedParams) {
@@ -80,8 +77,9 @@ export class AuthService {
       .update(dataToCheck.join('\n'))
       .digest('hex');
 
-    console.log('Computed hash:', computedHash); // Для отладки
-    console.log('Received hash:', hash); // Для отладки
+    console.log('Computed hash:', computedHash);
+    console.log('Received hash:', hash);
+    console.log('Data checked:', dataToCheck);
 
     if (hash !== computedHash) {
       console.log('Hash mismatch:', { dataToCheck, computedHash, receivedHash: hash });
