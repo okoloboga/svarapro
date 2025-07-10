@@ -8,6 +8,12 @@ import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './pages/LoadingPage';
 import { More } from './pages/More';
 
+// Определяем интерфейс для параметров запуска
+interface LaunchParams {
+  initData?: string;
+  tgWebAppData?: Record<string, string | Record<string, any>>;
+}
+
 type ApiError = {
   message?: string;
   response?: {
@@ -29,7 +35,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more'>('dashboard');
   const userData = useMemo(() => {
-    const params = retrieveLaunchParams();
+    const params = retrieveLaunchParams() as LaunchParams;
     return (params.tgWebAppData as { user?: UserData })?.user || {};
   }, []);
 
@@ -37,20 +43,25 @@ function App() {
     console.log('Before initTelegramSdk');
     initTelegramSdk();
     console.log('Before launch params');
-    const launchParams = retrieveLaunchParams();
+    const launchParams = retrieveLaunchParams() as LaunchParams;
     console.log('Launch params:', launchParams);
-    let initData = launchParams.tgWebAppData;
 
-    if (!initData) {
-      console.warn('No initData found, relying on mock');
-      initData = launchParams.tgWebAppData; // Это может быть избыточным, убедись, что mock есть
+    // Извлекаем initData как строку напрямую
+    let initData: string | undefined = launchParams.initData;
+    if (!initData && launchParams.tgWebAppData) {
+      // Если initData отсутствует, преобразуем tgWebAppData в строку
+      initData = new URLSearchParams(
+        Object.entries(launchParams.tgWebAppData)
+          .filter(([key]) => key !== 'hash' && key !== 'signature') // Исключаем hash и signature
+          .map(([key, value]) => [key, (value as string | Record<string, any>).toString()]) // Приведение типа
+      ).toString();
     }
 
     const loadData = async () => {
       if (initData) {
-        console.log('Sending login request with initData:', initData); // Логируем как есть
+        console.log('Sending login request with initData:', initData);
         try {
-          const response = await apiService.login(initData); // Передаём напрямую
+          const response = await apiService.login(initData); // Передаём строку
           console.log('Login response:', response);
         } catch (error) {
           const apiError = error as ApiError;
@@ -59,8 +70,8 @@ function App() {
           setError(errorMessage);
         }
       } else {
-        console.error('No initData available after mock check');
-        setError('App not running in Telegram context or mock failed');
+        console.error('No initData available after check');
+        setError('App not running in Telegram context or data unavailable');
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
       setIsLoading(false);
