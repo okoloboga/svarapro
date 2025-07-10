@@ -22,7 +22,11 @@ import * as Joi from 'joi'; // Импортируем ObjectSchema
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService) => {
-        console.log('Config loaded:', config.get('POSTGRES_HOST')); // Отладка
+        console.log('Config loaded:', {
+          host: config.get('POSTGRES_HOST'),
+          port: config.get('POSTGRES_PORT'),
+          env: config.get('NODE_ENV'),
+        }); // Расширенная отладка
         return {
           type: 'postgres',
           host: config.get('POSTGRES_HOST'),
@@ -32,10 +36,10 @@ import * as Joi from 'joi'; // Импортируем ObjectSchema
           database: config.get('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: config.get('NODE_ENV') === 'development',
-          logging: false,
+          logging: true, // Включи логи для отладки
           extra: {
-            ssl: config.get('NODE_ENV') === 'production' 
-              ? { rejectUnauthorized: true } 
+            ssl: config.get('NODE_ENV') === 'production'
+              ? { rejectUnauthorized: false } // Отключаем строгую проверку SSL
               : false,
           },
         };
