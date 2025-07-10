@@ -55,37 +55,38 @@ export class AuthService {
     };
   }
 
-  private validateInitData(initData: string): { user: TelegramUser } | null {
-    const params = new URLSearchParams(decodeURIComponent(initData));
-    const hash = params.get('hash');
-    if (!hash) throw new UnauthorizedException('Missing hash in initData');
+private validateInitData(initData: string): { user: TelegramUser } | null {
+  console.log('Raw initData:', initData); // Логируем исходные данные
+  const params = new URLSearchParams(decodeURIComponent(initData));
+  const hash = params.get('hash');
+  if (!hash) throw new UnauthorizedException('Missing hash in initData');
 
-    const dataToCheck: string[] = [];
-    const sortedParams = Array.from(params.entries())
-      .filter(([key]) => key !== 'hash' && key !== 'signature') // Исключаем signature
-      .sort(([key1], [key2]) => key1.localeCompare(key2));
+  const dataToCheck: string[] = [];
+  const sortedParams = Array.from(params.entries())
+    .filter(([key]) => key !== 'hash' && key !== 'signature')
+    .sort(([key1], [key2]) => key1.localeCompare(key2));
 
-    for (const [key, val] of sortedParams) {
-      dataToCheck.push(`${key}=${val}`);
-    }
-
-    const secret = crypto.createHmac('sha256', 'WebAppData')
-      .update(process.env.BOT_TOKEN!)
-      .digest();
-
-    const computedHash = crypto.createHmac('sha256', secret)
-      .update(dataToCheck.join('\n'))
-      .digest('hex');
-
-    console.log('Computed hash:', computedHash);
-    console.log('Received hash:', hash);
-    console.log('Data checked:', dataToCheck);
-
-    if (hash !== computedHash) {
-      console.log('Hash mismatch:', { dataToCheck, computedHash, receivedHash: hash });
-      return null;
-    }
-
-    return { user: JSON.parse(params.get('user')!) };
+  for (const [key, val] of sortedParams) {
+    dataToCheck.push(`${key}=${val}`);
   }
+
+  const secret = crypto.createHmac('sha256', 'WebAppData')
+    .update(process.env.BOT_TOKEN!)
+    .digest();
+
+  const computedHash = crypto.createHmac('sha256', secret)
+    .update(dataToCheck.join('\n'))
+    .digest('hex');
+
+  console.log('Computed hash:', computedHash);
+  console.log('Received hash:', hash);
+  console.log('Data checked:', dataToCheck);
+
+  if (hash !== computedHash) {
+    console.log('Hash mismatch:', { dataToCheck, computedHash, receivedHash: hash });
+    return null;
+  }
+
+  return { user: JSON.parse(params.get('user')!) };
+}
 }
