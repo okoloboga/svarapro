@@ -5,10 +5,23 @@ import 'rc-slider/assets/index.css';
 type SlidePanelProps = {
   isOpen: boolean;
   onClose: () => void;
+  onRangeChange: (range: [number, number]) => void;
 };
 
-export function SlidePanel({ isOpen }: SlidePanelProps) {
-  const [rangeValues, setRangeValues] = useState([0, 1000000]);
+export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
+  const [rangeValues, setRangeValues] = useState<[number, number]>([0, 1000000]);
+
+  const handleRangeChange = (value: number | number[]) => {
+    const newRange = Array.isArray(value) ? value as [number, number] : [0, 1000000];
+    // Ограничиваем значения в пределах [0, 1000000] и гарантируем порядок
+    const [minVal, maxVal] = [
+      Math.max(0, Math.min(newRange[0], 1000000)),
+      Math.max(0, Math.min(newRange[1], 1000000)),
+    ].sort((a, b) => a - b) as [number, number];
+    const validRange: [number, number] = [minVal, Math.max(minVal, maxVal)]; // Убеждаемся, что max >= min
+    setRangeValues(validRange);
+    onRangeChange(validRange); // Передаём родителю
+  };
 
   if (!isOpen) return null;
 
@@ -43,7 +56,7 @@ export function SlidePanel({ isOpen }: SlidePanelProps) {
             width: '320px',
             margin: '0 auto',
             maxWidth: '320px',
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)', // Градиент как бордер
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)',
             overflow: 'hidden',
             position: 'relative',
           }}
@@ -51,10 +64,10 @@ export function SlidePanel({ isOpen }: SlidePanelProps) {
           <div
             style={{
               position: 'absolute',
-              inset: '1px', // Толщина бордера 1px
-              background: '#48454D', // Сплошной фон внутри
-              borderRadius: '15px', // Закругление внутреннего слоя
-              pointerEvents: 'none', // Чтобы не перекрывал кликабельные элементы
+              inset: '1px',
+              background: '#48454D',
+              borderRadius: '15px',
+              pointerEvents: 'none',
               zIndex: 0,
             }}
           />
@@ -64,7 +77,7 @@ export function SlidePanel({ isOpen }: SlidePanelProps) {
               min={0}
               max={1000000}
               value={rangeValues}
-              onChange={(value) => setRangeValues(value as [number, number])}
+              onChange={handleRangeChange}
               railStyle={{ background: 'transparent', borderRadius: '15px', height: '37px' }}
               trackStyle={[{ background: '#807C7C', height: '4px', top: '50%', transform: 'translateY(-50%)', position: 'absolute', width: '290px', left: '50%', marginLeft: '-145px' }]}
               handleStyle={[

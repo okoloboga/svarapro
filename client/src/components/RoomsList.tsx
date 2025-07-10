@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Room } from './Room';
 
 const rooms = [
@@ -21,19 +21,41 @@ const rooms = [
 
 const ITEMS_PER_PAGE = 10;
 
-export function RoomsList() {
+type RoomsListProps = {
+  searchId: string;
+  isAvailableFilter: boolean;
+  stakeRange: [number, number]; // Новый пропс для диапазона ставок
+};
+
+export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(rooms.length / ITEMS_PER_PAGE);
+
+  // Фильтрация комнат
+  const filteredRooms = rooms.filter((room) => {
+    const matchesSearch = searchId === '' || room.id.toString() === searchId;
+    const matchesAvailability = !isAvailableFilter || room.players < 6;
+    const matchesStake = room.stake >= stakeRange[0] && room.stake <= stakeRange[1]; // Включительно
+    return matchesSearch && matchesAvailability && matchesStake;
+  });
+
+  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
+  useEffect(() => {
+    setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+  }, [searchId, isAvailableFilter, stakeRange]);
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedRooms = rooms.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedRooms = filteredRooms.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-4 mx-auto w-[336px]">
       <p className="text-white text-center mb-2" style={{ fontWeight: 600 }}>Присоединяйтесь к игре прямо сейчас</p>
-      {paginatedRooms.map((room) => (
-        <Room key={room.id} {...room} />
-      ))}
+      {paginatedRooms.length > 0 ? (
+        paginatedRooms.map((room) => (
+          <Room key={room.id} {...room} />
+        ))
+      ) : (
+        <p className="text-white text-center">Комнаты не найдены</p>
+      )}
       {totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4" style={{ position: 'relative' }}>
           {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
@@ -44,7 +66,7 @@ export function RoomsList() {
                 boxSizing: 'border-box',
                 width: '32px',
                 height: '25px',
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)', // Градиент как бордер
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)',
                 boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
                 borderRadius: '8px',
                 overflow: 'hidden',
@@ -54,16 +76,16 @@ export function RoomsList() {
               <div
                 style={{
                   position: 'absolute',
-                  inset: '1px', // Толщина бордера 1px
-                  background: page === currentPage ? '#2E2B33' : '#48454D', // Фон текущей/другой страницы
-                  borderRadius: '8px', // Закругление внутреннего слоя
-                  pointerEvents: 'none', // Чтобы не перекрывал кликабельные элементы
+                  inset: '1px',
+                  background: page === currentPage ? '#2E2B33' : '#48454D',
+                  borderRadius: '8px',
+                  pointerEvents: 'none',
                   zIndex: 0,
                 }}
               />
               <span
                 className="relative z-10"
-                style={{ color: '#C9C6CE', fontSize: '14px' }} // Цвет шрифта и размер
+                style={{ color: '#C9C6CE', fontSize: '14px' }}
               >
                 {page}
               </span>

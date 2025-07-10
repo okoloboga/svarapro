@@ -6,7 +6,7 @@ export function Footer() {
         boxSizing: 'border-box',
         width: '300px',
         height: '21px',
-        margin: '50px auto 0', // 50px сверху от RoomsList, центрирование
+        margin: '50px auto 16px', // 50px сверху, 16px снизу, центрирование
         fontStyle: 'normal',
         fontWeight: 600, // Как в ButtonGroup
         fontSize: '14px', // Фиксированный размер
@@ -55,7 +55,7 @@ export function Footer() {
             fontWeight: 600, // Как в ButtonGroup
             fontSize: '10px', // Фиксированный размер
           }}  
-          >
+        >
           18+
         </text>
       </svg>

@@ -14,11 +14,13 @@ export function Dashboard() {
   }, []);
 
   const [profileData, setProfileData] = useState<{ balance: string }>({ balance: '0.00' });
+  const [searchId, setSearchId] = useState('');
+  const [isAvailableFilter, setIsAvailableFilter] = useState(false);
+  const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]); // Начальный диапазон
 
   useEffect(() => {
     apiService.getProfile()
       .then((data) => {
-        console.log('Profile data:', data); // Лог для отладки
         setProfileData(data);
       })
       .catch((error) => {
@@ -28,11 +30,21 @@ export function Dashboard() {
   }, []);
 
   return (
-    <div className="bg-primary min-h-screen">
-      <Header user={userData} balance={profileData.balance} />
-      <ButtonGroup />
-      <Filter />
-      <RoomsList />
+    <div className="bg-primary min-h-screen flex flex-col">
+      <div className="flex-1">
+        <Header user={userData} balance={profileData.balance} />
+        <ButtonGroup />
+        <Filter
+          onSearchChange={setSearchId}
+          onAvailabilityChange={setIsAvailableFilter}
+          onRangeChange={setStakeRange}
+        />
+        <RoomsList
+          searchId={searchId}
+          isAvailableFilter={isAvailableFilter}
+          stakeRange={stakeRange}
+        />
+      </div>
       <Footer />
     </div>
   );

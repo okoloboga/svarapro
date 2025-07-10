@@ -5,11 +5,22 @@ import { Dashboard } from './pages/Dashboard';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api';
 import { ErrorAlert } from './components/ErrorAlert';
+import { LoadingPage } from './pages/LoadingPage';
+
+// Определение типа ошибки
+type ApiError = {
+  message?: string;
+  response?: {
+    data?: any;
+    status?: number;
+  };
+} | string;
 
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
@@ -25,32 +36,48 @@ function App() {
       initData = launchParams.tgWebAppData; // После мока должно быть заполнено
     }
 
-    if (initData) {
-      const params = new URLSearchParams();
-      for (const [key, value] of Object.entries(initData)) {
-        if (value !== undefined) { // Убрали условие key !== 'hash'
-          params.append(key, typeof value === 'object' ? JSON.stringify(value) : value.toString());
+    const loadData = async () => {
+      if (initData) {
+        const params = new URLSearchParams();
+        for (const [key, value] of Object.entries(initData)) {
+          if (value !== undefined) {
+            params.append(key, typeof value === 'object' ? JSON.stringify(value) : value.toString());
+          }
         }
-      }
-      console.log('Sending login request with params:', params.toString());
-      console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-      apiService.login(params.toString())
-        .then((response) => {
+        console.log('Sending login request with params:', params.toString());
+        console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+        try {
+          const response = await apiService.login(params.toString());
           console.log('Login response:', response);
-        })
-        .catch((error) => {
-          console.error('Login error:', error.response ? error.response.data : error.message);
-          setError(error.message || 'Authorization failed');
-        });
-    } else {
-      console.error('No initData available after mock check');
-      setError('App not running in Telegram context or mock failed');
-    }
+        } catch (error) {
+          const apiError = error as ApiError;
+          const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
+          console.error('Login error:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
+          setError(errorMessage);
+        }
+      } else {
+        console.error('No initData available after mock check');
+        setError('App not running in Telegram context or mock failed');
+      }
+      // Принудительная задержка 2 секунды перед завершением загрузки
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsLoading(false); // Завершение загрузки
+    };
+
+    loadData();
   }, []);
+
+  console.log('Rendering with isLoading:', isLoading, 'error:', error);
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform={'base'}>
-      {error ? <ErrorAlert code={undefined} customMessage={error} /> : <Dashboard />}
+      {isLoading ? (
+        <LoadingPage isLoading={isLoading} />
+      ) : error ? (
+        <ErrorAlert code={undefined} customMessage={error} />
+      ) : (
+        <Dashboard />
+      )}
     </AppRoot>
   );
 }
