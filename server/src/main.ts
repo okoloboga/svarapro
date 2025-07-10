@@ -20,13 +20,12 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '10kb' }));
 
   app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.url} from ${req.ip}`);
+    console.log('Headers:', req.headers);
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
-    console.log('Request received:', req.method, req.url); // Базовый лог
-    console.log('Request headers:', JSON.stringify(req.headers)); // Заголовки
-    console.log('Request body:', JSON.stringify(req.body)); // Тело
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
