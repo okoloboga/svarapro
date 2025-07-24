@@ -1,4 +1,3 @@
-import React from 'react';
 import completeIcon from '../../assets/complete.png';
 import errorIcon from '../../assets/error.png';
 

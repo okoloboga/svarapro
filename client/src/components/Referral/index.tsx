@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyledContainer } from '../StyledContainer';
 import { Button } from '../Button/Button';
 import closeIcon from '../../assets/close.png';

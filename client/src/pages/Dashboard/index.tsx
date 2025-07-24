@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { retrieveLaunchParams, type User } from '@telegram-apps/sdk-react';
-import { apiService } from '../../services/api/api';
 import { Header } from '../../components/Dashboard/Header';
 import { Filter } from '../../components/Dashboard/Filter';
 import { RoomsList } from '../../components/Dashboard/RoomsList';

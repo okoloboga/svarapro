@@ -36,7 +36,7 @@ type UserData = {
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
   const [balance, setBalance] = useState('0.00');
