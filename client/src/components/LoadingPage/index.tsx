@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import './LoadingPage.css';
 
 // Добавляем импорт логотипа (если используете vite)
-import mainLogo from '../assets/main_logo.png'; // или правильный путь к вашему изображению
+import mainLogo from '../../assets/main_logo.png'; // или правильный путь к вашему изображению
 
 export function LoadingPage({ isLoading }: { isLoading: boolean }) {
   const [isVisible, setIsVisible] = useState(false);

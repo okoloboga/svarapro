@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import searchIcon from '../assets/search.svg';
-import slideDownIcon from '../assets/slide-down.svg';
+import { StyledContainer } from '../StyledContainer';
+import { Button } from '../Button/Button';
+import searchIcon from '../../assets/search.svg';
+import slideDownIcon from '../../assets/slide-down.svg';
 import { CSSTransition } from 'react-transition-group';
 import { SlidePanel } from './SlidePanel';
 
@@ -33,24 +35,10 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
 
   return (
     <div className="mb-4 relative" style={{ zIndex: 10 }}>
-      <div
-        className="shadow-lg rounded-lg mx-auto mt-6 w-[336px] h-[50px] flex items-center p-2 relative"
-        style={{
-          boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)',
-          borderRadius: '8px',
-        }}
+      <StyledContainer 
+        className="mx-auto mt-6 w-[336px] h-[50px]"
+        contentClassName="w-full h-full flex items-center justify-between p-2"
       >
-        <div
-          style={{
-            position: 'absolute',
-            inset: '1px',
-            background: '#48454D',
-            borderRadius: '8px',
-            pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
         <div className="relative w-[120px]">
           <input
             type="text"
@@ -66,31 +54,17 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
             className="absolute left-2 top-1/2 transform -translate-y-1/2 w-[22px] h-[22px]"
           />
         </div>
-        <button
-          className="flex flex-col items-center justify-center w-[100px] h-[34px] mx-2"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            position: 'relative',
-            zIndex: 10,
-          }}
-          onClick={handleTogglePanel}
+        <Button 
+          layout="vertical" 
+          icon={slideDownIcon} 
+          iconPosition="right"
+          iconClassName="w-[15px] h-[7px]" // <-- Задаем кастомный размер иконки
+          onClick={handleTogglePanel} 
+          className="w-[100px] h-[34px] mx-2"
         >
-          <div
-            style={{
-              position: 'absolute',
-              inset: '1px',
-              background: '#48454D',
-              borderRadius: '8px',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
-          <span className="text-white text-[12px] leading-[16px] text-center z-20">Ставки</span>
-          <img src={slideDownIcon} alt="Slide down icon" className="w-[15px] h-[7px] mt-1 z-20" />
-        </button>
-        <div className="flex items-center z-20">
+          Ставки
+        </Button>
+        <div className="flex items-center">
           <span className="text-white text-[12px] mr-2">Доступны:</span>
           <div
             className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer"
@@ -103,7 +77,7 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
             ></div>
           </div>
         </div>
-      </div>
+      </StyledContainer>
       <CSSTransition
         in={isPanelOpen}
         timeout={300}

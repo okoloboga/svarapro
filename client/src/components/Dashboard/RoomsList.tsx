@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Room } from './Room';
+import { Button } from '../Button/Button';
 
 const rooms = [
   { id: 1, players: 2, stake: 10 },
@@ -57,39 +58,17 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsList
         <p className="text-white text-center">Комнаты не найдены</p>
       )}
       {totalPages > 1 && (
-        <div className="flex justify-center space-x-2 mt-4" style={{ position: 'relative' }}>
+        <div className="flex justify-center space-x-2 mt-4">
           {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-            <button
+            <Button
               key={page}
-              className="flex items-center justify-center relative"
-              style={{
-                boxSizing: 'border-box',
-                width: '32px',
-                height: '25px',
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, #2D2B31 100%)',
-                boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
-                borderRadius: '8px',
-                overflow: 'hidden',
-              }}
+              variant="secondary"
+              className="w-[32px] h-[25px] text-sm text-gray-400"
+              isActive={page === currentPage}
               onClick={() => setCurrentPage(page)}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '1px',
-                  background: page === currentPage ? '#2E2B33' : '#48454D',
-                  borderRadius: '8px',
-                  pointerEvents: 'none',
-                  zIndex: 0,
-                }}
-              />
-              <span
-                className="relative z-10"
-                style={{ color: '#C9C6CE', fontSize: '14px' }}
-              >
-                {page}
-              </span>
-            </button>
+              {page}
+            </Button>
           ))}
         </div>
       )}
