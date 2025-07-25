@@ -94,7 +94,7 @@ export function More({ onBack, userData, setCurrentPage }: MoreProps) {
         </div>
       </div>
       {isEulaVisible && <Eula onClose={() => setIsEulaVisible(false)} />}
-      {isReferralVisible && <Referral userId={userId} onClose={() => setIsReferralVisible(false)} />}
+      {isReferralVisible && <Referral onClose={() => setIsReferralVisible(false)} />}
     </div>
   );
 }

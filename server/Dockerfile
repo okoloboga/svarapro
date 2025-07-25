@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
 COPY . .
-RUN npm run build || { cat /app/npm-debug.log; exit 1; }
+RUN npm run build
 
 # Final stage
 FROM node:20-alpine
