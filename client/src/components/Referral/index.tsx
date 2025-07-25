@@ -2,17 +2,46 @@ import { StyledContainer } from '../StyledContainer';
 import { Button } from '../Button/Button';
 import closeIcon from '../../assets/close.png';
 import copyIcon from '../../assets/copy.svg';
+import { useEffect, useState } from 'react';
+import { apiService } from '../../services/api/api';
 
 type ReferralProps = {
   onClose: () => void;
-  referralLink: string;
-  refBalance: string;
-  refBonus: string;
-  referralCount: number;
-  referrals: { username: string | null }[];
 };
 
-export function Referral({ referralLink, refBalance, refBonus, referralCount, referrals, onClose }: ReferralProps) {
+export function Referral({ onClose }: ReferralProps) {
+  const [referralData, setReferralData] = useState<{
+    referralLink?: string;
+    refBalance?: string;
+    refBonus?: string;
+    referralCount?: number;
+    referrals?: { username: string | null }[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReferralData = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getReferralLink();
+        setReferralData(data);
+      } catch (err) {
+        setError('Failed to load referral data');
+        console.error('Error fetching referral data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReferralData();
+  }, []);
+
+  if (loading) return <div className="fixed inset-0 flex items-center justify-center">Loading...</div>;
+  if (error) return <div className="fixed inset-0 flex items-center justify-center text-white">{error}</div>;
+  if (!referralData) return null;
+
+  const { referralLink, refBalance, refBonus, referralCount, referrals } = referralData;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[#2E2B33] w-[330px] rounded-lg p-4 relative flex flex-col items-center gap-4">
@@ -45,7 +74,7 @@ export function Referral({ referralLink, refBalance, refBonus, referralCount, re
             <div className="flex justify-between gap-2 w-full">
               <Button 
                 variant="tertiary" 
-                onClick={() => navigator.clipboard.writeText(referralLink)}
+                onClick={() => navigator.clipboard.writeText(referralLink || '')}
                 className="w-[140px] h-[36px] !bg-[#2E2B33] font-medium text-sm leading-normal tracking-tighter rounded-lg"
                 icon={copyIcon}
                 iconClassName="w-4 h-4"
@@ -77,10 +106,10 @@ export function Referral({ referralLink, refBalance, refBonus, referralCount, re
                 <span>Профит</span>
               </div>
               <hr className="border-t border-white opacity-10 my-2 w-full" />
-              {referrals.map((ref, index) => (
+              {referrals?.map((ref, index) => (
                 <div key={index} className="flex justify-between text-xs text-white my-1">
                   <span>{ref.username || 'Без имени'}</span>
-                  <span>$0.00</span> {/* Пока заглушка, так как профит не реализован */}
+                  <span>$0.00</span>
                 </div>
               ))}
             </div>
