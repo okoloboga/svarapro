@@ -4,12 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { User } from '../../entities/user.entity'
-import { Referral } from '../../entities/referrals.entity'
 import { JwtStrategy } from './jwt.strategy'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Referral]),
+    TypeOrmModule.forFeature([User]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '24h' },

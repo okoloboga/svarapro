@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Index, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -39,13 +39,11 @@ export class User {
   })
   balance: number;
 
-  @Column({
-    type: 'varchar',
-    length: 64,
-    nullable: true
-  })
-  @Index()
-  referredBy: string | null; // telegramId пригласившего
+  @ManyToOne(() => User, user => user.referrals, { nullable: true, onDelete: 'SET NULL' })
+  referrer: User | null;
+
+  @OneToMany(() => User, user => user.referrer)
+  referrals: User[];
 
   @Column({
     type: 'decimal',

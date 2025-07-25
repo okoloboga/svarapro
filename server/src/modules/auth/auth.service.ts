@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { TelegramUser } from '../../types/telegram';
 import * as crypto from 'crypto';
-import { Referral } from '../../entities/referrals.entity';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -13,8 +12,6 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    @InjectRepository(Referral)
-    private referralRepository: Repository<Referral>,
     private jwtService: JwtService,
   ) {}
 
@@ -37,7 +34,6 @@ export class AuthService {
     let user = await this.usersRepository.findOne({ where: { telegramId: tgUser.id.toString() } });
 
     if (!user) {
-      // Проверка существования referredBy
       let referrer: User | null = null;
       if (referredBy) {
         referrer = await this.usersRepository.findOne({ where: { telegramId: referredBy } });
@@ -51,20 +47,13 @@ export class AuthService {
         username: tgUser.username,
         avatar: tgUser.photo_url,
         balance: 0,
-        refBalance: 0, // Начальное значение
-        refBonus: 0,   // Начальное значение
+        refBalance: 0,
+        refBonus: 0,
         totalDeposit: 0,
+        referrer: referrer, // Устанавливаем реферера
       });
       await this.usersRepository.save(user);
 
-      // Создание записи в Referrals после сохранения user
-      if (referrer) {
-        const referral = this.referralRepository.create({
-          referrer: { id: referrer.id }, // Передаём id вместо объекта
-          referral: { id: user.id },    // Передаём id вместо объекта
-        });
-        await this.referralRepository.save(referral);
-      }
     } else {
       user.username = tgUser.username ?? null;
       user.avatar = tgUser.photo_url ?? null;
