@@ -5,10 +5,10 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ 
+  @Column({
     type: 'varchar',
     length: 64,
-    unique: true 
+    unique: true
   })
   @Index()
   telegramId: string;
@@ -38,4 +38,44 @@ export class User {
     }
   })
   balance: number;
+
+  @Column({
+    type: 'varchar',
+    length: 64,
+    nullable: true
+  })
+  @Index()
+  referredBy: string | null; // telegramId пригласившего
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    }
+  })
+  refBalance: number; // Общий реферальный баланс (накопления от всех рефералов)
+
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  refBonus: number; // Текущий процент (3%, 5%, 8%, 10%)
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    }
+  })
+  totalDeposit: number; // Общая сумма депозитов пользователя
 }

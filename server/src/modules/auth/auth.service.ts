@@ -5,12 +5,15 @@ import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { TelegramUser } from '../../types/telegram';
 import * as crypto from 'crypto';
+import { Referral } from '../../entities/referrals.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Referral)
+    private referralRepository: Repository<Referral>,
     private jwtService: JwtService,
   ) {}
 
@@ -23,6 +26,7 @@ export class AuthService {
     console.log('Skipping hash validation for debug, raw initData:', initData);
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
+    const referredBy = params.get('referredBy'); // Предполагаем, что referredBy передаётся как параметр
     if (!userParam) throw new UnauthorizedException('Missing user data in initData');
 
     const validated = { user: JSON.parse(userParam) as TelegramUser };
@@ -31,13 +35,34 @@ export class AuthService {
     let user = await this.usersRepository.findOne({ where: { telegramId: tgUser.id.toString() } });
 
     if (!user) {
+      // Проверка существования referredBy
+      let referrer: User | null = null;
+      if (referredBy) {
+        referrer = await this.usersRepository.findOne({ where: { telegramId: referredBy } });
+        if (!referrer) {
+          throw new UnauthorizedException('Invalid referrer');
+        }
+      }
+
       user = this.usersRepository.create({
         telegramId: tgUser.id.toString(),
         username: tgUser.username,
         avatar: tgUser.photo_url,
-        balance: 0
+        balance: 0,
+        refBalance: 0, // Начальное значение
+        refBonus: 0,   // Начальное значение
+        totalDeposit: 0,
       });
       await this.usersRepository.save(user);
+
+      // Создание записи в Referrals после сохранения user
+      if (referrer) {
+        const referral = this.referralRepository.create({
+          referrer: { id: referrer.id }, // Передаём id вместо объекта
+          referral: { id: user.id },    // Передаём id вместо объекта
+        });
+        await this.referralRepository.save(referral);
+      }
     } else {
       user.username = tgUser.username ?? null;
       user.avatar = tgUser.photo_url ?? null;
@@ -47,12 +72,12 @@ export class AuthService {
     return {
       accessToken: this.jwtService.sign({
         sub: user.id,
-        telegramId: user.telegramId
-      })
+        telegramId: user.telegramId,
+      }),
     };
   }
 
-  // Метод валидации оставляем для будущего использования, но не используем
+  // Метод валидации оставляем для будущего использования
   private validateInitData(initData: string): { user: TelegramUser } | null {
     const params = new URLSearchParams(decodeURIComponent(initData));
     const hash = params.get('hash');

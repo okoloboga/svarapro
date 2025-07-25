@@ -17,6 +17,7 @@ import { More } from './pages/More';
 interface LaunchParams {
   initData?: string;
   tgWebAppData?: Record<string, string | Record<string, any>>;
+  startPayload? :string;
 }
 
 type ApiError = {
@@ -54,6 +55,7 @@ function App() {
     console.log('Launch params:', launchParams);
 
     let initData: string | undefined = launchParams.initData;
+    let referredBy: string | undefined;
     if (!initData && launchParams.tgWebAppData) {
       initData = new URLSearchParams(
         Object.entries(launchParams.tgWebAppData)
@@ -61,12 +63,18 @@ function App() {
           .map(([key, value]) => [key, (value as string | Record<string, any>).toString()])
       ).toString();
     }
+    // Безопасное извлечение startPayload
+    if (launchParams.startPayload && typeof launchParams.startPayload === 'string') {
+      referredBy = launchParams.startPayload;
+    } else if (launchParams.tgWebAppData && typeof (launchParams.tgWebAppData as any)?.startPayload === 'string') {
+      referredBy = (launchParams.tgWebAppData as any).startPayload;
+    }
 
     const loadData = async () => {
       if (initData) {
         console.log('Sending login request with initData:', initData);
         try {
-          const response = await apiService.login(initData);
+          const response = await apiService.login(initData, referredBy);
           console.log('Login response:', response);
           const profile = await apiService.getProfile();
           setBalance(profile.balance);

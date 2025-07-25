@@ -21,13 +21,11 @@ bot.use(rateLimit({
   onLimitExceeded: (ctx) => ctx.reply('Too many requests')
 }));
 
-// Обработчик команды /start
 bot.start(async (ctx) => {
   try {
     const user = ctx.from;
     if (!user) throw new Error('User data not available');
 
-    // Формируем initData
     const initData = new URLSearchParams();
     initData.append('auth_date', Math.floor(Date.now() / 1000).toString());
     initData.append('user', JSON.stringify({
@@ -38,14 +36,12 @@ bot.start(async (ctx) => {
     }));
     initData.append('hash', 'mock_signature_for_development');
 
-    // Формируем URL с учетом startPayload
     const webAppUrl = new URL(APP_URL);
     webAppUrl.searchParams.set('initData', initData.toString());
     
-    // Добавляем startPayload если есть
-    const payload = ctx.message?.text.split(' ')[1]; // Получаем payload из /start <payload>
+    const payload = ctx.message?.text.split(' ')[1]; // Получаем telegramId из /start
     if (payload) {
-      webAppUrl.searchParams.set('startPayload', payload);
+      webAppUrl.searchParams.set('startPayload', payload); // Передаём как startPayload
     }
 
     await ctx.reply('Welcome!', {
@@ -56,7 +52,6 @@ bot.start(async (ctx) => {
         }]]
       }
     });
-
   } catch (error) {
     console.error('Start command error:', error);
     await ctx.reply('Error occurred. Please try later.');
