@@ -7,10 +7,10 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() { initData }: LoginDto) {
-    if (!initData.includes('hash=')) {
+  async login(@Body() loginDto: LoginDto) {
+    if (!loginDto.initData.includes('hash=')) {
       throw new BadRequestException('Invalid initData format');
     }
-    return this.authService.login(initData);
+    return this.authService.login(loginDto);
   }
 }

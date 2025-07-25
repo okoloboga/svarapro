@@ -1,11 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../../entities/user.entity';
-import { TelegramUser } from '../../types/telegram';
-import * as crypto from 'crypto';
-import { Referral } from '../../entities/referrals.entity';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +10,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(initData: string) {
+  async login(loginDto: LoginDto) {
+    const { initData, startPayload } = loginDto;
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not configured');
     }
@@ -26,7 +20,7 @@ export class AuthService {
     console.log('Skipping hash validation for debug, raw initData:', initData);
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
-    const referredBy = params.get('referredBy'); // Предполагаем, что referredBy передаётся как параметр
+    const referredBy = startPayload;
     if (!userParam) throw new UnauthorizedException('Missing user data in initData');
 
     const validated = { user: JSON.parse(userParam) as TelegramUser };

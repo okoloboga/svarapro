@@ -6,10 +6,10 @@ const api = axios.create({
 });
 
 export const apiService = {
-  async login(initData: string, referredBy?: string): Promise<{ accessToken: string }> {
-    console.log('Sending to server - initData:', initData, 'referredBy:', referredBy);
+  async login(initData: string, startPayload?: string): Promise<{ accessToken: string }> {
+    console.log('Sending to server - initData:', initData, 'startPayload:', startPayload);
     try {
-      const response = await api.post('/auth/login', { initData, referredBy });
+      const response = await api.post('/auth/login', { initData, startPayload });
       localStorage.setItem('token', response.data.accessToken);
       return response.data;
     } catch (error) {

@@ -74,7 +74,7 @@ function App() {
       if (initData) {
         console.log('Sending login request with initData:', initData);
         try {
-          const response = await apiService.login(initData, referredBy);
+          const response = await apiService.login(initData, launchParams.startPayload);
           console.log('Login response:', response);
           const profile = await apiService.getProfile();
           setBalance(profile.balance);
