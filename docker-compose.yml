@@ -42,7 +42,7 @@ services:
       context: ./bot
       dockerfile: Dockerfile
       cache_from:
-        - node:20-a;pine
+        - node:20-alpine
     env_file:
       - ./bot/.env
     depends_on:
