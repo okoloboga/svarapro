@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: nginx/Dockerfile
+      cache_from:
+        - nginx:alpine
     ports:
       - "80:80"
       - "443:443"
@@ -23,6 +25,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+      cache_from:
+        - node:20-alpine
     env_file:
       - ./server/.env
     ports:
@@ -37,6 +41,8 @@ services:
     build:
       context: ./bot
       dockerfile: Dockerfile
+      cache_from:
+        - node:20-a;pine
     env_file:
       - ./bot/.env
     depends_on:
