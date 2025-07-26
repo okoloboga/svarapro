@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import * as Joi from 'joi';
+import { FinancesModule } from './modules/finances/finances.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import * as Joi from 'joi';
         NODE_ENV: Joi.string()
           .valid('development', 'production')
           .default('development'),
+        REDIS_HOST: Joi.string().required(),
+        REDIS_PORT: Joi.number().required(),
       }).unknown(true),
     }),
     TypeOrmModule.forRootAsync({
@@ -44,8 +48,21 @@ import * as Joi from 'joi';
       },
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      useFactory: (config: ConfigService) => ({
+        redis: {
+          host: config.get('REDIS_HOST'),
+          port: config.get('REDIS_PORT'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.registerQueue({
+      name: 'callback-queue',
+    }),
     AuthModule,
     UsersModule,
+    FinancesModule,
   ],
 })
 export class AppModule {}

@@ -32,4 +32,30 @@ export class Deposit {
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'failed', 'complete'],
+    default: 'pending',
+  })
+  status: string;
+
+  @Column({
+    type: 'varchar',
+    length: 128,
+  })
+  address: string; // Сгенерированный адрес для оплаты
+
+  @Column({
+    type: 'varchar',
+    length: 64,
+  })
+  tracker_id: string; // ID для связи с exnode
+
+  @Column({
+    type: 'varchar',
+    length: 128,
+    nullable: true,
+  })
+  transaction_hash: string | undefined; // Детали транзакции в блокчейне
 }
