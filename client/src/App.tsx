@@ -12,7 +12,7 @@ import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { More } from './pages/More';
-import { useAppBackButton } from './hooks/useAppBackButton';
+// import { useAppBackButton } from './hooks/useAppBackButton';
 
 // Определяем интерфейсы
 interface LaunchParams {
@@ -48,7 +48,7 @@ function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSdkInitialized, setIsSdkInitialized] = useState(false);
+  // const [isSdkInitialized, setIsSdkInitialized] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [balance, setBalance] = useState('0.00');
@@ -77,16 +77,16 @@ function App() {
     }
   };
 
-  if (isSdkInitialized) {
+  /* if (isSdkInitialized) {
     useAppBackButton(currentPage !== 'dashboard', handleBack);
-  }
+  } */
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
     const initialize = async () => {
       try {
         await initTelegramSdk();
-        setIsSdkInitialized(true);
+ //       setIsSdkInitialized(true);
         console.log('SDK initialization completed');
       } catch (e) {
         console.error('Failed to initialize SDK:', e);
