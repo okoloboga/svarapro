@@ -24,10 +24,14 @@ export function AddWallet({ onBack }: AddWalletProps) {
       await apiService.addWalletAddress(address);
       setNotification('addressAdded');
     } catch (error: unknown) {
-      if (error.response && error.response.data.message === 'Wallet address already in use') {
-        setNotification('addressAlreadyUsed');
-      } else if (error.response && error.response.data.message === 'Invalid TON address format') {
-        setNotification('invalidAddress');
+      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response === 'object' && error.response !== null && 'data' in error.response && typeof error.response.data === 'object' && error.response.data !== null && 'message' in error.response.data) {
+        if ((error.response.data as { message: string }).message === 'Wallet address already in use') {
+          setNotification('addressAlreadyUsed');
+        } else if ((error.response.data as { message: string }).message === 'Invalid TON address format') {
+          setNotification('invalidAddress');
+        } else {
+          setNotification('invalidAddress');
+        }
       } else {
         setNotification('invalidAddress');
       }

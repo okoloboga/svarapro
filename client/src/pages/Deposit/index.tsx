@@ -28,7 +28,7 @@ export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
   };
 
   if (loading) {
-    return <LoadingPage />;
+    return <LoadingPage isLoading={loading} />;
   }
 
   return (

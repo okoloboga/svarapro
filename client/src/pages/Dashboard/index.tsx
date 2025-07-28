@@ -36,7 +36,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
   return (
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
-        <Header user={userData} balance={balance} onWithdrawClick={handleWithdrawClick} />
+        <Header user={userData} balance={balance} onWithdrawClick={handleWithdrawClick} setCurrentPage={setCurrentPage} />
         <ButtonGroup onMoreClick={onMoreClick} />
         <Filter
           onSearchChange={setSearchId}

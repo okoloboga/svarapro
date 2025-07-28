@@ -6,18 +6,16 @@ import { useEffect, useState } from 'react';
 import { apiService } from '../../services/api/api';
 import { PopSuccess } from '../PopSuccess';
 
-type ReferralProps = {
-  onClose: () => void;
+type ReferralData = {
+  referralLink?: string;
+  refBalance?: string;
+  refBonus?: string;
+  referralCount?: number;
+  referrals?: { username: string | null }[];
 };
 
 export function Referral({ onClose }: ReferralProps) {
-  const [referralData, setReferralData] = useState<{
-    referralLink?: string;
-    refBalance?: string;
-    refBonus?: string;
-    referralCount?: number;
-    referrals?: { username: string | null }[];
-  } | null>(null);
+  const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -34,7 +32,7 @@ export function Referral({ onClose }: ReferralProps) {
     const fetchReferralData = async () => {
       try {
         setLoading(true);
-        const data = await apiService.getReferralLink();
+        const data = (await apiService.getReferralLink()) as ReferralData;
         setReferralData(data);
       } catch (err) {
         setError('Failed to load referral data');

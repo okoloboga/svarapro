@@ -60,7 +60,7 @@ export async function mockTelegram(realInitData?: Record<string, unknown>): Prom
       ['tgWebAppPlatform', 'tdesktop'],
       ['tgWebAppVersion', '8.4'],
       ['tgWebAppThemeParams', JSON.stringify(themeParams)],
-      ['tgWebAppData', new URLSearchParams(Object.entries(tgWebAppData)).toString()],
+      ['tgWebAppData', new URLSearchParams(Object.entries(tgWebAppData).map(([key, value]) => [key, String(value)])).toString()],
     ]),
     resetPostMessage: true,
   });

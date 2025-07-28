@@ -34,6 +34,12 @@ type PageData = {
   [key: string]: unknown;
 };
 
+type UserData = {
+  id?: number | string;
+  username?: string;
+  photo_url?: string;
+};
+
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
@@ -109,8 +115,8 @@ function App() {
         <More onBack={() => handleSetCurrentPage('dashboard')} userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
         <Deposit onBack={() => handleSetCurrentPage('dashboard')} setCurrentPage={handleSetCurrentPage}/>
-      ) : currentPage === 'confirmDeposit' ? (
-        <ConfirmDeposit onBack={() => handleSetCurrentPage('deposit')} {...pageData} />
+      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency ? (
+        <ConfirmDeposit onBack={() => handleSetCurrentPage('deposit')} address={pageData.address} currency={pageData.currency} />
       ) : currentPage === 'withdraw' ? (
         <Withdraw onBack={() => handleSetCurrentPage('dashboard')} balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
       ) : currentPage === 'confirmWithdraw' ? (
