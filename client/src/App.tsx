@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useSignal, isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
+import { useSignal, isMiniAppDark, retrieveLaunchParams, useWebAppBackButton } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 import { Dashboard } from './pages/Dashboard';
 import { Deposit } from './pages/Deposit';
@@ -43,6 +43,7 @@ type UserData = {
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
+  const backButton = useWebAppBackButton();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
@@ -59,6 +60,36 @@ function App() {
     setCurrentPage(page);
     setPageData(data);
   };
+
+  const handleBack = () => {
+    // This logic will be handled by the back button
+  };
+
+  useEffect(() => {
+    const onBackClick = () => {
+      // A simple history implementation
+      if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw') {
+        setCurrentPage('dashboard');
+      } else if (currentPage === 'confirmDeposit') {
+        setCurrentPage('deposit');
+      } else if (currentPage === 'confirmWithdraw') {
+        setCurrentPage('withdraw');
+      } else if (currentPage === 'addWallet') {
+        setCurrentPage('more');
+      }
+    };
+
+    if (currentPage !== 'dashboard') {
+      backButton.show();
+      backButton.onClick(onBackClick);
+    } else {
+      backButton.hide();
+    }
+
+    return () => {
+      backButton.offClick(onBackClick);
+    };
+  }, [currentPage, backButton]);
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
@@ -112,17 +143,17 @@ function App() {
       ) : error ? (
         <ErrorAlert code={undefined} customMessage={error} />
       ) : currentPage === 'more' ? (
-        <More onBack={() => handleSetCurrentPage('dashboard')} userData={userData} setCurrentPage={handleSetCurrentPage} />
+        <More onBack={handleBack} userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
-        <Deposit onBack={() => handleSetCurrentPage('dashboard')} setCurrentPage={handleSetCurrentPage}/>
+        <Deposit onBack={handleBack} setCurrentPage={handleSetCurrentPage}/>
       ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency ? (
-        <ConfirmDeposit onBack={() => handleSetCurrentPage('deposit')} address={pageData.address} currency={pageData.currency} />
+        <ConfirmDeposit onBack={handleBack} address={pageData.address} currency={pageData.currency} />
       ) : currentPage === 'withdraw' ? (
-        <Withdraw onBack={() => handleSetCurrentPage('dashboard')} balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
+        <Withdraw onBack={handleBack} balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
       ) : currentPage === 'confirmWithdraw' ? (
-        <ConfirmWithdraw onBack={() => setCurrentPage('withdraw')} withdrawAmount={withdrawAmount} />
+        <ConfirmWithdraw onBack={handleBack} withdrawAmount={withdrawAmount} />
       ) : currentPage === 'addWallet' ? (
-        <AddWallet onBack={() => handleSetCurrentPage('more')} />
+        <AddWallet onBack={handleBack} />
       ) : (
         <Dashboard onMoreClick={() => handleSetCurrentPage('more')} setCurrentPage={handleSetCurrentPage} balance={balance} walletAddress={walletAddress} />
       )}
