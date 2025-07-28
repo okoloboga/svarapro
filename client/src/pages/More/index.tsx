@@ -3,6 +3,7 @@ import { YellowButton } from '../../components/Button/YellowButton';
 import { StyledContainer } from '../../components/StyledContainer';
 import { Eula } from '../../components/Eula';
 import { Referral } from '../../components/Referral';
+import { PopSuccess } from '../../components/PopSuccess';
 import sharpIcon from '../../assets/sharp.png';
 import languageIcon from '../../assets/language.png';
 import depositHistoryIcon from '../../assets/deposit_history.png';
@@ -16,18 +17,19 @@ import copyIcon from '../../assets/copy.svg';
 import tetherIcon from '../../assets/tether.png';
 import slideDownIcon from '../../assets/slide-down.svg';
 import { useMemo, useState } from 'react';
-import { PopSuccess } from '../../components/PopSuccess';
+
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
 type UserData = {
-  id?: number | string; // Учитываем, что ID может быть числом или строкой
+  id?: number | string;
   username?: string;
   photo_url?: string;
 };
 
 type MoreProps = {
   onBack: () => void;
-  userData?: UserData; // Добавляем пропс для передачи userData
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet') => void;
+  userData?: UserData;
+  setCurrentPage: (page: Page) => void;
 };
 
 export function More({ onBack, userData, setCurrentPage }: MoreProps) {

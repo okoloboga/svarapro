@@ -1,23 +1,20 @@
-import { backButton, useWebApp } from '@telegram-apps/sdk-react';
+import { backButton } from '@telegram-apps/sdk-react';
 import { useEffect } from 'react';
 
 export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
-  const webApp = useWebApp();
-
   useEffect(() => {
-    if (webApp.initData) {
-      if (isVisible) {
-        backButton.show();
-        backButton.onClick(handler);
-      } else {
-        backButton.hide();
-      }
+    if (isVisible) {
+      console.log('BackButton: Showing');
+      backButton.show();
+      backButton.onClick(handler);
+    } else {
+      console.log('BackButton: Hiding');
+      backButton.hide();
     }
 
     return () => {
-      if (webApp.initData) {
-        backButton.offClick(handler);
-      }
+      console.log('BackButton: Cleaning up handler');
+      backButton.offClick(handler);
     };
-  }, [isVisible, handler, webApp.initData]);
+  }, [isVisible, handler]);
 };

@@ -4,10 +4,12 @@ import { YellowButton } from '../../components/Button/YellowButton';
 import tetherIcon from '../../assets/tether.png';
 import warningIcon from '../../assets/warning.svg';
 
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+
 type WithdrawProps = {
   onBack: () => void;
   balance: string;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw') => void;
+  setCurrentPage: (page: Page) => void;
   setWithdrawAmount: (amount: string) => void;
 };
 
@@ -22,6 +24,10 @@ export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }:
     if (/^\d*$/.test(value)) {
       setAmount(value);
     }
+  };
+
+  const handleMaxClick = () => {
+    setAmount(Math.floor(availableAmount).toString());
   };
 
   const handleCheck = () => {
@@ -43,7 +49,6 @@ export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }:
         </div>
       </div>
 
-      {/* Контейнер с инпутом */}
       <div className="bg-black bg-opacity-30 rounded-lg px-4 w-full max-w-[336px] flex items-center mb-4 h-[53px]">
         <span className="text-white font-inter text-[17px] opacity-60">$</span>
         <input
@@ -56,14 +61,13 @@ export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }:
         <Button
           variant="tertiary"
           size="sm"
-          onClick={() => console.log('Max button clicked')}
+          onClick={handleMaxClick}
           className="!h-[25px] !w-[57px] !px-2 !py-1 !rounded-lg !bg-[#2E2B33] !text-[#C9C6CE] !font-medium !text-[14px]"
         >
           Макс
         </Button>
       </div>
 
-      {/* Мин.сумма и Доступно */}
       <div className="w-full max-w-[336px] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
         <div className="flex justify-between">
           <span className="text-left">Мин.сумма:</span>
@@ -78,7 +82,7 @@ export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }:
       <YellowButton
         size="lg"
         onClick={handleCheck}
-        isActive={true} // Кнопка всегда активна для теста
+        isActive={parseFloat(amount) >= minAmount && parseFloat(amount) <= availableAmount}
         className="w-full max-w-[336px]"
       >
         Проверить

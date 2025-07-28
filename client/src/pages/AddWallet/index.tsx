@@ -10,6 +10,14 @@ type AddWalletProps = {
   onBack: () => void;
 };
 
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 export function AddWallet({ onBack }: AddWalletProps) {
   const [address, setAddress] = useState('');
   const [notification, setNotification] = useState<'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | null>(null);
@@ -24,14 +32,12 @@ export function AddWallet({ onBack }: AddWalletProps) {
       await apiService.addWalletAddress(address);
       setNotification('addressAdded');
     } catch (error: unknown) {
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response === 'object' && error.response !== null && 'data' in error.response && typeof error.response.data === 'object' && error.response.data !== null && 'message' in error.response.data) {
-        if ((error.response.data as { message: string }).message === 'Wallet address already in use') {
-          setNotification('addressAlreadyUsed');
-        } else if ((error.response.data as { message: string }).message === 'Invalid TON address format') {
-          setNotification('invalidAddress');
-        } else {
-          setNotification('invalidAddress');
-        }
+      const apiError = error as ApiError;
+      const errorMessage = apiError.response?.data?.message;
+      if (errorMessage === 'Wallet address already in use') {
+        setNotification('addressAlreadyUsed');
+      } else if (errorMessage === 'Invalid TON address format') {
+        setNotification('invalidAddress');
       } else {
         setNotification('invalidAddress');
       }

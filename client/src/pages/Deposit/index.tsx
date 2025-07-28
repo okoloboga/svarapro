@@ -6,9 +6,11 @@ import rightIcon from '../../assets/right.svg';
 import { apiService } from '../../services/api/api';
 import { LoadingPage } from '../../components/LoadingPage';
 
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+
 type TopUpProps = {
   onBack: () => void;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit', data?: Record<string, unknown>) => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
 };
 
 export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
@@ -21,7 +23,7 @@ export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
       setCurrentPage('confirmDeposit', { ...depositData, currency });
     } catch (error) {
       console.error('Failed to initiate deposit:', error);
-      // Тут можно показать ошибку
+      // Можно добавить уведомление об ошибке
     } finally {
       setLoading(false);
     }

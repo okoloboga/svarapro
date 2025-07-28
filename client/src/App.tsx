@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useSignal, isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
+import { isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 import { Dashboard } from './pages/Dashboard';
 import { Deposit } from './pages/Deposit';
@@ -14,11 +14,11 @@ import { LoadingPage } from './components/LoadingPage';
 import { More } from './pages/More';
 import { useAppBackButton } from './hooks/useAppBackButton';
 
-// Определяем интерфейс для параметров запуска
+// Определяем интерфейсы
 interface LaunchParams {
   initData?: string;
   tgWebAppData?: Record<string, string | Record<string, unknown>>;
-  startPayload? :string;
+  startPayload?: string;
 }
 
 type ApiError = {
@@ -41,12 +41,15 @@ type UserData = {
   photo_url?: string;
 };
 
+// Унифицированный тип для страниц
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+
 function App() {
   console.log('Launch App');
-  const isDark = useSignal(isMiniAppDark);
+  const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [balance, setBalance] = useState('0.00');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -56,20 +59,18 @@ function App() {
     return (params.tgWebAppData as { user?: UserData })?.user || {};
   }, []);
 
-  const handleSetCurrentPage = (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet', data: PageData | null = null) => {
+  const handleSetCurrentPage = (page: Page, data: PageData | null = null) => {
     setCurrentPage(page);
     setPageData(data);
   };
 
   const handleBack = () => {
-    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw') {
+    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet') {
       setCurrentPage('dashboard');
     } else if (currentPage === 'confirmDeposit') {
       setCurrentPage('deposit');
     } else if (currentPage === 'confirmWithdraw') {
       setCurrentPage('withdraw');
-    } else if (currentPage === 'addWallet') {
-      setCurrentPage('more');
     }
   };
 
@@ -90,7 +91,6 @@ function App() {
           .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
       ).toString();
     }
-    
 
     const loadData = async () => {
       if (initData) {
@@ -103,15 +103,24 @@ function App() {
           setWalletAddress(profile.walletAddress);
         } catch (error) {
           const apiError = error as ApiError;
-          const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
-          console.error('Login error - using mock data:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
+          const errorMessage =
+            typeof apiError === 'string'
+              ? apiError
+              : apiError.message || 'Unknown error';
+          console.error(
+            'Login error:',
+            errorMessage,
+            typeof apiError === 'object' && apiError.response
+              ? apiError.response.data
+              : 'No response data'
+          );
           setError('Failed to load data. Please try again later.');
         }
       } else {
-        console.error('No initData available - using mock data');
+        console.error('No initData available');
         setError('Telegram initialization data not found.');
       }
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       setIsLoading(false);
     };
 
@@ -121,7 +130,7 @@ function App() {
   console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage);
 
   return (
-    <AppRoot appearance={isDark ? 'dark' : 'light'} platform={'base'}>
+    <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
       {isLoading ? (
         <LoadingPage isLoading={isLoading} />
       ) : error ? (
@@ -129,17 +138,27 @@ function App() {
       ) : currentPage === 'more' ? (
         <More onBack={handleBack} userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
-        <Deposit onBack={handleBack} setCurrentPage={handleSetCurrentPage}/>
+        <Deposit onBack={handleBack} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency ? (
         <ConfirmDeposit onBack={handleBack} address={pageData.address} currency={pageData.currency} />
       ) : currentPage === 'withdraw' ? (
-        <Withdraw onBack={handleBack} balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
+        <Withdraw
+          onBack={handleBack}
+          balance={balance}
+          setCurrentPage={handleSetCurrentPage}
+          setWithdrawAmount={setWithdrawAmount}
+        />
       ) : currentPage === 'confirmWithdraw' ? (
         <ConfirmWithdraw onBack={handleBack} withdrawAmount={withdrawAmount} />
       ) : currentPage === 'addWallet' ? (
         <AddWallet onBack={handleBack} />
       ) : (
-        <Dashboard onMoreClick={() => handleSetCurrentPage('more')} setCurrentPage={handleSetCurrentPage} balance={balance} walletAddress={walletAddress} />
+        <Dashboard
+          onMoreClick={() => handleSetCurrentPage('more')}
+          setCurrentPage={handleSetCurrentPage}
+          balance={balance}
+          walletAddress={walletAddress}
+        />
       )}
     </AppRoot>
   );

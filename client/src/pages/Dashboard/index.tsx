@@ -8,9 +8,11 @@ import { Footer } from '../../components/Footer';
 import { AddWalletWindow } from '../../components/AddWalletWindow';
 import { Notification } from '../../components/Notification';
 
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+
 type DashboardProps = {
   onMoreClick: () => void;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'withdraw' | 'addWallet') => void; // Добавляем пропс
+  setCurrentPage: (page: Page) => void;
   balance: string;
   walletAddress: string | null;
 };
