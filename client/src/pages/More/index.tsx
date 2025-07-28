@@ -27,12 +27,11 @@ type UserData = {
 };
 
 type MoreProps = {
-  onBack: () => void;
   userData?: UserData;
   setCurrentPage: (page: Page) => void;
 };
 
-export function More({ onBack, userData, setCurrentPage }: MoreProps) {
+export function More({ userData, setCurrentPage }: MoreProps) {
   const userId = useMemo(() => userData?.id?.toString() || 'N/A', [userData?.id]);
   const [isEulaVisible, setIsEulaVisible] = useState(false);
   const [isReferralVisible, setIsReferralVisible] = useState(false);
@@ -96,12 +95,6 @@ export function More({ onBack, userData, setCurrentPage }: MoreProps) {
               </YellowButton>
             </div>
           </StyledContainer>
-        </div>
-
-        <div className="pt-4 w-full">
-          <Button variant="secondary" onClick={onBack} fullWidth>
-            Назад
-          </Button>
         </div>
       </div>
       {isEulaVisible && <Eula onClose={() => setIsEulaVisible(false)} />}

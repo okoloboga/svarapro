@@ -21,7 +21,7 @@ export function StyledContainer({
     <div
       className={`relative box-border overflow-hidden text-white ${className}`}
       style={{
-        background: 'linear-gradient(180deg, #2D2B31 0%, rgba(255, 255, 255, 0.3) 50%, #48454D 100%)',
+        background: 'linear-gradient(180deg, #2D2B31 0%, rgba(255, 255, 255, 0.3) 50%, #DDDDDD 100%)',
         boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
         borderRadius: '8px',
         ...rest.style,

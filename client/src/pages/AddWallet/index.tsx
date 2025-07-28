@@ -1,14 +1,10 @@
 import { useState } from 'react';
-import { Button } from '../../components/Button/Button';
 import { YellowButton } from '../../components/Button/YellowButton';
 import { Notification } from '../../components/Notification';
 import tetherIcon from '../../assets/tether.png';
 import warningIcon from '../../assets/warning.svg';
 import { apiService } from '../../services/api/api';
 
-type AddWalletProps = {
-  onBack: () => void;
-};
 
 type ApiError = {
   response?: {
@@ -18,7 +14,7 @@ type ApiError = {
   };
 };
 
-export function AddWallet({ onBack }: AddWalletProps) {
+export function AddWallet() {
   const [address, setAddress] = useState('');
   const [notification, setNotification] = useState<'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | null>(null);
 
@@ -81,12 +77,8 @@ export function AddWallet({ onBack }: AddWalletProps) {
       >
         Добавить
       </YellowButton>
-
-      <div className="mt-auto pb-6 w-full max-w-[336px]">
-        <Button variant="tertiary" onClick={onBack} fullWidth>
-          Назад
-        </Button>
-      </div>
+      
+      
 
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>

@@ -9,11 +9,10 @@ import { LoadingPage } from '../../components/LoadingPage';
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
 type TopUpProps = {
-  onBack: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
 };
 
-export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
+export function Deposit({ setCurrentPage }: TopUpProps) {
   const [loading, setLoading] = useState(false);
 
   const handleDeposit = async (currency: string) => {
@@ -62,11 +61,6 @@ export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
         </Button>
       </div>
 
-      <div className="mt-auto pt-6 w-full max-w-md">
-        <Button variant="tertiary" onClick={onBack} fullWidth>
-          Назад
-        </Button>
-      </div>
     </div>
   );
 }

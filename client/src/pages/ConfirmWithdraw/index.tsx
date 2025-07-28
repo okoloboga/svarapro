@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { YellowButton } from '../../components/Button/YellowButton';
-import { Button } from '../../components/Button/Button';
 
 type ConfirmWithdrawProps = {
-  onBack: () => void;
   withdrawAmount: string;
 };
 
-export function ConfirmWithdraw({ onBack, withdrawAmount }: ConfirmWithdrawProps) {
+export function ConfirmWithdraw({ withdrawAmount }: ConfirmWithdrawProps) {
   const [walletAddress] = useState('TQxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); // Заглушка адреса
 
   return (
@@ -45,9 +43,7 @@ export function ConfirmWithdraw({ onBack, withdrawAmount }: ConfirmWithdrawProps
         <YellowButton size="lg" onClick={() => console.log('Подтвердить clicked')} className="w-full">
           Подтвердить
         </YellowButton>
-        <Button variant="tertiary" onClick={onBack} fullWidth className="mt-4">
-          Назад
-        </Button>
+
       </div>
     </div>
   );

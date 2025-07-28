@@ -10,12 +10,11 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { PopSuccess } from '../../components/PopSuccess';
 
 type DepositProps = {
-  onBack: () => void;
   address: string;
   currency: string;
 };
 
-export function ConfirmDeposit({ onBack, address, currency }: DepositProps) {
+export function ConfirmDeposit({ address, currency }: DepositProps) {
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 минут в секундах
   const [showQR, setShowQR] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -98,11 +97,6 @@ export function ConfirmDeposit({ onBack, address, currency }: DepositProps) {
         </div>
       </div>
 
-      <div className="mt-auto pb-6 w-full max-w-[336px]">
-        <Button variant="tertiary" onClick={onBack} fullWidth>
-          Назад
-        </Button>
-      </div>
     </div>
   );
 }

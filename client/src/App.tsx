@@ -160,22 +160,21 @@ function App() {
       ) : error ? (
         <ErrorAlert code={undefined} customMessage={error} />
       ) : currentPage === 'more' ? (
-        <More onBack={handleBack} userData={userData} setCurrentPage={handleSetCurrentPage} />
+        <More userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
-        <Deposit onBack={handleBack} setCurrentPage={handleSetCurrentPage} />
+        <Deposit setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency ? (
-        <ConfirmDeposit onBack={handleBack} address={pageData.address} currency={pageData.currency} />
+        <ConfirmDeposit address={pageData.address} currency={pageData.currency} />
       ) : currentPage === 'withdraw' ? (
         <Withdraw
-          onBack={handleBack}
           balance={balance}
           setCurrentPage={handleSetCurrentPage}
           setWithdrawAmount={setWithdrawAmount}
         />
       ) : currentPage === 'confirmWithdraw' ? (
-        <ConfirmWithdraw onBack={handleBack} withdrawAmount={withdrawAmount} />
+        <ConfirmWithdraw withdrawAmount={withdrawAmount} />
       ) : currentPage === 'addWallet' ? (
-        <AddWallet onBack={handleBack} />
+        <AddWallet />
       ) : (
         <Dashboard
           onMoreClick={() => handleSetCurrentPage('more')}

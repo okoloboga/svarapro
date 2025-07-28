@@ -7,13 +7,12 @@ import warningIcon from '../../assets/warning.svg';
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
 type WithdrawProps = {
-  onBack: () => void;
   balance: string;
   setCurrentPage: (page: Page) => void;
   setWithdrawAmount: (amount: string) => void;
 };
 
-export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }: WithdrawProps) {
+export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: WithdrawProps) {
   const [amount, setAmount] = useState('');
   const minAmount = 10;
   const availableAmount = parseFloat(balance);
@@ -87,12 +86,6 @@ export function Withdraw({ onBack, balance, setCurrentPage, setWithdrawAmount }:
       >
         Проверить
       </YellowButton>
-
-      <div className="mt-auto pb-6 w-full max-w-[336px]">
-        <Button variant="tertiary" onClick={onBack} fullWidth>
-          Назад
-        </Button>
-      </div>
     </div>
   );
 }
