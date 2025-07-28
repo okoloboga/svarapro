@@ -55,7 +55,8 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15
+    image: public.ecr.aws/docker/library/postgres:15
+    # image: postgres:15
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -68,7 +69,8 @@ services:
       - app-network
 
   redis:
-    image: redis:7-alpine
+    image: public.ecr.aws/docker/library/redis:7-alpine
+    # image: redis:7-alpine
     ports:
       - "6379:6379"
     volumes:
