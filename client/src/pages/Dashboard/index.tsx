@@ -16,6 +16,7 @@ type DashboardProps = {
 };
 
 export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress }: DashboardProps) {
+  console.log('walletAddress:', walletAddress);
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;
