@@ -98,8 +98,18 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
-  // Метод для получения списка рефералов
-  getReferrals(user: User): Promise<{ username: string | null }[]> {
+  async getReferrals(
+    telegramId: string,
+  ): Promise<{ username: string | null }[]> {
+    const user = await this.usersRepository.findOne({
+      where: { telegramId },
+      relations: ['referrals'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     if (!user.referrals) {
       return [];
     }
@@ -116,7 +126,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     const referralCount = user.referrals.length;
-    const referrals = await this.getReferrals(user);
+    const referrals = await this.getReferrals(telegramId);
     const refBonus = this.calculateRefBonus(referralCount);
     const refBalance = user.refBalance;
 

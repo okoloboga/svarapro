@@ -31,7 +31,7 @@ type ApiError = {
 type PageData = {
   address?: string;
   currency?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 function App() {

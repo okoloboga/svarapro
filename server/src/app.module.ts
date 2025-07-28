@@ -29,8 +29,8 @@ import { BullModule } from '@nestjs/bull';
         const nodeEnv = config.get<string>('NODE_ENV');
         console.log('Current NODE_ENV:', nodeEnv);
         console.log('Config loaded:', {
-          host: config.get('POSTGRES_HOST'),
-          port: config.get('POSTGRES_PORT'),
+          host: config.get<string>('POSTGRES_HOST'),
+          port: config.get<number>('POSTGRES_PORT'),
           env: nodeEnv,
         });
         return {
