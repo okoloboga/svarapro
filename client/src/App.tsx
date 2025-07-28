@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useSignal, isMiniAppDark, retrieveLaunchParams, useWebAppBackButton } from '@telegram-apps/sdk-react';
+import { useSignal, isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 import { Dashboard } from './pages/Dashboard';
 import { Deposit } from './pages/Deposit';
@@ -12,6 +12,7 @@ import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { More } from './pages/More';
+import { useAppBackButton } from './hooks/useAppBackButton';
 
 // Определяем интерфейс для параметров запуска
 interface LaunchParams {
@@ -43,7 +44,6 @@ type UserData = {
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
-  const backButton = useWebAppBackButton();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
@@ -62,34 +62,26 @@ function App() {
   };
 
   const handleBack = () => {
-    // This logic will be handled by the back button
+    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw') {
+      setCurrentPage('dashboard');
+    } else if (currentPage === 'confirmDeposit') {
+      setCurrentPage('deposit');
+    } else if (currentPage === 'confirmWithdraw') {
+      setCurrentPage('withdraw');
+    } else if (currentPage === 'addWallet') {
+      setCurrentPage('more');
+    }
   };
 
+  const { showButton, hideButton } = useAppBackButton(handleBack);
+
   useEffect(() => {
-    const onBackClick = () => {
-      // A simple history implementation
-      if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw') {
-        setCurrentPage('dashboard');
-      } else if (currentPage === 'confirmDeposit') {
-        setCurrentPage('deposit');
-      } else if (currentPage === 'confirmWithdraw') {
-        setCurrentPage('withdraw');
-      } else if (currentPage === 'addWallet') {
-        setCurrentPage('more');
-      }
-    };
-
     if (currentPage !== 'dashboard') {
-      backButton.show();
-      backButton.onClick(onBackClick);
+      showButton();
     } else {
-      backButton.hide();
+      hideButton();
     }
-
-    return () => {
-      backButton.offClick(onBackClick);
-    };
-  }, [currentPage, backButton]);
+  }, [currentPage, showButton, hideButton]);
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
