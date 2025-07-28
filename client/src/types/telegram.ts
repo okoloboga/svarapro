@@ -1,5 +1,29 @@
 import { LaunchParams } from '@telegram-apps/sdk-react';
 
+// Интерфейс для Telegram WebApp
+interface TelegramWebApp {
+  version: string;
+  // Можно добавить другие свойства, если они используются в вашем приложении
+  initData?: string;
+  initDataUnsafe?: {
+    user?: TelegramUser;
+    hash?: string;
+    auth_date?: number;
+    [key: string]: any;
+  };
+  // Добавьте другие методы или свойства, если они используются, например:
+  // ready: () => void;
+  // expand: () => void;
+}
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: TelegramWebApp;
+    };
+  }
+}
+
 export interface TelegramUser {
   id: number;
   first_name?: string;

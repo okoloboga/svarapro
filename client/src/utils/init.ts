@@ -8,14 +8,21 @@ export async function initTelegramSdk(): Promise<void> {
     return;
   }
 
+  // Проверяем наличие Telegram WebApp
+  if (!window.Telegram?.WebApp) {
+    console.error('Telegram WebApp is not available. Ensure the app is running in Telegram.');
+    throw new Error('Telegram WebApp is not available');
+  }
+
   if (!isTMA()) {
-    console.warn('Not running in Telegram Mini App environment. Skipping SDK initialization.');
-    return;
+    console.warn('Not running in Telegram Mini App environment (isTMA returned false). Skipping SDK initialization.');
+    throw new Error('Not in Telegram Mini App environment');
   }
 
   try {
     console.log('Starting Telegram SDK initialization');
-    await init(); // init теперь асинхронный
+    console.log('Telegram.WebApp version:', window.Telegram.WebApp.version);
+    await init();
     console.log('SDK init() called successfully');
 
     await expandViewport();
@@ -37,6 +44,6 @@ export async function initTelegramSdk(): Promise<void> {
   } catch (e) {
     console.error('Telegram SDK init error:', e);
     isInitialized = false;
-    throw e; // Пробрасываем ошибку, чтобы App.tsx мог обработать её
+    throw e;
   }
 }

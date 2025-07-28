@@ -8,23 +8,36 @@ export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
       return;
     }
 
-    if (!backButton.isMounted()) {
-      console.warn('BackButton is not mounted. Ensure initTelegramSdk() is called and completed.');
+    if (!window.Telegram?.WebApp) {
+      console.warn('Telegram WebApp is not available. BackButton will not be used.');
       return;
     }
 
-    if (isVisible) {
-      console.log('BackButton: Showing');
-      backButton.show();
-      backButton.onClick(handler);
-    } else {
-      console.log('BackButton: Hiding');
-      backButton.hide();
-    }
+    try {
+      if (!backButton.isSupported()) {
+        console.warn('BackButton is not supported in this environment');
+        return;
+      }
 
-    return () => {
-      console.log('BackButton: Cleaning up handler');
-      backButton.offClick(handler);
-    };
+      if (isVisible) {
+        console.log('BackButton: Showing');
+        backButton.show();
+        backButton.onClick(handler);
+      } else {
+        console.log('BackButton: Hiding');
+        backButton.hide();
+      }
+
+      return () => {
+        console.log('BackButton: Cleaning up handler');
+        try {
+          backButton.offClick(handler);
+        } catch (e) {
+          console.error('Error cleaning up BackButton handler:', e);
+        }
+      };
+    } catch (e) {
+      console.error('Error managing BackButton:', e);
+    }
   }, [isVisible, handler]);
 };
