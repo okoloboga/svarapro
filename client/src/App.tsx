@@ -48,7 +48,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
-  const [pageHistory, setPageHistory] = useState<string[]>(['dashboard']);
   const [balance, setBalance] = useState('0.00');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -60,7 +59,6 @@ function App() {
   const handleSetCurrentPage = (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet', data: PageData | null = null) => {
     setCurrentPage(page);
     setPageData(data);
-    setPageHistory([...pageHistory, page]);
   };
 
   const handleBack = () => {
@@ -83,8 +81,50 @@ function App() {
     } else {
       hideButton();
     }
-<<<<<<< HEAD
   }, [currentPage, showButton, hideButton]);
+
+  useEffect(() => {
+    console.log('Before initTelegramSdk');
+    initTelegramSdk();
+    console.log('Before launch params');
+    const launchParams = retrieveLaunchParams() as LaunchParams;
+    console.log('Launch params:', launchParams);
+
+    let initData: string | undefined = launchParams.initData;
+    if (!initData && launchParams.tgWebAppData) {
+      initData = new URLSearchParams(
+        Object.entries(launchParams.tgWebAppData)
+          .filter(([key]) => key !== 'hash' && key !== 'signature')
+          .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
+      ).toString();
+    }
+    
+
+    const loadData = async () => {
+      if (initData) {
+        console.log('Sending login request with initData:', initData);
+        try {
+          const response = await apiService.login(initData, launchParams.startPayload);
+          console.log('Login response:', response);
+          const profile = await apiService.getProfile();
+          setBalance(profile.balance);
+          setWalletAddress(profile.walletAddress);
+        } catch (error) {
+          const apiError = error as ApiError;
+          const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
+          console.error('Login error - using mock data:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
+          setError('Failed to load data. Please try again later.');
+        }
+      } else {
+        console.error('No initData available - using mock data');
+        setError('Telegram initialization data not found.');
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, []);
 
   console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage);
 
