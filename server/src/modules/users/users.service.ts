@@ -131,7 +131,7 @@ export class UsersService {
     const refBalance = user.refBalance;
 
     return {
-      referralLink: `https://t.me/svara_pro_bot?start=${encodeURIComponent(telegramId)}`,
+      referralLink: `https://t.me/Svaraprobot?start=${encodeURIComponent(telegramId)}`,
       refBalance: refBalance.toString(),
       refBonus: refBonus.toString(),
       referralCount,
