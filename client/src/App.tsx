@@ -48,7 +48,7 @@ function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSdkInitialized, setIsSdkInitialized] = useState(false); // Новое состояние
+  const [isSdkInitialized, setIsSdkInitialized] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [balance, setBalance] = useState('0.00');
@@ -56,15 +56,18 @@ function App() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const userData = useMemo(() => {
     const params = retrieveLaunchParams() as LaunchParams;
+    console.log('Retrieved userData:', params.tgWebAppData?.user);
     return (params.tgWebAppData as { user?: UserData })?.user || {};
   }, []);
 
   const handleSetCurrentPage = (page: Page, data: PageData | null = null) => {
+    console.log('Setting page:', page, 'with data:', data);
     setCurrentPage(page);
     setPageData(data);
   };
 
   const handleBack = () => {
+    console.log('Handling back from page:', currentPage);
     if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet') {
       setCurrentPage('dashboard');
     } else if (currentPage === 'confirmDeposit') {
@@ -74,7 +77,6 @@ function App() {
     }
   };
 
-  // Условный вызов useAppBackButton только после инициализации SDK
   if (isSdkInitialized) {
     useAppBackButton(currentPage !== 'dashboard', handleBack);
   }
@@ -83,7 +85,7 @@ function App() {
     console.log('Before initTelegramSdk');
     const initialize = async () => {
       try {
-        await initTelegramSdk(); // Ожидаем завершения инициализации
+        await initTelegramSdk();
         setIsSdkInitialized(true);
         console.log('SDK initialization completed');
       } catch (e) {
@@ -111,8 +113,9 @@ function App() {
             const response = await apiService.login(initData, launchParams.startPayload);
             console.log('Login response:', response);
             const profile = await apiService.getProfile();
-            setBalance(profile.balance);
-            setWalletAddress(profile.walletAddress);
+            console.log('Profile data:', profile);
+            setBalance(profile.balance || '0.00'); // Защита от undefined/null
+            setWalletAddress(profile.walletAddress || null); // Защита от undefined/null
           } catch (error) {
             const apiError = error as ApiError;
             const errorMessage =
@@ -132,7 +135,6 @@ function App() {
           console.error('No initData available');
           setError('Telegram initialization data not found.');
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
         setIsLoading(false);
       };
 
@@ -174,6 +176,9 @@ function App() {
           balance={balance}
           walletAddress={walletAddress}
         />
+      )}
+      {isLoading === false && error === null && currentPage === 'dashboard' && (
+        <div>Debug: Rendering Dashboard as fallback</div>
       )}
     </AppRoot>
   );
