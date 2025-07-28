@@ -14,6 +14,10 @@ type ReferralData = {
   referrals?: { username: string | null }[];
 };
 
+type ReferralProps = {
+  onClose: () => void;
+};
+
 export function Referral({ onClose }: ReferralProps) {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
