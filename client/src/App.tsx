@@ -41,7 +41,6 @@ type UserData = {
   photo_url?: string;
 };
 
-// Унифицированный тип для страниц
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
 function App() {
@@ -49,6 +48,7 @@ function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSdkInitialized, setIsSdkInitialized] = useState(false); // Новое состояние
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [balance, setBalance] = useState('0.00');
@@ -74,57 +74,72 @@ function App() {
     }
   };
 
-  useAppBackButton(currentPage !== 'dashboard', handleBack);
+  // Условный вызов useAppBackButton только после инициализации SDK
+  if (isSdkInitialized) {
+    useAppBackButton(currentPage !== 'dashboard', handleBack);
+  }
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
-    initTelegramSdk();
-    console.log('Before launch params');
-    const launchParams = retrieveLaunchParams() as LaunchParams;
-    console.log('Launch params:', launchParams);
-
-    let initData: string | undefined = launchParams.initData;
-    if (!initData && launchParams.tgWebAppData) {
-      initData = new URLSearchParams(
-        Object.entries(launchParams.tgWebAppData)
-          .filter(([key]) => key !== 'hash' && key !== 'signature')
-          .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
-      ).toString();
-    }
-
-    const loadData = async () => {
-      if (initData) {
-        console.log('Sending login request with initData:', initData);
-        try {
-          const response = await apiService.login(initData, launchParams.startPayload);
-          console.log('Login response:', response);
-          const profile = await apiService.getProfile();
-          setBalance(profile.balance);
-          setWalletAddress(profile.walletAddress);
-        } catch (error) {
-          const apiError = error as ApiError;
-          const errorMessage =
-            typeof apiError === 'string'
-              ? apiError
-              : apiError.message || 'Unknown error';
-          console.error(
-            'Login error:',
-            errorMessage,
-            typeof apiError === 'object' && apiError.response
-              ? apiError.response.data
-              : 'No response data'
-          );
-          setError('Failed to load data. Please try again later.');
-        }
-      } else {
-        console.error('No initData available');
-        setError('Telegram initialization data not found.');
+    const initialize = async () => {
+      try {
+        await initTelegramSdk(); // Ожидаем завершения инициализации
+        setIsSdkInitialized(true);
+        console.log('SDK initialization completed');
+      } catch (e) {
+        console.error('Failed to initialize SDK:', e);
+        setError('Failed to initialize Telegram SDK');
       }
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setIsLoading(false);
+
+      console.log('Before launch params');
+      const launchParams = retrieveLaunchParams() as LaunchParams;
+      console.log('Launch params:', launchParams);
+
+      let initData: string | undefined = launchParams.initData;
+      if (!initData && launchParams.tgWebAppData) {
+        initData = new URLSearchParams(
+          Object.entries(launchParams.tgWebAppData)
+            .filter(([key]) => key !== 'hash' && key !== 'signature')
+            .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
+        ).toString();
+      }
+
+      const loadData = async () => {
+        if (initData) {
+          console.log('Sending login request with initData:', initData);
+          try {
+            const response = await apiService.login(initData, launchParams.startPayload);
+            console.log('Login response:', response);
+            const profile = await apiService.getProfile();
+            setBalance(profile.balance);
+            setWalletAddress(profile.walletAddress);
+          } catch (error) {
+            const apiError = error as ApiError;
+            const errorMessage =
+              typeof apiError === 'string'
+                ? apiError
+                : apiError.message || 'Unknown error';
+            console.error(
+              'Login error:',
+              errorMessage,
+              typeof apiError === 'object' && apiError.response
+                ? apiError.response.data
+                : 'No response data'
+            );
+            setError('Failed to load data. Please try again later.');
+          }
+        } else {
+          console.error('No initData available');
+          setError('Telegram initialization data not found.');
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setIsLoading(false);
+      };
+
+      await loadData();
     };
 
-    loadData();
+    initialize();
   }, []);
 
   console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage);
