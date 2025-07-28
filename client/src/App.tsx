@@ -73,15 +73,7 @@ function App() {
     }
   };
 
-  const { showButton, hideButton } = useAppBackButton(handleBack);
-
-  useEffect(() => {
-    if (currentPage !== 'dashboard') {
-      showButton();
-    } else {
-      hideButton();
-    }
-  }, [currentPage, showButton, hideButton]);
+  useAppBackButton(currentPage !== 'dashboard', handleBack);
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
