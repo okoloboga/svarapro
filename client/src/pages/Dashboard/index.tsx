@@ -6,6 +6,7 @@ import { RoomsList } from '../../components/Dashboard/RoomsList';
 import { ButtonGroup } from '../../components/Dashboard/ButtonGroup';
 import { Footer } from '../../components/Footer';
 import { AddWalletWindow } from '../../components/AddWalletWindow';
+import { Notification } from '../../components/Notification';
 
 type DashboardProps = {
   onMoreClick: () => void;
@@ -24,6 +25,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
   const [isAvailableFilter, setIsAvailableFilter] = useState(false);
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
   const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
+  const [notification, setNotification] = useState<'comingSoon' | null>(null);
 
   const handleWithdrawClick = () => {
     if (walletAddress) {
@@ -33,11 +35,15 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
     }
   };
 
+  const handleComingSoon = () => {
+    setNotification('comingSoon');
+  };
+
   return (
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
         <Header user={userData} balance={balance} onWithdrawClick={handleWithdrawClick} setCurrentPage={setCurrentPage} />
-        <ButtonGroup onMoreClick={onMoreClick} />
+        <ButtonGroup onMoreClick={onMoreClick} onComingSoonClick={handleComingSoon} />
         <Filter
           onSearchChange={setSearchId}
           onAvailabilityChange={setIsAvailableFilter}
@@ -61,6 +67,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
           />
         </div>
       )}
+      <Notification type={notification} onClose={() => setNotification(null)} />
     </div>
   );
 }

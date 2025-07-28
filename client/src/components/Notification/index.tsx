@@ -1,7 +1,8 @@
 import completeIcon from '../../assets/complete.png';
 import errorIcon from '../../assets/error.png';
+import cupIcon from '../../assets/cup.png';
 
-type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded';
+type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon';
 
 type NotificationProps = {
   type: NotificationType | null;
@@ -20,6 +21,10 @@ const notificationContent = {
   addressAdded: {
     icon: completeIcon,
     text: 'Ваш USDT-TON адрес успешно добавлен',
+  },
+  comingSoon: {
+    icon: cupIcon,
+    text: 'Скоро...',
   },
 };
 
