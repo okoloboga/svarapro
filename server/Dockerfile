@@ -1,11 +1,11 @@
 # 1. Этап зависимостей
-FROM node:20-alpine AS deps
+FROM localhost:5000/node:20.17.0-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
 
 # 2. Этап сборки
-FROM node:20-alpine AS builder
+FROM localhost:5000/node:20.17.0-alpine AS builder
 WORKDIR /app
 # Копируем зависимости из предыдущего этапа
 COPY --from=deps /app/node_modules ./node_modules
@@ -14,7 +14,7 @@ COPY . .
 RUN npm run build
 
 # 3. Финальный этап
-FROM node:20-alpine AS runner
+FROM localhost:5000/node:20.17.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Копируем только нужные для запуска артефакты
