@@ -43,7 +43,7 @@ export function Notification({ type, onClose }: NotificationProps) {
           <p className="text-white font-semibold text-sm">{text}</p>
         </div>
         <div className="absolute bottom-[41px] left-1/2 -translate-x-1/2 w-[270px] h-px bg-white opacity-50" />
-        <button onClick={onClose} className="absolute bottom-3 text-white font-semibold text-[17px]">
+        <button onClick={onClose} className="absolute bottom-2 text-white font-semibold text-[17px]">
           ОК
         </button>
       </div>
