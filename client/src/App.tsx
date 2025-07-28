@@ -48,6 +48,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
+  const [pageHistory, setPageHistory] = useState<string[]>(['dashboard']);
   const [balance, setBalance] = useState('0.00');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -59,6 +60,7 @@ function App() {
   const handleSetCurrentPage = (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet', data: PageData | null = null) => {
     setCurrentPage(page);
     setPageData(data);
+    setPageHistory([...pageHistory, page]);
   };
 
   const handleBack = () => {
@@ -81,8 +83,8 @@ function App() {
     } else {
       hideButton();
     }
+<<<<<<< HEAD
   }, [currentPage, showButton, hideButton]);
-
   useEffect(() => {
     console.log('Before initTelegramSdk');
     initTelegramSdk();
