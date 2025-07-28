@@ -3,6 +3,9 @@ import { useEffect } from 'react';
 
 export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
   useEffect(() => {
+    // Добавим проверку на isVisible, чтобы не пытаться работать с backButton, если он не нужен
+    if (!isVisible) return;
+
     if (!isTMA()) {
       console.warn('Not in Telegram environment. BackButton will not be used.');
       return;
@@ -19,19 +22,15 @@ export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
         return;
       }
 
-      if (isVisible) {
-        console.log('BackButton: Showing');
-        backButton.show();
-        backButton.onClick(handler);
-      } else {
-        console.log('BackButton: Hiding');
-        backButton.hide();
-      }
+      console.log('BackButton: Showing');
+      backButton.show();
+      backButton.onClick(handler);
 
       return () => {
         console.log('BackButton: Cleaning up handler');
         try {
           backButton.offClick(handler);
+          backButton.hide();
         } catch (e) {
           console.error('Error cleaning up BackButton handler:', e);
         }
