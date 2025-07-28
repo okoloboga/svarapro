@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { ProfileDto } from './dto/profile.dto';
 import { Logger } from '@nestjs/common';
+import { Address } from 'ton-core';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +24,14 @@ export class UsersService {
     this.logger.log(`Fetching profile for Telegram ID: ${telegramId}`);
     const user = await this.usersRepository.findOne({
       where: { telegramId },
-      select: ['id', 'telegramId', 'username', 'avatar', 'balance'],
+      select: [
+        'id',
+        'telegramId',
+        'username',
+        'avatar',
+        'balance',
+        'walletAddress',
+      ],
     });
 
     if (!user) {
@@ -31,13 +44,46 @@ export class UsersService {
       username: user.username,
       avatar: user.avatar,
       balance: user.balance,
+      walletAddress: user.walletAddress,
     };
   }
 
+  async addWalletAddress(
+    telegramId: string,
+    walletAddress: string,
+  ): Promise<void> {
+    try {
+      Address.parse(walletAddress);
+    } catch {
+      throw new BadRequestException('Invalid TON address format');
+    }
+
+    const existingUser = await this.usersRepository.findOne({
+      where: { walletAddress },
+    });
+    if (existingUser) {
+      throw new ConflictException('Wallet address already in use');
+    }
+
+    const user = await this.usersRepository.findOne({ where: { telegramId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.walletAddress = walletAddress;
+    await this.usersRepository.save(user);
+  }
+
   // Заглушка для обновления реферальных данных
-  async updateReferralData(telegramId: string, depositAmount: number = 0): Promise<void> {
+  async updateReferralData(
+    telegramId: string,
+    depositAmount: number = 0,
+  ): Promise<void> {
     this.logger.log(`Updating referral data for Telegram ID: ${telegramId}`);
-    const user = await this.usersRepository.findOne({ where: { telegramId }, relations: ['referrals'] });
+    const user = await this.usersRepository.findOne({
+      where: { telegramId },
+      relations: ['referrals'],
+    });
     if (!user) throw new NotFoundException('User not found');
 
     if (depositAmount > 0) {
@@ -53,7 +99,7 @@ export class UsersService {
   }
 
   // Метод для получения списка рефералов
-  async getReferrals(user: User): Promise<{ username: string | null }[]> {
+  getReferrals(user: User): Promise<{ username: string | null }[]> {
     if (!user.referrals) {
       return [];
     }
@@ -63,7 +109,10 @@ export class UsersService {
   // Новый метод для получения всех реферальных данных
   async getReferralData(telegramId: string) {
     this.logger.log(`Fetching referral data for Telegram ID: ${telegramId}`);
-    const user = await this.usersRepository.findOne({ where: { telegramId }, relations: ['referrals'] });
+    const user = await this.usersRepository.findOne({
+      where: { telegramId },
+      relations: ['referrals'],
+    });
     if (!user) throw new NotFoundException('User not found');
 
     const referralCount = user.referrals.length;
@@ -82,10 +131,10 @@ export class UsersService {
 
   // Вспомогательный метод для расчёта бонуса
   private calculateRefBonus(referralCount: number): number {
-    if (referralCount >= 101) return 10.00;
-    if (referralCount >= 31) return 8.00;
-    if (referralCount >= 11) return 5.00;
-    if (referralCount >= 1) return 3.00;
-    return 0.00;
+    if (referralCount >= 101) return 10.0;
+    if (referralCount >= 31) return 8.0;
+    if (referralCount >= 11) return 5.0;
+    if (referralCount >= 1) return 3.0;
+    return 0.0;
   }
 }

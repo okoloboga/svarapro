@@ -16,36 +16,43 @@ import { More } from './pages/More';
 // Определяем интерфейс для параметров запуска
 interface LaunchParams {
   initData?: string;
-  tgWebAppData?: Record<string, string | Record<string, any>>;
+  tgWebAppData?: Record<string, string | Record<string, unknown>>;
   startPayload? :string;
 }
 
 type ApiError = {
   message?: string;
   response?: {
-    data?: any;
+    data?: unknown;
     status?: number;
   };
 } | string;
 
-type UserData = {
-  id?: number | string;
-  username?: string;
-  photo_url?: string;
+type PageData = {
+  address?: string;
+  currency?: string;
+  [key: string]: any;
 };
 
 function App() {
   console.log('Launch App');
   const isDark = useSignal(isMiniAppDark);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet'>('dashboard');
+  const [pageData, setPageData] = useState<PageData | null>(null);
   const [balance, setBalance] = useState('0.00');
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const userData = useMemo(() => {
     const params = retrieveLaunchParams() as LaunchParams;
     return (params.tgWebAppData as { user?: UserData })?.user || {};
   }, []);
+
+  const handleSetCurrentPage = (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet', data: PageData | null = null) => {
+    setCurrentPage(page);
+    setPageData(data);
+  };
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
@@ -59,7 +66,7 @@ function App() {
       initData = new URLSearchParams(
         Object.entries(launchParams.tgWebAppData)
           .filter(([key]) => key !== 'hash' && key !== 'signature')
-          .map(([key, value]) => [key, (value as string | Record<string, any>).toString()])
+          .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
       ).toString();
     }
     
@@ -72,13 +79,16 @@ function App() {
           console.log('Login response:', response);
           const profile = await apiService.getProfile();
           setBalance(profile.balance);
+          setWalletAddress(profile.walletAddress);
         } catch (error) {
           const apiError = error as ApiError;
           const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
           console.error('Login error - using mock data:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
+          setError('Failed to load data. Please try again later.');
         }
       } else {
         console.error('No initData available - using mock data');
+        setError('Telegram initialization data not found.');
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
       setIsLoading(false);
@@ -96,19 +106,19 @@ function App() {
       ) : error ? (
         <ErrorAlert code={undefined} customMessage={error} />
       ) : currentPage === 'more' ? (
-        <More onBack={() => setCurrentPage('dashboard')} userData={userData} setCurrentPage={setCurrentPage} />
+        <More onBack={() => handleSetCurrentPage('dashboard')} userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
-        <Deposit onBack={() => setCurrentPage('dashboard')} setCurrentPage={setCurrentPage}/>
+        <Deposit onBack={() => handleSetCurrentPage('dashboard')} setCurrentPage={handleSetCurrentPage}/>
       ) : currentPage === 'confirmDeposit' ? (
-        <ConfirmDeposit onBack={() => setCurrentPage('deposit')} />
+        <ConfirmDeposit onBack={() => handleSetCurrentPage('deposit')} {...pageData} />
       ) : currentPage === 'withdraw' ? (
-        <Withdraw onBack={() => setCurrentPage('dashboard')} balance={balance} setCurrentPage={setCurrentPage} setWithdrawAmount={setWithdrawAmount} />
+        <Withdraw onBack={() => handleSetCurrentPage('dashboard')} balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
       ) : currentPage === 'confirmWithdraw' ? (
         <ConfirmWithdraw onBack={() => setCurrentPage('withdraw')} withdrawAmount={withdrawAmount} />
       ) : currentPage === 'addWallet' ? (
-        <AddWallet onBack={() => setCurrentPage('more')} />
+        <AddWallet onBack={() => handleSetCurrentPage('more')} />
       ) : (
-        <Dashboard onMoreClick={() => setCurrentPage('more')} setCurrentPage={setCurrentPage} balance={balance} />
+        <Dashboard onMoreClick={() => handleSetCurrentPage('more')} setCurrentPage={handleSetCurrentPage} balance={balance} walletAddress={walletAddress} />
       )}
     </AppRoot>
   );

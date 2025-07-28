@@ -6,10 +6,11 @@ import { RedButton } from '../Button/RedButton';
 type HeaderProps = {
   user?: User;
   balance: string;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'withdraw') => void; // Добавляем пропс
+  onWithdrawClick: () => void;
+  setCurrentPage: (page: 'deposit') => void;
 };
 
-export function Header({ user, balance, setCurrentPage }: HeaderProps) {
+export function Header({ user, balance, onWithdrawClick, setCurrentPage }: HeaderProps) {
   const safeBalance = typeof balance === 'string' ? balance : '0.00';
   const [whole, decimal = '00'] = safeBalance.split('.');
   const formattedBalance = `$ ${whole}.${decimal}`;
@@ -52,7 +53,7 @@ export function Header({ user, balance, setCurrentPage }: HeaderProps) {
           <GreenButton onClick={() => setCurrentPage('deposit')}>
             Пополнить
           </GreenButton>
-          <RedButton onClick={() => setCurrentPage('withdraw')}>
+          <RedButton onClick={onWithdrawClick}>
             Вывести
           </RedButton>
         </div>

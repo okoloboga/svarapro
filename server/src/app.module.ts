@@ -26,7 +26,7 @@ import { BullModule } from '@nestjs/bull';
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService) => {
-        const nodeEnv = config.get('NODE_ENV');
+        const nodeEnv = config.get<string>('NODE_ENV');
         console.log('Current NODE_ENV:', nodeEnv);
         console.log('Config loaded:', {
           host: config.get('POSTGRES_HOST'),
@@ -35,11 +35,11 @@ import { BullModule } from '@nestjs/bull';
         });
         return {
           type: 'postgres',
-          host: config.get('POSTGRES_HOST'),
-          port: config.get('POSTGRES_PORT'),
-          username: config.get('POSTGRES_USER'),
-          password: config.get('POSTGRES_PASSWORD'),
-          database: config.get('POSTGRES_DB'),
+          host: config.get<string>('POSTGRES_HOST'),
+          port: config.get<number>('POSTGRES_PORT'),
+          username: config.get<string>('POSTGRES_USER'),
+          password: config.get<string>('POSTGRES_PASSWORD'),
+          database: config.get<string>('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true, // Временно включено для отладки
           logging: true,
@@ -51,8 +51,8 @@ import { BullModule } from '@nestjs/bull';
     BullModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
         redis: {
-          host: config.get('REDIS_HOST'),
-          port: config.get('REDIS_PORT'),
+          host: config.get<string>('REDIS_HOST'),
+          port: config.get<number>('REDIS_PORT'),
         },
       }),
       inject: [ConfigService],

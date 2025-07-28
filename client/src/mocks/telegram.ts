@@ -1,6 +1,6 @@
 import { mockTelegramEnv, isTMA, emitEvent, init } from '@telegram-apps/sdk-react';
 
-export async function mockTelegram(realInitData?: Record<string, any>): Promise<void> {
+export async function mockTelegram(realInitData?: Record<string, unknown>): Promise<void> {
   const isTmaCheck = await isTMA('complete');
   console.log('isTmaCheck:', isTmaCheck);
 

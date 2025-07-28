@@ -6,15 +6,19 @@ import copyIcon from '../../assets/copy.svg';
 import qrIcon from '../../assets/qr.png';
 import slideDownIcon from '../../assets/slide-down.svg';
 import warningIcon from '../../assets/warning.svg';
+import { QRCodeCanvas } from 'qrcode.react';
+import { PopSuccess } from '../../components/PopSuccess';
 
 type DepositProps = {
   onBack: () => void;
+  address: string;
+  currency: string;
 };
 
-export function ConfirmDeposit({ onBack }: DepositProps) {
-  const [currency] = useState('USDT-TON'); // Заглушка, заменить на пропс из TopUp
-  const [walletAddress] = useState('TQxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); // Заглушка адреса
+export function ConfirmDeposit({ onBack, address, currency }: DepositProps) {
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 минут в секундах
+  const [showQR, setShowQR] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,11 +27,20 @@ export function ConfirmDeposit({ onBack }: DepositProps) {
     return () => clearInterval(timer);
   }, []);
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(address).then(() => {
+      setShowSuccess(true);
+    });
+  };
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
+  const paymentUrl = `ton://transfer/${address}`;
+
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
+      {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
       <div className="w-full max-w-[336px]">
         <h2 className="text-lg font-semibold text-white mb-2 flex items-center text-left">
           Пополнение с {currency} <img src={tetherIcon} alt={currency} className="w-6 h-6 ml-2" />
@@ -48,13 +61,18 @@ export function ConfirmDeposit({ onBack }: DepositProps) {
         <Button 
           variant="secondary" 
           size="sm" 
-          onClick={() => console.log('Show QR clicked')}
+          onClick={() => setShowQR(!showQR)}
           icon={qrIcon}
           rightIcon={slideDownIcon}
         >
-          Показать QR
+          {showQR ? 'Скрыть QR' : 'Показать QR'}
         </Button>
-        <p className="text-white font-inter text-sm text-center break-all">{walletAddress}</p>
+        {showQR && (
+          <div className="mt-4">
+            <QRCodeCanvas value={paymentUrl} size={128} bgColor="#000" fgColor="#fff" />
+          </div>
+        )}
+        <p className="text-white font-inter text-sm text-center break-all mt-4">{address}</p>
       </div>
 
       {/* Кнопка копирования */}
@@ -62,7 +80,7 @@ export function ConfirmDeposit({ onBack }: DepositProps) {
         size="lg" // Установлен размер lg для высоты 47px
         icon={copyIcon}
         iconPosition="left"
-        onClick={() => navigator.clipboard.writeText(walletAddress).then(() => console.log('Address copied'))}
+        onClick={handleCopy}
         className="w-full max-w-[336px]"
       >
         Скопировать адрес

@@ -16,6 +16,7 @@ import copyIcon from '../../assets/copy.svg';
 import tetherIcon from '../../assets/tether.png';
 import slideDownIcon from '../../assets/slide-down.svg';
 import { useMemo, useState } from 'react';
+import { PopSuccess } from '../../components/PopSuccess';
 
 type UserData = {
   id?: number | string; // Учитываем, что ID может быть числом или строкой
@@ -33,9 +34,17 @@ export function More({ onBack, userData, setCurrentPage }: MoreProps) {
   const userId = useMemo(() => userData?.id?.toString() || 'N/A', [userData?.id]);
   const [isEulaVisible, setIsEulaVisible] = useState(false);
   const [isReferralVisible, setIsReferralVisible] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(userId).then(() => {
+      setShowSuccess(true);
+    });
+  };
 
   return (
     <div className="bg-[#2E2B33] min-h-screen p-5">
+      {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
       <div className="w-full max-w-[336px] mx-auto flex flex-col items-center space-y-3">
         <div className="relative w-full">
           <Button 
@@ -43,7 +52,7 @@ export function More({ onBack, userData, setCurrentPage }: MoreProps) {
             fullWidth 
             icon={sharpIcon} 
             justify="start"
-            onClick={() => navigator.clipboard.writeText(userId)}
+            onClick={handleCopy}
             rightText={userId}
             rightIcon={copyIcon}
             rightContentClassName="text-[#BBB9BD]"

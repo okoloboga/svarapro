@@ -17,13 +17,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; telegramId: string }) {
+  validate(payload: { sub: string; telegramId: string }) {
     if (!payload.sub || !payload.telegramId) {
       throw new UnauthorizedException();
     }
-    return { 
-      userId: payload.sub, 
-      telegramId: payload.telegramId 
+    return {
+      userId: payload.sub,
+      telegramId: payload.telegramId,
     };
   }
 }

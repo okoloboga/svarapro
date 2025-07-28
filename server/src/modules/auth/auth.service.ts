@@ -26,17 +26,22 @@ export class AuthService {
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
     const referredBy = startPayload;
-    if (!userParam) throw new UnauthorizedException('Missing user data in initData');
+    if (!userParam)
+      throw new UnauthorizedException('Missing user data in initData');
 
     const validated = { user: JSON.parse(userParam) as TelegramUser };
 
     const { user: tgUser } = validated;
-    let user = await this.usersRepository.findOne({ where: { telegramId: tgUser.id.toString() } });
+    let user = await this.usersRepository.findOne({
+      where: { telegramId: tgUser.id.toString() },
+    });
 
     if (!user) {
       let referrer: User | null = null;
       if (referredBy) {
-        referrer = await this.usersRepository.findOne({ where: { telegramId: referredBy } });
+        referrer = await this.usersRepository.findOne({
+          where: { telegramId: referredBy },
+        });
         if (!referrer) {
           throw new UnauthorizedException('Invalid referrer');
         }
@@ -53,7 +58,6 @@ export class AuthService {
         referrer: referrer, // Устанавливаем реферера
       });
       await this.usersRepository.save(user);
-
     } else {
       user.username = tgUser.username ?? null;
       user.avatar = tgUser.photo_url ?? null;
@@ -83,11 +87,13 @@ export class AuthService {
       dataToCheck.push(`${key}=${val}`);
     }
 
-    const secret = crypto.createHmac('sha256', 'WebAppData')
+    const secret = crypto
+      .createHmac('sha256', 'WebAppData')
       .update(process.env.BOT_TOKEN!)
       .digest();
 
-    const computedHash = crypto.createHmac('sha256', secret)
+    const computedHash = crypto
+      .createHmac('sha256', secret)
       .update(dataToCheck.join('\n'))
       .digest('hex');
 
@@ -96,10 +102,14 @@ export class AuthService {
     console.log('Data checked:', dataToCheck);
 
     if (hash !== computedHash) {
-      console.log('Hash mismatch:', { dataToCheck, computedHash, receivedHash: hash });
+      console.log('Hash mismatch:', {
+        dataToCheck,
+        computedHash,
+        receivedHash: hash,
+      });
       return null;
     }
 
-    return { user: JSON.parse(params.get('user')!) };
+    return { user: JSON.parse(params.get('user')!) as TelegramUser };
   }
 }

@@ -1,19 +1,35 @@
+import { useState } from 'react';
 import { Button } from '../../components/Button/Button';
 import tetherIcon from '../../assets/tether.png';
 import tonIcon from '../../assets/ton.png';
 import rightIcon from '../../assets/right.svg';
+import { apiService } from '../../services/api/api';
+import { LoadingPage } from '../../components/LoadingPage';
 
 type TopUpProps = {
   onBack: () => void;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit') => void; // Добавляем пропс
+  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'confirmDeposit', data?: Record<string, unknown>) => void;
 };
 
 export function Deposit({ onBack, setCurrentPage }: TopUpProps) {
-  const handleDeposit = (currency: string) => {
-    console.log(`Navigating to deposit for ${currency}`);
-    setCurrentPage('confirmDeposit'); // Переход на ConfirmDeposit
-    // Здесь можно передать валюту через контекст или состояние (пока жестко в Deposit)
+  const [loading, setLoading] = useState(false);
+
+  const handleDeposit = async (currency: string) => {
+    setLoading(true);
+    try {
+      const depositData = await apiService.initiateDeposit(currency);
+      setCurrentPage('confirmDeposit', { ...depositData, currency });
+    } catch (error) {
+      console.error('Failed to initiate deposit:', error);
+      // Тут можно показать ошибку
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">

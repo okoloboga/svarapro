@@ -24,7 +24,10 @@ export class FinancesService {
 
   async initDeposit(userId: string, currency: string): Promise<Deposit> {
     const clientTransactionId = uuidv4();
-    const { address, trackerId } = await this.apiService.createDepositAddress(currency, clientTransactionId);
+    const { address, trackerId } = await this.apiService.createDepositAddress(
+      currency,
+      clientTransactionId,
+    );
 
     const deposit = this.depositRepository.create({
       user: { id: userId } as User,
@@ -38,8 +41,11 @@ export class FinancesService {
   }
 
   async processCallback(trackerId: string): Promise<void> {
-    const transactionData = await this.apiService.getTransactionStatus(trackerId);
-    const deposit = await this.depositRepository.findOne({ where: { tracker_id: trackerId } });
+    const transactionData =
+      await this.apiService.getTransactionStatus(trackerId);
+    const deposit = await this.depositRepository.findOne({
+      where: { tracker_id: trackerId },
+    });
 
     if (deposit) {
       if (transactionData.status === 'complete' && transactionData.amount) {
@@ -47,15 +53,19 @@ export class FinancesService {
         deposit.amount = transactionData.amount;
         deposit.transaction_hash = transactionData.transaction_hash;
 
-        const user = await this.userRepository.findOne({ where: { id: deposit.user.id } });
+        const user = await this.userRepository.findOne({
+          where: { id: deposit.user.id },
+        });
         if (user) {
           user.balance += transactionData.amount;
           user.totalDeposit += transactionData.amount;
           await this.userRepository.save(user);
-          
-          // Конвертация в USDT для проверки условия
-          const amountInUsdt = this.convertTonToUsdt(deposit, transactionData.amount);
 
+          // Конвертация в USDT для проверки условия
+          const amountInUsdt = this.convertTonToUsdt(
+            deposit,
+            transactionData.amount,
+          );
 
           // Реферальная логика
           if (user.referrer && transactionData.amount >= 100) {
@@ -69,7 +79,8 @@ export class FinancesService {
               let refBonus = 0;
               if (referralCount >= 1 && referralCount <= 10) refBonus = 3;
               else if (referralCount >= 11 && referralCount <= 30) refBonus = 5;
-              else if (referralCount >= 31 && referralCount <= 100) refBonus = 8;
+              else if (referralCount >= 31 && referralCount <= 100)
+                refBonus = 8;
               else if (referralCount > 100) refBonus = 10;
 
               const bonusAmount = ((amountInUsdt - 100) * refBonus) / 100;
@@ -79,7 +90,9 @@ export class FinancesService {
 
                 if (referrer.refBalance >= 10) {
                   referrer.balance += referrer.refBalance;
-                  this.logger.log(`Обнуление refBalance для ${referrer.id}: добавлено ${referrer.refBalance} к balance`);
+                  this.logger.log(
+                    `Обнуление refBalance для ${referrer.id}: добавлено ${referrer.refBalance} к balance`,
+                  );
                   referrer.refBalance = 0;
                   await this.userRepository.save(referrer);
                 }
@@ -95,7 +108,11 @@ export class FinancesService {
   }
 
   async addToCallbackQueue(trackerId: string): Promise<void> {
-    await this.callbackQueue.add('process-callback', { trackerId }, { attempts: 3, backoff: 5000 });
+    await this.callbackQueue.add(
+      'process-callback',
+      { trackerId },
+      { attempts: 3, backoff: 5000 },
+    );
   }
 
   // Метод для конвертации TON в USDT (заглушка, пока фиксированный курс)

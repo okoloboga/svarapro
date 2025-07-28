@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Index,
+} from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('deposits')
@@ -23,7 +29,7 @@ export class Deposit {
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   amount: number; // Сумма депозита
 

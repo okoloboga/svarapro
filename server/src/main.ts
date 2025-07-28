@@ -1,25 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug'],  
+    logger: ['error', 'warn', 'log', 'debug'],
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-    })
+    }),
   );
   app.use(helmet());
   app.use(json({ limit: '10kb' }));
   app.use(urlencoded({ extended: true, limit: '10kb' }));
 
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`Incoming request: ${req.method} ${req.url} from ${req.ip}`);
     console.log('Headers:', req.headers);
     res.header('Access-Control-Allow-Origin', '*');
@@ -33,7 +33,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api/v1');
-  
+
   await app.listen(3000);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

@@ -11,7 +11,13 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "telegraf": "^4.16.3"
+    "telegraf": "^4.16.3",
+    "eslint": "^9.30.0",
+    "eslint-config-prettier": "^10.1.5",
+    "typescript-eslint": "^8.34.1",
+    "@eslint/js": "^9.29.0",
+    "globals": "^16.2.0",
+    "eslint-plugin-prettier": "^5.2.2"
   },
   "devDependencies": {
     "@telegraf/types": "^8.3.1",

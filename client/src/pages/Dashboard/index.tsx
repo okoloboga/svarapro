@@ -5,14 +5,16 @@ import { Filter } from '../../components/Dashboard/Filter';
 import { RoomsList } from '../../components/Dashboard/RoomsList';
 import { ButtonGroup } from '../../components/Dashboard/ButtonGroup';
 import { Footer } from '../../components/Footer';
+import { AddWalletWindow } from '../../components/AddWalletWindow';
 
 type DashboardProps = {
   onMoreClick: () => void;
-  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'withdraw') => void; // Добавляем пропс
+  setCurrentPage: (page: 'dashboard' | 'more' | 'deposit' | 'withdraw' | 'addWallet') => void; // Добавляем пропс
   balance: string;
+  walletAddress: string | null;
 };
 
-export function Dashboard({ onMoreClick, setCurrentPage, balance }: DashboardProps) {
+export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress }: DashboardProps) {
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;
@@ -21,11 +23,20 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance }: DashboardPro
   const [searchId, setSearchId] = useState('');
   const [isAvailableFilter, setIsAvailableFilter] = useState(false);
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
+  const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
+
+  const handleWithdrawClick = () => {
+    if (walletAddress) {
+      setCurrentPage('withdraw');
+    } else {
+      setIsAddWalletVisible(true);
+    }
+  };
 
   return (
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
-        <Header user={userData} balance={balance} setCurrentPage={setCurrentPage} /> {/* Передаём setCurrentPage */}
+        <Header user={userData} balance={balance} onWithdrawClick={handleWithdrawClick} />
         <ButtonGroup onMoreClick={onMoreClick} />
         <Filter
           onSearchChange={setSearchId}
@@ -39,6 +50,17 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance }: DashboardPro
         />
       </div>
       <Footer />
+      {isAddWalletVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+          <AddWalletWindow 
+            onClose={() => setIsAddWalletVisible(false)} 
+            onAdd={() => {
+              setCurrentPage('addWallet');
+              setIsAddWalletVisible(false);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { YellowButton } from '../../components/Button/YellowButton';
 import { Notification } from '../../components/Notification';
 import tetherIcon from '../../assets/tether.png';
 import warningIcon from '../../assets/warning.svg';
+import { apiService } from '../../services/api/api';
 
 type AddWalletProps = {
   onBack: () => void;
@@ -13,9 +14,24 @@ export function AddWallet({ onBack }: AddWalletProps) {
   const [address, setAddress] = useState('');
   const [notification, setNotification] = useState<'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | null>(null);
 
-  const handleAddWallet = () => {
-    // Пока просто показываем ошибку для теста
-    setNotification('invalidAddress');
+  const handleAddWallet = async () => {
+    if (address.length !== 48) {
+      setNotification('invalidAddress');
+      return;
+    }
+
+    try {
+      await apiService.addWalletAddress(address);
+      setNotification('addressAdded');
+    } catch (error: unknown) {
+      if (error.response && error.response.data.message === 'Wallet address already in use') {
+        setNotification('addressAlreadyUsed');
+      } else if (error.response && error.response.data.message === 'Invalid TON address format') {
+        setNotification('invalidAddress');
+      } else {
+        setNotification('invalidAddress');
+      }
+    }
   };
 
   return (
@@ -36,6 +52,7 @@ export function AddWallet({ onBack }: AddWalletProps) {
           onChange={(e) => setAddress(e.target.value)}
           placeholder="USDT-TON address"
           className="bg-transparent text-white text-left font-inter text-[17px] w-full focus:outline-none placeholder-white placeholder-opacity-60"
+          maxLength={48}
         />
       </div>
 
@@ -50,6 +67,7 @@ export function AddWallet({ onBack }: AddWalletProps) {
         size="lg"
         onClick={handleAddWallet}
         className="w-full max-w-[336px]"
+        isActive={address.length === 48}
       >
         Добавить
       </YellowButton>

@@ -4,4 +4,5 @@ export class ProfileDto {
   username: string | null;
   avatar: string | null;
   balance: number;
+  walletAddress: string | null;
 }

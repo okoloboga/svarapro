@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, Index, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Index,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -8,7 +15,7 @@ export class User {
   @Column({
     type: 'varchar',
     length: 64,
-    unique: true
+    unique: true,
   })
   @Index()
   telegramId: string;
@@ -16,14 +23,14 @@ export class User {
   @Column({
     type: 'varchar',
     length: 32,
-    nullable: true
+    nullable: true,
   })
   username: string | null;
 
   @Column({
     type: 'varchar',
     length: 512,
-    nullable: true
+    nullable: true,
   })
   avatar: string | null;
 
@@ -35,14 +42,17 @@ export class User {
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   balance: number;
 
-  @ManyToOne(() => User, user => user.referrals, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => User, (user) => user.referrals, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   referrer: User | null;
 
-  @OneToMany(() => User, user => user.referrer)
+  @OneToMany(() => User, (user) => user.referrer)
   referrals: User[];
 
   @Column({
@@ -53,7 +63,7 @@ export class User {
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   refBalance: number; // Общий реферальный баланс (накопления от всех рефералов)
 
@@ -73,7 +83,15 @@ export class User {
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
-    }
+    },
   })
   totalDeposit: number; // Общая сумма депозитов пользователя
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    default: null,
+  })
+  walletAddress: string | null;
 }
