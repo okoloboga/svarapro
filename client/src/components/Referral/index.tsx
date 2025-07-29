@@ -20,6 +20,11 @@ type ReferralProps = {
   onClose: () => void;
 };
 
+const truncateUsername = (username: string | null | undefined) => {
+  if (!username) return 'N/A';
+  return username.length > 12 ? `${username.slice(0, 12)}...` : username;
+};
+
 export function Referral({ onClose }: ReferralProps) {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +137,7 @@ export function Referral({ onClose }: ReferralProps) {
               <hr className="border-t border-white opacity-10 my-2 w-full" />
               {referrals?.map((ref, index) => (
                 <div key={index} className="flex justify-between text-xs text-white my-1">
-                  <span>{ref.username || t('no_name')}</span>
+                  <span>{truncateUsername(ref.username)}</span>
                   <span>$0.00</span>
                 </div>
               ))}

@@ -10,7 +10,6 @@ const LANGUAGES = [
 export function LanguageSelector({ onClose }: { onClose: () => void }) {
   const { currentLanguage, changeLanguage } = useLanguage();
   const { t } = useTranslation('common');
-  const [hovered, setHovered] = useState<string | null>(null);
   const [pressed, setPressed] = useState<string | null>(null);
 
   const handleSelect = (code: string) => {
@@ -36,16 +35,13 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
     >
       {LANGUAGES.map((lang) => {
         const isActive = currentLanguage === lang.code;
-        const isHovered = hovered === lang.code;
         const isPressed = pressed === lang.code;
 
         let background = 'none';
         if (isActive) {
           background = '#131217';
         } else if (isPressed) {
-          background = '#6F6C75'; // Darker for pressed
-        } else if (isHovered) {
-          background = '#5A5760'; // Lighter for hovered
+          background = '#bebebe'; // Darker for pressed
         }
 
         return (
@@ -64,10 +60,10 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
               transition: 'background 0.2s',
             }}
             onClick={() => handleSelect(lang.code)}
-            onMouseEnter={() => setHovered(lang.code)}
-            onMouseLeave={() => setHovered(null)}
             onMouseDown={() => setPressed(lang.code)}
             onMouseUp={() => setPressed(null)}
+            onTouchStart={() => setPressed(lang.code)}
+            onTouchEnd={() => setPressed(null)}
           >
             <span
               style={{

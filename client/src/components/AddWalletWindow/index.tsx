@@ -1,5 +1,6 @@
 import './AddWalletWindow.css';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 type AddWalletWindowProps = {
   onClose: () => void;
@@ -8,6 +9,10 @@ type AddWalletWindowProps = {
 
 export function AddWalletWindow({ onClose, onAdd }: AddWalletWindowProps) {
   const { t } = useTranslation('common');
+  const [isCancelPressed, setIsCancelPressed] = useState(false);
+
+  const cancelBackground = isCancelPressed ? '#bebebe' : 'transparent';
+
   return (
     <div className="add-wallet-window">
       <div className="add-wallet-content">
@@ -19,7 +24,15 @@ export function AddWalletWindow({ onClose, onAdd }: AddWalletWindowProps) {
         <button className="add-wallet-button add-wallet-add-button" onClick={onAdd}>
           {t('add')}
         </button>
-        <button className="add-wallet-button add-wallet-cancel-button" onClick={onClose}>
+        <button 
+          className="add-wallet-button add-wallet-cancel-button"
+          onClick={onClose}
+          style={{ background: cancelBackground, transition: 'background 0.2s' }}
+          onMouseDown={() => setIsCancelPressed(true)}
+          onMouseUp={() => setIsCancelPressed(false)}
+          onTouchStart={() => setIsCancelPressed(true)}
+          onTouchEnd={() => setIsCancelPressed(false)}
+        >
           {t('cancel')}
         </button>
       </div>

@@ -11,6 +11,11 @@ type HeaderProps = {
   setCurrentPage: (page: 'deposit') => void;
 };
 
+const truncateUsername = (username: string | undefined) => {
+  if (!username) return 'N/A';
+  return username.length > 12 ? `${username.slice(0, 12)}...` : username;
+};
+
 export function Header({ user, balance, onWithdrawClick, setCurrentPage }: HeaderProps) {
   const safeBalance = typeof balance === 'string' ? balance : '0.00';
   const [whole, decimal = '00'] = safeBalance.split('.');
@@ -32,7 +37,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           className="text-white font-inter font-semibold text-[14px] leading-[21px] text-center"
           style={{ letterSpacing: '-0.011em', textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)' }}
         >
-          {user?.username || 'N/A'}
+          {truncateUsername(user?.username)}
         </p>
       </div>
       <div className="text-left">
