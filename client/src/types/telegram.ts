@@ -9,7 +9,7 @@ interface TelegramWebApp {
     user?: TelegramUser;
     hash?: string;
     auth_date?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   // Добавьте другие методы или свойства, если они используются, например:
   // ready: () => void;
