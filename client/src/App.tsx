@@ -173,7 +173,7 @@ function App() {
       ) : currentPage === 'addWallet' ? (
         <AddWallet />
       ) : currentPage === 'depositHistory' ? (
-        <DepositHistory setCurrentPage={handleSetCurrentPage} />
+        <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
       ) : (
         <Dashboard
           onMoreClick={() => handleSetCurrentPage('more')}
