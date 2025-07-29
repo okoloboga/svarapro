@@ -70,13 +70,18 @@ export function Referral({ onClose }: ReferralProps) {
 
         {/* Статистика */}
         <div className="flex justify-between gap-2 w-full">
-          <StyledContainer
+          <button
             className="w-[150px] h-[55px]"
-            contentClassName="flex flex-col items-center justify-center"
+            onClick={() => setIsRefrulesVisible(true)}
           >
-            <span className="text-sm text-gray-400">{t('level')}</span>
-            <span className="text-lg font-semibold text-white">{refBonus}%</span>
-          </StyledContainer>
+            <StyledContainer
+              className="w-full h-full"
+              contentClassName="flex flex-col items-center justify-center"
+            >
+              <span className="text-sm text-gray-400">{t('level')}</span>
+              <span className="text-lg font-semibold text-white">{refBonus}%</span>
+            </StyledContainer>
+          </button>
           <StyledContainer className="w-[150px] h-[55px]">
             <div className="flex flex-col items-center justify-center h-full">
               <span className="text-sm text-gray-400">{t('earnings')}</span>

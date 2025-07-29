@@ -1,5 +1,6 @@
 import { useLanguage } from '../../hooks/useLanguage';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 const LANGUAGES = [
   { code: 'ru', labelKey: 'russian' },
@@ -9,6 +10,8 @@ const LANGUAGES = [
 export function LanguageSelector({ onClose }: { onClose: () => void }) {
   const { currentLanguage, changeLanguage } = useLanguage();
   const { t } = useTranslation('common');
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [pressed, setPressed] = useState<string | null>(null);
 
   const handleSelect = (code: string) => {
     if (currentLanguage !== code) {
@@ -33,13 +36,25 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
     >
       {LANGUAGES.map((lang) => {
         const isActive = currentLanguage === lang.code;
+        const isHovered = hovered === lang.code;
+        const isPressed = pressed === lang.code;
+
+        let background = 'none';
+        if (isActive) {
+          background = '#131217';
+        } else if (isPressed) {
+          background = '#6F6C75'; // Darker for pressed
+        } else if (isHovered) {
+          background = '#5A5760'; // Lighter for hovered
+        }
+
         return (
           <div
             key={lang.code}
             style={{
               width: 260,
               height: 39,
-              background: isActive ? '#131217' : 'none',
+              background: background,
               borderRadius: isActive ? 8 : 0,
               display: 'flex',
               alignItems: 'center',
@@ -49,6 +64,10 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
               transition: 'background 0.2s',
             }}
             onClick={() => handleSelect(lang.code)}
+            onMouseEnter={() => setHovered(lang.code)}
+            onMouseLeave={() => setHovered(null)}
+            onMouseDown={() => setPressed(lang.code)}
+            onMouseUp={() => setPressed(null)}
           >
             <span
               style={{

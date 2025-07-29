@@ -133,7 +133,7 @@ export class FinancesService {
 
   async getTransactionHistory(userId: string): Promise<Transaction[]> {
     return this.transactionRepository.find({
-      where: { user: { id: userId } },
+      where: { user: { telegramId: userId } },
       order: { createdAt: 'DESC' },
     });
   }
