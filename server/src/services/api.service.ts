@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 import { createHmac } from 'crypto';
 
-interface ExnodeCreateDepositResponse {
+interface ExnodeCreateTransactionResponse {
   refer: string;
   tracker_id: string;
 }
@@ -51,8 +51,42 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    const response = await axios.post<ExnodeCreateDepositResponse>(
+    const response = await axios.post<ExnodeCreateTransactionResponse>(
       `${this.baseUrl}/api/transaction/create/in`,
+      body,
+      {
+        headers: {
+          ApiPublic: this.apiPublic!,
+          Signature: signature,
+          Timestamp: timestamp,
+        },
+      },
+    );
+
+    return {
+      address: response.data.refer,
+      trackerId: response.data.tracker_id,
+    };
+  }
+
+  async createWithdrawAddress(
+    token: string,
+    clientTransactionId: string,
+  ): Promise<{ address: string; trackerId: string }> {
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const body = JSON.stringify({
+      token,
+      client_transaction_id: clientTransactionId,
+      address_type: 'SINGLE',
+      call_back_url: this.callBackUrl,
+    });
+
+    const signature = createHmac('sha512', this.getApiSecret())
+      .update(timestamp + body)
+      .digest('hex');
+
+    const response = await axios.post<ExnodeCreateTransactionResponse>(
+      `${this.baseUrl}/api/transaction/create/out`,
       body,
       {
         headers: {

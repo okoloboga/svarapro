@@ -5,17 +5,19 @@ import searchIcon from '../../assets/search.svg';
 import slideDownIcon from '../../assets/slide-down.svg';
 import { CSSTransition } from 'react-transition-group';
 import { SlidePanel } from './SlidePanel';
+import { useTranslation } from 'react-i18next';
 
 type FilterProps = {
   onSearchChange: (searchId: string) => void;
   onAvailabilityChange: (isAvailable: boolean) => void;
-  onRangeChange: (range: [number, number]) => void; // Новый пропс для диапазона ставок
+  onRangeChange: (range: [number, number]) => void;
 };
 
 export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: FilterProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isToggleOn, setIsToggleOn] = useState(false);
   const [searchId, setSearchId] = useState('');
+  const { t } = useTranslation('common');
 
   const handleTogglePanel = () => {
     setIsPanelOpen((prev) => !prev);
@@ -42,7 +44,7 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
         <div className="relative w-[120px]">
           <input
             type="text"
-            placeholder="Номер комнаты"
+            placeholder={t('room_number')}
             value={searchId}
             onChange={handleSearchChange}
             className="w-full h-[30px] bg-[rgba(19,18,23,0.34)] p-2 pl-8 rounded-lg text-white text-center text-[10px]"
@@ -58,14 +60,14 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
           layout="vertical" 
           icon={slideDownIcon} 
           iconPosition="right"
-          iconClassName="w-[15px] h-[7px]" // <-- Задаем кастомный размер иконки
+          iconClassName="w-[15px] h-[7px]"
           onClick={handleTogglePanel} 
           className="w-[100px] h-[34px] mx-2"
         >
-          Ставки
+          {t('stakes')}
         </Button>
         <div className="flex items-center">
-          <span className="text-white text-[12px] mr-2">Доступны:</span>
+          <span className="text-white text-[12px] mr-2">{t('available_colon')}</span>
           <div
             className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer"
             style={{ background: isToggleOn ? 'linear-gradient(180deg, #AF6600 0%, #FFC53F 100%)' : '#2F2E35' }}

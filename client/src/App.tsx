@@ -7,11 +7,12 @@ import { ConfirmDeposit } from './pages/ConfirmDeposit';
 import { Withdraw } from './pages/Withdraw';
 import { ConfirmWithdraw } from './pages/ConfirmWithdraw';
 import { AddWallet } from './pages/AddWallet';
+import { More } from './pages/More';
+import { DepositHistory } from './pages/DepositHistory';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
-import { More } from './pages/More';
 import { useAppBackButton } from './hooks/useAppBackButton';
 
 // Определяем интерфейсы
@@ -41,7 +42,7 @@ type UserData = {
   photo_url?: string;
 };
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
 function App() {
   console.log('Launch App');
@@ -58,7 +59,7 @@ function App() {
   // Объявляем handleBack ДО использования
   const handleBack = useCallback(() => {
     console.log('Handling back from page:', currentPage);
-    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet') {
+    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory') {
       setCurrentPage('dashboard');
     } else if (currentPage === 'confirmDeposit') {
       setCurrentPage('deposit');
@@ -83,10 +84,6 @@ function App() {
     setCurrentPage(page);
     setPageData(data);
   };
-
-  /* if (isSdkInitialized) {
-    useAppBackButton(currentPage !== 'dashboard', handleBack);
-  } */
 
   useEffect(() => {
     console.log('Before initTelegramSdk');
@@ -121,8 +118,8 @@ function App() {
             console.log('Login response:', response);
             const profile = await apiService.getProfile();
             console.log('Profile data:', profile);
-            setBalance(profile.balance || '0.00'); // Защита от undefined/null
-            setWalletAddress(profile.walletAddress || null); // Защита от undefined/null
+            setBalance(profile.balance || '0.00');
+            setWalletAddress(profile.walletAddress || null);
           } catch (error) {
             const apiError = error as ApiError;
             const errorMessage =
@@ -175,6 +172,8 @@ function App() {
         <ConfirmWithdraw withdrawAmount={withdrawAmount} />
       ) : currentPage === 'addWallet' ? (
         <AddWallet />
+      ) : currentPage === 'depositHistory' ? (
+        <DepositHistory setCurrentPage={handleSetCurrentPage} />
       ) : (
         <Dashboard
           onMoreClick={() => handleSetCurrentPage('more')}

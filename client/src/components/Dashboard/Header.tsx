@@ -2,6 +2,7 @@ import { type User } from '@telegram-apps/sdk-react';
 import { StyledContainer } from '../StyledContainer';
 import { GreenButton } from '../Button/GreenButton';
 import { RedButton } from '../Button/RedButton';
+import { useTranslation } from 'react-i18next';
 
 type HeaderProps = {
   user?: User;
@@ -14,6 +15,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
   const safeBalance = typeof balance === 'string' ? balance : '0.00';
   const [whole, decimal = '00'] = safeBalance.split('.');
   const formattedBalance = `$ ${whole}.${decimal}`;
+  const { t } = useTranslation('common');
 
   return (
     <StyledContainer 
@@ -51,10 +53,10 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
         </div>
         <div className="flex space-x-2 mt-4">
           <GreenButton onClick={() => setCurrentPage('deposit')}>
-            Пополнить
+            {t('deposit')}
           </GreenButton>
           <RedButton onClick={onWithdrawClick}>
-            Вывести
+            {t('withdraw')}
           </RedButton>
         </div>
       </div>

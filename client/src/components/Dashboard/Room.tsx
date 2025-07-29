@@ -1,5 +1,6 @@
 import { StyledContainer } from '../StyledContainer';
 import { YellowButton } from '../Button/YellowButton';
+import { useTranslation } from 'react-i18next';
 
 type RoomProps = {
   id: number;
@@ -8,6 +9,7 @@ type RoomProps = {
 };
 
 export function Room({ id, players, stake }: RoomProps) {
+  const { t } = useTranslation('common');
   return (
     <StyledContainer 
       className="w-[336px] h-[90px] p-4"
@@ -23,10 +25,10 @@ export function Room({ id, players, stake }: RoomProps) {
         }}
       >
         {/* Первая строка */}
-        <p className="text-sm font-semibold text-gray-400 text-center m-0">Комната</p>
-        <p className="text-sm font-semibold text-gray-400 text-center m-0">Игроки</p>
-        <p className="text-sm font-semibold text-gray-400 text-center m-0">Ставка</p>
-        <YellowButton style={{ marginTop: '5px' }}>Войти</YellowButton>
+        <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('room')}</p>
+        <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('players')}</p>
+        <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('stake')}</p>
+        <YellowButton style={{ marginTop: '5px' }}>{t('enter')}</YellowButton>
 
         {/* Вторая строка */}
         <p className="text-base font-semibold text-white text-left m-0">№{id}</p>
@@ -52,7 +54,7 @@ export function Room({ id, players, stake }: RoomProps) {
             marginTop: '5px',
           }}
         >
-          Смотреть
+          {t('watch')}
         </button>
       </div>
 

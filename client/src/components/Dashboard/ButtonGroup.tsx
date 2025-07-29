@@ -2,18 +2,20 @@ import { Button } from '../Button/Button';
 import createIcon from '../../assets/create.png';
 import tournamentsIcon from '../../assets/tournaments.png';
 import moreIcon from '../../assets/more.png';
+import { useTranslation } from 'react-i18next';
 
 type ButtonGroupProps = {
-  onMoreClick: () => void; // Пропс для обработки клика на "Ещё"
+  onMoreClick: () => void;
   onComingSoonClick: () => void;
 };
 
 export function ButtonGroup({ onMoreClick, onComingSoonClick }: ButtonGroupProps) {
+  const { t } = useTranslation('common');
   return (
     <div className="flex items-center gap-2 mx-auto mt-6 w-[336px]">
-      <Button layout="vertical" icon={createIcon} className="flex-1 h-[57px]">Создать</Button>
-      <Button layout="vertical" icon={tournamentsIcon} className="flex-1 h-[57px]" onClick={onComingSoonClick}>Турниры</Button>
-      <Button layout="vertical" icon={moreIcon} onClick={onMoreClick} className="flex-1 h-[57px]">Ещё</Button>
+      <Button layout="vertical" icon={createIcon} className="flex-1 h-[57px]">{t('create')}</Button>
+      <Button layout="vertical" icon={tournamentsIcon} className="flex-1 h-[57px]" onClick={onComingSoonClick}>{t('tournaments')}</Button>
+      <Button layout="vertical" icon={moreIcon} onClick={onMoreClick} className="flex-1 h-[57px]">{t('more')}</Button>
     </div>
   );
 }

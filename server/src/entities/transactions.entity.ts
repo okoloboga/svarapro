@@ -7,20 +7,26 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('deposits')
-export class Deposit {
+@Entity('transactions')
+export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => User, (user) => user.id)
   @Index()
-  user: User; // Пользователь, сделавший депозит
+  user: User;
+
+  @Column({
+    type: 'enum',
+    enum: ['deposit', 'withdraw'],
+  })
+  type: 'deposit' | 'withdraw';
 
   @Column({
     type: 'varchar',
     length: 16,
   })
-  currency: string; // Валюта депозита (USDT-TON, TON)
+  currency: string;
 
   @Column({
     type: 'decimal',
@@ -31,7 +37,7 @@ export class Deposit {
       from: (value: string) => parseFloat(value),
     },
   })
-  amount: number; // Сумма депозита
+  amount: number;
 
   @Column({
     type: 'timestamp',
@@ -50,18 +56,18 @@ export class Deposit {
     type: 'varchar',
     length: 128,
   })
-  address: string; // Сгенерированный адрес для оплаты
+  address: string;
 
   @Column({
     type: 'varchar',
     length: 64,
   })
-  tracker_id: string; // ID для связи с exnode
+  tracker_id: string;
 
   @Column({
     type: 'varchar',
     length: 128,
     nullable: true,
   })
-  transaction_hash: string | undefined; // Детали транзакции в блокчейне
+  transaction_hash: string | undefined;
 }

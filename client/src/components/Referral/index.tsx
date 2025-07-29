@@ -1,10 +1,12 @@
 import { StyledContainer } from '../StyledContainer';
 import { Button } from '../Button/Button';
+import { Refrules } from '../LongRead/refrules';
 import closeIcon from '../../assets/close.png';
 import copyIcon from '../../assets/copy.svg';
 import { useEffect, useState } from 'react';
 import { apiService } from '../../services/api/api';
 import { PopSuccess } from '../PopSuccess';
+import { useTranslation } from 'react-i18next';
 
 type ReferralData = {
   referralLink?: string;
@@ -23,6 +25,8 @@ export function Referral({ onClose }: ReferralProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isRefrulesVisible, setIsRefrulesVisible] = useState(false);
+  const { t } = useTranslation('common');
 
   const handleCopy = () => {
     if (referralData?.referralLink) {
@@ -39,16 +43,16 @@ export function Referral({ onClose }: ReferralProps) {
         const data = (await apiService.getReferralLink()) as ReferralData;
         setReferralData(data);
       } catch (err) {
-        setError('Failed to load referral data');
+        setError(t('referral_load_error'));
         console.error('Error fetching referral data:', err);
       } finally {
         setLoading(false);
       }
     };
     fetchReferralData();
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="fixed inset-0 flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="fixed inset-0 flex items-center justify-center">{t('loading')}</div>;
   if (error) return <div className="fixed inset-0 flex items-center justify-center text-white">{error}</div>;
   if (!referralData) return null;
 
@@ -57,23 +61,26 @@ export function Referral({ onClose }: ReferralProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
+      {isRefrulesVisible && <Refrules onClose={() => setIsRefrulesVisible(false)} />}
       <div className="bg-[#2E2B33] w-[330px] rounded-lg p-4 relative flex flex-col items-center gap-4">
-        <h2 className="text-white font-bold text-lg text-center">Партнёрская программа</h2>
+        <h2 className="text-white font-bold text-lg text-center">{t('referral_program')}</h2>
         <button onClick={onClose} className="absolute top-4 right-4 z-10">
           <img src={closeIcon} alt="Close" className="w-6 h-6" />
         </button>
 
         {/* Статистика */}
         <div className="flex justify-between gap-2 w-full">
+          <Button
+            variant="secondary"
+            className="w-[150px] h-[55px] flex flex-col items-center justify-center"
+            onClick={() => setIsRefrulesVisible(true)}
+          >
+            <span className="text-sm text-gray-400">{t('level')}</span>
+            <span className="text-lg font-semibold text-white">{refBonus}%</span>
+          </Button>
           <StyledContainer className="w-[150px] h-[55px]">
             <div className="flex flex-col items-center justify-center h-full">
-              <span className="text-sm text-gray-400">Уровень</span>
-              <span className="text-lg font-semibold text-white">{refBonus}%</span>
-            </div>
-          </StyledContainer>
-          <StyledContainer className="w-[150px] h-[55px]">
-            <div className="flex flex-col items-center justify-center h-full">
-              <span className="text-sm text-gray-400">Заработок</span>
+              <span className="text-sm text-gray-400">{t('earnings')}</span>
               <span className="text-lg font-semibold text-white">${refBalance}</span>
             </div>
           </StyledContainer>
@@ -82,7 +89,7 @@ export function Referral({ onClose }: ReferralProps) {
         {/* Реферальная ссылка */}
         <StyledContainer className="w-[298px] h-[141px]">
           <div className="flex flex-col items-center justify-between h-full p-2">
-            <p className="font-semibold text-base leading-tight tracking-tighter text-white">Твоя реферальная ссылка</p>
+            <p className="font-semibold text-base leading-tight tracking-tighter text-white">{t('your_referral_link')}</p>
             <p className="text-xs text-gray-400 break-all text-center">{referralData.referralLink}</p>
             <div className="flex justify-between gap-2 w-full">
               <Button 
@@ -92,13 +99,13 @@ export function Referral({ onClose }: ReferralProps) {
                 icon={copyIcon}
                 iconClassName="w-4 h-4"
               >
-                Скопировать
+                {t('copy')}
               </Button>
               <Button 
                 variant="tertiary" 
                 className="w-[140px] h-[36px] !bg-[#2E2B33] font-medium text-sm leading-normal tracking-tighter rounded-lg"
               >
-                Поделиться
+                {t('share')}
               </Button>
             </div>
           </div>
@@ -106,8 +113,8 @@ export function Referral({ onClose }: ReferralProps) {
 
         {/* Список рефералов */}
         <div className="w-[298px]">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-base leading-tight tracking-tighter text-white">Твои рефералы</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="font-semibold text-base leading-tight tracking-tighter text-white">{t('your_referrals')}</h3>
             <div className="bg-[#46434B] w-[26px] h-[21px] rounded-lg flex items-center justify-center">
               <span className="font-semibold text-[13px] leading-tight tracking-tighter text-white">{referralCount}</span>
             </div>
@@ -115,13 +122,13 @@ export function Referral({ onClose }: ReferralProps) {
           <StyledContainer className="w-full h-[141px]">
             <div className="p-2 w-full h-full flex flex-col">
               <div className="flex justify-between text-xs text-gray-400 w-full">
-                <span>Рефералы</span>
-                <span>Профит</span>
+                <span>{t('referrals')}</span>
+                <span>{t('profit')}</span>
               </div>
               <hr className="border-t border-white opacity-10 my-2 w-full" />
               {referrals?.map((ref, index) => (
                 <div key={index} className="flex justify-between text-xs text-white my-1">
-                  <span>{ref.username || 'Без имени'}</span>
+                  <span>{ref.username || t('no_name')}</span>
                   <span>$0.00</span>
                 </div>
               ))}

@@ -4,6 +4,7 @@ import { Notification } from '../../components/Notification';
 import tetherIcon from '../../assets/tether.png';
 import warningIcon from '../../assets/warning.svg';
 import { apiService } from '../../services/api/api';
+import { useTranslation } from 'react-i18next';
 
 
 type ApiError = {
@@ -17,6 +18,7 @@ type ApiError = {
 export function AddWallet() {
   const [address, setAddress] = useState('');
   const [notification, setNotification] = useState<'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | null>(null);
+  const { t } = useTranslation('common');
 
   const handleAddWallet = async () => {
     if (address.length !== 48) {
@@ -44,10 +46,10 @@ export function AddWallet() {
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
       <div className="w-full max-w-[336px]">
         <h2 className="text-xl font-semibold text-white mb-2 flex items-center text-left leading-tight tracking-tighter">
-          Добавить USDT-TON <img src={tetherIcon} alt="USDT-TON" className="w-6 h-6 ml-2" />
+          {t('add_wallet_title')} <img src={tetherIcon} alt="USDT-TON" className="w-6 h-6 ml-2" />
         </h2>
         <p className="text-xl font-semibold text-white mb-4 text-left leading-tight tracking-tighter">
-          адрес для выводов
+          {t('add_wallet_subtitle')}
         </p>
       </div>
 
@@ -56,7 +58,7 @@ export function AddWallet() {
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="USDT-TON address"
+          placeholder={t('usdt_ton_address_placeholder')}
           className="bg-transparent text-white text-left font-inter text-[17px] w-full focus:outline-none placeholder-white placeholder-opacity-60"
           maxLength={48}
         />
@@ -65,7 +67,7 @@ export function AddWallet() {
       <div className="bg-red-900 bg-opacity-30 rounded-lg p-3 mb-4 w-full max-w-[336px] flex items-center text-left">
         <img src={warningIcon} alt="Warning" className="w-6 h-6 mr-2" />
         <span className="text-white font-inter text-xs">
-          Мемо/комментарии не поддерживаются Будьте внимательны при выводе на биржевые адреса
+          {t('memo_warning')}
         </span>
       </div>
 
@@ -75,7 +77,7 @@ export function AddWallet() {
         className="w-full max-w-[336px]"
         isActive={address.length === 48}
       >
-        Добавить
+        {t('add')}
       </YellowButton>
       
       

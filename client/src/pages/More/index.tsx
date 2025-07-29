@@ -1,8 +1,9 @@
 import { Button } from '../../components/Button/Button';
 import { YellowButton } from '../../components/Button/YellowButton';
 import { StyledContainer } from '../../components/StyledContainer';
-import { Eula } from '../../components/Eula';
+import { Eula } from '../../components/LongRead/eula';
 import { Referral } from '../../components/Referral';
+import { Gamerules } from '../../components/LongRead/gamerules';
 import { PopSuccess } from '../../components/PopSuccess';
 import sharpIcon from '../../assets/sharp.png';
 import languageIcon from '../../assets/language.png';
@@ -17,8 +18,10 @@ import copyIcon from '../../assets/copy.svg';
 import tetherIcon from '../../assets/tether.png';
 import slideDownIcon from '../../assets/slide-down.svg';
 import { useMemo, useState } from 'react';
+import LanguageSelector from '../../components/Language';
+import { useTranslation } from 'react-i18next';
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
 type UserData = {
   id?: number | string;
@@ -32,10 +35,13 @@ type MoreProps = {
 };
 
 export function More({ userData, setCurrentPage }: MoreProps) {
+  const { t } = useTranslation('common');
   const userId = useMemo(() => userData?.id?.toString() || 'N/A', [userData?.id]);
   const [isEulaVisible, setIsEulaVisible] = useState(false);
   const [isReferralVisible, setIsReferralVisible] = useState(false);
+  const [isGamerulesVisible, setIsGamerulesVisible] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(userId).then(() => {
@@ -43,15 +49,35 @@ export function More({ userData, setCurrentPage }: MoreProps) {
     });
   };
 
+  const handleOpenNewsChannel = () => {
+    window.open('https://web.telegram.org/k/#@SvaraPro', '_blank');
+  };
+
+  const handleOpenSupportChat = () => {
+    window.open('https://t.me/SvaraProSupportbot', '_blank');
+  };
+
   return (
-    <div className="bg-[#2E2B33] min-h-screen p-5">
+    <div className="bg-primary min-h-screen p-5 relative">
       {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
-      <div className="w-full max-w-[336px] mx-auto flex flex-col items-center space-y-3">
+      {/* Blur overlay and modal for language selector */}
+      {showLanguageSelector && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black bg-opacity-40 backdrop-blur-sm"
+            style={{ backdropFilter: 'blur(6px)' }}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
+          </div>
+        </>
+      )}
+      <div className={`w-full max-w-[336px] mx-auto flex flex-col items-center space-y-3 ${showLanguageSelector ? 'pointer-events-none select-none filter blur-sm' : ''}`}>
         <div className="relative w-full">
-          <Button 
-            variant="secondary" 
-            fullWidth 
-            icon={sharpIcon} 
+          <Button
+            variant="secondary"
+            fullWidth
+            icon={sharpIcon}
             justify="start"
             onClick={handleCopy}
             rightText={userId}
@@ -59,30 +85,85 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             rightContentClassName="text-[#BBB9BD]"
             iconClassName="w-4 h-4"
           >
-            Мой ID
+            {t('my_id')}
           </Button>
         </div>
-        <Button 
-          variant="secondary" 
-          fullWidth 
-          icon={languageIcon} 
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={languageIcon}
           justify="start"
-          rightText="Русский"
+          rightText={t('russian')}
           rightIcon={slideDownIcon}
           rightContentClassName="text-[#BBB9BD]"
           iconClassName="w-4 h-4"
+          onClick={() => setShowLanguageSelector(true)}
         >
-          Текущий язык
+          {t('current_language')}
         </Button>
-        <Button variant="secondary" fullWidth icon={depositHistoryIcon} rightIcon={rightIcon} justify="start">История Депозитов</Button>
-        <Button variant="secondary" fullWidth icon={refIcon} rightIcon={rightIcon} justify="start" onClick={() => setIsReferralVisible(true)}>Партнёрская программа</Button>
-        <Button variant="secondary" fullWidth icon={channelIcon} rightIcon={rightIcon} justify="start">Новостной канал</Button>
-        <Button variant="secondary" fullWidth icon={licenseIcon} rightIcon={rightIcon} justify="start" onClick={() => setIsEulaVisible(true)}>Пользовательское соглашение</Button>
-        <Button variant="secondary" fullWidth icon={helpIcon} rightIcon={rightIcon} justify="start">Как играть</Button>
-        <Button variant="secondary" fullWidth icon={supportIcon} rightIcon={rightIcon} justify="start">Чат с поддержкой</Button>
-        
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={depositHistoryIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={() => setCurrentPage('depositHistory')}
+        >
+          {t('deposit_history')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={refIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={() => setIsReferralVisible(true)}
+        >
+          {t('referral_program')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={channelIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={handleOpenNewsChannel}
+        >
+          {t('news_channel')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={licenseIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={() => setIsEulaVisible(true)}
+        >
+          {t('user_agreement')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={helpIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={() => setIsGamerulesVisible(true)}
+        >
+          {t('how_to_play')}
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={supportIcon}
+          rightIcon={rightIcon}
+          justify="start"
+          onClick={handleOpenSupportChat}
+        >
+          {t('support_chat')}
+        </Button>
+
         <div className="pt-4 w-full">
-          <h3 className="font-semibold text-lg text-white tracking-tighter leading-tight mb-2 text-left">Кошелёк для вывода</h3>
+          <h3 className="font-semibold text-lg text-white tracking-tighter leading-tight mb-2 text-left">{t('wallet_for_withdraw')}</h3>
           <hr className="w-full border-t border-white opacity-50 mb-4" />
           <StyledContainer className="h-12">
             <div className="flex items-center justify-between w-full px-4">
@@ -91,7 +172,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
                 <span>USDT TON</span>
               </div>
               <YellowButton size="sm" onClick={() => setCurrentPage('addWallet')} className="w-[88px]">
-                Добавить
+                {t('add')}
               </YellowButton>
             </div>
           </StyledContainer>
@@ -99,6 +180,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
       </div>
       {isEulaVisible && <Eula onClose={() => setIsEulaVisible(false)} />}
       {isReferralVisible && <Referral onClose={() => setIsReferralVisible(false)} />}
+      {isGamerulesVisible && <Gamerules onClose={() => setIsGamerulesVisible(false)} />}
     </div>
   );
 }

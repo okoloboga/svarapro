@@ -8,5 +8,5 @@ export function useLanguage() {
     i18n.changeLanguage(lng);
   }, [i18n]);
 
-  return { changeLanguage };
+  return { changeLanguage, currentLanguage: i18n.language };
 }

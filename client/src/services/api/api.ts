@@ -12,12 +12,13 @@ export const apiService = {
     localStorage.setItem('token', response.data.accessToken);
     return response.data;
   },
-  async getProfile(): Promise<{ 
-    id: number; 
-    telegramId: string; 
-    username: string; 
-    avatar: string; 
-    balance: string; 
+
+  async getProfile(): Promise<{
+    id: number;
+    telegramId: string;
+    username: string;
+    avatar: string;
+    balance: string;
     walletAddress: string | null;
   }> {
     const token = localStorage.getItem('token');
@@ -27,7 +28,8 @@ export const apiService = {
     });
     return response.data;
   },
-  async getReferralLink(): Promise<unknown> { 
+
+  async getReferralLink(): Promise<unknown> {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('No token available');
     const response = await api.get('/users/referral-link', {
@@ -35,16 +37,50 @@ export const apiService = {
     });
     return response.data;
   },
-  
-  // В объекте apiService, после метода getReferralLink, добавить:
+
   async initiateDeposit(currency: string): Promise<{ address: string; trackerId: string }> {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('No token available');
 
-    const profile = await this.getProfile(); // Получаем профиль для userId
-    const userId = profile.telegramId; // Предполагаем, что userId = telegramId
+    const profile = await this.getProfile();
+    const userId = profile.telegramId;
 
-    const response = await api.post('/finances/deposit', { userId, currency }, {
+    const response = await api.post(
+      '/finances/transaction',
+      { userId, currency, type: 'deposit' },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  },
+
+  async initiateWithdraw(currency: string, amount: number): Promise<{ address: string; trackerId: string }> {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token available');
+
+    const profile = await this.getProfile();
+    const userId = profile.telegramId;
+
+    const response = await api.post(
+      '/finances/transaction',
+      { userId, currency, type: 'withdraw', amount },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  },
+
+  async getTransactionHistory(userId: string): Promise<
+    {
+      type: 'deposit' | 'withdraw';
+      currency: string;
+      amount: number;
+      status: 'pending' | 'canceled' | 'confirmed';
+      tracker_id: string;
+      createdAt: string;
+    }[]
+  > {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token available');
+    const response = await api.get(`/finances/history/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
