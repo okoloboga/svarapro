@@ -20,6 +20,7 @@ import slideDownIcon from '../../assets/slide-down.svg';
 import { useMemo, useState } from 'react';
 import LanguageSelector from '../../components/Language';
 import { useTranslation } from 'react-i18next';
+import { openTelegramLink } from '@telegram-apps/sdk';
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
@@ -50,11 +51,11 @@ export function More({ userData, setCurrentPage }: MoreProps) {
   };
 
   const handleOpenNewsChannel = () => {
-    window.open('https://web.telegram.org/k/#@SvaraPro', '_blank');
+    openTelegramLink('https://t.me/SvaraPro');
   };
 
   const handleOpenSupportChat = () => {
-    window.open('https://t.me/SvaraProSupportbot', '_blank');
+    openTelegramLink('https://t.me/SvaraProSupportbot');
   };
 
   return (
