@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Room } from './Room';
 import { Button } from '../Button/Button';
+import { useTranslation } from 'react-i18next';
 
 const rooms = [
   { id: 1, players: 2, stake: 10 },
@@ -29,6 +30,7 @@ type RoomsListProps = {
 };
 
 export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsListProps) {
+  const { t } = useTranslation('common');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Фильтрация комнат
@@ -49,13 +51,13 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsList
 
   return (
     <div className="space-y-4 mx-auto w-[336px]">
-      <p className="text-white text-center mb-2" style={{ fontWeight: 600 }}>Присоединяйтесь к игре прямо сейчас</p>
+      <p className="text-white text-center mb-2" style={{ fontWeight: 600 }}>{t('join_game_now')}</p>
       {paginatedRooms.length > 0 ? (
         paginatedRooms.map((room) => (
           <Room key={room.id} {...room} />
         ))
       ) : (
-        <p className="text-white text-center">Комнаты не найдены</p>
+        <p className="text-white text-center">{t('rooms_not_found')}</p>
       )}
       {totalPages > 1 && (
         <div className="flex justify-center space-x-2 mt-4">

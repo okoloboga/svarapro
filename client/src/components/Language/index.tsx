@@ -37,8 +37,8 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
           <div
             key={lang.code}
             style={{
-              width: isActive ? 260 : 'auto',
-              height: isActive ? 39 : 'auto',
+              width: 260,
+              height: 39,
               background: isActive ? '#131217' : 'none',
               borderRadius: isActive ? 8 : 0,
               display: 'flex',

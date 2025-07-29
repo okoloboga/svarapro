@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import { useTranslation } from 'react-i18next';
 
 type SlidePanelProps = {
   isOpen: boolean;
@@ -9,6 +10,7 @@ type SlidePanelProps = {
 };
 
 export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
+  const { t } = useTranslation('common');
   const [rangeValues, setRangeValues] = useState<[number, number]>([0, 1000000]);
 
   const handleRangeChange = (value: number | number[]) => {
@@ -47,7 +49,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
         }}
       />
       <div className="relative z-10">
-        <p className="text-white text-center mb-2">Отображать только</p>
+        <p className="text-white text-center mb-2">{t('show_only')}</p>
         <div
           className="p-1 rounded-lg relative"
           style={{

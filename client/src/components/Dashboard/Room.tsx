@@ -12,8 +12,7 @@ export function Room({ id, players, stake }: RoomProps) {
   const { t } = useTranslation('common');
   return (
     <StyledContainer 
-      className="w-[336px] h-[90px] p-4"
-      style={{ borderRadius: '15px' }}
+      className="w-[336px] h-[90px] p-4 rounded-[15px]"
     >
       <div
         className="grid"

@@ -182,9 +182,7 @@ function App() {
           walletAddress={walletAddress}
         />
       )}
-      {isLoading === false && error === null && currentPage === 'dashboard' && (
-        <div>Debug: Rendering Dashboard as fallback</div>
-      )}
+      
     </AppRoot>
   );
 }

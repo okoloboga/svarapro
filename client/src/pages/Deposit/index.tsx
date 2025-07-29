@@ -5,6 +5,7 @@ import tonIcon from '../../assets/ton.png';
 import rightIcon from '../../assets/right.svg';
 import { apiService } from '../../services/api/api';
 import { LoadingPage } from '../../components/LoadingPage';
+import { useTranslation } from 'react-i18next';
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
@@ -13,6 +14,7 @@ type TopUpProps = {
 };
 
 export function Deposit({ setCurrentPage }: TopUpProps) {
+  const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
 
   const handleDeposit = async (currency: string) => {
@@ -35,7 +37,7 @@ export function Deposit({ setCurrentPage }: TopUpProps) {
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
       <h2 className="text-lg font-semibold text-gray-400 mb-4">
-        Выберите валюту
+        {t('select_currency')}
       </h2>
 
       <div className="w-full max-w-[336px] flex flex-col items-start space-y-3">

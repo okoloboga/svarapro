@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import LanguageSelector from '../../components/Language';
 import { useTranslation } from 'react-i18next';
 import { openTelegramLink } from '@telegram-apps/sdk';
+import { useLanguage } from '../../hooks/useLanguage';
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
@@ -35,8 +36,14 @@ type MoreProps = {
   setCurrentPage: (page: Page) => void;
 };
 
+const languageKeyMap: { [key: string]: string } = {
+  ru: 'russian',
+  en: 'english',
+};
+
 export function More({ userData, setCurrentPage }: MoreProps) {
   const { t } = useTranslation('common');
+  const { currentLanguage } = useLanguage();
   const userId = useMemo(() => userData?.id?.toString() || 'N/A', [userData?.id]);
   const [isEulaVisible, setIsEulaVisible] = useState(false);
   const [isReferralVisible, setIsReferralVisible] = useState(false);
@@ -94,7 +101,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           fullWidth
           icon={languageIcon}
           justify="start"
-          rightText={t('russian')}
+          rightText={t(languageKeyMap[currentLanguage] || 'russian')}
           rightIcon={slideDownIcon}
           rightContentClassName="text-[#BBB9BD]"
           iconClassName="w-4 h-4"

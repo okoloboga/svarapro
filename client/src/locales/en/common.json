@@ -156,5 +156,11 @@
   "refrules_condition3": "The more referrals and their deposits, the higher your earnings!",
   "refrules_condition4": "Start inviting and increase your earnings today!",
   "refrules_space": " ",
-  "refrules_condition5": "When your accumulated balance reaches $10, the amount is automatically transferred to your game balance."
+  "refrules_condition5": "When your accumulated balance reaches $10, the amount is automatically transferred to your game balance.",
+  "join_game_now": "Join the game right now",
+  "rooms_not_found": "Rooms not found",
+  "select_currency": "Select currency",
+  "show_only": "Show only",
+  "no_transactions_found": "No transactions found",
+  "all_rights_reserved": "All rights reserved."
 }

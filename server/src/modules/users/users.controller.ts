@@ -17,7 +17,7 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-@Controller('users')
+@Controller('v1/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

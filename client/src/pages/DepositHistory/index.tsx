@@ -3,6 +3,7 @@ import tonIcon from '../../assets/ton.png';
 import tetherIcon from '../../assets/tetherRound.png';
 import { useEffect, useState } from 'react';
 import { apiService } from '../../services/api/api';
+import { useTranslation } from 'react-i18next';
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
@@ -35,6 +36,7 @@ const formatDate = (dateString: string) => {
 };
 
 export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) {
+  const { t } = useTranslation('common');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
         {/* Список транзакций */}
         <div className="w-full max-w-[320px] flex flex-col gap-4 overflow-y-auto">
           {transactions.length === 0 ? (
-            <div className="text-white/60 text-center">No transactions found</div>
+            <div className="text-white/60 text-center">{t('no_transactions_found')}</div>
           ) : (
             transactions.map((transaction, index) => (
               <div key={transaction.tracker_id} className="w-[320px] h-[56px] flex items-center">

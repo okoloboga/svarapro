@@ -60,9 +60,9 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
           layout="vertical" 
           icon={slideDownIcon} 
           iconPosition="right"
-          iconClassName="w-[15px] h-[7px]"
+          iconClassName={`w-[15px] h-[7px] transition-transform duration-300 ${isPanelOpen ? 'rotate-180' : ''}`}
           onClick={handleTogglePanel} 
-          className="w-[100px] h-[34px] mx-2"
+          className="w-[48px] h-[34px] mx-2"
         >
           {t('stakes')}
         </Button>

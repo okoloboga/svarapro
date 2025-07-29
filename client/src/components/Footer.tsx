@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 export function Footer() {
+  const { t } = useTranslation('common');
   return (
     <div
       className="font-inter"
@@ -21,7 +24,7 @@ export function Footer() {
         whiteSpace: 'nowrap', // Убираем перенос текста
       }}
     >
-      <span style={{ fontSize: '14px' }}>© 2024 | Все права защищены.</span>
+      <span style={{ fontSize: '14px' }}>© 2024 | {t('all_rights_reserved')}</span>
       <svg
         width="22"
         height="22"
