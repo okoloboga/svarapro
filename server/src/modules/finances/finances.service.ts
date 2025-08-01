@@ -100,24 +100,29 @@ export class FinancesService {
       amount: type === 'withdraw' ? amount! : 0,
       address,
       tracker_id: trackerId,
+      client_transaction_id: clientTransactionId, // Добавлено
       status: 'pending',
     });
 
-    this.logger.log(`Transaction initiated: ${trackerId}, type: ${type}, currency: ${currency}`);
+    this.logger.log(`Transaction initiated: ${trackerId}, type: ${type}, currency: ${currency}, clientTransactionId: ${clientTransactionId}`);
     return await this.transactionRepository.save(transaction);
   }
 
-  async processCallback(trackerId: string): Promise<void> {
-    this.logger.debug(`Processing callback for trackerId: ${trackerId}`);
+  async processCallback(trackerId: string, clientTransactionId?: string): Promise<void> {
+    this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
     const transactionData = await this.apiService.getTransactionStatus(trackerId);
     this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
+
     const transaction = await this.transactionRepository.findOne({
-      where: { tracker_id: trackerId },
+      where: [
+        { tracker_id: trackerId },
+        ...(clientTransactionId ? [{ client_transaction_id: clientTransactionId }] : []),
+      ],
       relations: ['user'],
     });
 
     if (!transaction) {
-      this.logger.warn(`Transaction not found for trackerId: ${trackerId}`);
+      this.logger.warn(`Transaction not found for trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
       return;
     }
 
@@ -192,13 +197,13 @@ export class FinancesService {
     });
   }
 
-  async addToCallbackQueue(trackerId: string): Promise<void> {
+  async addToCallbackQueue(trackerId: string, clientTransactionId?: string): Promise<void> {
     await this.callbackQueue.add(
       'process-callback',
-      { trackerId },
+      { trackerId, clientTransactionId },
       { attempts: 3, backoff: 5000 },
     );
-    this.logger.log(`Added to callback queue: trackerId: ${trackerId}`);
+    this.logger.log(`Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
   }
 
   private convertTonToUsdt(transaction: Transaction, amount: number): number {

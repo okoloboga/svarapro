@@ -66,6 +66,13 @@ export class Transaction {
 
   @Column({
     type: 'varchar',
+    length: 36,
+    nullable: true,
+  })
+  client_transaction_id: string | null;
+
+  @Column({
+    type: 'varchar',
     length: 128,
     nullable: true,
   })
