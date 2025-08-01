@@ -51,7 +51,7 @@ interface UserProfile {
   telegramId?: string;
   username?: string;
   avatar?: string | null;
-  balance?: string | number; // balance может быть строкой или числом
+  balance?: string | number;
   walletAddress?: string | null;
 }
 
@@ -142,32 +142,35 @@ function App() {
             );
             setWalletAddress(profile.walletAddress || null);
 
-            // Подключаемся к WebSocket
-            const socketInstance = io('https://svarapro.com', {
-              transports: ['websocket'],
-              query: { telegramId: profile.telegramId },
-            });
-            setSocket(socketInstance);
+            // Подключаемся к WebSocket только если еще не подключены
+            if (!socket) {
+              const socketInstance = io('https://svarapro.com', {
+                transports: ['websocket'],
+                query: { telegramId: profile.telegramId },
+              });
+              setSocket(socketInstance);
 
-            socketInstance.on('connect', () => {
-              console.log('WebSocket connected');
-              socketInstance.emit('join', profile.telegramId); // Присоединяемся к комнате
-            });
+              socketInstance.on('connect', () => {
+                console.log('WebSocket connected');
+                socketInstance.emit('join', profile.telegramId);
+              });
 
-            socketInstance.on('transactionConfirmed', (data: {
-              balance: string;
-              amount: number;
-              currency: string;
-              message: string;
-            }) => {
-              console.log('Transaction confirmed:', data);
-              setBalance(data.balance); // Обновляем баланс
-              setSuccessMessage(data.message); // Показываем уведомление
-            });
+              socketInstance.on('transactionConfirmed', (data: {
+                balance: string;
+                amount: number;
+                currency: string;
+                message: string;
+              }) => {
+                console.log('Transaction confirmed:', data);
+                setBalance(data.balance);
+                setSuccessMessage(data.message);
+              });
 
-            socketInstance.on('disconnect', () => {
-              console.log('WebSocket disconnected');
-            });
+              socketInstance.on('disconnect', () => {
+                console.log('WebSocket disconnected');
+                setSocket(null);
+              });
+            }
           } catch (error) {
             const apiError = error as ApiError;
             const errorMessage =
@@ -195,7 +198,7 @@ function App() {
 
     initialize();
 
-    // Очистка WebSocket при размонтировании
+    // Очистка WebSocket
     return () => {
       if (socket) {
         socket.disconnect();

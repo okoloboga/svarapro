@@ -42,7 +42,7 @@ import { BullModule } from '@nestjs/bull';
           database: config.get<string>('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true, // Временно включено для отладки
-          logging: true,
+          logging: false,
           ssl: false,
         };
       },

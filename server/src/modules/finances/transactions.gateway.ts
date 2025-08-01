@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // Замените на ваш фронтенд URL в продакшене, например, 'https://svarapro.com'
+    origin: 'https://svarapro.com', // Указываем точный origin
   },
 })
 export class TransactionGateway {
@@ -15,7 +15,7 @@ export class TransactionGateway {
 
   // Отправка уведомления о подтверждении транзакции
   notifyTransactionConfirmed(userId: string, balance: number, amount: number, currency: string) {
-    this.logger.log(`Notifying user ${userId} of transaction confirmation: balance=${balance}, amount=${amount}, currency=${currency}`);
+    this.logger.log(`Notifying user ${userId}: balance=${balance}, amount=${amount}, currency=${currency}`);
     this.server.to(userId).emit('transactionConfirmed', {
       balance: balance.toFixed(2),
       amount,
@@ -27,7 +27,9 @@ export class TransactionGateway {
   // Подключение клиента
   @SubscribeMessage('join')
   handleJoin(client: any, userId: string) {
-    this.logger.log(`Client joined: userId=${userId}`);
-    client.join(userId); // Присоединяем клиента к комнате с его userId
+    client.join(userId); // Логируем только в debug-режиме
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`Client joined: userId=${userId}`);
+    }
   }
 }
