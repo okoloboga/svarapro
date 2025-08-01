@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Transaction } from '../../entities/transactions.entity';
 import { User } from '../../entities/user.entity';
 import { ApiService } from '../../services/api.service';
-import { TransactionGateway } from './transactions.gateway'; // Добавляем импорт
+import { TransactionGateway } from './transactions.gateway';
 import { v4 as uuidv4 } from 'uuid';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -21,9 +21,11 @@ export class FinancesService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private apiService: ApiService,
-    private transactionGateway: TransactionGateway, // Добавляем гейтвей
+    private transactionGateway: TransactionGateway,
     @InjectQueue('callback-queue') private callbackQueue: Queue,
-  ) {}
+  ) {
+    this.logger.log('FinancesService initialized');
+  }
 
   async initTransaction(
     telegramId: string,
@@ -113,8 +115,14 @@ export class FinancesService {
   async processCallback(trackerId: string, clientTransactionIdFromCallback?: string): Promise<void> {
     this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`);
     
-    const transactionData = await this.apiService.getTransactionStatus(trackerId);
-    this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
+    let transactionData;
+    try {
+      transactionData = await this.apiService.getTransactionStatus(trackerId);
+      this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
+    } catch (error) {
+      this.logger.error(`Failed to get transaction status for trackerId: ${trackerId}`, error.stack, { error: error.message });
+      throw new BadRequestException(`Failed to get transaction status: ${error.message}`);
+    }
 
     const clientTransactionId = transactionData.clientTransactionId;
     if (!clientTransactionId) {
@@ -146,13 +154,17 @@ export class FinancesService {
           user.totalDeposit += transactionData.amount;
           await this.userRepository.save(user);
 
-          // Отправляем уведомление через WebSocket
-          this.transactionGateway.notifyTransactionConfirmed(
-            user.telegramId,
-            user.balance,
-            transactionData.amount,
-            transaction.currency,
-          );
+          try {
+            // Отправляем уведомление через WebSocket
+            this.transactionGateway.notifyTransactionConfirmed(
+              user.telegramId,
+              user.balance,
+              transactionData.amount,
+              transaction.currency,
+            );
+          } catch (error) {
+            this.logger.error(`Failed to notify user ${user.telegramId} via WebSocket`, error.stack, { error: error.message });
+          }
 
           if (user.referrer && transactionData.amount >= 100) {
             const referrer = await this.userRepository.findOne({
@@ -198,6 +210,8 @@ export class FinancesService {
           this.logger.log(`Refunded ${transaction.amount} to user ${user.id} due to failed withdraw`);
         }
       }
+    } else {
+      this.logger.warn(`Unexpected transaction status: ${transactionData.status} for trackerId: ${trackerId}`);
     }
 
     await this.transactionRepository.save(transaction);
@@ -212,12 +226,17 @@ export class FinancesService {
   }
 
   async addToCallbackQueue(trackerId: string, clientTransactionId?: string): Promise<void> {
-    await this.callbackQueue.add(
-      'process-callback',
-      { trackerId, clientTransactionId },
-      { attempts: 3, backoff: 5000 },
-    );
-    this.logger.log(`Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
+    try {
+      await this.callbackQueue.add(
+        'process-callback',
+        { trackerId, clientTransactionId },
+        { attempts: 3, backoff: 5000 },
+      );
+      this.logger.log(`Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
+    } catch (error) {
+      this.logger.error(`Failed to add to callback queue for trackerId: ${trackerId}`, error.stack, { error: error.message });
+      throw error;
+    }
   }
 
   private convertTonToUsdt(transaction: Transaction, amount: number): number {
