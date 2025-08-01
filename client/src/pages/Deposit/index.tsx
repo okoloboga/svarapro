@@ -6,8 +6,9 @@ import rightIcon from '../../assets/right.svg';
 import { apiService } from '../../services/api/api';
 import { LoadingPage } from '../../components/LoadingPage';
 import { useTranslation } from 'react-i18next';
+import { ErrorAlert } from '../../components/ErrorAlert';
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
 type TopUpProps = {
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
@@ -16,15 +17,23 @@ type TopUpProps = {
 export function Deposit({ setCurrentPage }: TopUpProps) {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDeposit = async (currency: string) => {
     setLoading(true);
+    setError(null);
     try {
       const depositData = await apiService.initiateDeposit(currency);
-      setCurrentPage('confirmDeposit', { ...depositData, currency });
+      console.log('Deposit data received:', depositData);
+      setCurrentPage('confirmDeposit', {
+        address: depositData.address,
+        trackerId: depositData.trackerId, // Преобразуем tracker_id в trackerId
+        currency, // Явно задаем currency из аргумента
+      });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initiate deposit';
       console.error('Failed to initiate deposit:', error);
-      // Можно добавить уведомление об ошибке
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -32,6 +41,10 @@ export function Deposit({ setCurrentPage }: TopUpProps) {
 
   if (loading) {
     return <LoadingPage isLoading={loading} />;
+  }
+
+  if (error) {
+    return <ErrorAlert code={undefined} customMessage={error} />;
   }
 
   return (
@@ -62,7 +75,6 @@ export function Deposit({ setCurrentPage }: TopUpProps) {
           TON
         </Button>
       </div>
-
     </div>
   );
 }

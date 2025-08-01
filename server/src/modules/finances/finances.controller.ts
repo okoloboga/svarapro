@@ -24,9 +24,10 @@ export class FinancesController {
       body.receiver,
       body.destTag,
     );
+    this.logger.log(`Transaction created: ${JSON.stringify(transaction)}`);
     return {
       address: transaction.address,
-      tracker_id: transaction.tracker_id,
+      trackerId: transaction.tracker_id,
     };
   }
 

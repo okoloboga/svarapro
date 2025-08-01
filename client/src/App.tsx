@@ -32,8 +32,8 @@ type ApiError = {
 
 type PageData = {
   address?: string;
-  currency?: string;
   trackerId?: string;
+  currency?: string; // Оставляем для совместимости, но не требуем в рендере
   [key: string]: unknown;
 };
 
@@ -149,7 +149,7 @@ function App() {
     initialize();
   }, []);
 
-  console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage);
+  console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage, 'pageData:', pageData);
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
@@ -161,8 +161,8 @@ function App() {
         <More userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
         <Deposit setCurrentPage={handleSetCurrentPage} />
-      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency && pageData.trackerId ? (
-        <ConfirmDeposit address={pageData.address} currency={pageData.currency} trackerId={pageData.trackerId}/>
+      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.trackerId ? (
+        <ConfirmDeposit address={pageData.address} currency={pageData.currency ?? 'USDTTON'} trackerId={pageData.trackerId}/>
       ) : currentPage === 'withdraw' ? (
         <Withdraw
           balance={balance}
@@ -183,7 +183,6 @@ function App() {
           walletAddress={walletAddress}
         />
       )}
-      
     </AppRoot>
   );
 }
