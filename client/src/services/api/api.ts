@@ -43,11 +43,11 @@ export const apiService = {
     if (!token) throw new Error('No token available');
 
     const profile = await this.getProfile();
-    const userId = profile.telegramId;
+    const telegramId = profile.telegramId;
 
     const response = await api.post(
       '/finances/transaction',
-      { userId, currency, type: 'deposit' },
+      { telegramId, currency, type: 'deposit' },
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
@@ -58,11 +58,11 @@ export const apiService = {
     if (!token) throw new Error('No token available');
 
     const profile = await this.getProfile();
-    const userId = profile.telegramId;
+    const telegramId = profile.telegramId;
 
     const response = await api.post(
       '/finances/transaction',
-      { userId, currency, type: 'withdraw', amount },
+      { telegramId, currency, type: 'withdraw', amount },
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
