@@ -1,16 +1,26 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { createHmac } from 'crypto';
+import axiosRetry from 'axios-retry';
 
+// Интерфейсы для ответов API
 interface ExnodeCreateTransactionResponse {
-  refer: string;
+  status: string;
   tracker_id: string;
+  token_name?: string;
+  refer?: string;
+  alter_refer?: string;
+  description?: string | null;
+  dest_tag?: string | null;
+  extra_info?: Record<string, any> | null;
 }
 
 interface ExnodeTransactionStatusResponse {
   status: string;
   amount?: number;
   transaction_hash?: string;
+  client_transaction_id?: string;
+  token?: string;
 }
 
 @Injectable()
@@ -18,6 +28,8 @@ export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
   private readonly callBackUrl = 'https://svarapro.com/api/finances/callback';
+  private readonly supportedTokens = ['USDTTRC', 'BTC', 'ETH']; // Список поддерживаемых токенов
+  private readonly logger = new Logger(ApiService.name);
 
   constructor() {
     if (!process.env.EXNODE_API_SECRET || !this.apiPublic) {
@@ -25,6 +37,11 @@ export class ApiService {
         'EXNODE_API_SECRET or EXNODE_API_PUBLIC is not defined in environment variables',
       );
     }
+    // Настройка повторных попыток
+    axiosRetry(axios, {
+      retries: 3,
+      retryDelay: (retryCount) => retryCount * 1000,
+    });
   }
 
   private getApiSecret(): string {
@@ -35,10 +52,21 @@ export class ApiService {
     return secret;
   }
 
+  /**
+   * Создает адрес для пополнения (депозита)
+   */
   async createDepositAddress(
     token: string,
     clientTransactionId: string,
-  ): Promise<{ address: string; trackerId: string }> {
+  ): Promise<{ address: string; trackerId: string; destTag?: string | null }> {
+    // Валидация входных параметров
+    if (!this.supportedTokens.includes(token)) {
+      throw new BadRequestException(`Unsupported token: ${token}`);
+    }
+    if (!clientTransactionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      throw new BadRequestException(`Invalid clientTransactionId: ${clientTransactionId}`);
+    }
+
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({
       token,
@@ -51,83 +79,160 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    const response = await axios.post<ExnodeCreateTransactionResponse>(
-      `${this.baseUrl}/api/transaction/create/in`,
-      body,
-      {
-        headers: {
-          ApiPublic: this.apiPublic!,
-          Signature: signature,
-          Timestamp: timestamp,
+    try {
+      const response = await axios.post<ExnodeCreateTransactionResponse>(
+        `${this.baseUrl}/api/transaction/create/in`,
+        body,
+        {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ApiPublic: this.apiPublic!,
+            Signature: signature,
+            Timestamp: timestamp,
+          },
+          timeout: 10000,
         },
-      },
-    );
+      );
 
-    return {
-      address: response.data.refer,
-      trackerId: response.data.tracker_id,
-    };
+      if (response.data.status !== 'ACCEPTED') {
+        this.logger.error(`Failed to create deposit address: ${response.data.status}`);
+        throw new BadRequestException(`Failed to create deposit address: ${response.data.status}`);
+      }
+
+      this.logger.log(`Deposit address created: ${response.data.refer}, trackerId: ${response.data.tracker_id}`);
+      return {
+        address: response.data.refer!,
+        trackerId: response.data.tracker_id,
+        destTag: response.data.dest_tag || null,
+      };
+    } catch (error) {
+      this.logger.error(`Exnode API error (createDepositAddress): ${error.message}`);
+      throw new BadRequestException(`Exnode API error: ${error.message}`);
+    }
   }
 
+  /**
+   * Создает запрос на вывод средств
+   */
   async createWithdrawAddress(
     token: string,
     clientTransactionId: string,
-  ): Promise<{ address: string; trackerId: string }> {
+    merchantUuid: string,
+    amount: number,
+    receiver: string,
+    destTag?: string,
+  ): Promise<{ trackerId: string }> {
+    // Валидация входных параметров
+    if (!this.supportedTokens.includes(token)) {
+      throw new BadRequestException(`Unsupported token: ${token}`);
+    }
+    if (!clientTransactionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      throw new BadRequestException(`Invalid clientTransactionId: ${clientTransactionId}`);
+    }
+    if (!merchantUuid.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      throw new BadRequestException(`Invalid merchantUuid: ${merchantUuid}`);
+    }
+    if (amount <= 0) {
+      throw new BadRequestException(`Amount must be greater than 0: ${amount}`);
+    }
+    if (!receiver || typeof receiver !== 'string' || receiver.trim() === '') {
+      throw new BadRequestException(`Invalid receiver address: ${receiver}`);
+    }
+
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({
       token,
       client_transaction_id: clientTransactionId,
-      address_type: 'SINGLE',
+      merchant_uuid: merchantUuid,
+      amount,
+      receiver,
       call_back_url: this.callBackUrl,
+      ...(destTag && { dest_tag: destTag }), // Добавляем dest_tag, если указан
+      fiat_calculation: false, // Пока не используем пересчет в фиат
     });
 
     const signature = createHmac('sha512', this.getApiSecret())
       .update(timestamp + body)
       .digest('hex');
 
-    const response = await axios.post<ExnodeCreateTransactionResponse>(
-      `${this.baseUrl}/api/transaction/create/out`,
-      body,
-      {
-        headers: {
-          ApiPublic: this.apiPublic!,
-          Signature: signature,
-          Timestamp: timestamp,
+    try {
+      const response = await axios.post<ExnodeCreateTransactionResponse>(
+        `${this.baseUrl}/api/transaction/create/out`,
+        body,
+        {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ApiPublic: this.apiPublic!,
+            Signature: signature,
+            Timestamp: timestamp,
+          },
+          timeout: 10000,
         },
-      },
-    );
+      );
 
-    return {
-      address: response.data.refer,
-      trackerId: response.data.tracker_id,
-    };
+      if (response.data.status !== 'ACCEPTED') {
+        this.logger.error(`Failed to create withdraw transaction: ${response.data.status}`);
+        throw new BadRequestException(`Failed to create withdraw transaction: ${response.data.status}`);
+      }
+
+      this.logger.log(`Withdraw transaction created: trackerId: ${response.data.tracker_id}`);
+      return {
+        trackerId: response.data.tracker_id,
+      };
+    } catch (error) {
+      this.logger.error(`Exnode API error (createWithdrawAddress): ${error.message}`);
+      throw new BadRequestException(`Exnode API error: ${error.message}`);
+    }
   }
 
+  /**
+   * Проверяет статус транзакции по tracker_id
+   */
   async getTransactionStatus(trackerId: string): Promise<{
     status: string;
     amount?: number;
-    transaction_hash?: string | undefined;
+    transactionHash?: string;
+    clientTransactionId?: string;
+    token?: string;
   }> {
+    // Валидация входного параметра
+    if (!trackerId || typeof trackerId !== 'string' || trackerId.trim() === '') {
+      throw new BadRequestException(`Invalid trackerId: ${trackerId}`);
+    }
+
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const signature = createHmac('sha512', this.getApiSecret())
       .update(timestamp + trackerId)
       .digest('hex');
 
-    const response = await axios.get<ExnodeTransactionStatusResponse>(
-      `${this.baseUrl}/transaction/get?tracker_id=${trackerId}`,
-      {
-        headers: {
-          ApiPublic: this.apiPublic!,
-          Signature: signature,
-          Timestamp: timestamp,
+    try {
+      const response = await axios.get<ExnodeTransactionStatusResponse>(
+        `${this.baseUrl}/api/transaction/get`,
+        {
+          params: { tracker_id: trackerId },
+          headers: {
+            Accept: 'application/json',
+            ApiPublic: this.apiPublic!,
+            Signature: signature,
+            Timestamp: timestamp,
+          },
+          timeout: 10000,
         },
-      },
-    );
+      );
 
-    return {
-      status: response.data.status,
-      amount: response.data.amount,
-      transaction_hash: response.data.transaction_hash,
-    };
+      this.logger.log(`Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.status}`);
+      return {
+        status: response.data.status,
+        amount: response.data.amount,
+        transactionHash: response.data.transaction_hash,
+        clientTransactionId: response.data.client_transaction_id,
+        token: response.data.token,
+      };
+    } catch (error) {
+      this.logger.error(`Exnode API error (getTransactionStatus): ${error.message}`);
+      throw new BadRequestException(`Exnode API error: ${error.message}`);
+    }
   }
 }
