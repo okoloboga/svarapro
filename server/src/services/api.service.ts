@@ -3,7 +3,6 @@ import axios from 'axios';
 import { createHmac } from 'crypto';
 import axiosRetry from 'axios-retry';
 
-// Интерфейсы для ответов API
 interface ExnodeCreateTransactionResponse {
   status: string;
   tracker_id: string;
@@ -17,10 +16,26 @@ interface ExnodeCreateTransactionResponse {
 
 interface ExnodeTransactionStatusResponse {
   status: string;
-  amount?: number;
-  transaction_hash?: string;
-  client_transaction_id?: string;
-  token?: string;
+  transaction: {
+    amount?: number;
+    status: string;
+    hash?: string;
+    client_transaction_id?: string;
+    token?: string;
+    amount_usd?: number;
+    invoice_amount_usd?: number;
+    transaction_commission?: number;
+    transaction_description?: string | null;
+    type?: string;
+    receiver?: string;
+    callback_url?: string | null;
+    dest_tag?: string | null;
+    extra_info?: Record<string, any> | null;
+    date_create?: string;
+    date_update?: string;
+    token_major_name?: string;
+    course?: number;
+  };
 }
 
 @Injectable()
@@ -28,7 +43,7 @@ export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
   private readonly callBackUrl = 'https://svarapro.com/api/v1/finances/callback';
-  private readonly supportedTokens = ['USDTTON', 'TON']; // Обновлено: только USDTTON и TON
+  private readonly supportedTokens = ['USDTTON', 'TON'];
   private readonly logger = new Logger(ApiService.name);
 
   constructor() {
@@ -200,20 +215,23 @@ export class ApiService {
     }
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
+    const body = JSON.stringify({ tracker_id: trackerId });
     const signature = createHmac('sha512', this.getApiSecret())
-      .update(timestamp + trackerId)
+      .update(timestamp + body)
       .digest('hex');
 
     this.logger.debug(`Checking transaction status: trackerId=${trackerId}`);
     this.logger.debug(`Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`);
+    this.logger.debug(`Request body: ${body}`);
 
     try {
-      const response = await axios.get<ExnodeTransactionStatusResponse>(
+      const response = await axios.post<ExnodeTransactionStatusResponse>(
         `${this.baseUrl}/api/transaction/get`,
+        body,
         {
-          params: { tracker_id: trackerId },
           headers: {
             Accept: 'application/json',
+            'Content-Type': 'application/json',
             ApiPublic: this.apiPublic!,
             Signature: signature,
             Timestamp: timestamp,
@@ -222,13 +240,18 @@ export class ApiService {
         },
       );
 
-      this.logger.log(`Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.status}`);
+      if (response.data.status !== 'ok') {
+        this.logger.error(`Failed to get transaction status: ${response.data.status}, response: ${JSON.stringify(response.data)}`);
+        throw new BadRequestException(`Failed to get transaction status: ${response.data.status}`);
+      }
+
+      this.logger.log(`Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.transaction.status}`);
       return {
-        status: response.data.status,
-        amount: response.data.amount,
-        transactionHash: response.data.transaction_hash,
-        clientTransactionId: response.data.client_transaction_id,
-        token: response.data.token,
+        status: response.data.transaction.status,
+        amount: response.data.transaction.amount,
+        transactionHash: response.data.transaction.hash,
+        clientTransactionId: response.data.transaction.client_transaction_id,
+        token: response.data.transaction.token,
       };
     } catch (error) {
       this.logger.error(`Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`);

@@ -24,7 +24,7 @@ export class FinancesService {
   ) {}
 
   async initTransaction(
-    telegramId: string, // Изменено: принимаем telegramId вместо userId
+    telegramId: string,
     currency: string,
     type: 'deposit' | 'withdraw',
     amount?: number,
@@ -33,7 +33,6 @@ export class FinancesService {
   ): Promise<Transaction> {
     this.logger.debug(`Initiating transaction: telegramId=${telegramId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`);
 
-    // Валидация входных параметров
     if (!this.supportedCurrencies.includes(currency)) {
       this.logger.error(`Unsupported currency: ${currency}`);
       throw new BadRequestException(`Unsupported currency: ${currency}`);
@@ -57,10 +56,13 @@ export class FinancesService {
       const deposit = await this.apiService.createDepositAddress(currency, clientTransactionId);
       address = deposit.address;
       trackerId = deposit.trackerId;
+      if (trackerId.length > 128) {
+        this.logger.error(`Tracker ID too long: ${trackerId} (length: ${trackerId.length})`);
+        throw new BadRequestException('Tracker ID exceeds maximum length of 128 characters');
+      }
     } else {
       const withdrawAmount: number = amount!;
       const withdrawReceiver: string = receiver!;
-
       const withdraw = await this.apiService.createWithdrawAddress(
         currency,
         clientTransactionId,
@@ -69,6 +71,10 @@ export class FinancesService {
         destTag,
       );
       trackerId = withdraw.trackerId;
+      if (trackerId.length > 128) {
+        this.logger.error(`Tracker ID too long: ${trackerId} (length: ${trackerId.length})`);
+        throw new BadRequestException('Tracker ID exceeds maximum length of 128 characters');
+      }
     }
 
     const user = await this.userRepository.findOne({ where: { telegramId } });
@@ -88,7 +94,7 @@ export class FinancesService {
     }
 
     const transaction = this.transactionRepository.create({
-      user: { id: user.id } as User, // Используем user.id (UUID) для связи с пользователем
+      user: { id: user.id } as User,
       type,
       currency,
       amount: type === 'withdraw' ? amount! : 0,
@@ -102,7 +108,9 @@ export class FinancesService {
   }
 
   async processCallback(trackerId: string): Promise<void> {
+    this.logger.debug(`Processing callback for trackerId: ${trackerId}`);
     const transactionData = await this.apiService.getTransactionStatus(trackerId);
+    this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
     const transaction = await this.transactionRepository.findOne({
       where: { tracker_id: trackerId },
       relations: ['user'],
@@ -113,7 +121,7 @@ export class FinancesService {
       return;
     }
 
-    if (transactionData.status === 'complete' && transactionData.amount) {
+    if (transactionData.status === 'SUCCESS' && transactionData.amount) {
       transaction.status = 'complete';
       transaction.amount = transactionData.amount;
       transaction.transaction_hash = transactionData.transactionHash;
@@ -159,7 +167,7 @@ export class FinancesService {
           }
         }
       }
-    } else if (transactionData.status === 'failed') {
+    } else if (transactionData.status === 'ERROR') {
       transaction.status = 'failed';
       if (transaction.type === 'withdraw') {
         const user = await this.userRepository.findOne({
