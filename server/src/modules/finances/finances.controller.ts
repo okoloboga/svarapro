@@ -5,13 +5,23 @@ import { FinancesService } from './finances.service';
 export class FinancesController {
   constructor(private financesService: FinancesService) {}
 
-  @Post('transaction')
-  async initiateTransaction(
-    @Body() body: { userId: string; currency: string; type: 'deposit' | 'withdraw'; amount?: number },
-  ) {
-    const { userId, currency, type, amount } = body;
-    const transaction = await this.financesService.initTransaction(userId, currency, type, amount);
-    return { address: transaction.address, trackerId: transaction.tracker_id };
+  @Post('transactions')
+  async createTransaction(@Body() body: {
+    userId: string;
+    currency: string;
+    type: 'deposit' | 'withdraw';
+    amount?: number;
+    receiver?: string;
+    destTag?: string;
+  }) {
+    return this.financesService.initTransaction(
+      body.userId,
+      body.currency,
+      body.type,
+      body.amount,
+      body.receiver,
+      body.destTag,
+    );
   }
 
   @Post('callback')

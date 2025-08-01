@@ -12,6 +12,8 @@ import { Queue } from 'bull';
 export class FinancesService {
   private readonly logger = new Logger(FinancesService.name);
   private readonly TON_TO_USDT_RATE = 3;
+  private readonly supportedCurrencies = ['USDTTRC', 'BTC', 'ETH', 'TON'];
+  private readonly merchantUuid: string;
 
   constructor(
     @InjectRepository(Transaction)
@@ -20,19 +22,58 @@ export class FinancesService {
     private userRepository: Repository<User>,
     private apiService: ApiService,
     @InjectQueue('callback-queue') private callbackQueue: Queue,
-  ) {}
+  ) {
+    const merchantUuid = process.env.EXNODE_MERCHANT_UUID;
+    if (!merchantUuid) {
+      throw new BadRequestException('EXNODE_MERCHANT_UUID is not defined in environment variables');
+    }
+    this.merchantUuid = merchantUuid;
+  }
 
   async initTransaction(
     userId: string,
     currency: string,
     type: 'deposit' | 'withdraw',
     amount?: number,
+    receiver?: string,
+    destTag?: string,
   ): Promise<Transaction> {
+    // Валидация входных параметров
+    if (!this.supportedCurrencies.includes(currency)) {
+      throw new BadRequestException(`Unsupported currency: ${currency}`);
+    }
+    if (type === 'withdraw') {
+      if (!amount || amount <= 0) {
+        throw new BadRequestException('Amount is required and must be greater than 0 for withdraw');
+      }
+      if (!receiver || receiver.trim() === '') {
+        throw new BadRequestException('Receiver address is required for withdraw');
+      }
+    }
+
     const clientTransactionId = uuidv4();
-    const { address, trackerId } =
-      type === 'deposit'
-        ? await this.apiService.createDepositAddress(currency, clientTransactionId)
-        : await this.apiService.createWithdrawAddress(currency, clientTransactionId);
+    let address: string | undefined;
+    let trackerId: string;
+
+    if (type === 'deposit') {
+      const deposit = await this.apiService.createDepositAddress(currency, clientTransactionId);
+      address = deposit.address;
+      trackerId = deposit.trackerId;
+    } else {
+      // Явное сужение типов для amount и receiver
+      const withdrawAmount: number = amount!; // Гарантировано валидацией выше
+      const withdrawReceiver: string = receiver!; // Гарантировано валидацией выше
+
+      const withdraw = await this.apiService.createWithdrawAddress(
+        currency,
+        clientTransactionId,
+        this.merchantUuid,
+        withdrawAmount,
+        withdrawReceiver,
+        destTag,
+      );
+      trackerId = withdraw.trackerId;
+    }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -40,13 +81,11 @@ export class FinancesService {
     }
 
     if (type === 'withdraw') {
-      if (!amount) {
-        throw new BadRequestException('Amount is required for withdraw');
-      }
-      if (user.balance < amount) {
+      const withdrawAmount: number = amount!; // Гарантировано валидацией выше
+      if (user.balance < withdrawAmount) {
         throw new BadRequestException('Insufficient balance');
       }
-      user.balance -= amount;
+      user.balance -= withdrawAmount;
       await this.userRepository.save(user);
     }
 
@@ -54,12 +93,13 @@ export class FinancesService {
       user: { id: userId } as User,
       type,
       currency,
-      amount: amount || 0, // Для депозитов amount заполняется в processCallback
+      amount: type === 'withdraw' ? amount! : 0, // Для депозитов amount заполняется в processCallback
       address,
       tracker_id: trackerId,
       status: 'pending',
     });
 
+    this.logger.log(`Transaction initiated: ${trackerId}, type: ${type}, currency: ${currency}`);
     return await this.transactionRepository.save(transaction);
   }
 
@@ -67,68 +107,76 @@ export class FinancesService {
     const transactionData = await this.apiService.getTransactionStatus(trackerId);
     const transaction = await this.transactionRepository.findOne({
       where: { tracker_id: trackerId },
+      relations: ['user'],
     });
 
-    if (transaction) {
-      if (transactionData.status === 'complete' && transactionData.amount) {
-        transaction.status = 'complete';
-        transaction.amount = transactionData.amount;
-        transaction.transaction_hash = transactionData.transaction_hash;
+    if (!transaction) {
+      this.logger.warn(`Transaction not found for trackerId: ${trackerId}`);
+      return;
+    }
 
-        const user = await this.userRepository.findOne({
-          where: { id: transaction.user.id },
-        });
-        if (user) {
-          if (transaction.type === 'deposit') {
-            user.balance += transactionData.amount;
-            user.totalDeposit += transactionData.amount;
-            await this.userRepository.save(user);
+    if (transactionData.status === 'complete' && transactionData.amount) {
+      transaction.status = 'complete';
+      transaction.amount = transactionData.amount;
+      transaction.transaction_hash = transactionData.transactionHash;
 
-            if (user.referrer && transactionData.amount >= 100) {
-              const referrer = await this.userRepository.findOne({
-                where: { id: user.referrer.id },
-                relations: ['referrals'],
-              });
-              if (referrer) {
-                const referralCount = referrer.referrals.length;
-                let refBonus = 0;
-                if (referralCount >= 1 && referralCount <= 10) refBonus = 3;
-                else if (referralCount >= 11 && referralCount <= 30) refBonus = 5;
-                else if (referralCount >= 31 && referralCount <= 100) refBonus = 8;
-                else if (referralCount > 100) refBonus = 10;
+      const user = await this.userRepository.findOne({
+        where: { id: transaction.user.id },
+      });
+      if (user) {
+        if (transaction.type === 'deposit') {
+          user.balance += transactionData.amount;
+          user.totalDeposit += transactionData.amount;
+          await this.userRepository.save(user);
 
-                const bonusAmount = ((this.convertTonToUsdt(transaction, transactionData.amount) - 100) * refBonus) / 100;
-                if (bonusAmount > 0) {
-                  referrer.refBalance += bonusAmount;
+          if (user.referrer && transactionData.amount >= 100) {
+            const referrer = await this.userRepository.findOne({
+              where: { id: user.referrer.id },
+              relations: ['referrals'],
+            });
+            if (referrer) {
+              const referralCount = referrer.referrals.length;
+              let refBonus = 0;
+              if (referralCount >= 1 && referralCount <= 10) refBonus = 3;
+              else if (referralCount >= 11 && referralCount <= 30) refBonus = 5;
+              else if (referralCount >= 31 && referralCount <= 100) refBonus = 8;
+              else if (referralCount > 100) refBonus = 10;
+
+              const bonusAmount =
+                ((this.convertTonToUsdt(transaction, transactionData.amount) - 100) * refBonus) / 100;
+              if (bonusAmount > 0) {
+                referrer.refBalance += bonusAmount;
+                await this.userRepository.save(referrer);
+
+                if (referrer.refBalance >= 10) {
+                  referrer.balance += referrer.refBalance;
+                  this.logger.log(
+                    `RefBalance reset for ${referrer.id}: added ${referrer.refBalance} to balance`,
+                  );
+                  referrer.refBalance = 0;
                   await this.userRepository.save(referrer);
-
-                  if (referrer.refBalance >= 10) {
-                    referrer.balance += referrer.refBalance;
-                    this.logger.log(
-                      `Обнуление refBalance для ${referrer.id}: добавлено ${referrer.refBalance} к balance`,
-                    );
-                    referrer.refBalance = 0;
-                    await this.userRepository.save(referrer);
-                  }
                 }
               }
             }
           }
         }
-      } else if (transactionData.status === 'failed') {
-        transaction.status = 'failed';
-        if (transaction.type === 'withdraw') {
-          const user = await this.userRepository.findOne({
-            where: { id: transaction.user.id },
-          });
-          if (user) {
-            user.balance += transaction.amount;
-            await this.userRepository.save(user);
-          }
+      }
+    } else if (transactionData.status === 'failed') {
+      transaction.status = 'failed';
+      if (transaction.type === 'withdraw') {
+        const user = await this.userRepository.findOne({
+          where: { id: transaction.user.id },
+        });
+        if (user) {
+          user.balance += transaction.amount;
+          await this.userRepository.save(user);
+          this.logger.log(`Refunded ${transaction.amount} to user ${user.id} due to failed withdraw`);
         }
       }
-      await this.transactionRepository.save(transaction);
     }
+
+    await this.transactionRepository.save(transaction);
+    this.logger.log(`Callback processed: trackerId: ${trackerId}, status: ${transactionData.status}`);
   }
 
   async getTransactionHistory(userId: string): Promise<Transaction[]> {
@@ -144,6 +192,7 @@ export class FinancesService {
       { trackerId },
       { attempts: 3, backoff: 5000 },
     );
+    this.logger.log(`Added to callback queue: trackerId: ${trackerId}`);
   }
 
   private convertTonToUsdt(transaction: Transaction, amount: number): number {
