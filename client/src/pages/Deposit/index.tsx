@@ -46,7 +46,7 @@ export function Deposit({ setCurrentPage }: TopUpProps) {
           fullWidth
           icon={tetherIcon}
           rightIcon={rightIcon}
-          onClick={() => handleDeposit('USDT-TON')}
+          onClick={() => handleDeposit('USDTTON')}
           justify="start"
         >
           USDT-TON
