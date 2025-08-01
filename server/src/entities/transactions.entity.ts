@@ -60,7 +60,7 @@ export class Transaction {
 
   @Column({
     type: 'varchar',
-    length: 64,
+    length: 128, // Изменено с 64 на 128
   })
   tracker_id: string;
 
