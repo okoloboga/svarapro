@@ -28,7 +28,7 @@ export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
   private readonly callBackUrl = 'https://svarapro.com/api/finances/callback';
-  private readonly supportedTokens = ['USDTTRC', 'BTC', 'ETH']; // Список поддерживаемых токенов
+  private readonly supportedTokens = ['USDTTRC', 'BTC', 'ETH', 'TON']; // Обновлено: добавлен TON
   private readonly logger = new Logger(ApiService.name);
 
   constructor() {
@@ -118,7 +118,6 @@ export class ApiService {
   async createWithdrawAddress(
     token: string,
     clientTransactionId: string,
-    merchantUuid: string,
     amount: number,
     receiver: string,
     destTag?: string,
@@ -129,9 +128,6 @@ export class ApiService {
     }
     if (!clientTransactionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
       throw new BadRequestException(`Invalid clientTransactionId: ${clientTransactionId}`);
-    }
-    if (!merchantUuid.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
-      throw new BadRequestException(`Invalid merchantUuid: ${merchantUuid}`);
     }
     if (amount <= 0) {
       throw new BadRequestException(`Amount must be greater than 0: ${amount}`);
@@ -144,7 +140,6 @@ export class ApiService {
     const body = JSON.stringify({
       token,
       client_transaction_id: clientTransactionId,
-      merchant_uuid: merchantUuid,
       amount,
       receiver,
       call_back_url: this.callBackUrl,
@@ -236,3 +231,5 @@ export class ApiService {
     }
   }
 }
+
+

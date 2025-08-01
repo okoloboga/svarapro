@@ -13,7 +13,6 @@ export class FinancesService {
   private readonly logger = new Logger(FinancesService.name);
   private readonly TON_TO_USDT_RATE = 3;
   private readonly supportedCurrencies = ['USDTTRC', 'BTC', 'ETH', 'TON'];
-  private readonly merchantUuid: string;
 
   constructor(
     @InjectRepository(Transaction)
@@ -22,13 +21,7 @@ export class FinancesService {
     private userRepository: Repository<User>,
     private apiService: ApiService,
     @InjectQueue('callback-queue') private callbackQueue: Queue,
-  ) {
-    const merchantUuid = process.env.EXNODE_MERCHANT_UUID;
-    if (!merchantUuid) {
-      throw new BadRequestException('EXNODE_MERCHANT_UUID is not defined in environment variables');
-    }
-    this.merchantUuid = merchantUuid;
-  }
+  ) {}
 
   async initTransaction(
     userId: string,
@@ -67,7 +60,6 @@ export class FinancesService {
       const withdraw = await this.apiService.createWithdrawAddress(
         currency,
         clientTransactionId,
-        this.merchantUuid,
         withdrawAmount,
         withdrawReceiver,
         destTag,
