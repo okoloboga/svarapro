@@ -5,7 +5,7 @@ import { FinancesService } from './finances.service';
 export class FinancesController {
   constructor(private financesService: FinancesService) {}
 
-  @Post('transactions')
+  @Post('transaction')
   async createTransaction(@Body() body: {
     userId: string;
     currency: string;
