@@ -28,7 +28,7 @@ export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
   private readonly callBackUrl = 'https://svarapro.com/api/finances/callback';
-  private readonly supportedTokens = ['USDTTRC', 'BTC', 'ETH', 'TON'];
+  private readonly supportedTokens = ['USDTTON', 'TON']; // Обновлено: только USDTTON и TON
   private readonly logger = new Logger(ApiService.name);
 
   constructor() {

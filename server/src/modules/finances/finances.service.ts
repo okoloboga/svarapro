@@ -12,7 +12,7 @@ import { Queue } from 'bull';
 export class FinancesService {
   private readonly logger = new Logger(FinancesService.name);
   private readonly TON_TO_USDT_RATE = 3;
-  private readonly supportedCurrencies = ['USDTTRC', 'BTC', 'ETH', 'TON'];
+  private readonly supportedCurrencies = ['USDTTON', 'TON']; // Обновлено: только USDTTON и TON
 
   constructor(
     @InjectRepository(Transaction)
@@ -31,15 +31,20 @@ export class FinancesService {
     receiver?: string,
     destTag?: string,
   ): Promise<Transaction> {
+    this.logger.debug(`Initiating transaction: userId=${userId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`);
+
     // Валидация входных параметров
     if (!this.supportedCurrencies.includes(currency)) {
+      this.logger.error(`Unsupported currency: ${currency}`);
       throw new BadRequestException(`Unsupported currency: ${currency}`);
     }
     if (type === 'withdraw') {
       if (!amount || amount <= 0) {
+        this.logger.error(`Amount is required and must be greater than 0 for withdraw: ${amount}`);
         throw new BadRequestException('Amount is required and must be greater than 0 for withdraw');
       }
       if (!receiver || receiver.trim() === '') {
+        this.logger.error(`Receiver address is required for withdraw: ${receiver}`);
         throw new BadRequestException('Receiver address is required for withdraw');
       }
     }
@@ -53,7 +58,6 @@ export class FinancesService {
       address = deposit.address;
       trackerId = deposit.trackerId;
     } else {
-      // Явное сужение типов для amount и receiver
       const withdrawAmount: number = amount!; // Гарантировано валидацией выше
       const withdrawReceiver: string = receiver!; // Гарантировано валидацией выше
 
@@ -69,12 +73,14 @@ export class FinancesService {
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
+      this.logger.error(`User not found: ${userId}`);
       throw new BadRequestException('User not found');
     }
 
     if (type === 'withdraw') {
       const withdrawAmount: number = amount!; // Гарантировано валидацией выше
       if (user.balance < withdrawAmount) {
+        this.logger.error(`Insufficient balance for user ${userId}: balance=${user.balance}, amount=${withdrawAmount}`);
         throw new BadRequestException('Insufficient balance');
       }
       user.balance -= withdrawAmount;
