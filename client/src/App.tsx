@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
+import { io, Socket } from 'socket.io-client';
 import { Dashboard } from './pages/Dashboard';
 import { Deposit } from './pages/Deposit';
 import { ConfirmDeposit } from './pages/ConfirmDeposit';
@@ -9,6 +10,7 @@ import { ConfirmWithdraw } from './pages/ConfirmWithdraw';
 import { AddWallet } from './pages/AddWallet';
 import { More } from './pages/More';
 import { DepositHistory } from './pages/DepositHistory';
+import { PopSuccess } from './components/PopSuccess';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
@@ -33,7 +35,7 @@ type ApiError = {
 type PageData = {
   address?: string;
   trackerId?: string;
-  currency?: string; // Оставляем для совместимости, но не требуем в рендере
+  currency?: string;
   [key: string]: unknown;
 };
 
@@ -42,6 +44,16 @@ type UserData = {
   username?: string;
   photo_url?: string;
 };
+
+// Добавляем интерфейс для профиля
+interface UserProfile {
+  id?: number;
+  telegramId?: string;
+  username?: string;
+  avatar?: string | null;
+  balance?: string | number; // balance может быть строкой или числом
+  walletAddress?: string | null;
+}
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
 
@@ -56,6 +68,8 @@ function App() {
   const [balance, setBalance] = useState('0.00');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // Для PopSuccess
 
   // Объявляем handleBack ДО использования
   const handleBack = useCallback(() => {
@@ -117,10 +131,43 @@ function App() {
           try {
             const response = await apiService.login(initData, launchParams.startPayload);
             console.log('Login response:', response);
-            const profile = await apiService.getProfile();
+            const profile = await apiService.getProfile() as UserProfile;
             console.log('Profile data:', profile);
-            setBalance(profile.balance || '0.00');
+            setBalance(
+              profile.balance !== undefined
+                ? typeof profile.balance === 'number'
+                  ? profile.balance.toFixed(2)
+                  : parseFloat(profile.balance).toFixed(2)
+                : '0.00'
+            );
             setWalletAddress(profile.walletAddress || null);
+
+            // Подключаемся к WebSocket
+            const socketInstance = io('https://svarapro.com', {
+              transports: ['websocket'],
+              query: { telegramId: profile.telegramId },
+            });
+            setSocket(socketInstance);
+
+            socketInstance.on('connect', () => {
+              console.log('WebSocket connected');
+              socketInstance.emit('join', profile.telegramId); // Присоединяемся к комнате
+            });
+
+            socketInstance.on('transactionConfirmed', (data: {
+              balance: string;
+              amount: number;
+              currency: string;
+              message: string;
+            }) => {
+              console.log('Transaction confirmed:', data);
+              setBalance(data.balance); // Обновляем баланс
+              setSuccessMessage(data.message); // Показываем уведомление
+            });
+
+            socketInstance.on('disconnect', () => {
+              console.log('WebSocket disconnected');
+            });
           } catch (error) {
             const apiError = error as ApiError;
             const errorMessage =
@@ -147,7 +194,15 @@ function App() {
     };
 
     initialize();
-  }, []);
+
+    // Очистка WebSocket при размонтировании
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        console.log('WebSocket disconnected on cleanup');
+      }
+    };
+  }, [socket]);
 
   console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage, 'pageData:', pageData);
 
@@ -182,6 +237,9 @@ function App() {
           balance={balance}
           walletAddress={walletAddress}
         />
+      )}
+      {successMessage && (
+        <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />
       )}
     </AppRoot>
   );

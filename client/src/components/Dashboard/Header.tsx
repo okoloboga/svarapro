@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 type HeaderProps = {
   user?: User;
-  balance: string;
+  balance: string | number; // Обновляем тип, чтобы принимать строку или число
   onWithdrawClick: () => void;
   setCurrentPage: (page: 'deposit') => void;
 };
@@ -17,9 +17,12 @@ const truncateUsername = (username: string | undefined) => {
 };
 
 export function Header({ user, balance, onWithdrawClick, setCurrentPage }: HeaderProps) {
-  const safeBalance = typeof balance === 'string' ? balance : '0.00';
-  const [whole, decimal = '00'] = safeBalance.split('.');
-  const formattedBalance = `$ ${whole}.${decimal}`;
+  // Форматируем баланс: принимаем строку или число, приводим к строке с двумя десятичными знаками
+  const formattedBalance = typeof balance === 'number' 
+    ? balance.toFixed(2) // Преобразуем число в строку с 2 знаками после запятой
+    : parseFloat(balance).toFixed(2); // Если строка, парсим и форматируем
+  const [whole, decimal = '00'] = formattedBalance.split('.');
+  const displayBalance = `$ ${whole}.${decimal}`;
   const { t } = useTranslation('common');
 
   return (
@@ -48,12 +51,12 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           <span
             className="font-inter font-semibold text-[20px] text-white"
           >
-            {formattedBalance.split('.')[0]}
+            {displayBalance.split('.')[0]}
           </span>
           <span
             className="font-inter font-semibold text-[15px] text-gray-400"
           >
-            .{formattedBalance.split('.')[1]}
+            .{displayBalance.split('.')[1]}
           </span>
         </div>
         <div className="flex space-x-2 mt-4">
