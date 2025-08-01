@@ -27,7 +27,7 @@ interface ExnodeTransactionStatusResponse {
 export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
-  private readonly callBackUrl = 'https://svarapro.com/api/finances/callback';
+  private readonly callBackUrl = 'https://svarapro.com/api/v1/finances/callback';
   private readonly supportedTokens = ['USDTTON', 'TON']; // Обновлено: только USDTTON и TON
   private readonly logger = new Logger(ApiService.name);
 
