@@ -20,7 +20,7 @@ export class TransactionGateway {
       balance: balance.toFixed(2),
       amount,
       currency,
-      message: `Transaction of ${amount} ${currency} confirmed successfully`,
+      message: `+ ${amount} ${currency}`,
     });
   }
 
