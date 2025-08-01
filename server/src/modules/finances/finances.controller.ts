@@ -14,7 +14,7 @@ export class FinancesController {
     receiver?: string;
     destTag?: string;
   }) {
-    return this.financesService.initTransaction(
+    const transaction = await this.financesService.initTransaction(
       body.userId,
       body.currency,
       body.type,
@@ -22,6 +22,11 @@ export class FinancesController {
       body.receiver,
       body.destTag,
     );
+    // Преобразуем Transaction в нужный формат для клиента
+    return {
+      address: transaction.address,
+      trackerId: transaction.tracker_id,
+    };
   }
 
   @Post('callback')
