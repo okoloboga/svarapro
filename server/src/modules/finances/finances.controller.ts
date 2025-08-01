@@ -7,7 +7,7 @@ export class FinancesController {
 
   @Post('transaction')
   async createTransaction(@Body() body: {
-    userId: string;
+    telegramId: string;
     currency: string;
     type: 'deposit' | 'withdraw';
     amount?: number;
@@ -15,7 +15,7 @@ export class FinancesController {
     destTag?: string;
   }) {
     const transaction = await this.financesService.initTransaction(
-      body.userId,
+      body.telegramId,
       body.currency,
       body.type,
       body.amount,

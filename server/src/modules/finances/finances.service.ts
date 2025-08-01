@@ -12,7 +12,7 @@ import { Queue } from 'bull';
 export class FinancesService {
   private readonly logger = new Logger(FinancesService.name);
   private readonly TON_TO_USDT_RATE = 3;
-  private readonly supportedCurrencies = ['USDTTON', 'TON']; // Обновлено: только USDTTON и TON
+  private readonly supportedCurrencies = ['USDTTON', 'TON'];
 
   constructor(
     @InjectRepository(Transaction)
@@ -24,14 +24,14 @@ export class FinancesService {
   ) {}
 
   async initTransaction(
-    userId: string,
+    telegramId: string, // Изменено: принимаем telegramId вместо userId
     currency: string,
     type: 'deposit' | 'withdraw',
     amount?: number,
     receiver?: string,
     destTag?: string,
   ): Promise<Transaction> {
-    this.logger.debug(`Initiating transaction: userId=${userId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`);
+    this.logger.debug(`Initiating transaction: telegramId=${telegramId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`);
 
     // Валидация входных параметров
     if (!this.supportedCurrencies.includes(currency)) {
@@ -58,8 +58,8 @@ export class FinancesService {
       address = deposit.address;
       trackerId = deposit.trackerId;
     } else {
-      const withdrawAmount: number = amount!; // Гарантировано валидацией выше
-      const withdrawReceiver: string = receiver!; // Гарантировано валидацией выше
+      const withdrawAmount: number = amount!;
+      const withdrawReceiver: string = receiver!;
 
       const withdraw = await this.apiService.createWithdrawAddress(
         currency,
@@ -71,16 +71,16 @@ export class FinancesService {
       trackerId = withdraw.trackerId;
     }
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({ where: { telegramId } });
     if (!user) {
-      this.logger.error(`User not found: ${userId}`);
+      this.logger.error(`User not found for telegramId: ${telegramId}`);
       throw new BadRequestException('User not found');
     }
 
     if (type === 'withdraw') {
-      const withdrawAmount: number = amount!; // Гарантировано валидацией выше
+      const withdrawAmount: number = amount!;
       if (user.balance < withdrawAmount) {
-        this.logger.error(`Insufficient balance for user ${userId}: balance=${user.balance}, amount=${withdrawAmount}`);
+        this.logger.error(`Insufficient balance for user ${telegramId}: balance=${user.balance}, amount=${withdrawAmount}`);
         throw new BadRequestException('Insufficient balance');
       }
       user.balance -= withdrawAmount;
@@ -88,10 +88,10 @@ export class FinancesService {
     }
 
     const transaction = this.transactionRepository.create({
-      user: { id: userId } as User,
+      user: { id: user.id } as User, // Используем user.id (UUID) для связи с пользователем
       type,
       currency,
-      amount: type === 'withdraw' ? amount! : 0, // Для депозитов amount заполняется в processCallback
+      amount: type === 'withdraw' ? amount! : 0,
       address,
       tracker_id: trackerId,
       status: 'pending',
@@ -177,9 +177,9 @@ export class FinancesService {
     this.logger.log(`Callback processed: trackerId: ${trackerId}, status: ${transactionData.status}`);
   }
 
-  async getTransactionHistory(userId: string): Promise<Transaction[]> {
+  async getTransactionHistory(telegramId: string): Promise<Transaction[]> {
     return this.transactionRepository.find({
-      where: { user: { telegramId: userId } },
+      where: { user: { telegramId } },
       order: { createdAt: 'DESC' },
     });
   }
