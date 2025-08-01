@@ -6,6 +6,7 @@ import { Transaction } from '../../entities/transactions.entity';
 import { User } from '../../entities/user.entity';
 import { ApiService } from '../../services/api.service';
 import { BullModule } from '@nestjs/bull';
+import { CallbackProcessor } from './callback.processor'; // Добавлено
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { BullModule } from '@nestjs/bull';
     }),
   ],
   controllers: [FinancesController],
-  providers: [FinancesService, ApiService],
+  providers: [FinancesService, ApiService, CallbackProcessor], // Добавлено CallbackProcessor
   exports: [FinancesService],
 })
 export class FinancesModule {}

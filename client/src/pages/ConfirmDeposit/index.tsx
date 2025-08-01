@@ -12,9 +12,10 @@ import { PopSuccess } from '../../components/PopSuccess';
 type DepositProps = {
   address: string;
   currency: string;
+  trackerId: string; // Добавлено
 };
 
-export function ConfirmDeposit({ address, currency }: DepositProps) {
+export function ConfirmDeposit({ address, currency, trackerId }: DepositProps) {
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 минут в секундах
   const [showQR, setShowQR] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -26,8 +27,14 @@ export function ConfirmDeposit({ address, currency }: DepositProps) {
     return () => clearInterval(timer);
   }, []);
 
-  const handleCopy = () => {
+  const handleCopyAddress = () => {
     navigator.clipboard.writeText(address).then(() => {
+      setShowSuccess(true);
+    });
+  };
+
+  const handleCopyTrackerId = () => {
+    navigator.clipboard.writeText(trackerId).then(() => {
       setShowSuccess(true);
     });
   };
@@ -36,6 +43,11 @@ export function ConfirmDeposit({ address, currency }: DepositProps) {
   const seconds = timeLeft % 60;
 
   const paymentUrl = `ton://transfer/${address}`;
+
+  // Сокращаем trackerId (первые 8 и последние 8 символов)
+  const shortTrackerId = trackerId.length > 16
+    ? `${trackerId.slice(0, 8)}...${trackerId.slice(-8)}`
+    : trackerId;
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
@@ -55,7 +67,7 @@ export function ConfirmDeposit({ address, currency }: DepositProps) {
         </div>
       </div>
 
-      {/* Контейнер с адресом */}
+      {/* Контейнер с адресом и trackerId */}
       <div className="bg-black bg-opacity-30 rounded-lg p-4 w-full max-w-[336px] flex flex-col items-center mb-4">
         <Button 
           variant="secondary" 
@@ -71,15 +83,28 @@ export function ConfirmDeposit({ address, currency }: DepositProps) {
             <QRCodeCanvas value={paymentUrl} size={128} bgColor="#000" fgColor="#fff" />
           </div>
         )}
-        <p className="text-white font-inter text-sm text-center break-all mt-4">{address}</p>
+        <p className="text-white font-inter text-sm text-center break-all mt-4">
+          <span className="font-semibold">Адрес:</span> {address}
+        </p>
+        <div className="flex items-center mt-2">
+          <p className="text-white font-inter text-sm text-center">
+            <span className="font-semibold">Tracker ID:</span> {shortTrackerId}
+          </p>
+          <img
+            src={copyIcon}
+            alt="Copy Tracker ID"
+            className="w-5 h-5 ml-2 cursor-pointer"
+            onClick={handleCopyTrackerId}
+          />
+        </div>
       </div>
 
-      {/* Кнопка копирования */}
+      {/* Кнопка копирования адреса */}
       <YellowButton
-        size="lg" // Установлен размер lg для высоты 47px
+        size="lg"
         icon={copyIcon}
         iconPosition="left"
-        onClick={handleCopy}
+        onClick={handleCopyAddress}
         className="w-full max-w-[336px]"
       >
         Скопировать адрес
@@ -96,7 +121,6 @@ export function ConfirmDeposit({ address, currency }: DepositProps) {
           <span className="text-right">1%</span>
         </div>
       </div>
-
     </div>
   );
 }
