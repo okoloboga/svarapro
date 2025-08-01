@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FinancesService } from './finances.service';
+import { BullModule } from '@nestjs/bull';
 import { FinancesController } from './finances.controller';
+import { FinancesService } from './finances.service';
+import { TransactionGateway } from './transactions.gateway'; // Добавляем импорт
 import { Transaction } from '../../entities/transactions.entity';
 import { User } from '../../entities/user.entity';
 import { ApiService } from '../../services/api.service';
-import { BullModule } from '@nestjs/bull';
-import { CallbackProcessor } from './callback.processor'; // Добавлено
 
 @Module({
   imports: [
@@ -16,7 +16,6 @@ import { CallbackProcessor } from './callback.processor'; // Добавлено
     }),
   ],
   controllers: [FinancesController],
-  providers: [FinancesService, ApiService, CallbackProcessor], // Добавлено CallbackProcessor
-  exports: [FinancesService],
+  providers: [FinancesService, ApiService, TransactionGateway], // Добавляем TransactionGateway
 })
 export class FinancesModule {}

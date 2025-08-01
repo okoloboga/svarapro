@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { ProfileDto } from './dto/profile.dto';
-import { Logger } from '@nestjs/common';
 import { Address } from 'ton-core';
 
 @Injectable()
@@ -18,10 +17,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  private readonly logger = new Logger(UsersService.name);
-
   async getProfile(telegramId: string): Promise<ProfileDto> {
-    this.logger.log(`Fetching profile for Telegram ID: ${telegramId}`);
     const user = await this.usersRepository.findOne({
       where: { telegramId },
       select: [
@@ -79,7 +75,6 @@ export class UsersService {
     telegramId: string,
     depositAmount: number = 0,
   ): Promise<void> {
-    this.logger.log(`Updating referral data for Telegram ID: ${telegramId}`);
     const user = await this.usersRepository.findOne({
       where: { telegramId },
       relations: ['referrals'],
@@ -118,7 +113,6 @@ export class UsersService {
 
   // Новый метод для получения всех реферальных данных
   async getReferralData(telegramId: string) {
-    this.logger.log(`Fetching referral data for Telegram ID: ${telegramId}`);
     const user = await this.usersRepository.findOne({
       where: { telegramId },
       relations: ['referrals'],

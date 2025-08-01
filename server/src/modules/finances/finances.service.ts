@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Transaction } from '../../entities/transactions.entity';
 import { User } from '../../entities/user.entity';
 import { ApiService } from '../../services/api.service';
+import { TransactionGateway } from './transactions.gateway'; // Добавляем импорт
 import { v4 as uuidv4 } from 'uuid';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -20,6 +21,7 @@ export class FinancesService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private apiService: ApiService,
+    private transactionGateway: TransactionGateway, // Добавляем гейтвей
     @InjectQueue('callback-queue') private callbackQueue: Queue,
   ) {}
 
@@ -111,18 +113,15 @@ export class FinancesService {
   async processCallback(trackerId: string, clientTransactionIdFromCallback?: string): Promise<void> {
     this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`);
     
-    // Получаем данные транзакции от Exnode
     const transactionData = await this.apiService.getTransactionStatus(trackerId);
     this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
 
-    // Проверяем, есть ли clientTransactionId в ответе getTransactionStatus
     const clientTransactionId = transactionData.clientTransactionId;
     if (!clientTransactionId) {
       this.logger.error(`No clientTransactionId in transaction data for trackerId: ${trackerId}`);
       throw new BadRequestException('No clientTransactionId provided in transaction data');
     }
 
-    // Ищем транзакцию по clientTransactionId
     const transaction = await this.transactionRepository.findOne({
       where: { client_transaction_id: clientTransactionId },
       relations: ['user'],
@@ -146,6 +145,14 @@ export class FinancesService {
           user.balance += transactionData.amount;
           user.totalDeposit += transactionData.amount;
           await this.userRepository.save(user);
+
+          // Отправляем уведомление через WebSocket
+          this.transactionGateway.notifyTransactionConfirmed(
+            user.telegramId,
+            user.balance,
+            transactionData.amount,
+            transaction.currency,
+          );
 
           if (user.referrer && transactionData.amount >= 100) {
             const referrer = await this.userRepository.findOne({
