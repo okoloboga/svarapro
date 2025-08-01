@@ -33,6 +33,7 @@ type ApiError = {
 type PageData = {
   address?: string;
   currency?: string;
+  trackerId?: string;
   [key: string]: unknown;
 };
 
@@ -160,8 +161,8 @@ function App() {
         <More userData={userData} setCurrentPage={handleSetCurrentPage} />
       ) : currentPage === 'deposit' ? (
         <Deposit setCurrentPage={handleSetCurrentPage} />
-      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency ? (
-        <ConfirmDeposit address={pageData.address} currency={pageData.currency} />
+      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.currency && pageData.trackerId ? (
+        <ConfirmDeposit address={pageData.address} currency={pageData.currency} trackerId={pageData.trackerId}/>
       ) : currentPage === 'withdraw' ? (
         <Withdraw
           balance={balance}
