@@ -100,7 +100,7 @@ export class FinancesService {
       amount: type === 'withdraw' ? amount! : 0,
       address,
       tracker_id: trackerId,
-      client_transaction_id: clientTransactionId, // Добавлено
+      client_transaction_id: clientTransactionId,
       status: 'pending',
     });
 
@@ -108,21 +108,28 @@ export class FinancesService {
     return await this.transactionRepository.save(transaction);
   }
 
-  async processCallback(trackerId: string, clientTransactionId?: string): Promise<void> {
-    this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
+  async processCallback(trackerId: string, clientTransactionIdFromCallback?: string): Promise<void> {
+    this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`);
+    
+    // Получаем данные транзакции от Exnode
     const transactionData = await this.apiService.getTransactionStatus(trackerId);
     this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
 
+    // Проверяем, есть ли clientTransactionId в ответе getTransactionStatus
+    const clientTransactionId = transactionData.clientTransactionId;
+    if (!clientTransactionId) {
+      this.logger.error(`No clientTransactionId in transaction data for trackerId: ${trackerId}`);
+      throw new BadRequestException('No clientTransactionId provided in transaction data');
+    }
+
+    // Ищем транзакцию по clientTransactionId
     const transaction = await this.transactionRepository.findOne({
-      where: [
-        { tracker_id: trackerId },
-        ...(clientTransactionId ? [{ client_transaction_id: clientTransactionId }] : []),
-      ],
+      where: { client_transaction_id: clientTransactionId },
       relations: ['user'],
     });
 
     if (!transaction) {
-      this.logger.warn(`Transaction not found for trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
+      this.logger.warn(`Transaction not found for clientTransactionId: ${clientTransactionId}, trackerId: ${trackerId}`);
       return;
     }
 
@@ -187,7 +194,7 @@ export class FinancesService {
     }
 
     await this.transactionRepository.save(transaction);
-    this.logger.log(`Callback processed: trackerId: ${trackerId}, status: ${transactionData.status}`);
+    this.logger.log(`Callback processed: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}, status: ${transactionData.status}`);
   }
 
   async getTransactionHistory(telegramId: string): Promise<Transaction[]> {

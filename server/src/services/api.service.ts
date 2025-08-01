@@ -245,6 +245,9 @@ export class ApiService {
         throw new BadRequestException(`Failed to get transaction status: ${response.data.status}`);
       }
 
+      // Добавляем логирование clientTransactionId
+      this.logger.debug(`Transaction status response: clientTransactionId=${response.data.transaction.client_transaction_id}, status=${response.data.transaction.status}`);
+
       this.logger.log(`Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.transaction.status}`);
       return {
         status: response.data.transaction.status,

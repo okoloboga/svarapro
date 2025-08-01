@@ -16,6 +16,26 @@ export class FinancesController {
     receiver?: string;
     destTag?: string;
   }) {
+    this.logger.debug(`Received transaction request: ${JSON.stringify(body)}`);
+    
+    // Валидация telegramId
+    if (!body.telegramId || typeof body.telegramId !== 'string' || body.telegramId.trim() === '') {
+      this.logger.error(`Invalid or missing telegramId: ${body.telegramId}`);
+      throw new BadRequestException('telegramId is required and must be a non-empty string');
+    }
+
+    // Валидация currency
+    if (!body.currency || typeof body.currency !== 'string' || body.currency.trim() === '') {
+      this.logger.error(`Invalid or missing currency: ${body.currency}`);
+      throw new BadRequestException('currency is required and must be a non-empty string');
+    }
+
+    // Валидация type
+    if (!['deposit', 'withdraw'].includes(body.type)) {
+      this.logger.error(`Invalid transaction type: ${body.type}`);
+      throw new BadRequestException('type must be either "deposit" or "withdraw"');
+    }
+
     const transaction = await this.financesService.initTransaction(
       body.telegramId,
       body.currency,
