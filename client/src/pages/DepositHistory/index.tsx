@@ -114,7 +114,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
                   {/* Вторая и третья секции: Текст и данные */}
                   <div className="flex justify-between flex-1">
                     {/* Вторая секция: Тип, Transaction ID, tracker_id */}
-                    <div className="flex flex-col justify-center">
+                    <div className="flex flex-col justify-center gap-1">
                       <span
                         style={{
                           fontWeight: 500,
@@ -157,7 +157,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
                     </div>
 
                     {/* Третья секция: Сумма, статус, дата */}
-                    <div className="flex flex-col justify-center items-end">
+                    <div className="flex flex-col justify-center items-end gap-1">
                       <span
                         style={{
                           fontWeight: 700,
