@@ -27,7 +27,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
 
   return (
     <StyledContainer 
-      className="mx-auto mt-6 w-[90vw] h-[108px]"
+      className="mx-auto mt-6 w-[95vw] h-[108px]"
       contentClassName="w-full h-full flex justify-between items-center p-4"
     >
       <div className="flex flex-col items-center">

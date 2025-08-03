@@ -13,7 +13,7 @@ type ButtonGroupProps = {
 export function ButtonGroup({ onMoreClick, onComingSoonClick, onCreateRoomClick }: ButtonGroupProps) {
   const { t } = useTranslation('common');
   return (
-    <div className="flex items-center gap-2 mx-auto mt-6 w-[90vw]">
+    <div className="flex items-center gap-2 mx-auto mt-6 w-[95vw]">
       <Button layout="vertical" icon={createIcon} className="flex-1 h-[57px]" onClick={onCreateRoomClick}>{t('create')}</Button>
       <Button layout="vertical" icon={tournamentsIcon} className="flex-1 h-[57px]" onClick={onComingSoonClick}>{t('tournaments')}</Button>
       <Button layout="vertical" icon={moreIcon} onClick={onMoreClick} className="flex-1 h-[57px]" >{t('more')}</Button>

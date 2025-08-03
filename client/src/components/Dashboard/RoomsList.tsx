@@ -50,7 +50,7 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsList
   const paginatedRooms = filteredRooms.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-4 mx-auto w-[90vw]">
+    <div className="space-y-4 mx-auto w-[95vw]">
       <p className="text-white text-center mb-2" style={{ fontWeight: 600 }}>{t('join_game_now')}</p>
       {paginatedRooms.length > 0 ? (
         paginatedRooms.map((room) => (
