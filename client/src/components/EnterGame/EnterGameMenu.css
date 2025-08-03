@@ -28,7 +28,6 @@
   background-color: transparent;
   border: none;
   color: white;
-  justify-content: center;
 }
 
 .menu-button:not(:last-child) {
@@ -41,6 +40,8 @@
   letter-spacing: -0.011em;
   margin-left: 10px;
   color: #FFFFFF;
+  flex-grow: 1;
+  text-align: center;
 }
 
 .divider {

@@ -52,7 +52,7 @@ export function ConfirmDeposit({ address, currency, trackerId }: DepositProps) {
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
       {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
-      <div className="w-full max-w-[336px]">
+      <div className="w-[90vw]">
         <h2 className="text-lg font-semibold text-white mb-2 flex items-center text-left">
           Пополнение с {currency} <img src={tetherIcon} alt={currency} className="w-6 h-6 ml-2" />
         </h2>
@@ -68,7 +68,7 @@ export function ConfirmDeposit({ address, currency, trackerId }: DepositProps) {
       </div>
 
       {/* Контейнер с адресом и trackerId */}
-      <div className="bg-black bg-opacity-30 rounded-lg p-4 w-full max-w-[336px] flex flex-col items-center mb-4">
+      <div className="bg-black bg-opacity-30 rounded-lg p-4 w-[90vw] flex flex-col items-center mb-4">
         <Button 
           variant="secondary" 
           size="sm" 
@@ -105,13 +105,13 @@ export function ConfirmDeposit({ address, currency, trackerId }: DepositProps) {
         icon={copyIcon}
         iconPosition="left"
         onClick={handleCopyAddress}
-        className="w-full max-w-[336px]"
+        className="w-[90vw]"
       >
         Скопировать адрес
       </YellowButton>
 
       {/* Минимальная сумма и комиссия */}
-      <div className="w-full max-w-[336px] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
+      <div className="w-[90vw] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
         <div className="flex justify-between">
           <span className="text-left">Минимальная сумма:</span>
           <span className="text-right">5$ USDT</span>

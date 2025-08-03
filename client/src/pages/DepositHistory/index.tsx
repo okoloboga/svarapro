@@ -72,7 +72,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
-      <div className="w-full max-w-[336px] mx-auto flex flex-col items-center">
+      <div className="w-[90vw] mx-auto flex flex-col items-center">
         {/* Заголовок и кнопка "Назад" */}
         <div className="w-full flex justify-between items-center mb-4">
           <h2

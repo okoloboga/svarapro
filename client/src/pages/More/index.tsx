@@ -80,7 +80,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           </div>
         </>
       )}
-      <div className={`w-full max-w-[336px] mx-auto flex flex-col items-center space-y-3 ${showLanguageSelector ? 'pointer-events-none select-none filter blur-sm' : ''}`}>
+      <div className={`w-[90vw] mx-auto flex flex-col items-center space-y-3 ${showLanguageSelector ? 'pointer-events-none select-none filter blur-sm' : ''}`}>
         <div className="relative w-full">
           <Button
             variant="secondary"
