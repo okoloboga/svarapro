@@ -21,7 +21,12 @@ type DepositHistoryProps = {
   userId: string;
 };
 
-// Функция форматирования даты в формат "16 Sep 2023 11:21 AM"
+const truncateTrackerId = (id: string) => {
+  if (id.length <= 11) {
+    return id;
+  }
+  return `${id.slice(0, 4)}...${id.slice(-4)}`;
+};
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const options: Intl.DateTimeFormatOptions = {
@@ -92,117 +97,118 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
             <div className="text-white/60 text-center">{t('no_transactions_found')}</div>
           ) : (
             transactions.map((transaction, index) => (
-              <div key={transaction.tracker_id} className="w-[320px] h-[56px] flex items-center">
-                {/* Первая секция: Иконка */}
-                <div
-                  className="w-[52px] h-[52px] rounded-lg flex items-center justify-center mr-3"
-                  style={{ backgroundColor: '#35333B' }}
-                >
-                  <img
-                    src={transaction.currency === 'USDTTON' ? tetherIcon : tonIcon}
-                    alt={transaction.currency}
-                    className="w-[32px] h-[32px]"
-                  />
-                </div>
-
-                {/* Вторая и третья секции: Текст и данные */}
-                <div className="flex justify-between flex-1">
-                  {/* Вторая секция: Тип, Transaction ID, tracker_id */}
-                  <div className="flex flex-col justify-center">
-                    <span
-                      style={{
-                        fontWeight: 500,
-                        fontStyle: 'normal',
-                        fontSize: '14px',
-                        lineHeight: '150%',
-                        letterSpacing: '-1.1%',
-                        verticalAlign: 'middle',
-                        color: '#FFFFFF',
-                      }}
-                    >
-                      {transaction.type === 'deposit' ? 'Пополнение' : 'Вывод'}
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: 400,
-                        fontStyle: 'normal',
-                        fontSize: '12px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        verticalAlign: 'middle',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                      }}
-                    >
-                      Transaction ID
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: 400,
-                        fontStyle: 'normal',
-                        fontSize: '12px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        verticalAlign: 'middle',
-                        color: '#FFFFFF',
-                      }}
-                    >
-                      {transaction.tracker_id}
-                    </span>
+              <React.Fragment key={transaction.tracker_id}>
+                <div className="w-[320px] h-[56px] flex items-center">
+                  {/* Первая секция: Иконка */}
+                  <div
+                    className="w-[52px] h-[52px] rounded-lg flex items-center justify-center mr-3"
+                    style={{ backgroundColor: '#35333B' }}
+                  >
+                    <img
+                      src={transaction.currency === 'USDTTON' ? tetherIcon : tonIcon}
+                      alt={transaction.currency}
+                      className="w-[32px] h-[32px]"
+                    />
                   </div>
 
-                  {/* Третья секция: Сумма, статус, дата */}
-                  <div className="flex flex-col justify-center items-end">
-                    <span
-                      style={{
-                        fontWeight: 700,
-                        fontStyle: 'normal',
-                        fontSize: '16px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        textAlign: 'right',
-                        verticalAlign: 'middle',
-                        color: '#FFFFFF',
-                      }}
-                    >
-                      ${transaction.amount}
-                    </span>
-                    <span
-                      className={
-                        transaction.status === 'canceled'
-                          ? 'text-red-500'
-                          : transaction.status === 'pending'
-                          ? 'text-orange-500'
-                          : 'text-green-500'
-                      }
-                      style={{
-                        fontWeight: 400,
-                        fontStyle: 'normal',
-                        fontSize: '12px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        textAlign: 'right',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      {transaction.status}
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: 400,
-                        fontStyle: 'normal',
-                        fontSize: '12px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        textAlign: 'right',
-                        verticalAlign: 'middle',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                      }}
-                    >
-                      {formatDate(transaction.createdAt)}
-                    </span>
+                  {/* Вторая и третья секции: Текст и данные */}
+                  <div className="flex justify-between flex-1">
+                    {/* Вторая секция: Тип, Transaction ID, tracker_id */}
+                    <div className="flex flex-col justify-center">
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          fontStyle: 'normal',
+                          fontSize: '14px',
+                          lineHeight: '150%',
+                          letterSpacing: '-1.1%',
+                          verticalAlign: 'middle',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        {transaction.type === 'deposit' ? 'Пополнение' : 'Вывод'}
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          fontStyle: 'normal',
+                          fontSize: '12px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          verticalAlign: 'middle',
+                          color: 'rgba(255, 255, 255, 0.6)',
+                        }}
+                      >
+                        Transaction ID
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          fontStyle: 'normal',
+                          fontSize: '12px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          verticalAlign: 'middle',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        {truncateTrackerId(transaction.tracker_id)}
+                      </span>
+                    </div>
+
+                    {/* Третья секция: Сумма, статус, дата */}
+                    <div className="flex flex-col justify-center items-end">
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          fontStyle: 'normal',
+                          fontSize: '16px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          textAlign: 'right',
+                          verticalAlign: 'middle',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        ${transaction.amount}
+                      </span>
+                      <span
+                        className={
+                          transaction.status === 'canceled'
+                            ? 'text-red-500'
+                            : transaction.status === 'pending'
+                            ? 'text-orange-500'
+                            : 'text-green-500'
+                        }
+                        style={{
+                          fontWeight: 400,
+                          fontStyle: 'normal',
+                          fontSize: '12px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          textAlign: 'right',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        {transaction.status}
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          fontStyle: 'normal',
+                          fontSize: '12px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          textAlign: 'right',
+                          verticalAlign: 'middle',
+                          color: 'rgba(255, 255, 255, 0.6)',
+                        }}
+                      >
+                        {formatDate(transaction.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
                 {/* Прерывистая линия (кроме последней транзакции) */}
                 {index < transactions.length - 1 && (
                   <hr
@@ -210,7 +216,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
                     style={{ borderWidth: '1px', borderStyle: 'dashed', borderImage: '2 5' }}
                   />
                 )}
-              </div>
+              </React.Fragment>
             ))
           )}
         </div>
