@@ -1,7 +1,7 @@
 import closeIcon from '../../assets/close.png';
 import tonIcon from '../../assets/ton.png';
 import tetherIcon from '../../assets/tetherRound.png';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiService } from '../../services/api/api';
 import { useTranslation } from 'react-i18next';
 
