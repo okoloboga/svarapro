@@ -165,5 +165,8 @@
   "all_rights_reserved": "Все права защищены.",
   "create_room": "Создать комнату",
   "create_private_room": "Создать закрытую комнату",
-  "join_room": "Подключиться к комнате"
+  "join_room": "Подключиться к комнате",
+  "min_stake": "Мин. ставка",
+  "password_for_entry": "Пароль для входа",
+  "come_up_with_a_password": "Придумайте пароль"
 }

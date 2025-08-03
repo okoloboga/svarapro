@@ -28,7 +28,7 @@
   background-color: transparent;
   border: none;
   color: white;
-  text-align: left;
+  justify-content: center;
 }
 
 .menu-button:not(:last-child) {
