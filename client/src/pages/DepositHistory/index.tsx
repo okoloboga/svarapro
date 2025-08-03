@@ -22,10 +22,10 @@ type DepositHistoryProps = {
 };
 
 const truncateTrackerId = (id: string) => {
-  if (id.length <= 11) {
+  if (id.length <= 15) {
     return id;
   }
-  return `${id.slice(0, 4)}...${id.slice(-4)}`;
+  return `${id.slice(0, 6)}...${id.slice(-6)}`;
 };
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
