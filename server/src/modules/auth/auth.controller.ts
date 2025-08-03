@@ -8,6 +8,7 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
+    console.log('Request body:', loginDto);
     if (!loginDto.initData.includes('hash=')) {
       throw new BadRequestException('Invalid initData format');
     }
