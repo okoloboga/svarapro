@@ -7,15 +7,16 @@ import { useTranslation } from 'react-i18next';
 type ButtonGroupProps = {
   onMoreClick: () => void;
   onComingSoonClick: () => void;
+  onCreateRoomClick: () => void;
 };
 
-export function ButtonGroup({ onMoreClick, onComingSoonClick }: ButtonGroupProps) {
+export function ButtonGroup({ onMoreClick, onComingSoonClick, onCreateRoomClick }: ButtonGroupProps) {
   const { t } = useTranslation('common');
   return (
     <div className="flex items-center gap-2 mx-auto mt-6 w-[336px]">
-      <Button layout="vertical" icon={createIcon} className="flex-1 h-[57px]">{t('create')}</Button>
+      <Button layout="vertical" icon={createIcon} className="flex-1 h-[57px]" onClick={onCreateRoomClick}>{t('create')}</Button>
       <Button layout="vertical" icon={tournamentsIcon} className="flex-1 h-[57px]" onClick={onComingSoonClick}>{t('tournaments')}</Button>
-      <Button layout="vertical" icon={moreIcon} onClick={onMoreClick} className="flex-1 h-[57px]">{t('more')}</Button>
+      <Button layout="vertical" icon={moreIcon} onClick={onMoreClick} className="flex-1 h-[57px]" >{t('more')}</Button>
     </div>
   );
 }

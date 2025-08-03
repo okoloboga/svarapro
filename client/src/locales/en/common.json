@@ -162,5 +162,8 @@
   "select_currency": "Select currency",
   "show_only": "Show only",
   "no_transactions_found": "No transactions found",
-  "all_rights_reserved": "All rights reserved."
+  "all_rights_reserved": "All rights reserved.",
+  "create_room": "Create room",
+  "create_private_room": "Create private room",
+  "join_room": "Join room"
 }

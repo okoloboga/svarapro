@@ -7,6 +7,10 @@ import { ButtonGroup } from '../../components/Dashboard/ButtonGroup';
 import { Footer } from '../../components/Footer';
 import { AddWalletWindow } from '../../components/AddWalletWindow';
 import { Notification } from '../../components/Notification';
+import EnterGameMenu from '../../components/EnterGame/EnterGameMenu';
+import { CreatePublic } from '../../components/EnterGame/CreatePublic';
+import { CreatePrivate } from '../../components/EnterGame/CreatePrivate';
+import { ConnectRoom } from '../../components/EnterGame/ConnectRoom';
 
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
 
@@ -29,6 +33,8 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
   const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
   const [notification, setNotification] = useState<'comingSoon' | null>(null);
+  const [isEnterGameMenuVisible, setIsEnterGameMenuVisible] = useState(false);
+  const [activeModal, setActiveModal] = useState<'createPublic' | 'createPrivate' | 'connectRoom' | null>(null);
 
   const handleWithdrawClick = () => {
     if (walletAddress) {
@@ -42,11 +48,28 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
     setNotification('comingSoon');
   };
 
+  const handleCreateRoomClick = () => {
+    setIsEnterGameMenuVisible(true);
+  };
+
+  const handleCloseEnterGameMenu = () => {
+    setIsEnterGameMenuVisible(false);
+  };
+
+  const openModal = (modal: 'createPublic' | 'createPrivate' | 'connectRoom' | 'enterGameMenu') => {
+    setActiveModal(modal);
+    setIsEnterGameMenuVisible(false);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+  };
+
   return (
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
         <Header user={userData} balance={balance} onWithdrawClick={handleWithdrawClick} setCurrentPage={setCurrentPage} />
-        <ButtonGroup onMoreClick={onMoreClick} onComingSoonClick={handleComingSoon} />
+        <ButtonGroup onMoreClick={onMoreClick} onComingSoonClick={handleComingSoon} onCreateRoomClick={handleCreateRoomClick} />
         <Filter
           onSearchChange={setSearchId}
           onAvailabilityChange={setIsAvailableFilter}
@@ -70,6 +93,10 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
           />
         </div>
       )}
+      {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openModal} />}
+      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openModal} />}
+      {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openModal} />}
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>
   );

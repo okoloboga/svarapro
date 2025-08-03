@@ -162,5 +162,8 @@
   "select_currency": "Выберите валюту",
   "show_only": "Отображать только",
   "no_transactions_found": "Транзакции не найдены",
-  "all_rights_reserved": "Все права защищены."
+  "all_rights_reserved": "Все права защищены.",
+  "create_room": "Создать комнату",
+  "create_private_room": "Создать закрытую комнату",
+  "join_room": "Подключиться к комнате"
 }
