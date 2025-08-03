@@ -7,7 +7,7 @@ import completeIcon from '../../assets/completeSmallGreen.png';
 
 type CreatePrivateProps = {
   onClose: () => void;
-  openModal: (modal: 'enterGameMenu') => void;
+  openModal: () => void;
 };
 
 export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal }) => {
@@ -35,7 +35,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
 
   const handleCancel = () => {
     onClose();
-    openModal('enterGameMenu');
+    openModal();
   };
 
   const isFormValid = isPasswordValid && isStakeValid;

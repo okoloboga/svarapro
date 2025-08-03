@@ -56,9 +56,14 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
     setIsEnterGameMenuVisible(false);
   };
 
-  const openModal = (modal: 'createPublic' | 'createPrivate' | 'connectRoom' | 'enterGameMenu') => {
+  const openModal = (modal: 'createPublic' | 'createPrivate' | 'connectRoom') => {
     setActiveModal(modal);
     setIsEnterGameMenuVisible(false);
+  };
+
+  const openEnterGameMenu = () => {
+    setActiveModal(null);
+    setIsEnterGameMenuVisible(true);
   };
 
   const closeModal = () => {
@@ -94,9 +99,9 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
         </div>
       )}
       {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
-      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openModal} />}
-      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openModal} />}
-      {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openModal} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} />}
+      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} />}
+      {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} />}
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>
   );

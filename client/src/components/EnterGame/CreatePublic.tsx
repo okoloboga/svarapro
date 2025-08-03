@@ -6,7 +6,7 @@ import completeIcon from '../../assets/completeSmallGreen.png';
 
 type CreatePublicProps = {
   onClose: () => void;
-  openModal: (modal: 'enterGameMenu') => void;
+  openModal: () => void;
 };
 
 export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal }) => {
@@ -24,7 +24,7 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal }
 
   const handleCancel = () => {
     onClose();
-    openModal('enterGameMenu');
+    openModal();
   };
 
   return (

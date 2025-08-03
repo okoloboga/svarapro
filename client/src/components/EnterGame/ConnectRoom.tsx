@@ -6,7 +6,7 @@ import completeIcon from '../../assets/completeSmallGreen.png';
 
 type ConnectRoomProps = {
   onClose: () => void;
-  openModal: (modal: 'enterGameMenu') => void;
+  openModal: () => void;
 };
 
 export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal }) => {
@@ -24,7 +24,7 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal }) 
 
   const handleCancel = () => {
     onClose();
-    openModal('enterGameMenu');
+    openModal();
   };
 
   return (
