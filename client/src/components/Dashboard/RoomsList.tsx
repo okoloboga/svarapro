@@ -17,6 +17,7 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
       socket.emit('request_rooms'); // Запрашиваем начальный список комнат
 
       socket.on('room_update', (data: { roomId: string; room: Room }) => {
+        console.log('Received room update:', data);
         setRooms((prevRooms) => {
           const updatedRooms = prevRooms.filter((r) => r.roomId !== data.roomId);
           return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
