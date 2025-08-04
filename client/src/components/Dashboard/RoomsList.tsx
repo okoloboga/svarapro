@@ -14,18 +14,28 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
 
   useEffect(() => {
     if (socket) {
-      socket.emit('request_rooms'); // Запрашиваем начальный список комнат
+      const handleInitialRooms = (data: { action: string; rooms?: Room[] }) => {
+        if (data.action === 'initial' && data.rooms) {
+          console.log('Received initial rooms:', data.rooms);
+          setRooms(data.rooms);
+        }
+      };
 
-      socket.on('room_update', (data: { roomId: string; room: Room }) => {
+      const handleRoomUpdate = (data: { roomId: string; room: Room }) => {
         console.log('Received room update:', data);
         setRooms((prevRooms) => {
           const updatedRooms = prevRooms.filter((r) => r.roomId !== data.roomId);
           return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
         });
-      });
- 
+      };
+
+      socket.on('rooms', handleInitialRooms);
+      socket.on('room_update', handleRoomUpdate);
+      socket.emit('request_rooms');
+
       return () => {
-        socket.off('rooms');
+        socket.off('rooms', handleInitialRooms);
+        socket.off('room_update', handleRoomUpdate);
       };
     }
   }, [socket]);
