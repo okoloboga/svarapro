@@ -15,7 +15,9 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   ) {}
 
   afterInit(server: Server) {
+    console.log('Subscribing to room updates');
     this.redisService.subscribeToRoomUpdates((roomId, room) => {
+      console.log('Received room update from Redis:', roomId, room);
       this.server.emit('room_update', { roomId, room });
     });
   }
