@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: nginx/Dockerfile
       cache_from:
-        - localhost:5000/nginx:1.27-alpine
+        - nginx:1.27-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -26,7 +26,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
       cache_from:
-        - localhost:5000/node:20.17.0-alpine
+        - node:20.17.0-alpine
     env_file:
       - ./server/.env
     environment:
@@ -46,7 +46,7 @@ services:
       context: ./bot
       dockerfile: Dockerfile
       cache_from:
-        - localhost:5000/node:20.17.0-alpine
+        - node:20.17.0-alpine
     env_file:
       - ./bot/.env
     depends_on:
