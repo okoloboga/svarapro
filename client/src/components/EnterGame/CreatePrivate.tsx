@@ -38,8 +38,8 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     setIsCreating(true);
     setError(null);
     try {
-      const minBet = parseFloat(stake);
-      const room = await apiService.createRoom(minBet, 'private', password);
+      const bet = parseFloat(stake);
+      const room = await apiService.createRoom(bet, 'private', password);
       onClose();
       setCurrentPage('gameRoom', { roomId: room.roomId });
     } catch (error: unknown) {
