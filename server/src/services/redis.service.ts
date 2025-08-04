@@ -46,4 +46,15 @@ export class RedisService {
     const exists = await this.client.sismember('active_rooms', roomId);
     return !exists;
   }
-}
+
+  async subscribeToRoomUpdates(callback: (roomId: string, room: Room) => void): Promise<void> {
+    const subClient = this.client.duplicate();
+    await subClient.subscribe('rooms');
+
+    subClient.on('message', (channel, message) => {
+      if (channel === 'rooms') {
+        const { room } = JSON.parse(message);
+        callback(room.roomId, room);
+      }
+    });
+  }
