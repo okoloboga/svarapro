@@ -7,9 +7,9 @@ export class TelegramService {
   private readonly telegramApiUrl: string;
 
   constructor() {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botToken = process.env.BOT_TOKEN;
     if (!botToken) {
-      throw new InternalServerErrorException('TELEGRAM_BOT_TOKEN is not defined in .env');
+      throw new InternalServerErrorException('BOT_TOKEN is not defined in .env');
     }
     this.botToken = botToken;
     this.telegramApiUrl = `https://api.telegram.org/bot${this.botToken}`;

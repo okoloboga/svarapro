@@ -23,7 +23,7 @@ import * as Joi from 'joi';
           .default('development'),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),
-        TELEGRAM_BOT_TOKEN: Joi.string().required(),
+        BOT_TOKEN: Joi.string().required(),
       }).unknown(true),
     }),
     TypeOrmModule.forRootAsync({
