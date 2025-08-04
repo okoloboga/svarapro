@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Room } from '../../types/game';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://svarapro.com/api/v1',
@@ -93,5 +94,28 @@ export const apiService = {
     await api.post('/users/wallet-address', { walletAddress }, {
       headers: { Authorization: `Bearer ${token}` },
     });
+  },
+
+  async createRoom(minBet: number, type: 'public' | 'private', password?: string): Promise<Room> {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token available');
+    const response = await api.post('/rooms', { minBet, type, password }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  async getRooms(): Promise<Room[]> {
+    const response = await api.get('/rooms');
+    return response.data;
+  },
+
+  async joinRoom(roomId: string, telegramId: string): Promise<Room> {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token available');
+    const response = await api.post(`/rooms/${roomId}/join`, { telegramId }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
   },
 };

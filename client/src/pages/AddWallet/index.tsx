@@ -44,7 +44,7 @@ export function AddWallet() {
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
-      <div className="w-[95vw]">
+      <div className="w-[93vw]">
         <h2 className="text-xl font-semibold text-white mb-2 flex items-center text-left leading-tight tracking-tighter">
           {t('add_wallet_title')} <img src={tetherIcon} alt="USDT-TON" className="w-6 h-6 ml-2" />
         </h2>
@@ -53,7 +53,7 @@ export function AddWallet() {
         </p>
       </div>
 
-      <div className="bg-black bg-opacity-30 rounded-lg px-4 w-[95vw] flex items-center mb-4 h-[53px]">
+      <div className="bg-black bg-opacity-30 rounded-lg px-4 w-[93vw] flex items-center mb-4 h-[53px]">
         <input
           type="text"
           value={address}
@@ -64,7 +64,7 @@ export function AddWallet() {
         />
       </div>
 
-      <div className="bg-red-900 bg-opacity-30 rounded-lg p-3 mb-4 w-[95vw] flex items-center text-left">
+      <div className="bg-red-900 bg-opacity-30 rounded-lg p-3 mb-4 w-[93vw] flex items-center text-left">
         <img src={warningIcon} alt="Warning" className="w-6 h-6 mr-2" />
         <span className="text-white font-inter text-xs">
           {t('memo_warning')}
@@ -74,7 +74,7 @@ export function AddWallet() {
       <YellowButton
         size="lg"
         onClick={handleAddWallet}
-        className="w-[95vw]"
+        className="w-[93vw]"
         isActive={address.length === 48}
       >
         {t('add')}

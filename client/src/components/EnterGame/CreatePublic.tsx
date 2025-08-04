@@ -3,22 +3,41 @@ import { useTranslation } from 'react-i18next';
 import dollarIcon from '../../assets/dollar.png';
 import incompleteIcon from '../../assets/completeSmallGrey.png';
 import completeIcon from '../../assets/completeSmallGreen.png';
+import { apiService } from '../../services/api/api';
 
 type CreatePublicProps = {
   onClose: () => void;
   openModal: () => void;
+  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
 };
 
-export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal }) => {
+export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d*$/.test(value)) {
       setInputValue(value);
-      setIsValid(!!value);
+      const numValue = parseFloat(value);
+      setIsValid(!isNaN(numValue) && numValue > 0);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!isValid) return;
+    setIsCreating(true);
+    try {
+      const minBet = parseFloat(inputValue);
+      const room = await apiService.createRoom(minBet, 'public');
+      onClose();
+      setCurrentPage('gameRoom', { roomId: room.roomId });
+    } catch (error) {
+      console.error('Failed to create room:', error);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -38,14 +57,15 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal }
             value={inputValue}
             onChange={handleInputChange}
             placeholder={t('min_stake')}
-                        className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-12 rounded-lg pl-10 pr-10"
+            className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-12 rounded-lg pl-10 pr-10"
           />
           <img src={isValid ? completeIcon : incompleteIcon} alt="complete" className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6" />
         </div>
         <div className="absolute bottom-0 left-0 w-full flex">
           <button 
             className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-r border-white border-opacity-10"
-            onClick={() => { /* Handle Create */ }}
+            onClick={handleCreate}
+            disabled={isCreating || !isValid}
           >
             {t('create')}
           </button>

@@ -10,6 +10,7 @@ import { ConfirmWithdraw } from './pages/ConfirmWithdraw';
 import { AddWallet } from './pages/AddWallet';
 import { More } from './pages/More';
 import { DepositHistory } from './pages/DepositHistory';
+import { GameRoom } from './pages/GameRoom'; // Добавляем GameRoom
 import { PopSuccess } from './components/PopSuccess';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
@@ -17,7 +18,6 @@ import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';
 
-// Определяем интерфейсы
 interface LaunchParams {
   initData?: string;
   tgWebAppData?: Record<string, string | Record<string, unknown>>;
@@ -36,6 +36,7 @@ type PageData = {
   address?: string;
   trackerId?: string;
   currency?: string;
+  roomId?: string; // Добавляем roomId для GameRoom
   [key: string]: unknown;
 };
 
@@ -45,7 +46,6 @@ type UserData = {
   photo_url?: string;
 };
 
-// Добавляем интерфейс для профиля
 interface UserProfile {
   id?: number;
   telegramId?: string;
@@ -55,7 +55,7 @@ interface UserProfile {
   walletAddress?: string | null;
 }
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
 
 function App() {
   console.log('Launch App');
@@ -69,12 +69,11 @@ function App() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null); // Для PopSuccess
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Объявляем handleBack ДО использования
   const handleBack = useCallback(() => {
     console.log('Handling back from page:', currentPage);
-    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory') {
+    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory' || currentPage === 'gameRoom') {
       setCurrentPage('dashboard');
     } else if (currentPage === 'confirmDeposit') {
       setCurrentPage('deposit');
@@ -142,7 +141,6 @@ function App() {
             );
             setWalletAddress(profile.walletAddress || null);
 
-            // Подключаемся к WebSocket только если еще не подключены
             if (!socket) {
               const socketInstance = io('https://svarapro.com', {
                 transports: ['websocket'],
@@ -198,7 +196,6 @@ function App() {
 
     initialize();
 
-    // Очистка WebSocket
     return () => {
       if (socket) {
         socket.disconnect();
@@ -233,12 +230,15 @@ function App() {
         <AddWallet />
       ) : currentPage === 'depositHistory' ? (
         <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
+      ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
+        <GameRoom roomId={pageData.roomId} socket={socket} balance={balance} />
       ) : (
         <Dashboard
           onMoreClick={() => handleSetCurrentPage('more')}
           setCurrentPage={handleSetCurrentPage}
           balance={balance}
           walletAddress={walletAddress}
+          socket={socket}
         />
       )}
       {successMessage && (

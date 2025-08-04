@@ -4,22 +4,26 @@ import lockIcon from '../../assets/lock.png';
 import dollarIcon from '../../assets/dollar.png';
 import incompleteIcon from '../../assets/completeSmallGrey.png';
 import completeIcon from '../../assets/completeSmallGreen.png';
+import { apiService } from '../../services/api/api';
 
 type CreatePrivateProps = {
   onClose: () => void;
   openModal: () => void;
+  setCurrentPage: (page: string, data?: any) => void;
 };
 
-export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal }) => {
+export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');
   const [password, setPassword] = useState('');
   const [stake, setStake] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [isStakeValid, setIsStakeValid] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^[a-zA-Z0-9]*$/.test(value)) {
+    if (/^\d*$/.test(value)) {
       setPassword(value);
       setIsPasswordValid(value.length >= 6);
     }
@@ -29,7 +33,24 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     const value = e.target.value;
     if (/^\d*\.?\d*$/.test(value)) {
       setStake(value);
-      setIsStakeValid(!!value);
+      const numValue = parseFloat(value);
+      setIsStakeValid(!isNaN(numValue) && numValue > 0);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!isPasswordValid || !isStakeValid) return;
+    setIsCreating(true);
+    setError(null);
+    try {
+      const minBet = parseFloat(stake);
+      const room = await apiService.createRoom(minBet, 'private', password);
+      onClose();
+      setCurrentPage('gameRoom', { roomId: room.roomId });
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to create room');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -44,6 +65,9 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-[#47444C] w-[316px] h-[260px] rounded-lg flex flex-col items-center py-4 px-4 relative">
         <h2 className="text-white font-semibold text-lg mb-4">{t('create_private_room')}</h2>
+        {error && (
+          <p className="text-red-500 text-sm mb-2">{error}</p>
+        )}
         <div className="relative w-full mb-4">
           <img src={lockIcon} alt="lock" className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6" />
           <input
@@ -69,8 +93,8 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
         <div className="absolute bottom-0 left-0 w-full flex">
           <button 
             className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-r border-white border-opacity-10 disabled:opacity-50"
-            onClick={() => { /* Handle Create */ }}
-            disabled={!isFormValid}
+            onClick={handleCreate}
+            disabled={!isFormValid || isCreating}
           >
             {t('create')}
           </button>

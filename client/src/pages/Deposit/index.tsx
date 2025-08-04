@@ -53,7 +53,7 @@ export function Deposit({ setCurrentPage }: TopUpProps) {
         {t('select_currency')}
       </h2>
 
-      <div className="w-[95vw] flex flex-col items-start space-y-3">
+      <div className="w-[93vw] flex flex-col items-start space-y-3">
         <Button
           variant="secondary"
           fullWidth

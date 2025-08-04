@@ -38,7 +38,7 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
-      <div className="w-[95vw]">
+      <div className="w-[93vw]">
         <h2 className="text-lg font-semibold text-white mb-2 flex items-center text-left">
           {t('withdraw_title')} <img src={tetherIcon} alt="USDT-TON" className="w-6 h-6 ml-2" />
         </h2>
@@ -50,7 +50,7 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
         </div>
       </div>
 
-      <div className="bg-black bg-opacity-30 rounded-lg px-4 w-[95vw] flex items-center mb-4 h-[53px]">
+      <div className="bg-black bg-opacity-30 rounded-lg px-4 w-[93vw] flex items-center mb-4 h-[53px]">
         <span className="text-white font-inter text-[17px] opacity-60">$</span>
         <input
           type="text"
@@ -69,7 +69,7 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
         </Button>
       </div>
 
-      <div className="w-[95vw] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
+      <div className="w-[93vw] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
         <div className="flex justify-between">
           <span className="text-left">{t('min_sum')}</span>
           <span className="text-right">{minAmount} USDT</span>
@@ -84,7 +84,7 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
         size="lg"
         onClick={handleCheck}
         isActive={parseFloat(amount) >= minAmount && parseFloat(amount) <= availableAmount}
-        className="w-[95vw]"
+        className="w-[93vw]"
       >
         {t('check')}
       </YellowButton>

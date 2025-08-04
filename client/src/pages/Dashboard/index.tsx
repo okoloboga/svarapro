@@ -7,21 +7,23 @@ import { ButtonGroup } from '../../components/Dashboard/ButtonGroup';
 import { Footer } from '../../components/Footer';
 import { AddWalletWindow } from '../../components/AddWalletWindow';
 import { Notification } from '../../components/Notification';
-import EnterGameMenu from '../../components/EnterGame/EnterGameMenu';
+import { EnterGameMenu } from '../../components/EnterGame/EnterGameMenu';
 import { CreatePublic } from '../../components/EnterGame/CreatePublic';
 import { CreatePrivate } from '../../components/EnterGame/CreatePrivate';
 import { ConnectRoom } from '../../components/EnterGame/ConnectRoom';
+import { Socket } from 'socket.io-client';
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
+type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
 
 type DashboardProps = {
   onMoreClick: () => void;
-  setCurrentPage: (page: Page) => void;
+  setCurrentPage: (page: Page, data?: any) => void;
   balance: string;
   walletAddress: string | null;
+  socket: Socket | null;
 };
 
-export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress }: DashboardProps) {
+export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
   console.log('walletAddress:', walletAddress);
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
@@ -84,6 +86,8 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
           searchId={searchId}
           isAvailableFilter={isAvailableFilter}
           stakeRange={stakeRange}
+          socket={socket}
+          setCurrentPage={setCurrentPage}
         />
       </div>
       <Footer />
@@ -99,9 +103,9 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress 
         </div>
       )}
       {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
-      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} />}
-      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} />}
-      {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
+      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
+      {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>
   );

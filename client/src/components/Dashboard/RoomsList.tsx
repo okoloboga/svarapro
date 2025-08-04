@@ -1,60 +1,81 @@
 import { useState, useEffect } from 'react';
-import { Room } from './Room';
+import { Room as RoomComponent } from './Room';
 import { Button } from '../Button/Button';
 import { useTranslation } from 'react-i18next';
-
-const rooms = [
-  { id: 1, players: 2, stake: 10 },
-  { id: 2, players: 4, stake: 100 },
-  { id: 3, players: 6, stake: 500 },
-  { id: 4, players: 1, stake: 20 },
-  { id: 5, players: 3, stake: 150 },
-  { id: 6, players: 5, stake: 300 },
-  { id: 7, players: 2, stake: 50 },
-  { id: 8, players: 4, stake: 200 },
-  { id: 9, players: 6, stake: 600 },
-  { id: 10, players: 3, stake: 80 },
-  { id: 11, players: 1, stake: 30 },
-  { id: 12, players: 5, stake: 400 },
-  { id: 13, players: 2, stake: 90 },
-  { id: 14, players: 4, stake: 250 },
-  { id: 15, players: 6, stake: 700 },
-];
+import { apiService } from '../../services/api/api';
+import { Room } from '../../types/game';
+import { Socket } from 'socket.io-client';
 
 const ITEMS_PER_PAGE = 10;
 
 type RoomsListProps = {
   searchId: string;
   isAvailableFilter: boolean;
-  stakeRange: [number, number]; // Новый пропс для диапазона ставок
+  stakeRange: [number, number];
+  socket: Socket | null;
+  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
 };
 
-export function RoomsList({ searchId, isAvailableFilter, stakeRange }: RoomsListProps) {
+export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage }: RoomsListProps) {
   const { t } = useTranslation('common');
   const [currentPage, setCurrentPage] = useState(1);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
-  // Фильтрация комнат
-  const filteredRooms = rooms.filter((room) => {
-    const matchesSearch = searchId === '' || room.id.toString() === searchId;
-    const matchesAvailability = !isAvailableFilter || room.players < 6;
-    const matchesStake = room.stake >= stakeRange[0] && room.stake <= stakeRange[1]; // Включительно
-    return matchesSearch && matchesAvailability && matchesStake;
-  });
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const fetchedRooms = await apiService.getRooms();
+        setRooms(fetchedRooms);
+      } catch (error) {
+        console.error('Failed to fetch rooms:', error);
+      }
+    };
 
-  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
+    fetchRooms();
+
+    if (socket) {
+      socket.on('rooms', (data: { action: string; room: Room }) => {
+        if (data.action === 'update') {
+          setRooms((prevRooms) => {
+            const updatedRooms = prevRooms.filter((r) => r.roomId !== data.room.roomId);
+            return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
+          });
+        }
+      });
+
+      return () => {
+        socket.off('rooms');
+      };
+    }
+  }, [socket]);
+
   useEffect(() => {
     setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
   }, [searchId, isAvailableFilter, stakeRange]);
 
+  const filteredRooms = rooms.filter((room) => {
+    const matchesSearch = searchId === '' || room.roomId === searchId;
+    const matchesAvailability = !isAvailableFilter || room.players.length < room.maxPlayers;
+    const matchesStake = room.minBet >= stakeRange[0] && room.minBet <= stakeRange[1];
+    return matchesSearch && matchesAvailability && matchesStake && room.type === 'public'; // Только публичные
+  });
+
+  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedRooms = filteredRooms.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-4 mx-auto w-[95vw]">
+    <div className="space-y-4 mx-auto w-[93vw]">
       <p className="text-white text-center mb-2" style={{ fontWeight: 600 }}>{t('join_game_now')}</p>
       {paginatedRooms.length > 0 ? (
         paginatedRooms.map((room) => (
-          <Room key={room.id} {...room} />
+          <RoomComponent
+            key={room.roomId}
+            roomId={room.roomId}
+            players={room.players.length}
+            stake={room.minBet}
+            setCurrentPage={setCurrentPage}
+          />
         ))
       ) : (
         <p className="text-white text-center">{t('rooms_not_found')}</p>

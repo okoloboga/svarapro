@@ -3,9 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import * as Joi from 'joi';
 import { FinancesModule } from './modules/finances/finances.module';
+import { RoomsModule } from './modules/rooms/rooms.module';
 import { BullModule } from '@nestjs/bull';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { BullModule } from '@nestjs/bull';
     AuthModule,
     UsersModule,
     FinancesModule,
+    RoomsModule,
   ],
 })
 export class AppModule {}

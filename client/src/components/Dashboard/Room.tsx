@@ -1,15 +1,36 @@
 import { StyledContainer } from '../StyledContainer';
 import { YellowButton } from '../Button/YellowButton';
 import { useTranslation } from 'react-i18next';
+import { apiService } from '../../services/api/api';
+import { useState } from 'react';
 
 type RoomProps = {
-  id: number;
+  roomId: string;
   players: number;
   stake: number;
+  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
 };
 
-export function Room({ id, players, stake }: RoomProps) {
+export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
   const { t } = useTranslation('common');
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleJoin = async () => {
+    setIsJoining(true);
+    try {
+      const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+      if (!telegramId) {
+        throw new Error('Telegram user ID not found');
+      }
+      await apiService.joinRoom(roomId, telegramId);
+      setCurrentPage('gameRoom', { roomId });
+    } catch (error) {
+      console.error('Failed to join room:', error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return (
     <StyledContainer 
       className="w-[95vw] h-[90px] p-4 rounded-[15px]"
@@ -23,14 +44,17 @@ export function Room({ id, players, stake }: RoomProps) {
           alignItems: 'center',
         }}
       >
-        {/* Первая строка */}
         <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('room')}</p>
         <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('players')}</p>
         <p className="text-sm font-semibold text-gray-400 text-center m-0">{t('stake')}</p>
-        <YellowButton style={{ marginTop: '5px' }}>{t('enter')}</YellowButton>
-
-        {/* Вторая строка */}
-        <p className="text-base font-semibold text-white text-left m-0">№{id}</p>
+        <YellowButton 
+          style={{ marginTop: '5px' }} 
+          onClick={handleJoin}
+          disabled={isJoining}
+        >
+          {t('enter')}
+        </YellowButton>
+        <p className="text-base font-semibold text-white text-left m-0">№{roomId.slice(0, 8)}</p>
         <p className="text-base font-semibold text-center m-0">
           <span style={{ color: '#12B754' }}>{players}</span>
           <span className="text-white"> / 6</span>
@@ -56,8 +80,6 @@ export function Room({ id, players, stake }: RoomProps) {
           {t('watch')}
         </button>
       </div>
-
-      {/* Горизонтальная линия */}
       <div
         style={{
           position: 'absolute',

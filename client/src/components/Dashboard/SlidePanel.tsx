@@ -29,7 +29,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
 
   return (
     <div
-      className="shadow-lg rounded-b-lg p-2 mx-auto w-[95vw] relative"
+      className="shadow-lg rounded-b-lg p-2 mx-auto w-[93vw] relative"
       style={{
         boxShadow: '0px 5.5px 10px rgba(0, 0, 0, 0.25)',
         borderRadius: '0 0 8px 8px',

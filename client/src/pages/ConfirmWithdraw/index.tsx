@@ -39,7 +39,7 @@ export function ConfirmWithdraw({ withdrawAmount }: ConfirmWithdrawProps) {
           </p>
         </div>
       </div>
-      <div className="mt-auto pb-6 w-[95vw]">
+      <div className="mt-auto pb-6 w-[93vw]">
         <YellowButton size="lg" onClick={() => console.log('Подтвердить clicked')} className="w-full">
           Подтвердить
         </YellowButton>
