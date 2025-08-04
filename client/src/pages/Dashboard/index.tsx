@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { retrieveLaunchParams, type User } from '@telegram-apps/sdk-react';
 import { Header } from '@/components/Dashboard/Header';
 import { Filter } from '@/components/Dashboard/Filter';
@@ -11,26 +11,13 @@ import EnterGameMenu from '@/components/EnterGame/EnterGameMenu';
 import { CreatePublic } from '@/components/EnterGame/CreatePublic';
 import { CreatePrivate } from '@/components/EnterGame/CreatePrivate';
 import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
-import { Socket } from 'socket.io-client';
-import { initSocket } from '@/services/websocket';
 import { DashboardProps } from '@/types/components';
 
-export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress }: DashboardProps) {
+export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
+  console.log('Dashboard rendering, socket status:', socket ? 'connected' : 'disconnected');
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;
-  }, []);
-
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  useEffect(() => {
-    const socketInstance = initSocket();
-    setSocket(socketInstance);
-
-    return () => {
-      socketInstance.disconnect();
-      setSocket(null);
-    };
   }, []);
 
   const [searchId, setSearchId] = useState('');

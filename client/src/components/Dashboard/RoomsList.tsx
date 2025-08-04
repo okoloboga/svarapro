@@ -8,6 +8,7 @@ import { RoomsListProps } from '@/types/components';
 const ITEMS_PER_PAGE = 10;
 
 export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage }: RoomsListProps) {
+  console.log('RoomsList rendering, socket status:', socket ? 'connected' : 'disconnected');
   const { t } = useTranslation('common');
   const [currentPage, setPage] = useState(1);
   const [rooms, setRooms] = useState<Room[]>([]);
