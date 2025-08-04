@@ -45,7 +45,7 @@ import * as Joi from 'joi';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true, // Временно включено для отладки
           logging: false,
-          ssl: false,
+          autoCreateDatabase: true,
         };
       },
       inject: [ConfigService],
