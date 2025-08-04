@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, BadRequestException, UseGuards, Request } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
@@ -10,8 +10,12 @@ export class RoomsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createRoom(@Body() createRoomDto: CreateRoomDto) {
-    return this.roomsService.createRoom(createRoomDto);
+  async createRoom(@Body() createRoomDto: CreateRoomDto, @Request() req) {
+    const telegramId = req.user.telegramId; // Предполагаем, что telegramId есть в JWT
+    if (!telegramId) {
+      throw new BadRequestException('User telegramId not found');
+    }
+    return this.roomsService.createRoom(createRoomDto, telegramId);
   }
 
   @Get()

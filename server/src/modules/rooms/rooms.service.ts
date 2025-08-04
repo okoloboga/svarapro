@@ -1,12 +1,13 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Room } from './rooms.entity';
-import { RedisService } from '../services/redis.service';
+import { Room } from '../../entities/rooms.entity';
+import { RedisService } from '../../services/redis.service';
+import { TelegramService } from '../../services/telegram.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
-import { Room as RoomType } from '../types/game';
+import { Room as RoomType } from '../../types/game';
 
 @Injectable()
 export class RoomsService {
@@ -14,9 +15,10 @@ export class RoomsService {
     @InjectRepository(Room)
     private roomsRepository: Repository<Room>,
     private redisService: RedisService,
+    private telegramService: TelegramService,
   ) {}
 
-  async createRoom(createRoomDto: CreateRoomDto): Promise<RoomType> {
+  async createRoom(createRoomDto: CreateRoomDto, telegramId: string): Promise<RoomType> {
     const { minBet, type, password } = createRoomDto;
     if (minBet <= 0) {
       throw new BadRequestException('Minimum bet must be positive');
@@ -40,17 +42,28 @@ export class RoomsService {
       roomId,
       minBet,
       type,
-      players: [],
+      players: [telegramId],
       status: 'waiting',
       maxPlayers: 6,
       createdAt: new Date(),
-      ...(type === 'private' && { password }), // Сохраняем пароль для приватных комнат
+      finishedAt: undefined, 
+      ...(type === 'private' && { password }),
     };
 
     await this.redisService.setRoom(roomId, room);
     await this.redisService.addToActiveRooms(roomId);
 
-    // Публикуем обновление для WebSocket (только для публичных комнат)
+    if (type === 'private') {
+      try {
+        await this.telegramService.sendMessage(
+          telegramId,
+          `Ваша приватная комната создана! Пароль: *${password}*`,
+        );
+      } catch (error) {
+        console.error('Failed to send Telegram notification:', error);
+      }
+    }
+
     await this.redisService.publishRoomUpdate(roomId, room);
 
     return room;
@@ -61,7 +74,7 @@ export class RoomsService {
     const rooms: RoomType[] = [];
     for (const roomId of roomIds) {
       const room = await this.redisService.getRoom(roomId);
-      if (room && room.type === 'public') { // Только публичные комнаты
+      if (room && room.type === 'public') {
         rooms.push(room);
       }
     }
@@ -89,14 +102,12 @@ export class RoomsService {
 
     room.players.push(joinRoomDto.telegramId);
     await this.redisService.setRoom(roomId, room);
-
-    // Публикуем обновление
     await this.redisService.publishRoomUpdate(roomId, room);
 
     return room;
   }
 
-  async finishRoom(roomId: string): Promise<void> {
+  async finishRoom(roomId: string, winner?: string): Promise<void> {
     const room = await this.redisService.getRoom(roomId);
     if (!room) {
       throw new BadRequestException('Room not found');
@@ -112,16 +123,13 @@ export class RoomsService {
       minBet: room.minBet,
       type: room.type,
       players: room.players,
-      status: 'finished',
       createdAt: room.createdAt,
       finishedAt: new Date(),
+      winner, // Сохраняем победителя
     });
     await this.roomsRepository.save(roomEntity);
 
-    // Удаляем из Redis
     await this.redisService.removeRoom(roomId);
-
-    // Публикуем обновление
     await this.redisService.publishRoomUpdate(roomId, room);
   }
 }

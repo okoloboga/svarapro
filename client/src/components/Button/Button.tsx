@@ -1,22 +1,5 @@
-import React from 'react';
-import { StyledContainer } from '../StyledContainer';
-
-type ButtonProps = {
-  children: React.ReactNode;
-  onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'tertiary';
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-  icon?: string; // Путь к левой иконке
-  iconPosition?: 'left' | 'right';
-  layout?: 'horizontal' | 'vertical';
-  iconClassName?: string;
-  isActive?: boolean;
-  justify?: 'start' | 'center' | 'end';
-  rightIcon?: string; // Путь к правой иконке, всегда в крайнем правом углу
-  rightText?: string;
-  rightContentClassName?: string;
-} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+import { StyledContainer } from '@/components/StyledContainer';
+import { ButtonProps } from '@/types/components';
 
 export function Button({
   children,

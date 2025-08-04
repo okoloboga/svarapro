@@ -1,15 +1,9 @@
-import completeIcon from '../../assets/complete.png';
-import errorIcon from '../../assets/error.png';
-import cupIcon from '../../assets/cup.png';
+import completeIcon from '@/assets/complete.png';
+import errorIcon from '@/assets/error.png';
+import cupIcon from '@/assets/cup.png';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-
-type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon';
-
-type NotificationProps = {
-  type: NotificationType | null;
-  onClose: () => void;
-};
+import { NotificationProps } from '@/types/components';
 
 const notificationContent = {
   invalidAddress: {

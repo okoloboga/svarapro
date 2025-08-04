@@ -1,11 +1,7 @@
 import './AddWalletWindow.css';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-
-type AddWalletWindowProps = {
-  onClose: () => void;
-  onAdd: () => void;
-};
+import { AddWalletWindowProps } from '@/types/components';
 
 export function AddWalletWindow({ onClose, onAdd }: AddWalletWindowProps) {
   const { t } = useTranslation('common');

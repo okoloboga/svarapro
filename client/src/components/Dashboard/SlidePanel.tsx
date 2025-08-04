@@ -2,12 +2,7 @@ import { useState } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { useTranslation } from 'react-i18next';
-
-type SlidePanelProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onRangeChange: (range: [number, number]) => void;
-};
+import { SlidePanelProps } from '@/types/components';
 
 export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
   const { t } = useTranslation('common');

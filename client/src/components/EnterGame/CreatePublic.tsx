@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import dollarIcon from '../../assets/dollar.png';
-import incompleteIcon from '../../assets/completeSmallGrey.png';
-import completeIcon from '../../assets/completeSmallGreen.png';
-import { apiService } from '../../services/api/api';
-
-type CreatePublicProps = {
-  onClose: () => void;
-  openModal: () => void;
-  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
-};
+import dollarIcon from '@/assets/dollar.png';
+import incompleteIcon from '@/assets/completeSmallGrey.png';
+import completeIcon from '@/assets/completeSmallGreen.png';
+import { apiService } from '@/services/api/api';
+import { CreatePublicProps } from '@/types/components';
 
 export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');

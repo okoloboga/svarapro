@@ -15,11 +15,11 @@ export class Room {
   players: string[];
 
   @Column()
-  status: 'waiting' | 'playing' | 'finished';
-
-  @Column()
   createdAt: Date;
 
   @Column({ nullable: true })
   finishedAt?: Date;
+
+  @Column({ nullable: true })
+  winner?: string; // telegramId победителя
 }

@@ -1,14 +1,7 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Socket } from 'socket.io-client';
+import { GameRoomProps } from '@/types/components';
 
-type GameRoomProps = {
-  roomId: string;
-  socket: Socket | null;
-  balance: string;
-};
-
-export function GameRoom({ roomId, socket, balance }: GameRoomProps) {
+export function GameRoom({ roomId, balance }: GameRoomProps) {
   const { t } = useTranslation('common');
 
   return (

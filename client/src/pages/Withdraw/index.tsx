@@ -1,17 +1,10 @@
 import { useState } from 'react';
-import { Button } from '../../components/Button/Button';
-import { YellowButton } from '../../components/Button/YellowButton';
-import tetherIcon from '../../assets/tether.png';
-import warningIcon from '../../assets/warning.svg';
+import { Button } from '@/components/Button/Button';
+import { YellowButton } from '@/components/Button/YellowButton';
+import tetherIcon from '@/assets/tether.png';
+import warningIcon from '@/assets/warning.svg';
 import { useTranslation } from 'react-i18next';
-
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet';
-
-type WithdrawProps = {
-  balance: string;
-  setCurrentPage: (page: Page) => void;
-  setWithdrawAmount: (amount: string) => void;
-};
+import { WithdrawProps } from '@/types/components';
 
 export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: WithdrawProps) {
   const [amount, setAmount] = useState('');

@@ -1,33 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { retrieveLaunchParams, type User } from '@telegram-apps/sdk-react';
-import { Header } from '../../components/Dashboard/Header';
-import { Filter } from '../../components/Dashboard/Filter';
-import { RoomsList } from '../../components/Dashboard/RoomsList';
-import { ButtonGroup } from '../../components/Dashboard/ButtonGroup';
-import { Footer } from '../../components/Footer';
-import { AddWalletWindow } from '../../components/AddWalletWindow';
-import { Notification } from '../../components/Notification';
-import { EnterGameMenu } from '../../components/EnterGame/EnterGameMenu';
-import { CreatePublic } from '../../components/EnterGame/CreatePublic';
-import { CreatePrivate } from '../../components/EnterGame/CreatePrivate';
-import { ConnectRoom } from '../../components/EnterGame/ConnectRoom';
+import { Header } from '@/components/Dashboard/Header';
+import { Filter } from '@/components/Dashboard/Filter';
+import { RoomsList } from '@/components/Dashboard/RoomsList';
+import { ButtonGroup } from '@/components/Dashboard/ButtonGroup';
+import { Footer } from '@/components/Footer';
+import { AddWalletWindow } from '@/components/AddWalletWindow';
+import { Notification } from '@/components/Notification';
+import EnterGameMenu from '@/components/EnterGame/EnterGameMenu';
+import { CreatePublic } from '@/components/EnterGame/CreatePublic';
+import { CreatePrivate } from '@/components/EnterGame/CreatePrivate';
+import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
 import { Socket } from 'socket.io-client';
+import { initSocket } from '@/services/websocket';
+import { DashboardProps } from '@/types/components';
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
-
-type DashboardProps = {
-  onMoreClick: () => void;
-  setCurrentPage: (page: Page, data?: any) => void;
-  balance: string;
-  walletAddress: string | null;
-  socket: Socket | null;
-};
-
-export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
-  console.log('walletAddress:', walletAddress);
+export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress }: DashboardProps) {
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;
+  }, []);
+
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    const socketInstance = initSocket();
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+      setSocket(null);
+    };
   }, []);
 
   const [searchId, setSearchId] = useState('');

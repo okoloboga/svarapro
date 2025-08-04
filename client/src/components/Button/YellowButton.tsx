@@ -1,14 +1,5 @@
-import React from 'react';
 import { clsx } from 'clsx';
-
-type ButtonProps = {
-  children: React.ReactNode;
-  icon?: string; // Путь к изображению
-  iconPosition?: 'left' | 'right';
-  size?: 'sm' | 'lg'; // Два размера: 28px и 47px
-  onClick?: () => void;
-  isActive?: boolean; // Добавляем пропс для активности
-} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+import { ButtonProps } from '@/types/components';
 
 export function YellowButton({
   children,
@@ -20,7 +11,7 @@ export function YellowButton({
   className,
   ...rest
 }: ButtonProps) {
-  const sizeClasses = {
+  const sizeClasses: Record<string, string> = {
     sm: 'h-[28px] px-3 text-[13px]',
     lg: 'h-[47px] px-4 text-[16px]',
   };

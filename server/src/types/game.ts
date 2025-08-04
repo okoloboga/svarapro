@@ -6,5 +6,7 @@ export interface Room {
   status: 'waiting' | 'playing' | 'finished';
   maxPlayers: number;
   createdAt: Date;
-  password?: string; // Храним пароль только на бэкенде для приватных комнат
+  finishedAt?: Date;
+  password?: string;
+  winner?: string; // telegramId победителя
 }

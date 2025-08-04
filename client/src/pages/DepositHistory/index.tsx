@@ -1,25 +1,11 @@
-import closeIcon from '../../assets/close.png';
-import tonIcon from '../../assets/ton.png';
-import tetherIcon from '../../assets/tetherRound.png';
+import closeIcon from '@/assets/close.png';
+import tonIcon from '@/assets/ton.png';
+import tetherIcon from '@/assets/tetherRound.png';
 import React, { useEffect, useState } from 'react';
-import { apiService } from '../../services/api/api';
+import { apiService } from '@/services/api/api';
 import { useTranslation } from 'react-i18next';
-
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
-
-type Transaction = {
-  type: 'deposit' | 'withdraw';
-  currency: 'USDTTON' | 'TON';
-  amount: number;
-  status: 'canceled' | 'pending' | 'confirmed';
-  tracker_id: string;
-  createdAt: string;
-};
-
-type DepositHistoryProps = {
-  setCurrentPage: (page: Page) => void;
-  userId: string;
-};
+import { Transaction } from '@/types/entities';
+import { DepositHistoryProps } from '@/types/components';
 
 const truncateTrackerId = (id: string) => {
   if (id.length <= 15) {

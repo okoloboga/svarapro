@@ -1,17 +1,12 @@
 import { useState } from 'react';
-import { StyledContainer } from '../StyledContainer';
-import { Button } from '../Button/Button';
-import searchIcon from '../../assets/search.svg';
-import slideDownIcon from '../../assets/slide-down.svg';
+import { StyledContainer } from '@/components/StyledContainer';
+import { Button } from '@/components/Button/Button';
+import searchIcon from '@/assets/search.svg';
+import slideDownIcon from '@/assets/slide-down.svg';
 import { CSSTransition } from 'react-transition-group';
 import { SlidePanel } from './SlidePanel';
 import { useTranslation } from 'react-i18next';
-
-type FilterProps = {
-  onSearchChange: (searchId: string) => void;
-  onAvailabilityChange: (isAvailable: boolean) => void;
-  onRangeChange: (range: [number, number]) => void;
-};
+import { FilterProps } from '@/types/components';
 
 export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: FilterProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);

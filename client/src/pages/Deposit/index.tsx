@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { Button } from '../../components/Button/Button';
-import tetherIcon from '../../assets/tether.png';
-import tonIcon from '../../assets/ton.png';
-import rightIcon from '../../assets/right.svg';
-import { apiService } from '../../services/api/api';
-import { LoadingPage } from '../../components/LoadingPage';
+import { Button } from '@/components/Button/Button';
+import tetherIcon from '@/assets/tether.png';
+import tonIcon from '@/assets/ton.png';
+import rightIcon from '@/assets/right.svg';
+import { apiService } from '@/services/api/api';
+import { LoadingPage } from '@/components/LoadingPage';
 import { useTranslation } from 'react-i18next';
-import { ErrorAlert } from '../../components/ErrorAlert';
+import { ErrorAlert } from '@/components/ErrorAlert';
+import { DepositProps } from '@/types/components';
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
-
-type TopUpProps = {
-  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
-};
-
-export function Deposit({ setCurrentPage }: TopUpProps) {
+export function Deposit({ setCurrentPage }: DepositProps) {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,15 +1,9 @@
-import { StyledContainer } from '../StyledContainer';
-import { YellowButton } from '../Button/YellowButton';
+import { StyledContainer } from '@/components/StyledContainer';
+import { YellowButton } from '@/components/Button/YellowButton';
 import { useTranslation } from 'react-i18next';
-import { apiService } from '../../services/api/api';
+import { apiService } from '@/services/api/api';
 import { useState } from 'react';
-
-type RoomProps = {
-  roomId: string;
-  players: number;
-  stake: number;
-  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
-};
+import { RoomProps } from '@/types/components';
 
 export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
   const { t } = useTranslation('common');

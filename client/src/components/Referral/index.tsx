@@ -1,24 +1,14 @@
-import { StyledContainer } from '../StyledContainer';
-import { Button } from '../Button/Button';
-import { Refrules } from '../LongRead/refrules';
-import closeIcon from '../../assets/close.png';
-import copyIcon from '../../assets/copy.svg';
+import { StyledContainer } from '@/components/StyledContainer';
+import { Button } from '@/components/Button/Button';
+import { Refrules } from '@/components/LongRead/refrules';
+import closeIcon from '@/assets/close.png';
+import copyIcon from '@/assets/copy.svg';
 import { useEffect, useState } from 'react';
-import { apiService } from '../../services/api/api';
-import { PopSuccess } from '../PopSuccess';
+import { apiService } from '@/services/api/api';
+import { PopSuccess } from '@/components/PopSuccess';
 import { useTranslation } from 'react-i18next';
-
-type ReferralData = {
-  referralLink?: string;
-  refBalance?: string;
-  refBonus?: string;
-  referralCount?: number;
-  referrals?: { username: string | null }[];
-};
-
-type ReferralProps = {
-  onClose: () => void;
-};
+import { ReferralProps } from '@/types/components';
+import { ReferralData } from '@/types/entities';
 
 const truncateUsername = (username: string | null | undefined) => {
   if (!username) return 'N/A';

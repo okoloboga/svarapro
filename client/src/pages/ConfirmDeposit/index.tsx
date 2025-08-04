@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/Button/Button';
-import { YellowButton } from '../../components/Button/YellowButton';
-import tetherIcon from '../../assets/tether.png';
-import copyIcon from '../../assets/copy.svg';
-import qrIcon from '../../assets/qr.png';
-import slideDownIcon from '../../assets/slide-down.svg';
-import warningIcon from '../../assets/warning.svg';
+import { Button } from '@/components/Button/Button';
+import { YellowButton } from '@/components/Button/YellowButton';
+import tetherIcon from '@/assets/tether.png';
+import copyIcon from '@/assets/copy.svg';
+import qrIcon from '@/assets/qr.png';
+import slideDownIcon from '@/assets/slide-down.svg';
+import warningIcon from '@/assets/warning.svg';
 import { QRCodeCanvas } from 'qrcode.react';
-import { PopSuccess } from '../../components/PopSuccess';
+import { PopSuccess } from '@/components/PopSuccess';
+import { ConfirmDepositProps } from '@/types/components';
 
-type DepositProps = {
-  address: string;
-  currency: string;
-  trackerId: string; // Добавлено
-};
-
-export function ConfirmDeposit({ address, currency, trackerId }: DepositProps) {
+export function ConfirmDeposit({ address, currency, trackerId }: ConfirmDepositProps) {
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 минут в секундах
   const [showQR, setShowQR] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

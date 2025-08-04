@@ -1,11 +1,4 @@
-import React from 'react';
-
-type StyledContainerProps = {
-  children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-  isActive?: boolean; // Новый пропс для активного состояния
-} & React.HTMLAttributes<HTMLDivElement>;
+import { StyledContainerProps } from '@/types/components';
 
 export function StyledContainer({ 
   children, 

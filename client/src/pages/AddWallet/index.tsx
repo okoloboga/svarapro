@@ -1,19 +1,11 @@
 import { useState } from 'react';
-import { YellowButton } from '../../components/Button/YellowButton';
-import { Notification } from '../../components/Notification';
-import tetherIcon from '../../assets/tether.png';
-import warningIcon from '../../assets/warning.svg';
-import { apiService } from '../../services/api/api';
+import { YellowButton } from '@/components/Button/YellowButton';
+import { Notification } from '@/components/Notification';
+import tetherIcon from '@/assets/tether.png';
+import warningIcon from '@/assets/warning.svg';
+import { apiService } from '@/services/api/api';
 import { useTranslation } from 'react-i18next';
-
-
-type ApiError = {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-};
+import { ApiError } from '@/types/entities';
 
 export function AddWallet() {
   const [address, setAddress] = useState('');
@@ -31,7 +23,7 @@ export function AddWallet() {
       setNotification('addressAdded');
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      const errorMessage = apiError.response?.data?.message;
+      const errorMessage = typeof apiError === 'object' && apiError !== null && 'response' in apiError ? (apiError as any).response?.data?.message : null;
       if (errorMessage === 'Wallet address already in use') {
         setNotification('addressAlreadyUsed');
       } else if (errorMessage === 'Invalid TON address format') {

@@ -1,15 +1,8 @@
-import { type User } from '@telegram-apps/sdk-react';
-import { StyledContainer } from '../StyledContainer';
-import { GreenButton } from '../Button/GreenButton';
-import { RedButton } from '../Button/RedButton';
+import { StyledContainer } from '@/components/StyledContainer';
+import { GreenButton } from '@/components/Button/GreenButton';
+import { RedButton } from '@/components/Button/RedButton';
 import { useTranslation } from 'react-i18next';
-
-type HeaderProps = {
-  user?: User;
-  balance: string | number; // Обновляем тип, чтобы принимать строку или число
-  onWithdrawClick: () => void;
-  setCurrentPage: (page: 'deposit') => void;
-};
+import { HeaderProps } from '@/types/components';
 
 const truncateUsername = (username: string | undefined) => {
   if (!username) return 'N/A';

@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import lockIcon from '../../assets/lock.png';
-import dollarIcon from '../../assets/dollar.png';
-import incompleteIcon from '../../assets/completeSmallGrey.png';
-import completeIcon from '../../assets/completeSmallGreen.png';
-import { apiService } from '../../services/api/api';
-
-type CreatePrivateProps = {
-  onClose: () => void;
-  openModal: () => void;
-  setCurrentPage: (page: string, data?: any) => void;
-};
+import lockIcon from '@/assets/lock.png';
+import dollarIcon from '@/assets/dollar.png';
+import incompleteIcon from '@/assets/completeSmallGrey.png';
+import completeIcon from '@/assets/completeSmallGreen.png';
+import { apiService } from '@/services/api/api';
+import { CreatePrivateProps } from '@/types/components';
 
 export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');
@@ -47,8 +42,8 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
       const room = await apiService.createRoom(minBet, 'private', password);
       onClose();
       setCurrentPage('gameRoom', { roomId: room.roomId });
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to create room');
+    } catch (error: unknown) {
+      setError((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to create room');
     } finally {
       setIsCreating(false);
     }

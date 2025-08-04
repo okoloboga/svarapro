@@ -1,14 +1,10 @@
 import React from 'react';
 import './EnterGameMenu.css';
-import plusIcon from '../../assets/plus.png';
-import lockIcon from '../../assets/lock.png';
-import partyIcon from '../../assets/party.png';
+import plusIcon from '@/assets/plus.png';
+import lockIcon from '@/assets/lock.png';
+import partyIcon from '@/assets/party.png';
 import { useTranslation } from 'react-i18next';
-
-type EnterGameMenuProps = {
-  onClose: () => void;
-  openModal: (modal: 'createPublic' | 'createPrivate' | 'connectRoom') => void;
-};
+import { EnterGameMenuProps } from '@/types/components';
 
 const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => {
   const { t } = useTranslation('common');

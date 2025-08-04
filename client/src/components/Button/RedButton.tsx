@@ -1,9 +1,4 @@
-import React from 'react';
-
-type ButtonProps = {
-  children: React.ReactNode;
-  onClick?: () => void;
-} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+import { ButtonProps } from '@/types/components';
 
 export function RedButton({ children, onClick, ...rest }: ButtonProps) {
   return (

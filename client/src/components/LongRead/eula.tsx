@@ -1,14 +1,6 @@
-import React from 'react';
-import closeIcon from '../../assets/close.png';
+import closeIcon from '@/assets/close.png';
 import { useTranslation } from 'react-i18next';
-
-type EulaProps = {
-  onClose: () => void;
-};
-
-type TextProps = {
-  children: React.ReactNode;
-};
+import { EulaProps, TextProps } from '@/types/components';
 
 export const EulaHeader = ({ children }: TextProps) => (
   <h2 className="font-bold text-base text-white tracking-tighter leading-tight">{children}</h2>

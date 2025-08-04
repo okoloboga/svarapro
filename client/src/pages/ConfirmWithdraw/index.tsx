@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { YellowButton } from '../../components/Button/YellowButton';
-
-type ConfirmWithdrawProps = {
-  withdrawAmount: string;
-};
+import { YellowButton } from '@/components/Button/YellowButton';
+import { ConfirmWithdrawProps } from '@/types/components';
 
 export function ConfirmWithdraw({ withdrawAmount }: ConfirmWithdrawProps) {
   const [walletAddress] = useState('TQxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); // Заглушка адреса

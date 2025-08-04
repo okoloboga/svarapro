@@ -1,40 +1,28 @@
-import { Button } from '../../components/Button/Button';
-import { YellowButton } from '../../components/Button/YellowButton';
-import { StyledContainer } from '../../components/StyledContainer';
-import { Eula } from '../../components/LongRead/eula';
-import { Referral } from '../../components/Referral';
-import { Gamerules } from '../../components/LongRead/gamerules';
-import { PopSuccess } from '../../components/PopSuccess';
-import sharpIcon from '../../assets/sharp.png';
-import languageIcon from '../../assets/language.png';
-import depositHistoryIcon from '../../assets/deposit_history.png';
-import refIcon from '../../assets/ref.png';
-import channelIcon from '../../assets/channel.png';
-import licenseIcon from '../../assets/license.png';
-import helpIcon from '../../assets/help.png';
-import supportIcon from '../../assets/support.png';
-import rightIcon from '../../assets/right.svg';
-import copyIcon from '../../assets/copy.svg';
-import tetherIcon from '../../assets/tether.png';
-import slideDownIcon from '../../assets/slide-down.svg';
+import { Button } from '@/components/Button/Button';
+import { YellowButton } from '@/components/Button/YellowButton';
+import { StyledContainer } from '@/components/StyledContainer';
+import { Eula } from '@/components/LongRead/eula';
+import { Referral } from '@/components/Referral';
+import { Gamerules } from '@/components/LongRead/gamerules';
+import { PopSuccess } from '@/components/PopSuccess';
+import sharpIcon from '@/assets/sharp.png';
+import languageIcon from '@/assets/language.png';
+import depositHistoryIcon from '@/assets/deposit_history.png';
+import refIcon from '@/assets/ref.png';
+import channelIcon from '@/assets/channel.png';
+import licenseIcon from '@/assets/license.png';
+import helpIcon from '@/assets/help.png';
+import supportIcon from '@/assets/support.png';
+import rightIcon from '@/assets/right.svg';
+import copyIcon from '@/assets/copy.svg';
+import tetherIcon from '@/assets/tether.png';
+import slideDownIcon from '@/assets/slide-down.svg';
 import { useMemo, useState } from 'react';
-import LanguageSelector from '../../components/Language';
+import LanguageSelector from '@/components/Language';
 import { useTranslation } from 'react-i18next';
 import { openTelegramLink } from '@telegram-apps/sdk';
-import { useLanguage } from '../../hooks/useLanguage';
-
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory';
-
-type UserData = {
-  id?: number | string;
-  username?: string;
-  photo_url?: string;
-};
-
-type MoreProps = {
-  userData?: UserData;
-  setCurrentPage: (page: Page) => void;
-};
+import { useLanguage } from '@/hooks/useLanguage';
+import { MoreProps } from '@/types/components';
 
 const languageKeyMap: { [key: string]: string } = {
   ru: 'russian',

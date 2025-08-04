@@ -1,14 +1,9 @@
-import { Button } from '../Button/Button';
-import createIcon from '../../assets/create.png';
-import tournamentsIcon from '../../assets/tournaments.png';
-import moreIcon from '../../assets/more.png';
+import { Button } from '@/components/Button/Button';
+import createIcon from '@/assets/create.png';
+import tournamentsIcon from '@/assets/tournaments.png';
+import moreIcon from '@/assets/more.png';
 import { useTranslation } from 'react-i18next';
-
-type ButtonGroupProps = {
-  onMoreClick: () => void;
-  onComingSoonClick: () => void;
-  onCreateRoomClick: () => void;
-};
+import { ButtonGroupProps } from '@/types/components';
 
 export function ButtonGroup({ onMoreClick, onComingSoonClick, onCreateRoomClick }: ButtonGroupProps) {
   const { t } = useTranslation('common');

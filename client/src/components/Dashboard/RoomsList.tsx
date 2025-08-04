@@ -1,48 +1,32 @@
 import { useState, useEffect } from 'react';
 import { Room as RoomComponent } from './Room';
-import { Button } from '../Button/Button';
+import { Button } from '@/components/Button/Button';
 import { useTranslation } from 'react-i18next';
-import { apiService } from '../../services/api/api';
-import { Room } from '../../types/game';
-import { Socket } from 'socket.io-client';
+import { Room } from '@/types/game';
+import { RoomsListProps } from '@/types/components';
 
 const ITEMS_PER_PAGE = 10;
 
-type RoomsListProps = {
-  searchId: string;
-  isAvailableFilter: boolean;
-  stakeRange: [number, number];
-  socket: Socket | null;
-  setCurrentPage: (page: string, data?: any) => void; // Добавляем prop
-};
-
 export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage }: RoomsListProps) {
   const { t } = useTranslation('common');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setPage] = useState(1);
   const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const fetchedRooms = await apiService.getRooms();
-        setRooms(fetchedRooms);
-      } catch (error) {
-        console.error('Failed to fetch rooms:', error);
-      }
-    };
-
-    fetchRooms();
-
     if (socket) {
-      socket.on('rooms', (data: { action: string; room: Room }) => {
-        if (data.action === 'update') {
+      socket.emit('request_rooms'); // Запрашиваем начальный список комнат
+
+      socket.on('rooms', (data: { action: string; rooms?: Room[]; room?: Room }) => {
+        if (data.action === 'initial' && data.rooms) {
+          setRooms(data.rooms);
+        } else if (data.action === 'update' && data.room) {
           setRooms((prevRooms) => {
-            const updatedRooms = prevRooms.filter((r) => r.roomId !== data.room.roomId);
-            return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
+            const updatedRooms = prevRooms.filter((r) => r.roomId !== data.room!.roomId);
+            return [...updatedRooms, data.room!].sort((a, b) => a.roomId.localeCompare(b.roomId));
           });
         }
       });
-
+ 
       return () => {
         socket.off('rooms');
       };
@@ -50,7 +34,7 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
   }, [socket]);
 
   useEffect(() => {
-    setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+    setPage(1); // Сбрасываем страницу при изменении фильтров
   }, [searchId, isAvailableFilter, stakeRange]);
 
   const filteredRooms = rooms.filter((room) => {
@@ -88,7 +72,7 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
               variant="secondary"
               className="w-[32px] h-[25px] text-sm text-gray-400"
               isActive={page === currentPage}
-              onClick={() => setCurrentPage(page)}
+              onClick={() => setPage(page)}
             >
               {page}
             </Button>

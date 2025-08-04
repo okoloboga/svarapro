@@ -1,12 +1,8 @@
 import { useEffect } from 'react';
 import './PopSuccess.css';
-import completeIcon from '../../assets/complete.png';
+import completeIcon from '@/assets/complete.png';
 import { useTranslation } from 'react-i18next';
-
-type PopSuccessProps = {
-  message?: string;
-  onClose: () => void;
-};
+import { PopSuccessProps } from '@/types/components';
 
 export function PopSuccess({ message, onClose }: PopSuccessProps) {
   const { t } = useTranslation('common');

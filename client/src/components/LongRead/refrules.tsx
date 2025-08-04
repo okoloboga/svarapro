@@ -1,15 +1,7 @@
-import React from 'react';
-import closeIcon from '../../assets/close.png';
-import referralsIcon from '../../assets/referrals.svg';
+import closeIcon from '@/assets/close.png';
+import referralsIcon from '@/assets/referrals.svg';
 import { useTranslation } from 'react-i18next';
-
-type RefrulesProps = {
-  onClose: () => void;
-};
-
-type TextProps = {
-  children: React.ReactNode;
-};
+import { RefrulesProps, TextProps } from '@/types/components';
 
 export const RefrulesHeader = ({ children }: TextProps) => (
   <h2 className="font-bold text-base text-white tracking-tighter leading-tight">{children}</h2>

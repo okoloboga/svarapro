@@ -5,5 +5,8 @@ export interface Room {
   players: string[];
   status: 'waiting' | 'playing' | 'finished';
   maxPlayers: number;
-  createdAt: string;
+  createdAt: Date;
+  finishedAt?: Date;
+  password?: string;
+  winner?: string; // telegramId победителя
 }

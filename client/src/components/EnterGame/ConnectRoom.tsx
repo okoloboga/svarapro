@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import lockIcon from '../../assets/lock.png';
-import incompleteIcon from '../../assets/completeSmallGrey.png';
-import completeIcon from '../../assets/completeSmallGreen.png';
-import { apiService } from '../../services/api/api';
-
-type ConnectRoomProps = {
-  onClose: () => void;
-  openModal: () => void;
-  setCurrentPage: (page: string, data?: any) => void;
-};
+import lockIcon from '@/assets/lock.png';
+import incompleteIcon from '@/assets/completeSmallGrey.png';
+import completeIcon from '@/assets/completeSmallGreen.png';
+import { apiService } from '@/services/api/api';
+import { ConnectRoomProps } from '@/types/components';
 
 export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');
@@ -38,8 +33,8 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
       await apiService.joinRoom(inputValue, telegramId);
       onClose();
       setCurrentPage('gameRoom', { roomId: inputValue });
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to join room');
+    } catch (error: unknown) {
+      setError((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to join room');
     } finally {
       setIsJoining(false);
     }

@@ -1,21 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { clsx } from 'clsx';
-// Обновлённый импорт
-import errorCodes from '../../src/locales/en/errors.json';
-
-type Props = {
-  code?: keyof typeof errorCodes;
-  customMessage?: string;
-  className?: string;
-  severity?: 'error' | 'warning';
-};
+import { ErrorAlertProps } from '@/types/components';
 
 export function ErrorAlert({
   code,
   customMessage,
   className = '',
   severity = 'error',
-}: Props) {
+}: ErrorAlertProps) {
   const { t } = useTranslation('errors');
 
   return (

@@ -1,15 +1,7 @@
-import React from 'react';
-import closeIcon from '../../assets/close.png';
-import combosImage from '../../assets/combos.jpg';
+import closeIcon from '@/assets/close.png';
+import combosImage from '@/assets/combos.jpg';
 import { useTranslation } from 'react-i18next';
-
-type GamerulesProps = {
-  onClose: () => void;
-};
-
-type TextProps = {
-  children: React.ReactNode;
-};
+import { GamerulesProps, TextProps } from '@/types/components';
 
 export const GamerulesHeader = ({ children }: TextProps) => (
   <h2 className="font-bold text-base text-white tracking-tighter leading-tight">{children}</h2>
