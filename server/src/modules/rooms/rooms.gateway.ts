@@ -33,7 +33,9 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
   @SubscribeMessage('request_rooms')
   async handleRequestRooms(client: Socket) {
+    console.log('Received request_rooms from client');
     const rooms = await this.roomsService.getRooms();
+    console.log('Sending initial rooms to client:', rooms);
     client.emit('rooms', { action: 'initial', rooms });
   }
 
