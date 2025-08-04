@@ -16,15 +16,11 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
     if (socket) {
       socket.emit('request_rooms'); // Запрашиваем начальный список комнат
 
-      socket.on('rooms', (data: { action: string; rooms?: Room[]; room?: Room }) => {
-        if (data.action === 'initial' && data.rooms) {
-          setRooms(data.rooms);
-        } else if (data.action === 'update' && data.room) {
-          setRooms((prevRooms) => {
-            const updatedRooms = prevRooms.filter((r) => r.roomId !== data.room!.roomId);
-            return [...updatedRooms, data.room!].sort((a, b) => a.roomId.localeCompare(b.roomId));
-          });
-        }
+      socket.on('room_update', (data: { roomId: string; room: Room }) => {
+        setRooms((prevRooms) => {
+          const updatedRooms = prevRooms.filter((r) => r.roomId !== data.roomId);
+          return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
+        });
       });
  
       return () => {
