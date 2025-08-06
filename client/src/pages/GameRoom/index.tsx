@@ -8,6 +8,7 @@ import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
 import { GameInfo } from '../../components/GameProcess/GameInfo';
 import { Socket } from 'socket.io-client';
+import { LoadingPage } from '../../components/LoadingPage'; // Добавляем импорт
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -36,15 +37,11 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
       }
     };
   }, [roomId, socket]);
-  
+
   if (loading) {
-    return (
-      <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
-        <div className="text-white text-xl">Загрузка игры...</div>
-      </div>
-    );
+    return <LoadingPage isLoading={loading} />;
   }
-  
+
   if (error) {
     return (
       <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
@@ -52,15 +49,15 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
       </div>
     );
   }
-  
+
   if (!gameState) {
     return (
       <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
-        <div className="text-white text-xl">Игра не найдена</div>
+        <div className="text-red-500 text-xl">Ошибка: Не удалось загрузить состояние игры</div>
       </div>
     );
   }
-  
+
   // Находим текущего игрока
   const currentPlayer = gameState.players.find(p => p.id === currentUserId);
   

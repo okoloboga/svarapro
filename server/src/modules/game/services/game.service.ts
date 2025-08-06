@@ -7,6 +7,7 @@ import { BettingService } from './betting.service';
 import { GameStateService } from './game-state.service';
 import { UsersService } from '../../users/users.service';
 import { Room } from '../../../types/game';
+import { warn } from 'console';
 
 @Injectable()
 export class GameService {
@@ -78,9 +79,31 @@ export class GameService {
       return { success: false, error: 'Комната заполнена' };
     }
 
+    const fetchedUserData = await this.getUserData(telegramId);
+    if (!fetchedUserData) {
+      console.log(`Failed to get user data for ${telegramId}`);
+      return { success: false, error: 'Не удалось получить данные пользователя' };
+    }
+
+    let gameState = await this.redisService.getGameState(roomId);
+    console.log(`Retrieved gameState from Redis for room ${roomId}:`, gameState);
     if (room.players.includes(telegramId)) {
       console.log(`Player ${telegramId} already in room ${roomId}`);
-      const gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        console.log(`Creating initial game state for room ${roomId} as it was not found`);
+        gameState = this.gameStateService.createInitialGameState(
+          roomId,
+          room.minBet,
+        );
+        const newPlayer = this.playerService.createPlayer(
+          telegramId,
+          fetchedUserData,
+          gameState.players.length,
+        );
+        gameState.players.push(newPlayer);
+        await this.redisService.setGameState(roomId, gameState);
+        console.log(`Game state created and saved for room ${roomId}`);
+      }
       return { success: true, gameState };
     }
 
@@ -90,7 +113,6 @@ export class GameService {
     await this.redisService.publishRoomUpdate(roomId, room);
     console.log(`Player ${telegramId} added to room ${roomId}`);
 
-    let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
       console.log(`Creating initial game state for room ${roomId}`);
       gameState = this.gameStateService.createInitialGameState(
@@ -101,7 +123,7 @@ export class GameService {
 
     const newPlayer = this.playerService.createPlayer(
       telegramId,
-      userData,
+      fetchedUserData,
       gameState.players.length,
     );
     gameState.players.push(newPlayer);
