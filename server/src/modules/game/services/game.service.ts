@@ -19,8 +19,8 @@ export class GameService {
     private readonly usersService: UsersService,
   ) {}
 
-  // Получение списка комнат
   async getRooms(): Promise<Room[]> {
+    console.log('Fetching active rooms');
     const roomIds = await this.redisService.getActiveRooms();
     const rooms: Room[] = [];
 
@@ -30,77 +30,75 @@ export class GameService {
         rooms.push(room);
       }
     }
-
+    console.log('Rooms fetched:', rooms);
     return rooms;
   }
 
-  // Покинуть комнату
   async leaveRoom(roomId: string, telegramId: string): Promise<void> {
+    console.log('Handling leaveRoom:', { roomId, telegramId });
     const room = await this.redisService.getRoom(roomId);
-    if (!room) return;
+    if (!room) {
+      console.log(`Room ${roomId} not found`);
+      return;
+    }
 
-    // Удаляем игрока из списка игроков
     room.players = room.players.filter((playerId) => playerId !== telegramId);
 
-    // Если комната пуста, удаляем ее
     if (room.players.length === 0) {
+      console.log(`Room ${roomId} is empty, removing`);
       await this.redisService.removeRoom(roomId);
       await this.redisService.clearGameData(roomId);
     } else {
-      // Обновляем комнату
+      console.log(`Updating room ${roomId} after player ${telegramId} left`);
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
 
-      // Если игра уже идет, обновляем состояние игры
       if (room.status === 'playing') {
         await this.markPlayerInactive(roomId, telegramId);
       }
     }
 
-    // Удаляем связь игрока с комнатой
     await this.redisService.removePlayerFromRoom(roomId, telegramId);
   }
 
-  // Присоединиться к игре
   async joinGame(
     roomId: string,
     telegramId: string,
     userData: any,
   ): Promise<GameActionResult> {
+    console.log('Handling joinGame:', { roomId, telegramId, userData });
     const room = await this.redisService.getRoom(roomId);
     if (!room) {
+      console.log(`Room ${roomId} not found`);
       return { success: false, error: 'Комната не найдена' };
     }
 
-    // Проверяем, не заполнена ли комната
     if (room.players.length >= room.maxPlayers) {
+      console.log(`Room ${roomId} is full`);
       return { success: false, error: 'Комната заполнена' };
     }
 
-    // Проверяем, не находится ли игрок уже в комнате
     if (room.players.includes(telegramId)) {
-      // Игрок уже в комнате, возвращаем текущее состояние
+      console.log(`Player ${telegramId} already in room ${roomId}`);
       const gameState = await this.redisService.getGameState(roomId);
       return { success: true, gameState };
     }
 
-    // Добавляем игрока в комнату
     room.players.push(telegramId);
     await this.redisService.setRoom(roomId, room);
     await this.redisService.addPlayerToRoom(roomId, telegramId);
     await this.redisService.publishRoomUpdate(roomId, room);
+    console.log(`Player ${telegramId} added to room ${roomId}`);
 
-    // Если игра еще не началась, создаем или обновляем состояние игры
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
-      // Создаем новое состояние игры
+      console.log(`Creating initial game state for room ${roomId}`);
       gameState = this.gameStateService.createInitialGameState(
         roomId,
         room.minBet,
       );
     }
 
-    // Добавляем игрока в состояние игры
     const newPlayer = this.playerService.createPlayer(
       telegramId,
       userData,
@@ -108,64 +106,63 @@ export class GameService {
     );
     gameState.players.push(newPlayer);
 
-    // Добавляем действие в лог
     const action: GameAction = {
       type: 'join',
-      telegramId: telegramId,
+      telegramId,
       timestamp: Date.now(),
       message: `Игрок ${newPlayer.username} присоединился к игре`,
     };
     gameState.log.push(action);
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    console.log(`Game state updated for room ${roomId}:`, gameState);
 
-    // Если достаточно игроков и игра еще не началась, начинаем игру
     if (room.players.length >= 2 && room.status === 'waiting') {
+      console.log(`Starting game for room ${roomId}`);
       await this.startGame(roomId);
     }
 
     return { success: true, gameState };
   }
 
-  // Обработка действия "сесть за стол"
   async sitDown(
     roomId: string,
     telegramId: string,
     position: number,
   ): Promise<GameActionResult> {
+    console.log('Handling sitDown:', { roomId, telegramId, position });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for room ${roomId}`);
       return { success: false, error: 'Игра не найдена' };
     }
 
-    // Проверяем, не занята ли позиция
     const positionTaken = gameState.players.some(
       (p) => p.position === position,
     );
     if (positionTaken) {
+      console.log(`Position ${position} is already taken in room ${roomId}`);
       return { success: false, error: 'Это место уже занято' };
     }
 
-    // Проверяем, не сидит ли игрок уже за столом
     const playerAlreadySeated = gameState.players.some(
       (p) => p.id === telegramId,
     );
     if (playerAlreadySeated) {
+      console.log(`Player ${telegramId} is already seated in room ${roomId}`);
       return { success: false, error: 'Вы уже сидите за столом' };
     }
 
-    // Получаем данные пользователя
     const userData = await this.getUserData(telegramId);
     if (!userData) {
+      console.log(`Failed to get user data for ${telegramId}`);
       return {
         success: false,
         error: 'Не удалось получить данные пользователя',
       };
     }
 
-    // Создаем нового игрока
     const newPlayer = this.playerService.createPlayer(
       telegramId,
       userData,
@@ -173,151 +170,142 @@ export class GameService {
     );
     gameState.players.push(newPlayer);
 
-    // Добавляем действие в лог
     const action: GameAction = {
       type: 'join',
-      telegramId: telegramId,
+      telegramId,
       timestamp: Date.now(),
       message: `Игрок ${newPlayer.username} сел за стол на позицию ${position + 1}`,
     };
     gameState.log.push(action);
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    console.log(`Player ${telegramId} seated at position ${position} in room ${roomId}`);
 
-    // Если достаточно игроков и игра еще не началась, начинаем игру
     const room = await this.redisService.getRoom(roomId);
     if (room && gameState.players.length >= 2 && room.status === 'waiting') {
+      console.log(`Starting game for room ${roomId} after sitDown`);
       await this.startGame(roomId);
     }
 
     return { success: true, gameState };
   }
 
-  // Начало игры
   async startGame(roomId: string): Promise<void> {
+    console.log('Starting game for room:', roomId);
     const room = await this.redisService.getRoom(roomId);
     if (!room || room.status !== 'waiting' || room.players.length < 2) {
+      console.log(`Cannot start game for room ${roomId}:`, { room, players: room?.players });
       return;
     }
 
-    // Обновляем статус комнаты
     room.status = 'playing';
     await this.redisService.setRoom(roomId, room);
     await this.redisService.publishRoomUpdate(roomId, room);
+    console.log(`Room ${roomId} status updated to playing`);
 
-    // Получаем состояние игры
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Creating initial game state for room ${roomId}`);
       gameState = this.gameStateService.createInitialGameState(
         roomId,
         room.minBet,
       );
     }
 
-    // Инициализируем игру
     const { updatedGameState, actions } =
       this.gameStateService.initializeNewGame(gameState);
     gameState = updatedGameState;
     gameState.log.push(...actions);
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    console.log(`Game state initialized for room ${roomId}:`, gameState);
 
-    // Начинаем фазу анте (входных ставок)
     await this.startAntePhase(roomId);
   }
 
-  // Начало фазы анте (входных ставок)
   async startAntePhase(roomId: string): Promise<void> {
+    console.log('Starting ante phase for room:', roomId);
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState || gameState.status !== 'ante') {
+      console.log(`Cannot start ante phase for room ${roomId}:`, gameState);
       return;
     }
 
-    // Обрабатываем анте
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,
       gameState.minBet,
     );
     gameState.log.push(...actions);
 
-    // Проверяем, остались ли активные игроки
     const activePlayers = gameState.players.filter((p) => p.isActive);
     if (activePlayers.length < 2) {
-      // Недостаточно игроков для продолжения
       if (activePlayers.length === 1) {
-        // Один игрок выигрывает банк
+        console.log(`Ending game with single winner for room ${roomId}`);
         await this.endGameWithWinner(roomId, activePlayers[0].id);
       } else {
-        // Нет активных игроков, завершаем игру
+        console.log(`Ending game with no winners for room ${roomId}`);
         await this.endGame(roomId);
       }
       return;
     }
 
-    // Раздаем карты
     const dealResult =
       this.gameStateService.dealCardsToPlayers(updatedGameState);
     gameState.log.push(...dealResult.actions);
 
-    // Переходим к фазе ставок вслепую
     const phaseResult = this.gameStateService.moveToNextPhase(
       dealResult.updatedGameState,
       'blind_betting',
     );
     gameState.log.push(...phaseResult.actions);
 
-    // Устанавливаем текущего игрока (следующий после дилера)
     gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.dealerIndex,
     );
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    console.log(`Ante phase completed, moved to blind_betting for room ${roomId}`);
   }
 
-  // Обработка действия игрока
   async processAction(
     roomId: string,
     telegramId: string,
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log('Processing action:', { roomId, telegramId, action, amount });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for room ${roomId}`);
       return { success: false, error: 'Игра не найдена' };
     }
 
-    // Находим игрока
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     if (playerIndex === -1) {
+      console.log(`Player ${telegramId} not found in room ${roomId}`);
       return { success: false, error: 'Игрок не найден' };
     }
 
-    const player = gameState.players[playerIndex];
-
-    // Проверяем, чей сейчас ход
     if (gameState.currentPlayerIndex !== playerIndex) {
+      console.log(`Not player ${telegramId}'s turn in room ${roomId}`);
       return { success: false, error: 'Сейчас не ваш ход' };
     }
 
-    // Проверяем возможность действия
     const { canPerform, error } = this.bettingService.canPerformAction(
-      player,
+      gameState.players[playerIndex],
       action,
       gameState,
     );
 
     if (!canPerform) {
+      console.log(`Action not allowed for ${telegramId}:`, error);
       return { success: false, error };
     }
 
-    // Обрабатываем действие в зависимости от фазы игры
     switch (gameState.status) {
       case 'blind_betting':
         return await this.processBlindBettingAction(
@@ -336,6 +324,7 @@ export class GameService {
           amount,
         );
       default:
+        console.log(`Invalid action ${action} for game status ${gameState.status}`);
         return {
           success: false,
           error: 'Недопустимое действие в текущей фазе',
@@ -343,26 +332,23 @@ export class GameService {
     }
   }
 
-  // Получение данных пользователя (заглушка, реализуйте в соответствии с вашей логикой)
+  // Получение данных пользователя
   private async getUserData(telegramId: string): Promise<any> {
+    console.log(`Fetching user data for telegramId: ${telegramId}`);
     try {
       const user = await this.usersService.getProfile(telegramId);
+      console.log(`User data fetched for ${telegramId}:`, user);
       return {
         username: user.username,
         avatar: user.avatar,
         balance: user.balance,
       };
     } catch (error) {
-      // Обработка ошибок, например, если пользователь не найден
-      console.error(
-        `Failed to get user data for telegramId: ${telegramId}`,
-        error,
-      );
+      console.error(`Failed to get user data for telegramId: ${telegramId}`, error);
       return null;
     }
   }
 
-  // Обработка действия в фазе ставок вслепую
   private async processBlindBettingAction(
     roomId: string,
     gameState: GameState,
@@ -370,12 +356,13 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log('Processing blind betting action:', { roomId, playerIndex, action, amount });
     const player = gameState.players[playerIndex];
 
     switch (action) {
       case 'blind_bet': {
-        // Проверяем, что ставка корректна
         if (!amount || amount < gameState.lastBlindBet * 2) {
+          console.log(`Invalid blind bet amount for ${player.id}:`, amount);
           return {
             success: false,
             error: `Минимальная ставка вслепую: ${
@@ -384,12 +371,11 @@ export class GameService {
           };
         }
 
-        // Проверяем, достаточно ли у игрока баланса
         if (player.balance < amount) {
+          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, amount });
           return { success: false, error: 'Недостаточно средств' };
         }
 
-        // Делаем ставку
         const { updatedPlayer, action: blindAction } =
           this.playerService.processPlayerBet(player, amount, 'blind_bet');
 
@@ -398,7 +384,6 @@ export class GameService {
         gameState.lastBlindBet = amount;
         gameState.log.push(blindAction);
 
-        // Переходим к следующему игроку
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
@@ -406,13 +391,11 @@ export class GameService {
         break;
       }
       case 'look': {
-        // Игрок решил посмотреть карты
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           { hasLooked: true, lastAction: 'look' },
         );
 
-        // Добавляем действие в лог
         const lookAction: GameAction = {
           type: 'look',
           telegramId: player.id,
@@ -421,16 +404,13 @@ export class GameService {
         };
         gameState.log.push(lookAction);
 
-        // Переходим к фазе обычных ставок
         const phaseResult = this.gameStateService.moveToNextPhase(
           gameState,
           'betting',
         );
         gameState.log.push(...phaseResult.actions);
 
-        // Если была ставка вслепую, игрок должен сделать ставку
         if (gameState.lastBlindBet > 0) {
-          // Проверяем, достаточно ли у игрока баланса
           const requiredBet = gameState.lastBlindBet * 2;
           if (player.balance < requiredBet) {
             gameState.players[playerIndex] =
@@ -439,7 +419,6 @@ export class GameService {
                 { hasFolded: true, isActive: false, lastAction: 'fold' },
               );
 
-            // Добавляем действие в лог
             const foldAction: GameAction = {
               type: 'fold',
               telegramId: player.id,
@@ -448,7 +427,6 @@ export class GameService {
             };
             gameState.log.push(foldAction);
 
-            // Переходим к следующему игроку
             gameState.currentPlayerIndex =
               this.playerService.findNextActivePlayer(
                 gameState.players,
@@ -459,13 +437,11 @@ export class GameService {
         break;
       }
       case 'fold': {
-        // Игрок сбрасывает карты
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           { hasFolded: true, isActive: false, lastAction: 'fold' },
         );
 
-        // Добавляем действие в лог
         const foldAction: GameAction = {
           type: 'fold',
           telegramId: player.id,
@@ -474,17 +450,15 @@ export class GameService {
         };
         gameState.log.push(foldAction);
 
-        // Проверяем, остался ли только один активный игрок
         const activePlayers = gameState.players.filter(
           (p) => p.isActive && !p.hasFolded,
         );
         if (activePlayers.length === 1) {
-          // Завершаем игру с победой последнего активного игрока
+          console.log(`Ending game with single winner for room ${roomId}`);
           await this.endGameWithWinner(roomId, activePlayers[0].id);
           return { success: true };
         }
 
-        // Переходим к следующему игроку
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
@@ -492,17 +466,16 @@ export class GameService {
         break;
       }
       default:
+        console.log(`Invalid blind betting action ${action} for ${player.id}`);
         return { success: false, error: 'Недопустимое действие' };
     }
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-
+    console.log(`Blind betting action processed for room ${roomId}`);
     return { success: true, gameState };
   }
 
-  // Обработка действия в фазе обычных ставок
   private async processBettingAction(
     roomId: string,
     gameState: GameState,
@@ -510,19 +483,18 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log('Processing betting action:', { roomId, playerIndex, action, amount });
     const player = gameState.players[playerIndex];
 
     switch (action) {
       case 'call': {
-        // Игрок уравнивает текущую ставку
         const callAmount = gameState.currentBet - player.currentBet;
 
-        // Проверяем, достаточно ли у игрока баланса
         if (player.balance < callAmount) {
+          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, callAmount });
           return { success: false, error: 'Недостаточно средств' };
         }
 
-        // Уравниваем ставку
         const { updatedPlayer: callPlayer, action: callAction } =
           this.playerService.processPlayerBet(player, callAmount, 'call');
 
@@ -530,38 +502,35 @@ export class GameService {
         gameState.pot += callAmount;
         gameState.log.push(callAction);
 
-        // Переходим к следующему игроку
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
         );
 
-        // Проверяем, завершился ли круг ставок
         if (this.bettingService.isBettingRoundComplete(gameState)) {
+          console.log(`Betting round complete for room ${roomId}`);
           await this.endBettingRound(roomId, gameState);
           return { success: true };
         }
         break;
       }
       case 'raise': {
-        // Игрок повышает ставку
         if (!amount || amount <= gameState.currentBet) {
+          console.log(`Invalid raise amount for ${player.id}:`, amount);
           return {
             success: false,
             error: `Повышение должно быть больше текущей ставки ${gameState.currentBet}`,
           };
         }
 
-        // Вычисляем сумму для добавления
         const raiseTotal = amount;
         const raiseAmount = raiseTotal - player.currentBet;
 
-        // Проверяем, достаточно ли у игрока баланса
         if (player.balance < raiseAmount) {
+          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, raiseAmount });
           return { success: false, error: 'Недостаточно средств' };
         }
 
-        // Повышаем ставку
         const { updatedPlayer: raisePlayer, action: raiseAction } =
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
 
@@ -571,7 +540,6 @@ export class GameService {
         gameState.lastRaiseIndex = playerIndex;
         gameState.log.push(raiseAction);
 
-        // Переходим к следующему игроку
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
@@ -579,13 +547,11 @@ export class GameService {
         break;
       }
       case 'fold': {
-        // Игрок сбрасывает карты
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           { hasFolded: true, isActive: false, lastAction: 'fold' },
         );
 
-        // Добавляем действие в лог
         const foldAction: GameAction = {
           type: 'fold',
           telegramId: player.id,
@@ -594,66 +560,58 @@ export class GameService {
         };
         gameState.log.push(foldAction);
 
-        // Проверяем, остался ли только один активный игрок
         const activePlayers = gameState.players.filter(
           (p) => p.isActive && !p.hasFolded,
         );
         if (activePlayers.length === 1) {
-          // Завершаем игру с победой последнего активного игрока
+          console.log(`Ending game with single winner for room ${roomId}`);
           await this.endGameWithWinner(roomId, activePlayers[0].id);
           return { success: true };
         }
 
-        // Переходим к следующему игроку
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
         );
 
-        // Проверяем, завершился ли круг ставок
         if (this.bettingService.isBettingRoundComplete(gameState)) {
+          console.log(`Betting round complete for room ${roomId}`);
           await this.endBettingRound(roomId, gameState);
           return { success: true };
         }
         break;
       }
       default:
+        console.log(`Invalid betting action ${action} for ${player.id}`);
         return { success: false, error: 'Недопустимое действие' };
     }
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-
+    console.log(`Betting action processed for room ${roomId}`);
     return { success: true, gameState };
   }
 
-  // Завершение круга ставок
   private async endBettingRound(
     roomId: string,
     gameState: GameState,
   ): Promise<void> {
-    // Переходим к вскрытию карт
+    console.log('Ending betting round for room:', roomId);
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'showdown',
     );
     gameState.log.push(...phaseResult.actions);
 
-    // Вычисляем очки для каждого активного игрока
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
     gameState.log.push(...scoreResult.actions);
 
-    // Определяем победителя(ей)
     const winners = this.playerService.determineWinners(gameState.players);
     gameState.winners = winners;
 
-    // Если есть несколько победителей с одинаковым счетом, объявляем "свару"
     if (winners.length > 1) {
       gameState.isSvara = true;
-
-      // Добавляем действие в лог
       const svaraAction: GameAction = {
         type: 'svara',
         telegramId: 'system',
@@ -662,97 +620,86 @@ export class GameService {
       };
       gameState.log.push(svaraAction);
 
-      // Сохраняем обновленное состояние
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
+      console.log(`Svara announced for room ${roomId}`);
 
-      // Начинаем новую игру для "свары"
       await this.startSvaraGame(
         roomId,
         winners.map((w) => w.id),
       );
     } else if (winners.length === 1) {
-      // Один победитель, завершаем игру
+      console.log(`Ending game with winner for room ${roomId}`);
       await this.endGameWithWinner(roomId, winners[0].id);
     } else {
-      // Нет победителей (не должно происходить), завершаем игру
+      console.log(`Ending game with no winners for room ${roomId}`);
       await this.endGame(roomId);
     }
   }
 
-  // Начало новой игры для "свары"
   private async startSvaraGame(
     roomId: string,
     winnerIds: string[],
   ): Promise<void> {
-    // Получаем текущее состояние игры
+    console.log('Starting svara game for room:', roomId, 'Winners:', winnerIds);
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for svara in room ${roomId}`);
       return;
     }
 
-    // Инициализируем игру для "свары"
     const { updatedGameState, actions } =
       this.gameStateService.initializeSvaraGame(gameState, winnerIds);
-
-    // Обновляем лог
     updatedGameState.log.push(...actions);
 
-    // Раздаем карты
     const dealResult =
       this.gameStateService.dealCardsToPlayers(updatedGameState);
     updatedGameState.log.push(...dealResult.actions);
 
-    // Переходим к фазе ставок вслепую
     const phaseResult = this.gameStateService.moveToNextPhase(
       dealResult.updatedGameState,
       'blind_betting',
     );
     updatedGameState.log.push(...phaseResult.actions);
 
-    // Устанавливаем текущего игрока (следующий после дилера)
     updatedGameState.currentPlayerIndex =
       this.playerService.findNextActivePlayer(
         updatedGameState.players,
         updatedGameState.dealerIndex,
       );
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, updatedGameState);
     await this.redisService.publishGameUpdate(roomId, updatedGameState);
+    console.log(`Svara game started for room ${roomId}`);
   }
 
-  // Завершение игры с победителем
   private async endGameWithWinner(
     roomId: string,
     winnerId: string,
   ): Promise<void> {
+    console.log('Ending game with winner:', { roomId, winnerId });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for room ${roomId}`);
       return;
     }
 
-    // Обрабатываем выигрыш
     const { updatedGameState, actions } = this.bettingService.processWinnings(
       gameState,
       [winnerId],
     );
-
-    // Обновляем лог
     updatedGameState.log.push(...actions);
 
-    // Переходим к завершению игры
     const phaseResult = this.gameStateService.moveToNextPhase(
       updatedGameState,
       'finished',
     );
     updatedGameState.log.push(...phaseResult.actions);
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, updatedGameState);
     await this.redisService.publishGameUpdate(roomId, updatedGameState);
+    console.log(`Game ended with winner for room ${roomId}`);
 
-    // Обновляем комнату
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
@@ -761,24 +708,24 @@ export class GameService {
 
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
+      console.log(`Room ${roomId} updated to finished with winner ${winnerId}`);
     }
   }
 
-  // Завершение игры без победителя
   private async endGame(roomId: string): Promise<void> {
+    console.log('Ending game without winner for room:', roomId);
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for room ${roomId}`);
       return;
     }
 
-    // Переходим к завершению игры
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'finished',
     );
     gameState.log.push(...phaseResult.actions);
 
-    // Добавляем действие в лог
     const action: GameAction = {
       type: 'join',
       telegramId: 'system',
@@ -787,11 +734,10 @@ export class GameService {
     };
     gameState.log.push(action);
 
-    // Сохраняем обновленное состояние
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    console.log(`Game ended without winner for room ${roomId}`);
 
-    // Обновляем комнату
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
@@ -799,49 +745,47 @@ export class GameService {
 
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
+      console.log(`Room ${roomId} updated to finished`);
     }
   }
 
-  // Пометить игрока как неактивного
   async markPlayerInactive(roomId: string, telegramId: string): Promise<void> {
+    console.log('Marking player inactive:', { roomId, telegramId });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
+      console.log(`Game state not found for room ${roomId}`);
       return;
     }
 
-    // Находим игрока
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     if (playerIndex === -1) {
+      console.log(`Player ${telegramId} not found in room ${roomId}`);
       return;
     }
 
-    // Помечаем игрока как неактивного
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       gameState.players[playerIndex],
       { isActive: false, hasFolded: true },
     );
 
-    // Добавляем действие в лог
     const action: GameAction = {
       type: 'leave',
-      telegramId: telegramId,
+      telegramId,
       timestamp: Date.now(),
       message: `Игрок ${gameState.players[playerIndex].username} покинул игру`,
     };
     gameState.log.push(action);
 
-    // Проверяем, остался ли только один активный игрок
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
     if (activePlayers.length === 1) {
-      // Завершаем игру с победой последнего активного игрока
+      console.log(`Ending game with single winner for room ${roomId}`);
       await this.endGameWithWinner(roomId, activePlayers[0].id);
     } else if (activePlayers.length === 0) {
-      // Завершаем игру без победителя
+      console.log(`Ending game with no winners for room ${roomId}`);
       await this.endGame(roomId);
     } else {
-      // Если текущий ход был у покинувшего игрока, переходим к следующему
       if (gameState.currentPlayerIndex === playerIndex) {
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
@@ -849,14 +793,16 @@ export class GameService {
         );
       }
 
-      // Обновляем состояние игры
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
+      console.log(`Player ${telegramId} marked inactive in room ${roomId}`);
     }
   }
 
-  // Получение состояния игры
   async getGameState(roomId: string): Promise<GameState | null> {
-    return this.redisService.getGameState(roomId);
+    console.log('Fetching game state for room:', roomId);
+    const gameState = await this.redisService.getGameState(roomId);
+    console.log('Game state fetched:', gameState);
+    return gameState;
   }
 }
