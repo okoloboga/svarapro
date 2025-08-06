@@ -30,7 +30,7 @@ export class PlayerService {
       hasFolded?: boolean;
       hasLooked?: boolean;
       isDealer?: boolean;
-      lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind';
+      lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look';
     },
   ): Player {
     return {

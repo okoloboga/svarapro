@@ -6,7 +6,7 @@ import { PlayerService } from './player.service';
 import { BettingService } from './betting.service';
 import { GameStateService } from './game-state.service';
 import { UsersService } from '../../users/users.service';
-import { Room } from '@/types/game';
+import { Room } from '../../../types/game';
 
 @Injectable()
 export class GameService {

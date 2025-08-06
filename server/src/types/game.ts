@@ -35,7 +35,7 @@ export interface Player {
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
-  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind'; // последнее действие
+  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
 }
 
 export interface GameState {
@@ -78,7 +78,7 @@ export interface GameAction {
     | 'fold'
     | 'win'
     | 'svara';
-  playerId: string;
+  telegramId: string;
   amount?: number;
   timestamp: number;
   message?: string; // текстовое описание действия
@@ -87,5 +87,5 @@ export interface GameAction {
 export interface GameActionResult {
   success: boolean;
   error?: string;
-  gameState?: GameState;
+  gameState?: GameState | null;
 }

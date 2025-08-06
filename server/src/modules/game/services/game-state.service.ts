@@ -140,7 +140,7 @@ export class GameStateService {
   // Переход к следующей фазе игры
   moveToNextPhase(
     gameState: GameState,
-    nextPhase: string,
+    nextPhase: GameState['status'],
   ): {
     updatedGameState: GameState;
     actions: GameAction[];
