@@ -132,6 +132,7 @@ function App() {
             console.log('Login response:', response);
             const profile = await apiService.getProfile() as UserProfile;
             console.log('Profile data:', profile);
+            console.log('Creating WebSocket with telegramId:', profile.telegramId);
             setBalance(
               profile.balance !== undefined
                 ? typeof profile.balance === 'number'

@@ -31,14 +31,17 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     });
   }
 
-  @SubscribeMessage('join_game')
+@SubscribeMessage('join_game')
   async handleJoinGame(
     client: Socket,
     payload: { roomId: string },
   ): Promise<void> {
     const { roomId } = payload;
-    // Получаем telegramId из заголовков или initData
-    const telegramId = client.handshake.auth?.telegramId || client.handshake.headers['x-telegram-id'];
+    // Получаем telegramId из query, auth или headers
+    const telegramId = 
+      client.handshake.query?.telegramId ||
+      client.handshake.auth?.telegramId || 
+      client.handshake.headers['x-telegram-id'];
     const userData = client.handshake.auth?.userData || {};
 
     console.log('Handling join_game:', { roomId, telegramId, userData });
@@ -54,7 +57,7 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
 
     const result = await this.gameService.joinGame(
       roomId,
-      telegramId,
+      telegramId as string,
       userData,
     );
     console.log('join_game result:', result);
@@ -73,11 +76,14 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     client: Socket,
     payload: { roomId: string },
   ): Promise<void> {
-    const telegramId = client.handshake.auth?.telegramId || client.handshake.headers['x-telegram-id'];
+    const telegramId = 
+      client.handshake.query?.telegramId ||
+      client.handshake.auth?.telegramId || 
+      client.handshake.headers['x-telegram-id'];
     console.log('Handling leave_room:', { roomId: payload.roomId, telegramId });
 
     if (telegramId) {
-      await this.gameService.leaveRoom(payload.roomId, telegramId);
+      await this.gameService.leaveRoom(payload.roomId, telegramId as string);
       client.leave(payload.roomId);
       console.log(`Client ${telegramId} left room ${payload.roomId}`);
       const rooms = await this.gameService.getRooms();
@@ -98,13 +104,16 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     },
   ): Promise<void> {
     const { roomId, action, amount } = payload;
-    const telegramId = client.handshake.auth?.telegramId || client.handshake.headers['x-telegram-id'];
+    const telegramId = 
+      client.handshake.query?.telegramId ||
+      client.handshake.auth?.telegramId || 
+      client.handshake.headers['x-telegram-id'];
     console.log('Handling game_action:', { roomId, telegramId, action, amount });
 
     if (telegramId) {
       const result = await this.gameService.processAction(
         roomId,
-        telegramId,
+        telegramId as string,
         action,
         amount,
       );
@@ -124,13 +133,16 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     payload: { roomId: string; position: number },
   ): Promise<void> {
     const { roomId, position } = payload;
-    const telegramId = client.handshake.auth?.telegramId || client.handshake.headers['x-telegram-id'];
+    const telegramId = 
+      client.handshake.query?.telegramId ||
+      client.handshake.auth?.telegramId || 
+      client.handshake.headers['x-telegram-id'];
     console.log('Handling sit_down:', { roomId, telegramId, position });
 
     if (telegramId) {
       const result = await this.gameService.sitDown(
         roomId,
-        telegramId,
+        telegramId as string,
         position,
       );
       if (!result.success) {
@@ -144,14 +156,17 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   }
 
   async handleDisconnect(client: Socket): Promise<void> {
-    const telegramId = client.handshake.auth?.telegramId || client.handshake.headers['x-telegram-id'];
+    const telegramId = 
+      client.handshake.query?.telegramId ||
+      client.handshake.auth?.telegramId || 
+      client.handshake.headers['x-telegram-id'];
     console.log('Client disconnected:', { telegramId });
 
     if (telegramId) {
-      const rooms = await this.redisService.getPlayerRooms(telegramId);
+      const rooms = await this.redisService.getPlayerRooms(telegramId as string);
       for (const roomId of rooms) {
         console.log(`Marking player ${telegramId} inactive in room ${roomId}`);
-        await this.gameService.markPlayerInactive(roomId, telegramId);
+        await this.gameService.markPlayerInactive(roomId, telegramId as string);
       }
     }
   }
