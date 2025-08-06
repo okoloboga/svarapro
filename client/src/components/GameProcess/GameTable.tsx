@@ -1,7 +1,7 @@
-
 import { GameState } from '@/types/game';
 import { PlayerSpot } from './PlayerSpot';
 import { SeatButton } from './SeatButton';
+import tableImage from '@/assets/game/table.png'; // Импорт изображения стола
 
 interface GameTableProps {
   gameState: GameState;
@@ -46,12 +46,17 @@ export function GameTable({
     .filter(pos => !occupiedPositions.includes(pos));
 
   return (
-    <div className="relative w-full h-full bg-green-800 rounded-full shadow-inner overflow-hidden">
-      {/* Фон стола */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-700 to-green-900 opacity-50" />
-      
+    <div 
+      className="relative w-full h-full rounded-full shadow-inner overflow-hidden"
+      style={{
+        backgroundImage: `url(${tableImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       {/* Центр стола с банком */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-700 rounded-full w-48 h-48 flex items-center justify-center shadow-lg">
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-700 bg-opacity-80 rounded-full w-48 h-48 flex items-center justify-center shadow-lg">
         <div className="text-center">
           <div className="text-white text-xl font-bold">Банк</div>
           <div className="text-yellow-400 text-3xl font-bold">${gameState.pot}</div>
