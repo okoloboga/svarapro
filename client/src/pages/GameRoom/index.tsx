@@ -1,30 +1,41 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameRoomProps } from '@/types/game';
-import { initSocket } from '@/services/websocket';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
 import { GameTable } from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
 import { GameInfo } from '../../components/GameProcess/GameInfo';
+import { Socket } from 'socket.io-client';
 
-const socket = initSocket();
+interface GameRoomPropsExtended extends GameRoomProps {
+  socket: Socket | null;
+}
 
-export function GameRoom({ roomId, balance }: GameRoomProps) {
+export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
-  const { gameState, loading, error, isSeated, actions } = useGameState(roomId);
+  const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
-  
-  
+
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
-  
+
   useEffect(() => {
+    if (socket) {
+      console.log('Emitting join_game from GameRoom:', { roomId, currentUserId });
+      socket.emit('join_game', { roomId });
+    } else {
+      console.error('Socket is not initialized in GameRoom');
+    }
+
     return () => {
-      socket.emit('leave_room', { roomId });
+      if (socket) {
+        console.log('Emitting leave_room from GameRoom:', { roomId });
+        socket.emit('leave_room', { roomId });
+      }
     };
-  }, [roomId]);
+  }, [roomId, socket]);
   
   if (loading) {
     return (

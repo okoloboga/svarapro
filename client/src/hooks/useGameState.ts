@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { initSocket } from '@/services/websocket';
+import { Socket } from 'socket.io-client';
 import { GameState } from '@/types/game';
 
-export const useGameState = (roomId: string) => {
+export const useGameState = (roomId: string, socket: Socket | null) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSeated, setIsSeated] = useState(false);
-  
+
   useEffect(() => {
-    const socket = initSocket();
-    
+    if (!socket) {
+      console.error('No socket provided for useGameState');
+      setError('WebSocket не инициализирован');
+      setLoading(false);
+      return;
+    }
+
     console.log('Joining game with roomId:', roomId);
-    socket.emit('join_game', { roomId });
     
     socket.on('game_state', (state: GameState) => {
       console.log('Received game_state:', state);
@@ -43,25 +47,34 @@ export const useGameState = (roomId: string) => {
       socket.off('game_update');
       socket.off('error');
     };
-  }, [roomId]);
-  
+  }, [roomId, socket]);
+
   const performAction = useCallback((action: string, amount?: number) => {
-    const socket = initSocket();
-    console.log('Emitting game_action:', { roomId, action, amount });
-    socket.emit('game_action', { roomId, action, amount });
-  }, [roomId]);
-  
+    if (socket) {
+      console.log('Emitting game_action:', { roomId, action, amount });
+      socket.emit('game_action', { roomId, action, amount });
+    } else {
+      console.error('Cannot perform action: socket not initialized');
+    }
+  }, [roomId, socket]);
+
   const sitDown = useCallback((position: number) => {
-    const socket = initSocket();
-    console.log('Emitting sit_down:', { roomId, position });
-    socket.emit('sit_down', { roomId, position });
-  }, [roomId]);
-  
+    if (socket) {
+      console.log('Emitting sit_down:', { roomId, position });
+      socket.emit('sit_down', { roomId, position });
+    } else {
+      console.error('Cannot sit down: socket not initialized');
+    }
+  }, [roomId, socket]);
+
   const invitePlayer = useCallback(() => {
-    const socket = initSocket();
-    console.log('Emitting game_action for invite:', { roomId });
-    socket.emit('game_action', { roomId, action: 'invite' });
-  
+    if (socket) {
+      console.log('Emitting game_action for invite:', { roomId });
+      socket.emit('game_action', { roomId, action: 'invite' });
+    } else {
+      console.error('Cannot invite player: socket not initialized');
+    }
+
     const roomLink = `https://t.me/your_bot_name?start=join_${roomId}`;
   
     if (window.Telegram?.WebApp) {
@@ -70,8 +83,8 @@ export const useGameState = (roomId: string) => {
       navigator.clipboard.writeText(roomLink);
       alert('Ссылка на игру скопирована в буфер обмена');
     }
-  }, [roomId]);
-  
+  }, [roomId, socket]);
+
   const actions = {
     blindBet: useCallback((amount: number) => performAction('blind_bet', amount), [performAction]),
     lookCards: useCallback(() => performAction('look'), [performAction]),
@@ -81,7 +94,7 @@ export const useGameState = (roomId: string) => {
     sitDown,
     invitePlayer,
   };
-  
+
   return {
     gameState,
     loading,

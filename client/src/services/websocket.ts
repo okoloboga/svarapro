@@ -1,24 +1,30 @@
 import { io, Socket } from 'socket.io-client';
 
-export const initSocket = (): Socket => {
-  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
-  const userData = {
+export const initSocket = (telegramId?: string, userData?: any): Socket => {
+  const defaultTelegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  const defaultUserData = {
     username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Unknown',
     avatar: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
   };
 
-  const socket = io(import.meta.env.VITE_API_URL || 'https://svarapro.com/api/v1', {
+  console.log('Initializing WebSocket with telegramId:', telegramId || defaultTelegramId, 'userData:', userData || defaultUserData);
+
+  const socket = io('https://svarapro.com', {
     withCredentials: true,
     transports: ['websocket'],
     auth: {
-      telegramId,
-      userData,
+      telegramId: telegramId || defaultTelegramId,
+      userData: userData || defaultUserData,
     },
   });
 
   socket.on('connect', () => {
-    console.log('WebSocket connected, telegramId:', telegramId);
+    console.log('WebSocket connected, telegramId:', telegramId || defaultTelegramId);
     socket.emit('request_rooms');
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('WebSocket connection error:', error.message);
   });
 
   socket.on('disconnect', () => {
