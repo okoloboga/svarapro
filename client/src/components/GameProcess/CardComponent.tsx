@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Card } from '@/types/game';
 
 // Импортируем изображения карт
@@ -92,7 +92,7 @@ export function CardComponent({ card, hidden = false, size = 'medium' }: CardCom
     const suitCode = getSuitCode(suit);
     const rankCode = getRankCode(rank);
     const imageName = `${rankCode}${suitCode}`;
-    return cardImages[imageName] || backImage;
+    return cardImages[imageName as keyof typeof cardImages] || backImage;
   };
 
   // Получение кода масти

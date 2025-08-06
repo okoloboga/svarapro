@@ -56,22 +56,22 @@ export const useGameState = (roomId: string) => {
   }, [roomId]);
   
   // Функция для приглашения в игру
-  // const invitePlayer = useCallback((position: number) => {
-  //   const socket = initSocket();
-  //   socket.emit('game_action', { roomId, action: 'invite' });
-  //   
-  //   // Получаем ссылку на комнату
-  //   const roomLink = `https://t.me/your_bot_name?start=join_${roomId}`;
-  //   
-  //   // Открываем диалог для отправки приглашения
-  //   if (window.Telegram?.WebApp) {
-  //     window.Telegram.WebApp.openTelegramLink(roomLink);
-  //   } else {
-  //     // Копируем ссылку в буфер обмена, если Telegram API недоступен
-  //     navigator.clipboard.writeText(roomLink);
-  //     alert('Ссылка на игру скопирована в буфер обмена');
-  //   }
-  // }, [roomId]);
+  const invitePlayer = useCallback(() => {
+    const socket = initSocket();
+    socket.emit('game_action', { roomId, action: 'invite' });
+  
+    // Получаем ссылку на комнату
+    const roomLink = `https://t.me/your_bot_name?start=join_${roomId}`;
+  
+    // Открываем диалог для отправки приглашения
+    if (window.Telegram?.WebApp) {
+      window.open(roomLink, '_blank');
+    } else {
+      // Копируем ссылку в буфер обмена, если Telegram API недоступен
+      navigator.clipboard.writeText(roomLink);
+      alert('Ссылка на игру скопирована в буфер обмена');
+    }
+  }, [roomId]);
   
   const actions = {
     blindBet: useCallback((amount: number) => performAction('blind_bet', amount), [performAction]),

@@ -23,13 +23,17 @@ export function AddWallet() {
       setNotification('addressAdded');
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      const errorMessage = typeof apiError === 'object' && apiError !== null && 'response' in apiError ? (apiError as ApiError).response?.data?.message : null;
-      if (errorMessage === 'Wallet address already in use') {
-        setNotification('addressAlreadyUsed');
-      } else if (errorMessage === 'Invalid TON address format') {
+      if (typeof apiError === 'string') {
         setNotification('invalidAddress');
       } else {
-        setNotification('invalidAddress');
+        const errorMessage = (apiError as { response?: { data?: { message: string } } }).response?.data?.message;
+        if (errorMessage === 'Wallet address already in use') {
+          setNotification('addressAlreadyUsed');
+        } else if (errorMessage === 'Invalid TON address format') {
+          setNotification('invalidAddress');
+        } else {
+          setNotification('invalidAddress');
+        }
       }
     }
   };

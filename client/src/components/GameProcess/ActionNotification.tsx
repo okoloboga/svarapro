@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Импортируем изображения уведомлений
 import blindImage from '@/assets/game/blind.png';
@@ -27,8 +27,6 @@ export function ActionNotification({ action, visible, onHide }: ActionNotificati
     }
   }, [visible, onHide]);
 
-  if (!action || !isVisible) return null;
-
   const getActionImage = () => {
     switch (action) {
       case 'blind': return blindImage;
@@ -40,10 +38,14 @@ export function ActionNotification({ action, visible, onHide }: ActionNotificati
     }
   };
 
+  const actionImage = getActionImage();
+
+  if (!action || !isVisible || !actionImage) return null;
+
   return (
     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full z-10 transition-opacity duration-300" 
          style={{ opacity: isVisible ? 1 : 0 }}>
-      <img src={getActionImage()} alt={action} className="w-16 h-16" />
+      <img src={actionImage} alt={action} className="w-16 h-16" />
     </div>
   );
 }

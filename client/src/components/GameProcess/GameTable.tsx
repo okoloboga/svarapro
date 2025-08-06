@@ -1,7 +1,7 @@
-import React from 'react';
+
 import { GameState } from '@/types/game';
-import { PlayerSpot } from '@/components/PlayerSpot';
-import { SeatButton } from '@/components/SeatButton';
+import { PlayerSpot } from './PlayerSpot';
+import { SeatButton } from './SeatButton';
 
 interface GameTableProps {
   gameState: GameState;

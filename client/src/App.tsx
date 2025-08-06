@@ -231,7 +231,7 @@ function App() {
       ) : currentPage === 'depositHistory' ? (
         <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
       ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
-        <GameRoom roomId={pageData.roomId} socket={socket} balance={balance} />
+        <GameRoom roomId={pageData.roomId} balance={parseFloat(balance)} />
       ) : (
         <Dashboard
           onMoreClick={() => handleSetCurrentPage('more')}

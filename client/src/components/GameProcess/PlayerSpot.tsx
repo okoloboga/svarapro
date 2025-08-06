@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Player } from '@/types/game';
-import { CardComponent } from '@/components/CardComponent';
-import { ActionNotification } from '@/components/ActionNotification';
+import { CardComponent } from './CardComponent';
+import { ActionNotification } from './ActionNotification';
 import starImage from '@/assets/game/star.png';
 
 interface PlayerSpotProps {

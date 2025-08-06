@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { GameState } from '@/types/game';
 
 interface GameInfoProps {

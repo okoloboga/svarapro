@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameRoomProps } from '@/types/game';
 import { initSocket } from '@/services/websocket';
 import { useGameState } from '@/hooks/useGameState';
-import { CardComponent } from '@/components/CardComponent';
-import { GameTable } from '@/components/GameTable';
-import { ActionButtons } from '@/components/ActionButtons';
-import { BetSlider } from '@/components/BetSlider';
-import { GameInfo } from '@/components/GameInfo';
+import { CardComponent } from '../../components/GameProcess/CardComponent';
+import { GameTable } from '../../components/GameProcess/GameTable';
+import { ActionButtons } from '../../components/GameProcess/ActionButton';
+import { BetSlider } from '../../components/GameProcess/BetSlider';
+import { GameInfo } from '../../components/GameProcess/GameInfo';
 
 const socket = initSocket();
 
@@ -15,6 +15,7 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
   const { t } = useTranslation('common');
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId);
   const [showBetSlider, setShowBetSlider] = useState(false);
+  
   
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -57,8 +58,8 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
   
   // Определяем возможные действия
   const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished';
-  const canCheck = isCurrentUserTurn && gameState.status === 'betting' && currentPlayer?.currentBet === gameState.currentBet;
-  const canCall = isCurrentUserTurn && gameState.status === 'betting' && currentPlayer?.currentBet < gameState.currentBet;
+  const canCheck = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) === gameState.currentBet;
+  const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting' && !currentPlayer?.hasLooked;
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting' && !currentPlayer?.hasLooked;
@@ -74,13 +75,9 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
   // Обработчик нажатия на кнопку "Повысить"
   const handleRaiseClick = () => {
     setShowBetSlider(true);
-    setBetAmount(minRaise);
   };
   
-  // Обработчик изменения суммы ставки
-  const handleBetChange = (amount: number) => {
-    setBetAmount(amount);
-  };
+  
   
   // Обработчик подтверждения ставки
   const handleBetConfirm = (amount: number) => {
@@ -91,11 +88,6 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
     actions.sitDown(position);
-  };
-  
-  // Обработчик нажатия на кнопку "Пригласить"
-  const handleInvite = (position: number) => {
-    actions.invitePlayer(position);
   };
   
   return (
@@ -123,7 +115,7 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
           currentUserId={currentUserId}
           showCards={showCards}
           onSitDown={handleSitDown}
-          onInvite={handleInvite}
+          onInvite={actions.invitePlayer}
           maxPlayers={6}
         />
       </div>
@@ -191,7 +183,6 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
                 minBet={gameState.lastBlindBet * 2 || gameState.minBet}
                 maxBet={maxRaise}
                 initialBet={gameState.lastBlindBet * 2 || gameState.minBet}
-                onChange={handleBetChange}
                 onConfirm={(amount) => actions.blindBet(amount)}
               />
               <div className="flex justify-center">
@@ -224,7 +215,6 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
               minBet={minRaise}
               maxBet={maxRaise}
               initialBet={minRaise}
-              onChange={handleBetChange}
               onConfirm={handleBetConfirm}
             />
           </div>

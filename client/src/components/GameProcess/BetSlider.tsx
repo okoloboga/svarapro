@@ -4,7 +4,7 @@ interface BetSliderProps {
   minBet: number;
   maxBet: number;
   initialBet?: number;
-  onChange: (value: number) => void;
+  onChange?: (value: number) => void;
   onConfirm: (value: number) => void;
 }
 
@@ -13,7 +13,7 @@ export function BetSlider({ minBet, maxBet, initialBet, onChange, onConfirm }: B
   const [percentage, setPercentage] = useState(0);
 
   // Предустановленные множители ставок
-  const multipliers = [
+  const multipliers: { label: string; value: number | 'max' }[] = [
     { label: '2x', value: 2 },
     { label: '5x', value: 5 },
     { label: '10x', value: 10 },
@@ -30,7 +30,9 @@ export function BetSlider({ minBet, maxBet, initialBet, onChange, onConfirm }: B
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(e.target.value);
     setValue(newValue);
-    onChange(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
   };
 
   // Обработчик нажатия на множитель
@@ -42,7 +44,9 @@ export function BetSlider({ minBet, maxBet, initialBet, onChange, onConfirm }: B
       newValue = Math.min(maxBet, minBet * multiplier);
     }
     setValue(newValue);
-    onChange(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
   };
 
   return (
