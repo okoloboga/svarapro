@@ -40,7 +40,14 @@ export interface Player {
 
 export interface GameState {
   roomId: string;
-  status: 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'finished';
+  status:
+    | 'waiting'
+    | 'ante'
+    | 'blind_betting'
+    | 'betting'
+    | 'showdown'
+    | 'svara'
+    | 'finished';
   players: Player[];
   deck: Card[]; // колода
   pot: number; // банк
@@ -59,7 +66,18 @@ export interface GameState {
 }
 
 export interface GameAction {
-  type: 'join' | 'leave' | 'ante' | 'blind_bet' | 'look' | 'bet' | 'call' | 'raise' | 'fold' | 'win' | 'svara';
+  type:
+    | 'join'
+    | 'leave'
+    | 'ante'
+    | 'blind_bet'
+    | 'look'
+    | 'bet'
+    | 'call'
+    | 'raise'
+    | 'fold'
+    | 'win'
+    | 'svara';
   playerId: string;
   amount?: number;
   timestamp: number;

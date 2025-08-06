@@ -32,8 +32,8 @@ export class GameStateService {
   }
 
   // Инициализация новой игры
-  initializeNewGame(gameState: GameState): { 
-    updatedGameState: GameState; 
+  initializeNewGame(gameState: GameState): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
@@ -46,33 +46,36 @@ export class GameStateService {
     updatedGameState.lastBlindBet = 0;
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
-    
+
     // Выбираем дилера случайным образом или переходим к следующему
     if (updatedGameState.round === 1) {
-      updatedGameState.dealerIndex = Math.floor(Math.random() * updatedGameState.players.length);
+      updatedGameState.dealerIndex =
+        Math.floor(Math.random() * updatedGameState.players.length) || 0;
     } else {
       updatedGameState.dealerIndex = this.playerService.findNextActivePlayer(
-        updatedGameState.players, 
-        updatedGameState.dealerIndex
+        updatedGameState.players,
+        updatedGameState.dealerIndex,
       );
     }
-    
+
     // Сбрасываем состояние игроков
     for (let i = 0; i < updatedGameState.players.length; i++) {
       updatedGameState.players[i] = this.playerService.resetPlayerForNewGame(
-        updatedGameState.players[i], 
-        true
+        updatedGameState.players[i],
+        true,
       );
       updatedGameState.players[i].isDealer = i === updatedGameState.dealerIndex;
     }
-    
+
     // Создаем и перемешиваем колоду
-    updatedGameState.deck = this.cardService.shuffleDeck(this.cardService.createDeck());
-    
+    updatedGameState.deck = this.cardService.shuffleDeck(
+      this.cardService.createDeck(),
+    );
+
     // Добавляем действие в лог
     const action: GameAction = {
       type: 'join',
-      playerId: 'system',
+      telegramId: 'system',
       timestamp: Date.now(),
       message: `Раунд ${updatedGameState.round} начался`,
     };
@@ -82,16 +85,19 @@ export class GameStateService {
   }
 
   // Инициализация игры для "свары"
-  initializeSvaraGame(gameState: GameState, winnerIds: string[]): { 
-    updatedGameState: GameState; 
+  initializeSvaraGame(
+    gameState: GameState,
+    winnerIds: string[],
+  ): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
-    
+
     // Сохраняем банк для новой игры
     const svaraPot = updatedGameState.pot;
-    
+
     // Сбрасываем состояние игры
     updatedGameState.status = 'ante';
     updatedGameState.round += 1;
@@ -100,26 +106,29 @@ export class GameStateService {
     updatedGameState.lastBlindBet = 0;
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
-    
+
     // Обновляем дилера (первый из победителей)
-    updatedGameState.dealerIndex = updatedGameState.players.findIndex(p => p.id === winnerIds[0]);
-    
+    updatedGameState.dealerIndex =
+      updatedGameState.players.findIndex((p) => p.id === winnerIds[0]) || 0;
+
     // Сбрасываем состояние игроков
     for (let i = 0; i < updatedGameState.players.length; i++) {
       updatedGameState.players[i] = this.playerService.resetPlayerForNewGame(
-        updatedGameState.players[i], 
-        winnerIds.includes(updatedGameState.players[i].id)
+        updatedGameState.players[i],
+        winnerIds.includes(updatedGameState.players[i].id),
       );
       updatedGameState.players[i].isDealer = i === updatedGameState.dealerIndex;
     }
-    
+
     // Создаем и перемешиваем новую колоду
-    updatedGameState.deck = this.cardService.shuffleDeck(this.cardService.createDeck());
-    
+    updatedGameState.deck = this.cardService.shuffleDeck(
+      this.cardService.createDeck(),
+    );
+
     // Добавляем действие в лог
     const action: GameAction = {
       type: 'svara',
-      playerId: 'system',
+      telegramId: 'system',
       timestamp: Date.now(),
       message: 'Начинается новая игра для "Свары"',
     };
@@ -129,95 +138,106 @@ export class GameStateService {
   }
 
   // Переход к следующей фазе игры
-  moveToNextPhase(gameState: GameState, nextPhase: string): { 
-    updatedGameState: GameState; 
+  moveToNextPhase(
+    gameState: GameState,
+    nextPhase: string,
+  ): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
-    
+
     updatedGameState.status = nextPhase;
-    
+
     // Добавляем действие в лог
     const phaseMessages = {
-      'ante': 'Начинается фаза входных ставок',
-      'blind_betting': 'Начинается фаза ставок вслепую',
-      'betting': 'Начинается фаза обычных ставок',
-      'showdown': 'Начинается вскрытие карт',
-      'finished': 'Игра завершена',
+      ante: 'Начинается фаза входных ставок',
+      blind_betting: 'Начинается фаза ставок вслепую',
+      betting: 'Начинается фаза обычных ставок',
+      showdown: 'Начинается вскрытие карт',
+      finished: 'Игра завершена',
     };
-    
+
     const action: GameAction = {
       type: 'join',
-      playerId: 'system',
+      telegramId: 'system',
       timestamp: Date.now(),
       message: phaseMessages[nextPhase] || `Переход к фазе: ${nextPhase}`,
     };
     actions.push(action);
-    
+
     return { updatedGameState, actions };
   }
 
   // Раздача карт игрокам
-  dealCardsToPlayers(gameState: GameState): { 
-    updatedGameState: GameState; 
+  dealCardsToPlayers(gameState: GameState): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
-    
+
     // Раздаем по 3 карты каждому активному игроку
     for (let i = 0; i < updatedGameState.players.length; i++) {
       if (updatedGameState.players[i].isActive) {
-        const { cards, remainingDeck } = this.cardService.dealCards(updatedGameState.deck, 3);
+        const { cards, remainingDeck } = this.cardService.dealCards(
+          updatedGameState.deck,
+          3,
+        );
         updatedGameState.players[i] = this.playerService.addCardsToPlayer(
-          updatedGameState.players[i], 
-          cards
+          updatedGameState.players[i],
+          cards,
         );
         updatedGameState.deck = remainingDeck;
       }
     }
-    
+
     // Добавляем действие в лог
     const action: GameAction = {
       type: 'join',
-      playerId: 'system',
+      telegramId: 'system',
       timestamp: Date.now(),
       message: 'Карты розданы',
     };
     actions.push(action);
-    
+
     return { updatedGameState, actions };
   }
 
   // Вычисление очков для всех игроков
-  calculateScoresForPlayers(gameState: GameState): { 
-    updatedGameState: GameState; 
+  calculateScoresForPlayers(gameState: GameState): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
-    
+
     // Вычисляем очки для каждого активного игрока
     for (let i = 0; i < updatedGameState.players.length; i++) {
-      if (updatedGameState.players[i].isActive && !updatedGameState.players[i].hasFolded) {
-        const score = this.cardService.calculateScore(updatedGameState.players[i].cards);
+      if (
+        updatedGameState.players[i].isActive &&
+        !updatedGameState.players[i].hasFolded
+      ) {
+        const score = this.cardService.calculateScore(
+          updatedGameState.players[i].cards,
+        );
         updatedGameState.players[i] = {
           ...updatedGameState.players[i],
           score,
         };
-        
+
         // Добавляем действие в лог
         const action: GameAction = {
           type: 'join',
-          playerId: updatedGameState.players[i].id,
+          telegramId: updatedGameState.players[i].id,
           timestamp: Date.now(),
           message: `Игрок ${updatedGameState.players[i].username} имеет ${score} очков`,
         };
         actions.push(action);
       }
     }
-    
+
     return { updatedGameState, actions };
   }
 }

@@ -4,8 +4,11 @@ import { GameState, Player, GameAction } from '../../../types/game';
 @Injectable()
 export class BettingService {
   // Обработка анте (входной ставки)
-  processAnte(gameState: GameState, minBet: number): { 
-    updatedGameState: GameState; 
+  processAnte(
+    gameState: GameState,
+    minBet: number,
+  ): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
@@ -18,11 +21,11 @@ export class BettingService {
         if (player.balance < minBet) {
           player.isActive = false;
           player.hasFolded = true;
-          
+
           // Добавляем действие в лог
           const action: GameAction = {
             type: 'fold',
-            playerId: player.id,
+            telegramId: player.id,
             timestamp: Date.now(),
             message: `Игрок ${player.username} не имеет достаточно средств для анте`,
           };
@@ -33,11 +36,11 @@ export class BettingService {
           player.tableBalance += minBet;
           player.totalBet += minBet;
           updatedGameState.pot += minBet;
-          
+
           // Добавляем действие в лог
           const action: GameAction = {
             type: 'ante',
-            playerId: player.id,
+            telegramId: player.id,
             amount: minBet,
             timestamp: Date.now(),
             message: `Игрок ${player.username} внес анте ${minBet}`,
@@ -53,16 +56,19 @@ export class BettingService {
   // Проверка, завершился ли круг ставок
   isBettingRoundComplete(gameState: GameState): boolean {
     // Если есть только один активный игрок, круг завершен
-    const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
+    const activePlayers = gameState.players.filter(
+      (p) => p.isActive && !p.hasFolded,
+    );
     if (activePlayers.length <= 1) {
       return true;
     }
 
     // Если не было повышения ставки, используем дилера как точку отсчета
-    const startIndex = gameState.lastRaiseIndex !== undefined 
-      ? gameState.lastRaiseIndex 
-      : gameState.dealerIndex;
-    
+    const startIndex =
+      gameState.lastRaiseIndex !== undefined
+        ? gameState.lastRaiseIndex
+        : gameState.dealerIndex;
+
     // Проверяем, что все активные игроки сделали ставки
     let allBet = true;
     for (const player of activePlayers) {
@@ -71,18 +77,23 @@ export class BettingService {
         break;
       }
     }
-    
+
     // Если текущий игрок - это игрок после последнего повысившего (или дилера)
     // и все сделали одинаковые ставки, круг завершен
-    return allBet && (
-      gameState.currentPlayerIndex === (startIndex + 1) % gameState.players.length ||
-      gameState.currentPlayerIndex === startIndex
+    return (
+      allBet &&
+      (gameState.currentPlayerIndex ===
+        (startIndex + 1) % gameState.players.length ||
+        gameState.currentPlayerIndex === startIndex)
     );
   }
 
   // Обработка выигрыша
-  processWinnings(gameState: GameState, winnerIds: string[]): { 
-    updatedGameState: GameState; 
+  processWinnings(
+    gameState: GameState,
+    winnerIds: string[],
+  ): {
+    updatedGameState: GameState;
     actions: GameAction[];
   } {
     const updatedGameState = { ...gameState };
@@ -91,20 +102,20 @@ export class BettingService {
     // Вычисляем комиссию (5% от банка)
     const rake = Math.floor(updatedGameState.pot * 0.05);
     const winAmount = updatedGameState.pot - rake;
-    
+
     // Если есть несколько победителей, делим выигрыш поровну
     const winPerPlayer = Math.floor(winAmount / winnerIds.length);
-    
+
     for (const winnerId of winnerIds) {
-      const winner = updatedGameState.players.find(p => p.id === winnerId);
+      const winner = updatedGameState.players.find((p) => p.id === winnerId);
       if (winner) {
         // Добавляем выигрыш победителю
         winner.balance += winPerPlayer;
-        
+
         // Добавляем действие в лог
         const action: GameAction = {
           type: 'win',
-          playerId: winnerId,
+          telegramId: winnerId,
           amount: winPerPlayer,
           timestamp: Date.now(),
           message: `Игрок ${winner.username} выиграл ${winPerPlayer}`,
@@ -112,15 +123,15 @@ export class BettingService {
         actions.push(action);
       }
     }
-    
+
     // Устанавливаем комиссию
     updatedGameState.rake = rake;
-    
+
     // Добавляем действие о комиссии в лог
     if (rake > 0) {
       const action: GameAction = {
         type: 'join',
-        playerId: 'system',
+        telegramId: 'system',
         timestamp: Date.now(),
         message: `Комиссия: ${rake}`,
       };
@@ -131,8 +142,12 @@ export class BettingService {
   }
 
   // Проверка возможности действия
-  canPerformAction(player: Player, action: string, gameState: GameState): { 
-    canPerform: boolean; 
+  canPerformAction(
+    player: Player,
+    action: string,
+    gameState: GameState,
+  ): {
+    canPerform: boolean;
     error?: string;
   } {
     if (!player.isActive || player.hasFolded) {
@@ -157,7 +172,10 @@ export class BettingService {
           return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
         }
         if (player.currentBet >= gameState.currentBet) {
-          return { canPerform: false, error: 'Вы уже сделали максимальную ставку' };
+          return {
+            canPerform: false,
+            error: 'Вы уже сделали максимальную ставку',
+          };
         }
         return { canPerform: true };
 

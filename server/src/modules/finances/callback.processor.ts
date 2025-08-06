@@ -26,7 +26,7 @@ export class CallbackProcessor {
       this.logger.log(
         `Successfully processed callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to process callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
         error.stack,

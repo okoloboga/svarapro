@@ -145,7 +145,7 @@ export class FinancesService {
       `Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`,
     );
 
-    let transactionData;
+    let transactionData: any;
     try {
       transactionData = await this.apiService.getTransactionStatus(trackerId);
       this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);

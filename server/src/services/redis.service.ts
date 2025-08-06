@@ -118,7 +118,7 @@ export class RedisService {
 
   async getGameActions(roomId: string): Promise<any[]> {
     const actions = await this.client.lrange(`game_log:${roomId}`, 0, -1);
-    return actions.map(action => JSON.parse(action));
+    return actions.map((action) => JSON.parse(action));
   }
 
   async clearGameData(roomId: string): Promise<void> {

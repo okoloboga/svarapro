@@ -29,7 +29,6 @@ export function ActionButtons({
   onCall,
   onRaise,
   onLook,
-  currentBet,
   minRaise,
   maxRaise,
 }: ActionButtonsProps) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, GameAction } from '@/types/game';
+import { GameState } from '@/types/game';
 
 interface GameInfoProps {
   gameState: GameState;

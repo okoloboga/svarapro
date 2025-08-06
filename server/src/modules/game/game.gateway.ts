@@ -37,14 +37,18 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId } = payload;
     // @ts-expect-error user is not defined on request
-    const userId = client.request.user?.id;
+    const telegramId = client.request.user?.telegramId;
     // @ts-expect-error user is not defined on request
     const userData = client.request.user;
 
     client.join(roomId); // Присоединяем клиента к комнате сокетов
 
-    if (userId) {
-      const result = await this.gameService.joinGame(roomId, userId, userData);
+    if (telegramId) {
+      const result = await this.gameService.joinGame(
+        roomId,
+        telegramId,
+        userData,
+      );
       if (result.success) {
         // Отправляем текущее состояние игры
         client.emit('game_state', result.gameState);
@@ -60,9 +64,9 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     payload: { roomId: string },
   ): Promise<void> {
     // @ts-expect-error user is not defined on request
-    const userId = client.request.user?.id;
-    if (userId) {
-      await this.gameService.leaveRoom(payload.roomId, userId);
+    const telegramId = client.request.user?.telegramId;
+    if (telegramId) {
+      await this.gameService.leaveRoom(payload.roomId, telegramId);
       client.leave(payload.roomId);
       const rooms = await this.gameService.getRooms();
       this.server.emit('rooms_updated', rooms);
@@ -80,12 +84,12 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId, action, amount } = payload;
     // @ts-expect-error user is not defined on request
-    const userId = client.request.user?.id;
+    const telegramId = client.request.user?.telegramId;
 
-    if (userId) {
+    if (telegramId) {
       const result = await this.gameService.processAction(
         roomId,
-        userId,
+        telegramId,
         action,
         amount,
       );
@@ -97,12 +101,34 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
 
   async handleDisconnect(client: Socket): Promise<void> {
     // @ts-expect-error user is not defined on request
-    const userId = client.request.user?.id;
-    if (userId) {
+    const telegramId = client.request.user?.telegramId;
+    if (telegramId) {
       // Находим все комнаты пользователя и помечаем его как неактивного
-      const rooms = await this.redisService.getPlayerRooms(userId);
+      const rooms = await this.redisService.getPlayerRooms(telegramId);
       for (const roomId of rooms) {
-        await this.gameService.markPlayerInactive(roomId, userId);
+        await this.gameService.markPlayerInactive(roomId, telegramId);
+      }
+    }
+  }
+  // Добавьте этот обработчик в класс GameGateway
+
+  @SubscribeMessage('sit_down')
+  async handleSitDown(
+    client: Socket,
+    payload: { roomId: string; position: number },
+  ): Promise<void> {
+    const { roomId, position } = payload;
+    // @ts-expect-error user is not defined on request
+    const telegramId = client.request.user?.telegramId;
+
+    if (telegramId) {
+      const result = await this.gameService.sitDown(
+        roomId,
+        telegramId,
+        position,
+      );
+      if (!result.success) {
+        client.emit('error', { message: result.error });
       }
     }
   }

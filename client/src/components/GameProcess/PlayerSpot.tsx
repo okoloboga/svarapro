@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from '@/components/CardComponent';
+import { ActionNotification } from '@/components/ActionNotification';
+import starImage from '@/assets/game/star.png';
 
 interface PlayerSpotProps {
   player: Player;
@@ -11,6 +13,37 @@ interface PlayerSpotProps {
 
 export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
+
+  // Показываем уведомление при изменении действия игрока
+  useEffect(() => {
+    if (lastAction) {
+      let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null = null;
+      
+      switch (lastAction) {
+        case 'blind':
+          actionType = 'blind';
+          break;
+        case 'call':
+          actionType = 'paid';
+          break;
+        case 'fold':
+          actionType = 'pass';
+          break;
+        case 'raise':
+          actionType = 'rais';
+          break;
+        default:
+          actionType = null;
+      }
+      
+      if (actionType) {
+        setNotificationType(actionType);
+        setShowNotification(true);
+      }
+    }
+  }, [lastAction]);
 
   // Определяем статус игрока
   const getPlayerStatus = () => {
@@ -39,6 +72,20 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
 
   return (
     <div className={spotClasses}>
+      {/* Уведомление о действии */}
+      <ActionNotification 
+        action={notificationType}
+        visible={showNotification}
+        onHide={() => setShowNotification(false)}
+      />
+      
+      {/* Индикатор текущего игрока */}
+      {isCurrentPlayer && (
+        <div className="absolute -top-3 -right-3">
+          <img src={starImage} alt="Current player" className="w-6 h-6" />
+        </div>
+      )}
+      
       {/* Аватар и имя */}
       <div className="flex items-center mb-2">
         <div className="w-10 h-10 rounded-full overflow-hidden mr-2">

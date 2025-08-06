@@ -1,16 +1,27 @@
 import React from 'react';
-import { GameState, Player } from '@/types/game';
+import { GameState } from '@/types/game';
 import { PlayerSpot } from '@/components/PlayerSpot';
+import { SeatButton } from '@/components/SeatButton';
 
 interface GameTableProps {
   gameState: GameState;
   currentUserId: string;
   showCards: boolean;
+  onSitDown: (position: number) => void;
+  onInvite?: (position: number) => void;
+  maxPlayers: number;
 }
 
-export function GameTable({ gameState, currentUserId, showCards }: GameTableProps) {
+export function GameTable({ 
+  gameState, 
+  currentUserId, 
+  showCards, 
+  onSitDown, 
+  onInvite,
+  maxPlayers = 6
+}: GameTableProps) {
   // Расположение игроков по кругу
-  const getPlayerPosition = (position: number, totalPlayers: number) => {
+  const getPlayerPosition = (position: number) => {
     // Вычисляем позиции для 6 мест (максимум)
     const positions = [
       'bottom-10 left-1/2 transform -translate-x-1/2', // нижний центр
@@ -19,14 +30,20 @@ export function GameTable({ gameState, currentUserId, showCards }: GameTableProp
       'top-1/4 right-1/4', // верхний правый
       'top-10 left-1/2 transform -translate-x-1/2', // верхний центр
       'top-1/4 left-1/4', // верхний левый
-      'top-1/2 left-10 transform -translate-y-1/2', // левый центр
-      'bottom-1/4 left-1/4', // нижний левый
     ];
     
-    // Если игроков меньше 6, выбираем позиции равномерно
-    const step = Math.floor(positions.length / totalPlayers);
-    return positions[position * step % positions.length];
+    return positions[position % positions.length];
   };
+
+  // Проверяем, сидит ли текущий пользователь за столом
+  const isUserSeated = gameState.players.some(p => p.id === currentUserId);
+  
+  // Получаем занятые позиции
+  const occupiedPositions = gameState.players.map(p => p.position);
+  
+  // Получаем свободные позиции
+  const freePositions = Array.from({ length: maxPlayers }, (_, i) => i)
+    .filter(pos => !occupiedPositions.includes(pos));
 
   return (
     <div className="relative w-full h-full bg-green-800 rounded-full shadow-inner overflow-hidden">
@@ -63,21 +80,37 @@ export function GameTable({ gameState, currentUserId, showCards }: GameTableProp
       {gameState.players.map((player, index) => (
         <div 
           key={player.id} 
-          className={`absolute ${getPlayerPosition(player.position, gameState.players.length)}`}
+          className={`absolute ${getPlayerPosition(player.position)}`}
         >
           <PlayerSpot 
             player={player} 
             isCurrentPlayer={index === gameState.currentPlayerIndex}
             isCurrentUser={player.id === currentUserId}
-            showCards={showCards || player.id === currentUserId && player.hasLooked}
+            showCards={showCards}
+          />
+        </div>
+      ))}
+      
+      {/* Свободные места */}
+      {freePositions.map(position => (
+        <div 
+          key={`seat-${position}`} 
+          className={`absolute ${getPlayerPosition(position)}`}
+        >
+          <SeatButton 
+            type={!isUserSeated ? 'sitdown' : 'invite'} 
+            position={position} 
+            onSitDown={onSitDown} 
+            onInvite={onInvite}
+            disabled={!onInvite}
           />
         </div>
       ))}
       
       {/* Дилер маркер */}
-      {gameState.dealerIndex !== undefined && (
+      {gameState.dealerIndex !== undefined && gameState.players[gameState.dealerIndex] && (
         <div 
-          className={`absolute ${getPlayerPosition(gameState.players[gameState.dealerIndex]?.position, gameState.players.length)} mt-16 ml-16`}
+          className={`absolute ${getPlayerPosition(gameState.players[gameState.dealerIndex].position)} mt-16 ml-16`}
         >
           <div className="bg-white text-black text-xs font-bold px-2 py-1 rounded-full">
             D

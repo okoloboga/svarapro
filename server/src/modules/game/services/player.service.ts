@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Player, GameAction } from '../../../types/game';
+import { Player, GameAction, Card } from '../../../types/game';
 
 @Injectable()
 export class PlayerService {
   // Создание нового игрока
-  createPlayer(id: string, userData: any, position: number): Player {
+  createPlayer(telegramId: string, userData: any, position: number): Player {
     return {
-      id,
+      id: telegramId,
       username: userData.username || 'Player',
       avatar: userData.avatar || '',
       balance: userData.balance || 0,
@@ -23,13 +23,16 @@ export class PlayerService {
   }
 
   // Обновление статуса игрока
-  updatePlayerStatus(player: Player, status: {
-    isActive?: boolean;
-    hasFolded?: boolean;
-    hasLooked?: boolean;
-    isDealer?: boolean;
-    lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind';
-  }): Player {
+  updatePlayerStatus(
+    player: Player,
+    status: {
+      isActive?: boolean;
+      hasFolded?: boolean;
+      hasLooked?: boolean;
+      isDealer?: boolean;
+      lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind';
+    },
+  ): Player {
     return {
       ...player,
       ...status,
@@ -52,7 +55,7 @@ export class PlayerService {
   }
 
   // Добавление карт игроку
-  addCardsToPlayer(player: Player, cards: any[]): Player {
+  addCardsToPlayer(player: Player, cards: Card[]): Player {
     return {
       ...player,
       cards,
@@ -60,8 +63,12 @@ export class PlayerService {
   }
 
   // Обработка ставки игрока
-  processPlayerBet(player: Player, amount: number, action: string): { 
-    updatedPlayer: Player; 
+  processPlayerBet(
+    player: Player,
+    amount: number,
+    action: string,
+  ): {
+    updatedPlayer: Player;
     action: GameAction;
   } {
     const updatedPlayer = { ...player };
@@ -73,10 +80,12 @@ export class PlayerService {
 
     const gameAction: GameAction = {
       type: action as any,
-      playerId: player.id,
+      telegramId: player.id,
       amount,
       timestamp: Date.now(),
-      message: `Игрок ${player.username} ${this.getActionDescription(action)} ${amount}`,
+      message: `Игрок ${player.username} ${this.getActionDescription(
+        action,
+      )} ${amount}`,
     };
 
     return { updatedPlayer, action: gameAction };
@@ -85,43 +94,52 @@ export class PlayerService {
   // Получение описания действия
   private getActionDescription(action: string): string {
     switch (action) {
-      case 'ante': return 'внес анте';
-      case 'blind_bet': return 'сделал ставку вслепую';
-      case 'call': return 'уравнял';
-      case 'raise': return 'повысил до';
-      case 'fold': return 'сбросил карты';
-      default: return action;
+      case 'ante':
+        return 'внес анте';
+      case 'blind_bet':
+        return 'сделал ставку вслепую';
+      case 'call':
+        return 'уравнял';
+      case 'raise':
+        return 'повысил до';
+      case 'fold':
+        return 'сбросил карты';
+      default:
+        return action;
     }
   }
 
   // Определение победителей
   determineWinners(players: Player[]): Player[] {
-    const activePlayers = players.filter(p => p.isActive && !p.hasFolded);
+    const activePlayers = players.filter((p) => p.isActive && !p.hasFolded);
     if (activePlayers.length === 0) {
       return [];
     }
-    
+
     // Находим максимальный счет
-    const maxScore = Math.max(...activePlayers.map(p => p.score || 0));
-    
+    const maxScore = Math.max(...activePlayers.map((p) => p.score || 0));
+
     // Возвращаем всех игроков с максимальным счетом
-    return activePlayers.filter(p => (p.score || 0) === maxScore);
+    return activePlayers.filter((p) => (p.score || 0) === maxScore);
   }
 
   // Нахождение следующего активного игрока
   findNextActivePlayer(players: Player[], currentIndex: number): number {
     let nextPlayerIndex = (currentIndex + 1) % players.length;
-    
+
     // Пропускаем неактивных игроков и тех, кто сбросил карты
     const startIndex = nextPlayerIndex;
-    
+
     do {
-      if (players[nextPlayerIndex].isActive && !players[nextPlayerIndex].hasFolded) {
+      if (
+        players[nextPlayerIndex].isActive &&
+        !players[nextPlayerIndex].hasFolded
+      ) {
         return nextPlayerIndex;
       }
       nextPlayerIndex = (nextPlayerIndex + 1) % players.length;
     } while (nextPlayerIndex !== startIndex);
-    
+
     // Если не нашли активного игрока, возвращаем текущий индекс
     return currentIndex;
   }

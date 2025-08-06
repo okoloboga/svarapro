@@ -13,9 +13,8 @@ const socket = initSocket();
 
 export function GameRoom({ roomId, balance }: GameRoomProps) {
   const { t } = useTranslation('common');
-  const { gameState, loading, error, actions } = useGameState(roomId);
+  const { gameState, loading, error, isSeated, actions } = useGameState(roomId);
   const [showBetSlider, setShowBetSlider] = useState(false);
-  const [betAmount, setBetAmount] = useState(0);
   
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -54,7 +53,7 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
   const currentPlayer = gameState.players.find(p => p.id === currentUserId);
   
   // Определяем, чей сейчас ход
-  const isCurrentUserTurn = gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
+  const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
   // Определяем возможные действия
   const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished';
@@ -89,6 +88,16 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
     setShowBetSlider(false);
   };
   
+  // Обработчик нажатия на кнопку "Сесть"
+  const handleSitDown = (position: number) => {
+    actions.sitDown(position);
+  };
+  
+  // Обработчик нажатия на кнопку "Пригласить"
+  const handleInvite = (position: number) => {
+    actions.invitePlayer(position);
+  };
+  
   return (
     <div className="bg-green-800 min-h-screen flex flex-col relative">
       {/* Заголовок */}
@@ -97,7 +106,7 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
           {t('game_room')} №{roomId.slice(0, 8)}
         </h2>
         <div>
-          <span className="mr-2">Баланс: ${currentPlayer?.balance || 0}</span>
+          <span className="mr-2">Баланс: ${currentPlayer?.balance || balance}</span>
           <button 
             onClick={() => window.history.back()}
             className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
@@ -113,56 +122,61 @@ export function GameRoom({ roomId, balance }: GameRoomProps) {
           gameState={gameState}
           currentUserId={currentUserId}
           showCards={showCards}
+          onSitDown={handleSitDown}
+          onInvite={handleInvite}
+          maxPlayers={6}
         />
       </div>
       
-      {/* Панель действий */}
-      <div className="bg-gray-900 p-4">
-        <div className="flex justify-between">
-          {/* Информация об игре */}
-          <div className="w-1/3">
-            <GameInfo gameState={gameState} />
-          </div>
-          
-          {/* Карты текущего игрока */}
-          <div className="flex justify-center items-center space-x-2">
-            {currentPlayer?.cards.map((card, index) => (
-              <CardComponent 
-                key={index} 
-                card={currentPlayer.hasLooked ? card : undefined} 
-                hidden={!currentPlayer.hasLooked}
-                size="large" 
-              />
-            ))}
-          </div>
-          
-          {/* Кнопки действий */}
-          <div className="w-1/3">
-            {isCurrentUserTurn ? (
-              <ActionButtons 
-                canFold={canFold}
-                canCheck={canCheck}
-                canCall={canCall}
-                canRaise={canRaise}
-                canLook={canLook}
-                callAmount={callAmount}
-                onFold={actions.fold}
-                onCheck={actions.call} // Проверка - это по сути уравнивание нулевой ставки
-                onCall={actions.call}
-                onRaise={handleRaiseClick}
-                onLook={actions.lookCards}
-                currentBet={gameState.currentBet}
-                minRaise={minRaise}
-                maxRaise={maxRaise}
-              />
-            ) : (
-              <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
-                <p className="text-xl">Ожидание хода...</p>
-              </div>
-            )}
+      {/* Панель действий (показываем только если пользователь сидит за столом) */}
+      {isSeated && (
+        <div className="bg-gray-900 p-4">
+          <div className="flex justify-between">
+            {/* Информация об игре */}
+            <div className="w-1/3">
+              <GameInfo gameState={gameState} />
+            </div>
+            
+            {/* Карты текущего игрока */}
+            <div className="flex justify-center items-center space-x-2">
+              {currentPlayer?.cards.map((card, index) => (
+                <CardComponent 
+                  key={index} 
+                  card={currentPlayer.hasLooked ? card : undefined} 
+                  hidden={!currentPlayer.hasLooked}
+                  size="large" 
+                />
+              ))}
+            </div>
+            
+            {/* Кнопки действий */}
+            <div className="w-1/3">
+              {isCurrentUserTurn ? (
+                <ActionButtons 
+                  canFold={canFold}
+                  canCheck={canCheck}
+                  canCall={canCall}
+                  canRaise={canRaise}
+                  canLook={canLook}
+                  callAmount={callAmount}
+                  onFold={actions.fold}
+                  onCheck={actions.call} // Проверка - это по сути уравнивание нулевой ставки
+                  onCall={actions.call}
+                  onRaise={handleRaiseClick}
+                  onLook={actions.lookCards}
+                  currentBet={gameState.currentBet}
+                  minRaise={minRaise}
+                  maxRaise={maxRaise}
+                />
+              ) : (
+                <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
+                  <p className="text-xl">Ожидание хода...</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       
       {/* Модальное окно для ставки вслепую */}
       {canBlindBet && (

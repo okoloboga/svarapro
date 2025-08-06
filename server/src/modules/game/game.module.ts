@@ -6,8 +6,10 @@ import { BettingService } from './services/betting.service';
 import { GameStateService } from './services/game-state.service';
 import { GameGateway } from './game.gateway';
 import { RedisService } from '../../services/redis.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
+  imports: [UsersModule],
   providers: [
     GameService,
     CardService,
