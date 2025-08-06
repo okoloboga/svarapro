@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, BadRequestException, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  BadRequestException,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
@@ -25,7 +34,10 @@ export class RoomsController {
 
   @Post(':roomId/join')
   @UseGuards(JwtAuthGuard)
-  async joinRoom(@Param('roomId') roomId: string, @Body() joinRoomDto: JoinRoomDto) {
+  async joinRoom(
+    @Param('roomId') roomId: string,
+    @Body() joinRoomDto: JoinRoomDto,
+  ) {
     return this.roomsService.joinRoom(roomId, joinRoomDto);
   }
 

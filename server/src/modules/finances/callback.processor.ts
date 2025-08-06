@@ -12,16 +12,25 @@ export class CallbackProcessor {
   }
 
   @Process('process-callback')
-  async handleCallback(job: Job<{ trackerId: string; clientTransactionId?: string }>) {
-    this.logger.debug(`Processing job ${job.id} for trackerId: ${job.data.trackerId}, clientTransactionId: ${job.data.clientTransactionId}`);
+  async handleCallback(
+    job: Job<{ trackerId: string; clientTransactionId?: string }>,
+  ) {
+    this.logger.debug(
+      `Processing job ${job.id} for trackerId: ${job.data.trackerId}, clientTransactionId: ${job.data.clientTransactionId}`,
+    );
     try {
-      await this.financesService.processCallback(job.data.trackerId, job.data.clientTransactionId);
-      this.logger.log(`Successfully processed callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`);
+      await this.financesService.processCallback(
+        job.data.trackerId,
+        job.data.clientTransactionId,
+      );
+      this.logger.log(
+        `Successfully processed callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to process callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
         error.stack,
-        { error: error.message, details: error }
+        { error: error.message, details: error },
       );
       throw error; // Позволяем Bull повторить попытку
     }

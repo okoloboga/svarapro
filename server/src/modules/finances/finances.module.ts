@@ -17,6 +17,11 @@ import { ApiService } from '../../services/api.service';
     }),
   ],
   controllers: [FinancesController],
-  providers: [FinancesService, ApiService, TransactionGateway, CallbackProcessor], // Добавляем CallbackProcessor
+  providers: [
+    FinancesService,
+    ApiService,
+    TransactionGateway,
+    CallbackProcessor,
+  ], // Добавляем CallbackProcessor
 })
 export class FinancesModule {}

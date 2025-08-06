@@ -9,7 +9,9 @@ export class TelegramService {
   constructor() {
     const botToken = process.env.BOT_TOKEN;
     if (!botToken) {
-      throw new InternalServerErrorException('BOT_TOKEN is not defined in .env');
+      throw new InternalServerErrorException(
+        'BOT_TOKEN is not defined in .env',
+      );
     }
     this.botToken = botToken;
     this.telegramApiUrl = `https://api.telegram.org/bot${this.botToken}`;
@@ -23,7 +25,10 @@ export class TelegramService {
         parse_mode: 'Markdown', // Опционально: для форматирования
       });
     } catch (error) {
-      console.error('Failed to send Telegram message:', error.response?.data || error.message);
+      console.error(
+        'Failed to send Telegram message:',
+        error.response?.data || error.message,
+      );
       throw new InternalServerErrorException('Failed to send Telegram message');
     }
   }

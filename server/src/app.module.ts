@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FinancesModule } from './modules/finances/finances.module';
+import { GameModule } from './modules/game/game.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { BullModule } from '@nestjs/bull';
 import * as Joi from 'joi';
@@ -66,6 +67,7 @@ import * as Joi from 'joi';
     UsersModule,
     FinancesModule,
     RoomsModule,
+    GameModule,
   ],
 })
 export class AppModule {}

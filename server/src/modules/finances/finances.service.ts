@@ -35,7 +35,9 @@ export class FinancesService {
     receiver?: string,
     destTag?: string,
   ): Promise<Transaction> {
-    this.logger.debug(`Initiating transaction: telegramId=${telegramId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`);
+    this.logger.debug(
+      `Initiating transaction: telegramId=${telegramId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`,
+    );
 
     if (!this.supportedCurrencies.includes(currency)) {
       this.logger.error(`Unsupported currency: ${currency}`);
@@ -43,12 +45,20 @@ export class FinancesService {
     }
     if (type === 'withdraw') {
       if (!amount || amount <= 0) {
-        this.logger.error(`Amount is required and must be greater than 0 for withdraw: ${amount}`);
-        throw new BadRequestException('Amount is required and must be greater than 0 for withdraw');
+        this.logger.error(
+          `Amount is required and must be greater than 0 for withdraw: ${amount}`,
+        );
+        throw new BadRequestException(
+          'Amount is required and must be greater than 0 for withdraw',
+        );
       }
       if (!receiver || receiver.trim() === '') {
-        this.logger.error(`Receiver address is required for withdraw: ${receiver}`);
-        throw new BadRequestException('Receiver address is required for withdraw');
+        this.logger.error(
+          `Receiver address is required for withdraw: ${receiver}`,
+        );
+        throw new BadRequestException(
+          'Receiver address is required for withdraw',
+        );
       }
     }
 
@@ -57,12 +67,19 @@ export class FinancesService {
     let trackerId: string;
 
     if (type === 'deposit') {
-      const deposit = await this.apiService.createDepositAddress(currency, clientTransactionId);
+      const deposit = await this.apiService.createDepositAddress(
+        currency,
+        clientTransactionId,
+      );
       address = deposit.address;
       trackerId = deposit.trackerId;
       if (trackerId.length > 128) {
-        this.logger.error(`Tracker ID too long: ${trackerId} (length: ${trackerId.length})`);
-        throw new BadRequestException('Tracker ID exceeds maximum length of 128 characters');
+        this.logger.error(
+          `Tracker ID too long: ${trackerId} (length: ${trackerId.length})`,
+        );
+        throw new BadRequestException(
+          'Tracker ID exceeds maximum length of 128 characters',
+        );
       }
     } else {
       const withdrawAmount: number = amount!;
@@ -76,8 +93,12 @@ export class FinancesService {
       );
       trackerId = withdraw.trackerId;
       if (trackerId.length > 128) {
-        this.logger.error(`Tracker ID too long: ${trackerId} (length: ${trackerId.length})`);
-        throw new BadRequestException('Tracker ID exceeds maximum length of 128 characters');
+        this.logger.error(
+          `Tracker ID too long: ${trackerId} (length: ${trackerId.length})`,
+        );
+        throw new BadRequestException(
+          'Tracker ID exceeds maximum length of 128 characters',
+        );
       }
     }
 
@@ -90,7 +111,9 @@ export class FinancesService {
     if (type === 'withdraw') {
       const withdrawAmount: number = amount!;
       if (user.balance < withdrawAmount) {
-        this.logger.error(`Insufficient balance for user ${telegramId}: balance=${user.balance}, amount=${withdrawAmount}`);
+        this.logger.error(
+          `Insufficient balance for user ${telegramId}: balance=${user.balance}, amount=${withdrawAmount}`,
+        );
         throw new BadRequestException('Insufficient balance');
       }
       user.balance -= withdrawAmount;
@@ -108,26 +131,43 @@ export class FinancesService {
       status: 'pending',
     });
 
-    this.logger.log(`Transaction initiated: ${trackerId}, type: ${type}, currency: ${currency}, clientTransactionId: ${clientTransactionId}`);
+    this.logger.log(
+      `Transaction initiated: ${trackerId}, type: ${type}, currency: ${currency}, clientTransactionId: ${clientTransactionId}`,
+    );
     return await this.transactionRepository.save(transaction);
   }
 
-  async processCallback(trackerId: string, clientTransactionIdFromCallback?: string): Promise<void> {
-    this.logger.debug(`Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`);
-    
+  async processCallback(
+    trackerId: string,
+    clientTransactionIdFromCallback?: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`,
+    );
+
     let transactionData;
     try {
       transactionData = await this.apiService.getTransactionStatus(trackerId);
       this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
     } catch (error) {
-      this.logger.error(`Failed to get transaction status for trackerId: ${trackerId}`, error.stack, { error: error.message });
-      throw new BadRequestException(`Failed to get transaction status: ${error.message}`);
+      this.logger.error(
+        `Failed to get transaction status for trackerId: ${trackerId}`,
+        error.stack,
+        { error: error.message },
+      );
+      throw new BadRequestException(
+        `Failed to get transaction status: ${error.message}`,
+      );
     }
 
     const clientTransactionId = transactionData.clientTransactionId;
     if (!clientTransactionId) {
-      this.logger.error(`No clientTransactionId in transaction data for trackerId: ${trackerId}`);
-      throw new BadRequestException('No clientTransactionId provided in transaction data');
+      this.logger.error(
+        `No clientTransactionId in transaction data for trackerId: ${trackerId}`,
+      );
+      throw new BadRequestException(
+        'No clientTransactionId provided in transaction data',
+      );
     }
 
     const transaction = await this.transactionRepository.findOne({
@@ -136,7 +176,9 @@ export class FinancesService {
     });
 
     if (!transaction) {
-      this.logger.warn(`Transaction not found for clientTransactionId: ${clientTransactionId}, trackerId: ${trackerId}`);
+      this.logger.warn(
+        `Transaction not found for clientTransactionId: ${clientTransactionId}, trackerId: ${trackerId}`,
+      );
       return;
     }
 
@@ -163,7 +205,11 @@ export class FinancesService {
               transaction.currency,
             );
           } catch (error) {
-            this.logger.error(`Failed to notify user ${user.telegramId} via WebSocket`, error.stack, { error: error.message });
+            this.logger.error(
+              `Failed to notify user ${user.telegramId} via WebSocket`,
+              error.stack,
+              { error: error.message },
+            );
           }
 
           if (user.referrer && transactionData.amount >= 100) {
@@ -176,11 +222,15 @@ export class FinancesService {
               let refBonus = 0;
               if (referralCount >= 1 && referralCount <= 10) refBonus = 3;
               else if (referralCount >= 11 && referralCount <= 30) refBonus = 5;
-              else if (referralCount >= 31 && referralCount <= 100) refBonus = 8;
+              else if (referralCount >= 31 && referralCount <= 100)
+                refBonus = 8;
               else if (referralCount > 100) refBonus = 10;
 
               const bonusAmount =
-                ((this.convertTonToUsdt(transaction, transactionData.amount) - 100) * refBonus) / 100;
+                ((this.convertTonToUsdt(transaction, transactionData.amount) -
+                  100) *
+                  refBonus) /
+                100;
               if (bonusAmount > 0) {
                 referrer.refBalance += bonusAmount;
                 await this.userRepository.save(referrer);
@@ -207,15 +257,21 @@ export class FinancesService {
         if (user) {
           user.balance += transaction.amount;
           await this.userRepository.save(user);
-          this.logger.log(`Refunded ${transaction.amount} to user ${user.id} due to failed withdraw`);
+          this.logger.log(
+            `Refunded ${transaction.amount} to user ${user.id} due to failed withdraw`,
+          );
         }
       }
     } else {
-      this.logger.warn(`Unexpected transaction status: ${transactionData.status} for trackerId: ${trackerId}`);
+      this.logger.warn(
+        `Unexpected transaction status: ${transactionData.status} for trackerId: ${trackerId}`,
+      );
     }
 
     await this.transactionRepository.save(transaction);
-    this.logger.log(`Callback processed: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}, status: ${transactionData.status}`);
+    this.logger.log(
+      `Callback processed: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}, status: ${transactionData.status}`,
+    );
   }
 
   async getTransactionHistory(telegramId: string): Promise<Transaction[]> {
@@ -225,16 +281,25 @@ export class FinancesService {
     });
   }
 
-  async addToCallbackQueue(trackerId: string, clientTransactionId?: string): Promise<void> {
+  async addToCallbackQueue(
+    trackerId: string,
+    clientTransactionId?: string,
+  ): Promise<void> {
     try {
       await this.callbackQueue.add(
         'process-callback',
         { trackerId, clientTransactionId },
         { attempts: 3, backoff: 5000 },
       );
-      this.logger.log(`Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`);
+      this.logger.log(
+        `Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to add to callback queue for trackerId: ${trackerId}`, error.stack, { error: error.message });
+      this.logger.error(
+        `Failed to add to callback queue for trackerId: ${trackerId}`,
+        error.stack,
+        { error: error.message },
+      );
       throw error;
     }
   }

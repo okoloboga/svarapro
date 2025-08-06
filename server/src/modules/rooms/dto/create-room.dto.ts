@@ -1,5 +1,10 @@
-
-import { IsString, IsNumber, IsIn, IsOptional, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsIn,
+  IsOptional,
+  MinLength,
+} from 'class-validator';
 
 export class CreateRoomDto {
   @IsNumber()
@@ -13,4 +18,3 @@ export class CreateRoomDto {
   @MinLength(6)
   password?: string;
 }
-

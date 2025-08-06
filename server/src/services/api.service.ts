@@ -42,7 +42,8 @@ interface ExnodeTransactionStatusResponse {
 export class ApiService {
   private readonly baseUrl = 'https://my.exnode.io';
   private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
-  private readonly callBackUrl = 'https://svarapro.com/api/v1/finances/callback';
+  private readonly callBackUrl =
+    'https://svarapro.com/api/v1/finances/callback';
   private readonly supportedTokens = ['USDTTON', 'TON'];
   private readonly logger = new Logger(ApiService.name);
 
@@ -74,9 +75,15 @@ export class ApiService {
       this.logger.error(`Unsupported token: ${token}`);
       throw new BadRequestException(`Unsupported token: ${token}`);
     }
-    if (!clientTransactionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+    if (
+      !clientTransactionId.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      )
+    ) {
       this.logger.error(`Invalid clientTransactionId: ${clientTransactionId}`);
-      throw new BadRequestException(`Invalid clientTransactionId: ${clientTransactionId}`);
+      throw new BadRequestException(
+        `Invalid clientTransactionId: ${clientTransactionId}`,
+      );
     }
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -91,8 +98,12 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    this.logger.debug(`Creating deposit address: token=${token}, clientTransactionId=${clientTransactionId}`);
-    this.logger.debug(`Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`);
+    this.logger.debug(
+      `Creating deposit address: token=${token}, clientTransactionId=${clientTransactionId}`,
+    );
+    this.logger.debug(
+      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
+    );
     this.logger.debug(`Request body: ${body}`);
 
     try {
@@ -112,18 +123,26 @@ export class ApiService {
       );
 
       if (response.data.status !== 'ACCEPTED') {
-        this.logger.error(`Failed to create deposit address: ${response.data.status}, response: ${JSON.stringify(response.data)}`);
-        throw new BadRequestException(`Failed to create deposit address: ${response.data.status}`);
+        this.logger.error(
+          `Failed to create deposit address: ${response.data.status}, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new BadRequestException(
+          `Failed to create deposit address: ${response.data.status}`,
+        );
       }
 
-      this.logger.log(`Deposit address created: ${response.data.refer}, trackerId: ${response.data.tracker_id}`);
+      this.logger.log(
+        `Deposit address created: ${response.data.refer}, trackerId: ${response.data.tracker_id}`,
+      );
       return {
         address: response.data.refer!,
         trackerId: response.data.tracker_id,
         destTag: response.data.dest_tag || null,
       };
     } catch (error) {
-      this.logger.error(`Exnode API error (createDepositAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`);
+      this.logger.error(
+        `Exnode API error (createDepositAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+      );
       throw new BadRequestException(`Exnode API error: ${error.message}`);
     }
   }
@@ -139,9 +158,15 @@ export class ApiService {
       this.logger.error(`Unsupported token: ${token}`);
       throw new BadRequestException(`Unsupported token: ${token}`);
     }
-    if (!clientTransactionId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+    if (
+      !clientTransactionId.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      )
+    ) {
       this.logger.error(`Invalid clientTransactionId: ${clientTransactionId}`);
-      throw new BadRequestException(`Invalid clientTransactionId: ${clientTransactionId}`);
+      throw new BadRequestException(
+        `Invalid clientTransactionId: ${clientTransactionId}`,
+      );
     }
     if (amount <= 0) {
       this.logger.error(`Amount must be greater than 0: ${amount}`);
@@ -167,8 +192,12 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    this.logger.debug(`Creating withdraw transaction: token=${token}, clientTransactionId=${clientTransactionId}, amount=${amount}, receiver=${receiver}`);
-    this.logger.debug(`Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`);
+    this.logger.debug(
+      `Creating withdraw transaction: token=${token}, clientTransactionId=${clientTransactionId}, amount=${amount}, receiver=${receiver}`,
+    );
+    this.logger.debug(
+      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
+    );
     this.logger.debug(`Request body: ${body}`);
 
     try {
@@ -188,16 +217,24 @@ export class ApiService {
       );
 
       if (response.data.status !== 'ACCEPTED') {
-        this.logger.error(`Failed to create withdraw transaction: ${response.data.status}, response: ${JSON.stringify(response.data)}`);
-        throw new BadRequestException(`Failed to create withdraw transaction: ${response.data.status}`);
+        this.logger.error(
+          `Failed to create withdraw transaction: ${response.data.status}, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new BadRequestException(
+          `Failed to create withdraw transaction: ${response.data.status}`,
+        );
       }
 
-      this.logger.log(`Withdraw transaction created: trackerId: ${response.data.tracker_id}`);
+      this.logger.log(
+        `Withdraw transaction created: trackerId: ${response.data.tracker_id}`,
+      );
       return {
         trackerId: response.data.tracker_id,
       };
     } catch (error) {
-      this.logger.error(`Exnode API error (createWithdrawAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`);
+      this.logger.error(
+        `Exnode API error (createWithdrawAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+      );
       throw new BadRequestException(`Exnode API error: ${error.message}`);
     }
   }
@@ -209,7 +246,11 @@ export class ApiService {
     clientTransactionId?: string;
     token?: string;
   }> {
-    if (!trackerId || typeof trackerId !== 'string' || trackerId.trim() === '') {
+    if (
+      !trackerId ||
+      typeof trackerId !== 'string' ||
+      trackerId.trim() === ''
+    ) {
       this.logger.error(`Invalid trackerId: ${trackerId}`);
       throw new BadRequestException(`Invalid trackerId: ${trackerId}`);
     }
@@ -221,7 +262,9 @@ export class ApiService {
       .digest('hex');
 
     this.logger.debug(`Checking transaction status: trackerId=${trackerId}`);
-    this.logger.debug(`Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`);
+    this.logger.debug(
+      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
+    );
     this.logger.debug(`Request body: ${body}`);
 
     try {
@@ -241,14 +284,22 @@ export class ApiService {
       );
 
       if (response.data.status !== 'ok') {
-        this.logger.error(`Failed to get transaction status: ${response.data.status}, response: ${JSON.stringify(response.data)}`);
-        throw new BadRequestException(`Failed to get transaction status: ${response.data.status}`);
+        this.logger.error(
+          `Failed to get transaction status: ${response.data.status}, response: ${JSON.stringify(response.data)}`,
+        );
+        throw new BadRequestException(
+          `Failed to get transaction status: ${response.data.status}`,
+        );
       }
 
       // Добавляем логирование clientTransactionId
-      this.logger.debug(`Transaction status response: clientTransactionId=${response.data.transaction.client_transaction_id}, status=${response.data.transaction.status}`);
+      this.logger.debug(
+        `Transaction status response: clientTransactionId=${response.data.transaction.client_transaction_id}, status=${response.data.transaction.status}`,
+      );
 
-      this.logger.log(`Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.transaction.status}`);
+      this.logger.log(
+        `Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.transaction.status}`,
+      );
       return {
         status: response.data.transaction.status,
         amount: response.data.transaction.amount,
@@ -257,7 +308,9 @@ export class ApiService {
         token: response.data.transaction.token,
       };
     } catch (error) {
-      this.logger.error(`Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`);
+      this.logger.error(
+        `Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+      );
       throw new BadRequestException(`Exnode API error: ${error.message}`);
     }
   }

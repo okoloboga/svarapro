@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room } from '../../entities/rooms.entity';
@@ -18,13 +22,18 @@ export class RoomsService {
     private telegramService: TelegramService,
   ) {}
 
-  async createRoom(createRoomDto: CreateRoomDto, telegramId: string): Promise<RoomType> {
+  async createRoom(
+    createRoomDto: CreateRoomDto,
+    telegramId: string,
+  ): Promise<RoomType> {
     const { minBet, type, password } = createRoomDto;
     if (minBet <= 0) {
       throw new BadRequestException('Minimum bet must be positive');
     }
     if (type === 'private' && (!password || !/^\d{6,}$/.test(password))) {
-      throw new BadRequestException('Password must be at least 6 digits for private rooms');
+      throw new BadRequestException(
+        'Password must be at least 6 digits for private rooms',
+      );
     }
 
     let roomId: string;
@@ -32,7 +41,9 @@ export class RoomsService {
       roomId = password!;
       const isUnique = await this.redisService.isRoomIdUnique(roomId);
       if (!isUnique) {
-        throw new BadRequestException('Password must be unique for private rooms');
+        throw new BadRequestException(
+          'Password must be unique for private rooms',
+        );
       }
     } else {
       roomId = uuidv4();
@@ -46,7 +57,7 @@ export class RoomsService {
       status: 'waiting',
       maxPlayers: 6,
       createdAt: new Date(),
-      finishedAt: undefined, 
+      finishedAt: undefined,
       ...(type === 'private' && { password }),
     };
 

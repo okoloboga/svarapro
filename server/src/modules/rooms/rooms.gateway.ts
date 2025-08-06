@@ -1,11 +1,20 @@
-import { SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import {
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from './rooms.service';
 import { RedisService } from '../../services/redis.service'; // Импортируем RedisService
 import { Room } from '../../types/game';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class RoomsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class RoomsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
