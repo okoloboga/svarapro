@@ -14,7 +14,7 @@ RUN pnpm install --frozen-lockfile --filter svara-pro-client
 
 # Build stage
 FROM deps AS builder
-# Copy client source
+# Copy client source (includes its own tsconfig files)
 COPY client/ ./client/
 
 # Build arguments for environment variables

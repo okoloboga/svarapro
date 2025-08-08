@@ -26,10 +26,9 @@ RUN pnpm install --frozen-lockfile --filter svara-pro-server --filter svara-pro-
 
 # Build stage
 FROM build-deps AS builder
-# Copy source code
+# Copy source code with individual tsconfig files
 COPY server/ ./server/
 COPY bot/ ./bot/
-COPY tsconfig.json ./
 
 # Build both server and bot
 RUN pnpm --filter svara-pro-server build
