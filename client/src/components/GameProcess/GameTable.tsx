@@ -1,7 +1,17 @@
 import React from 'react';
+import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
 
-const GameTable: React.FC = () => {
+interface GameTableProps {
+  gameState: GameState;
+  currentUserId: string;
+  showCards: boolean;
+  onSitDown: (position: number) => void;
+  onInvite: () => void;
+  maxPlayers: number;
+}
+
+const GameTable: React.FC<GameTableProps> = () => {
   const tableStyle: React.CSSProperties = {
     position: 'absolute',
     width: '493px',

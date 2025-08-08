@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
-import { GameTable } from '../../components/GameProcess/GameTable';
+import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
 import { GameInfo } from '../../components/GameProcess/GameInfo';
@@ -98,8 +98,6 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
     actions.sitDown(position);
-  };
-  
   };
 
   const containerStyle = {
