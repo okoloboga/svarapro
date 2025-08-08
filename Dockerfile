@@ -14,7 +14,8 @@ FROM node:20.17.0-alpine AS builder
 
 WORKDIR /app
 
-COPY --from=deps /usr/local/bin/pnpm /usr/local/bin/
+RUN npm install -g pnpm
+
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY server/ ./server/
