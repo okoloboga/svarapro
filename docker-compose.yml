@@ -39,6 +39,8 @@ services:
     restart: on-failure
     networks:
       - app-network
+    volumes:
+      - pnpm-store:/root/.pnpm-store
 
   postgres:
     image: public.ecr.aws/docker/library/postgres:15
@@ -72,3 +74,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  pnpm-store:
