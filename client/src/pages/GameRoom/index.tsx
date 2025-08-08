@@ -14,6 +14,8 @@ interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
 }
 
+import backgroundImage from '../../assets/game/background.jpg';
+
 export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
@@ -98,8 +100,17 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
     actions.sitDown(position);
   };
   
+  };
+
+  const containerStyle = {
+    backgroundImage: `url(${backgroundImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    minHeight: '100vh',
+  };
+
   return (
-    <div className="bg-green-800 min-h-screen flex flex-col relative">
+    <div style={containerStyle} className="flex flex-col relative">
       {/* Заголовок */}
       <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold">
