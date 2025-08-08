@@ -1,26 +1,40 @@
-# Stage 1: Install all dependencies
-FROM node:20.17.0-alpine AS deps
+# Base stage
+FROM node:20.17.0-alpine AS base
 WORKDIR /app
 RUN npm install -g pnpm
-COPY pnpm-lock.yaml ./
-COPY package.json ./
-COPY client/package.json ./client/
-COPY server/package.json ./server/
-COPY bot/package.json ./bot/
-RUN pnpm install --frozen-lockfile
+RUN apk add --no-cache libc6-compat
 
-# Stage 2: Build client
-FROM node:20.17.0-alpine AS builder
-WORKDIR /app
-RUN npm install -g pnpm
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
-COPY client/ ./
-RUN pnpm run build
+# Dependencies for client only
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY client/package.json ./client/package.json
 
-# Stage 3: Serve with Nginx
+# Install only client dependencies
+RUN pnpm install --frozen-lockfile --filter svara-pro-client
+
+# Build stage
+FROM deps AS builder
+# Copy client source
+COPY client/ ./client/
+
+# Build arguments for environment variables
+ARG VITE_APP_URL=http://localhost
+ARG VITE_WS_URL=/socket.io  
+ARG VITE_API_URL=http://localhost/api/v1
+
+ENV VITE_APP_URL=$VITE_APP_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# Build client
+RUN pnpm --filter svara-pro-client build
+
+# Production stage
 FROM nginx:1.27-alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built client
+COPY --from=builder /app/client/dist /usr/share/nginx/html
+# Copy nginx configuration
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]

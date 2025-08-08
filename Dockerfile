@@ -1,27 +1,64 @@
-# Stage 1: Install dependencies
+# Base stage with pnpm
 FROM node:20.17.0-alpine AS base
 WORKDIR /app
 RUN npm install -g pnpm
+RUN apk add --no-cache libc6-compat
 
-# Stage 2: Setup production dependencies
-FROM base AS production-deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+# Dependencies stage
+FROM base AS deps
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy package.json files for workspace packages
+COPY server/package.json ./server/package.json
+COPY bot/package.json ./bot/package.json
 
-# Stage 3: Setup development dependencies and build
-FROM base AS development-deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm run build
+# Install only production dependencies for server and bot
+RUN pnpm install --prod --frozen-lockfile --filter svara-pro-server --filter svara-pro-bot
 
-# Stage 4: Final image
+# Build dependencies stage
+FROM base AS build-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY server/package.json ./server/package.json
+COPY bot/package.json ./bot/package.json
+
+# Install all dependencies including dev dependencies
+RUN pnpm install --frozen-lockfile --filter svara-pro-server --filter svara-pro-bot
+
+# Build stage
+FROM build-deps AS builder
+# Copy source code
+COPY server/ ./server/
+COPY bot/ ./bot/
+COPY tsconfig.json ./
+
+# Build both server and bot
+RUN pnpm --filter svara-pro-server build
+RUN pnpm --filter svara-pro-bot build
+
+# Runtime stage
 FROM node:20.17.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=production-deps /app/node_modules ./node_modules
-COPY --from=development-deps /app/server/dist ./server/dist
-COPY --from=development-deps /app/bot/dist ./bot/dist
-COPY package.json ecosystem.config.js ./
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+
+# Install PM2 globally
+RUN npm install -g pm2
+
+# Copy production node_modules
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=deps --chown=nodejs:nodejs /app/server/node_modules ./server/node_modules
+COPY --from=deps --chown=nodejs:nodejs /app/bot/node_modules ./bot/node_modules
+
+# Copy built applications
+COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./server/dist
+COPY --from=builder --chown=nodejs:nodejs /app/bot/dist ./bot/dist
+
+# Copy configuration files
+COPY --chown=nodejs:nodejs package.json ecosystem.config.js ./
+
+USER nodejs
 EXPOSE 3000
 CMD ["pnpm", "start"]
