@@ -12,6 +12,7 @@ RUN pnpm install --frozen-lockfile
 # Stage 2: Build client
 FROM node:20.17.0-alpine AS builder
 WORKDIR /app
+COPY --from=deps /usr/local/bin/pnpm /usr/local/bin/
 COPY --from=deps /app/node_modules ./node_modules
 COPY client/ ./
 RUN pnpm run build
