@@ -60,4 +60,4 @@ COPY --chown=nodejs:nodejs package.json ecosystem.config.js ./
 
 USER nodejs
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]
