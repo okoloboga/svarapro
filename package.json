@@ -7,7 +7,6 @@
     "build:client": "pnpm --filter svara-pro-client build",
     "start": "pm2-runtime start ecosystem.config.js",
     "lint": "pnpm --filter svara-pro-server lint && pnpm --filter svara-pro-bot lint && pnpm --filter svara-pro-client lint",
-    "dev": "pnpm --parallel --filter \"svara-pro-*\" dev"
   },
   "devDependencies": {
     "pm2": "^5.4.2"
