@@ -58,6 +58,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/bot/dist ./bot/dist
 # Copy configuration files
 COPY --chown=nodejs:nodejs package.json ecosystem.config.js ./
 
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
+
 USER nodejs
 EXPOSE 3000
 CMD ["pm2-runtime", "start", "ecosystem.config.js"]
