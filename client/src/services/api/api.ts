@@ -2,9 +2,10 @@ import axios from 'axios';
 import { Room } from '../../types/game';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://svarapro.com/api/v1',
+  baseURL: 'https://svarapro.com/api/v1',
   withCredentials: true,
 });
+console.log('API baseURL is now hardcoded to https://svarapro.com/api/v1');
 
 export const apiService = {
   async login(initData: string, startPayload?: string): Promise<{ accessToken: string }> {
