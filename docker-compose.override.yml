@@ -7,9 +7,6 @@ services:
     volumes:
       - ./server/src:/app/server/src
       - ./bot/src:/app/bot/src
-    environment:
-      - NODE_ENV=development
-    command: ["pnpm", "run", "dev"]
 
   nginx:
     build:
