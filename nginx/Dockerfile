@@ -18,9 +18,9 @@ FROM deps AS builder
 COPY client/ ./client/
 
 # Build arguments for environment variables
-ARG VITE_APP_URL=http://localhost
-ARG VITE_WS_URL=/socket.io  
-ARG VITE_API_URL=http://localhost/api/v1
+ARG VITE_APP_URL
+ARG VITE_WS_URL
+ARG VITE_API_URL
 
 ENV VITE_APP_URL=$VITE_APP_URL
 ENV VITE_WS_URL=$VITE_WS_URL
