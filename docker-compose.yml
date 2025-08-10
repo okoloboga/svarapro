@@ -6,12 +6,14 @@ services:
       context: .
       dockerfile: nginx/Dockerfile
       args:
-        - VITE_APP_URL=${VITE_APP_URL:-http://localhost}
-        - VITE_WS_URL=${VITE_WS_URL:-/socket.io}
-        - VITE_API_URL=${VITE_API_URL:-http://localhost/api/v1}
+        - VITE_APP_URL=${VITE_APP_URL}
+        - VITE_WS_URL=${VITE_WS_URL}
+        - VITE_API_URL=${VITE_API_URL}
       cache_from:
         - nginx:1.27-alpine
         - node:20.17.0-alpine
+    env_file:
+      - ./client/.env
     ports:
       - "80:80"
       - "443:443"
