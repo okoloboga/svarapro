@@ -12,8 +12,6 @@ services:
       cache_from:
         - nginx:1.27-alpine
         - node:20.17.0-alpine
-    env_file:
-      - ./client/.env
     ports:
       - "80:80"
       - "443:443"
