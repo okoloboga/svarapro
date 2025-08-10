@@ -57,6 +57,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/bot/dist ./bot/dist
 
 # Copy configuration files
 COPY --chown=nodejs:nodejs package.json ecosystem.config.js ./
+COPY --chown=nodejs:nodejs server/package.json ./server/package.json
+COPY --chown=nodejs:nodejs bot/package.json ./bot/package.json
 
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
 
