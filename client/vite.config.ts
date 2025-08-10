@@ -5,9 +5,6 @@ import svgr from 'vite-plugin-svgr';
 import path from 'path';
 
 export default defineConfig({
-  define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify('https://svarapro.com/api/v1'),
-  },
   plugins: [
     react(),
     svgr(),
