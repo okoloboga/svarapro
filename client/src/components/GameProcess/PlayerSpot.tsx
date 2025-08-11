@@ -13,7 +13,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
   console.log('PlayerSpot.tsx: Received player prop:', player);
   const [showNotification, setShowNotification] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
 
   // Показываем уведомление при изменении действия игрока
