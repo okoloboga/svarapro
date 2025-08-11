@@ -6,9 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Room } from '../../entities/rooms.entity';
 import { RedisService } from '../../services/redis.service';
 import { TelegramService } from '../../services/telegram.service';
+import { GameModule } from '../game/game.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Room])],
+  imports: [TypeOrmModule.forFeature([Room]), GameModule],
   controllers: [RoomsController],
   providers: [RoomsService, RoomsGateway, RedisService, TelegramService],
 })

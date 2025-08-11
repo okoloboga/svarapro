@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { Room as RoomType } from '../../types/game';
+import { GameStateService } from '../game/services/game-state.service';
 
 @Injectable()
 export class RoomsService {
@@ -20,6 +21,7 @@ export class RoomsService {
     private roomsRepository: Repository<Room>,
     private redisService: RedisService,
     private telegramService: TelegramService,
+    private gameStateService: GameStateService,
   ) {}
 
   async createRoom(
@@ -53,7 +55,7 @@ export class RoomsService {
       roomId,
       minBet,
       type,
-      players: [telegramId],
+      players: [],
       status: 'waiting',
       maxPlayers: 6,
       createdAt: new Date(),
@@ -63,6 +65,9 @@ export class RoomsService {
 
     await this.redisService.setRoom(roomId, room);
     await this.redisService.addToActiveRooms(roomId);
+
+    const initialGameState = this.gameStateService.createInitialGameState(roomId, minBet);
+    await this.redisService.setGameState(roomId, initialGameState);
 
     if (type === 'private') {
       try {

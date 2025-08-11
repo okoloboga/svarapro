@@ -19,6 +19,6 @@ import { UsersModule } from '../users/users.module';
     GameGateway,
     RedisService,
   ],
-  exports: [GameService],
+  exports: [GameService, GameStateService],
 })
 export class GameModule {}

@@ -74,6 +74,12 @@ export class GameService {
       return { success: false, error: 'Комната не найдена' };
     }
 
+    if (!room.players.includes(telegramId)) {
+      room.players.push(telegramId);
+      await this.redisService.setRoom(roomId, room);
+      await this.redisService.publishRoomUpdate(roomId, room);
+    }
+
     const gameState = await this.redisService.getGameState(roomId);
     console.log(`Retrieved gameState from Redis for room ${roomId}:`, gameState);
 
