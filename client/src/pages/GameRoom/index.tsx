@@ -166,8 +166,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
                 {player ? (
                   <PlayerSpot 
                     player={player}
-                    isCurrentPlayer={gameState.players[gameState.currentPlayerIndex]?.id === player.id}
-                    isCurrentUser={player.id === currentUserId}
                     showCards={showCards}
                   />
                 ) : (

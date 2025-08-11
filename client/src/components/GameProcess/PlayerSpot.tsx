@@ -2,18 +2,14 @@ import { useState, useEffect } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
-import starImage from '@/assets/game/star.png';
 
 interface PlayerSpotProps {
   player: Player;
-  isCurrentPlayer: boolean;
-  isCurrentUser: boolean;
   showCards: boolean;
 }
 
-export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }: PlayerSpotProps) {
+export function PlayerSpot({ player, showCards }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
-  console.log('PlayerSpot avatar:', avatar);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
 
