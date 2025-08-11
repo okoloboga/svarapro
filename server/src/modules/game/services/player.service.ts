@@ -8,7 +8,7 @@ export class PlayerService {
     return {
       id: telegramId,
       username: userData.username || 'Player',
-      avatar: userData.avatar || '',
+      avatar: userData.avatar,
       balance: userData.balance || 0,
       tableBalance: 0,
       cards: [],

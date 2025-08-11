@@ -23,7 +23,7 @@ export interface Card {
 export interface Player {
   id: string; // telegramId
   username: string;
-  avatar: string;
+  avatar: string | null;
   balance: number; // общий баланс игрока
   tableBalance: number; // баланс на столе
   cards: Card[]; // карты в руке
