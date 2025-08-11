@@ -11,13 +11,10 @@ interface GameTableProps {
   maxPlayers: number;
 }
 
-const GameTable: React.FC<GameTableProps> = () => {
+const GameTable: React.FC<GameTableProps> = ({ gameState }) => {
   const tableStyle: React.CSSProperties = {
-    position: 'absolute',
     width: '493px',
     height: '315px',
-    top: '121px',
-    left: '30px',
     borderRadius: '149px',
     transform: 'rotate(90deg)',
     border: '16px solid #333238',
@@ -25,11 +22,24 @@ const GameTable: React.FC<GameTableProps> = () => {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     opacity: 1,
+    position: 'relative',
+  };
+
+  const potStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%) rotate(-90deg)',
+    textAlign: 'center',
+    color: 'white',
   };
 
   return (
     <div style={tableStyle}>
-      {/* Children can be passed here if needed */}
+      <div style={potStyle}>
+        <h3 className="text-lg font-semibold">Банк</h3>
+        <p className="text-2xl font-bold text-green-400">${gameState.pot}</p>
+      </div>
     </div>
   );
 };

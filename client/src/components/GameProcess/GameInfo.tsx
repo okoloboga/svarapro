@@ -29,10 +29,6 @@ export function GameInfo({ gameState }: GameInfoProps) {
     <div className="bg-gray-800 text-white p-4 rounded-lg">
       <div className="flex justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold">Банк</h3>
-          <p className="text-2xl font-bold text-green-400">${pot}</p>
-        </div>
-        <div>
           <h3 className="text-lg font-semibold">Статус</h3>
           <p className="text-md">{formatStatus(status)}</p>
         </div>

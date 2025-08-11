@@ -9,12 +9,30 @@ import { BetSlider } from '../../components/GameProcess/BetSlider';
 import { GameInfo } from '../../components/GameProcess/GameInfo';
 import { Socket } from 'socket.io-client';
 import { LoadingPage } from '../../components/LoadingPage'; // Добавляем импорт
+import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
+import { SeatButton } from '../../components/GameProcess/SeatButton';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
+
+import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
+import { SeatButton } from '../../components/GameProcess/SeatButton';
+
+// Функция для получения стилей позиционирования
+const getPositionStyle = (position: number): React.CSSProperties => {
+  switch (position) {
+    case 1: return { top: '50%', left: '5%', transform: 'translateY(-50%)' };
+    case 2: return { top: '10%', left: '25%', transform: 'translateX(-50%)' };
+    case 3: return { top: '10%', right: '25%', transform: 'translateX(50%)' };
+    case 4: return { top: '50%', right: '5%', transform: 'translateY(-50%)' };
+    case 5: return { bottom: '10%', right: '25%', transform: 'translateX(50%)' };
+    case 6: return { bottom: '10%', left: '25%', transform: 'translateX(-50%)' };
+    default: return {};
+  }
+};
 
 export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
@@ -110,7 +128,7 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   return (
     <div style={containerStyle} className="flex flex-col relative">
       {/* Заголовок */}
-      <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
+      <div className="text-white p-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold">
           {t('game_room')} №{roomId.slice(0, 8)}
         </h2>
@@ -125,8 +143,8 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
         </div>
       </div>
       
-      {/* Игровой стол */}
-      <div className="flex-grow relative p-4">
+      {/* Игровой стол и места для игроков */}
+      <div className="flex-grow relative p-4 flex items-center justify-center">
         <GameTable 
           gameState={gameState}
           currentUserId={currentUserId}
@@ -135,6 +153,33 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
           onInvite={actions.invitePlayer}
           maxPlayers={6}
         />
+        {
+          Array.from({ length: 6 }).map((_, index) => {
+            const position = index + 1;
+            const player = gameState.players.find(p => p.position === position);
+            const positionStyle = getPositionStyle(position);
+
+            return (
+              <div key={position} style={positionStyle} className="absolute">
+                {player ? (
+                  <PlayerSpot 
+                    player={player}
+                    isCurrentPlayer={gameState.players[gameState.currentPlayerIndex]?.id === player.id}
+                    isCurrentUser={player.id === currentUserId}
+                    showCards={showCards}
+                  />
+                ) : (
+                  <SeatButton 
+                    type="sitdown"
+                    position={position}
+                    onSitDown={handleSitDown}
+                    disabled={isSeated}
+                  />
+                )}
+              </div>
+            )
+          })
+        }
       </div>
       
       {/* Панель действий (показываем только если пользователь сидит за столом) */}
