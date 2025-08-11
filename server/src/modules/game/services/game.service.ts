@@ -316,10 +316,8 @@ export class GameService {
 
   // Получение данных пользователя
   private async getUserData(telegramId: string): Promise<any> {
-    console.log(`game.service.ts: Fetching user data for telegramId: ${telegramId}`);
     try {
       const user = await this.usersService.getProfile(telegramId);
-      console.log(`game.service.ts: User profile from DB:`, user);
       return {
         username: user.username,
         avatar: user.avatar,

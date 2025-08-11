@@ -32,7 +32,6 @@ export class AuthService {
     const validated = { user: JSON.parse(userParam) as TelegramUser };
 
     const { user: tgUser } = validated;
-    console.log('auth.service.ts: Parsed tgUser from initData:', tgUser);
     let user = await this.usersRepository.findOne({
       where: { telegramId: tgUser.id.toString() },
     });
@@ -58,12 +57,10 @@ export class AuthService {
         totalDeposit: 0,
         referrer: referrer, // Устанавливаем реферера
       });
-      console.log('auth.service.ts: Creating new user:', user);
       await this.usersRepository.save(user);
     } else {
       user.username = tgUser.username ?? null;
       user.avatar = tgUser.photo_url ? tgUser.photo_url : null;
-      console.log('auth.service.ts: Updating existing user:', user);
       await this.usersRepository.save(user);
     }
 

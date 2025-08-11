@@ -5,7 +5,6 @@ import { Player, GameAction, Card } from '../../../types/game';
 export class PlayerService {
   // Создание нового игрока
   createPlayer(telegramId: string, userData: any, position: number): Player {
-    console.log('player.service.ts: Creating player with userData:', userData);
     return {
       id: telegramId,
       username: userData.username || 'Player',
