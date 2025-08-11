@@ -12,7 +12,6 @@ interface PlayerSpotProps {
 export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
   console.log('PlayerSpot avatar:', avatar);
-  console.log('PlayerSpot avatar:', avatar);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
 
