@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
+import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
 import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
@@ -33,6 +34,9 @@ const getPositionStyle = (position: number): React.CSSProperties => {
 export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
+
+  const launchParams = retrieveLaunchParams();
+  const userData = (launchParams.initDataUnsafe as { user?: any })?.user || {};
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -110,7 +114,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
   
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
-    actions.sitDown(position);
+    actions.sitDown(position, userData);
   };
 
   const handleLeaveRoom = () => {

@@ -112,8 +112,9 @@ export class GameService {
     roomId: string,
     telegramId: string,
     position: number,
+    userData: any,
   ): Promise<GameActionResult> {
-    console.log('Handling sitDown:', { roomId, telegramId, position });
+    console.log('Handling sitDown:', { roomId, telegramId, position, userData });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
       console.log(`Game state not found for room ${roomId}`);
@@ -134,15 +135,6 @@ export class GameService {
     if (playerAlreadySeated) {
       console.log(`Player ${telegramId} is already seated in room ${roomId}`);
       return { success: false, error: 'Вы уже сидите за столом' };
-    }
-
-    const userData = await this.getUserData(telegramId);
-    if (!userData) {
-      console.log(`Failed to get user data for ${telegramId}`);
-      return {
-        success: false,
-        error: 'Не удалось получить данные пользователя',
-      };
     }
 
     const newPlayer = this.playerService.createPlayer(

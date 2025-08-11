@@ -130,20 +130,21 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   @SubscribeMessage('sit_down')
   async handleSitDown(
     client: Socket,
-    payload: { roomId: string; position: number },
+    payload: { roomId: string; position: number; userData: any },
   ): Promise<void> {
-    const { roomId, position } = payload;
+    const { roomId, position, userData } = payload;
     const telegramId = 
       client.handshake.query?.telegramId ||
       client.handshake.auth?.telegramId || 
       client.handshake.headers['x-telegram-id'];
-    console.log('Handling sit_down:', { roomId, telegramId, position });
+    console.log('Handling sit_down:', { roomId, telegramId, position, userData });
 
     if (telegramId) {
       const result = await this.gameService.sitDown(
         roomId,
         telegramId as string,
         position,
+        userData,
       );
       if (!result.success) {
         console.error(`Error in sit_down for ${telegramId}:`, result.error);
