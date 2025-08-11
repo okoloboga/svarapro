@@ -85,6 +85,15 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     }
   }, [roomId, socket]);
 
+  const leaveRoom = useCallback(() => {
+    if (socket) {
+      console.log('Emitting leave_room:', { roomId });
+      socket.emit('leave_room', { roomId });
+    } else {
+      console.error('Cannot leave room: socket not initialized');
+    }
+  }, [roomId, socket]);
+
   const actions = {
     blindBet: useCallback((amount: number) => performAction('blind_bet', amount), [performAction]),
     lookCards: useCallback(() => performAction('look'), [performAction]),
@@ -93,6 +102,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     fold: useCallback(() => performAction('fold'), [performAction]),
     sitDown,
     invitePlayer,
+    leaveRoom,
   };
 
   return {

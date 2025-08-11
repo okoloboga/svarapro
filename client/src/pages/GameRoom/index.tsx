@@ -11,6 +11,7 @@ import { Socket } from 'socket.io-client';
 import { LoadingPage } from '../../components/LoadingPage'; // Добавляем импорт
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
+import { useNavigate } from 'react-router-dom';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -33,6 +34,7 @@ const getPositionStyle = (position: number): React.CSSProperties => {
 
 export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
+  const navigate = useNavigate();
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
 
@@ -115,6 +117,11 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
     actions.sitDown(position);
   };
 
+  const handleLeaveRoom = () => {
+    actions.leaveRoom();
+    navigate('/');
+  };
+
   const containerStyle = {
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: 'cover',
@@ -132,7 +139,7 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
         <div>
           <span className="mr-2">Баланс: ${currentPlayer?.balance || balance}</span>
           <button 
-            onClick={() => window.history.back()}
+            onClick={handleLeaveRoom}
             className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Выйти
