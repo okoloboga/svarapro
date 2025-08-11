@@ -107,9 +107,22 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
             <img src={avatar || 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
           </div>
         </div>
-        <div>
-          <div className="font-semibold text-sm text-center">{username}</div>
-          <div className="text-xs text-gray-600 text-center">${balance}</div>
+        <div 
+          className="flex flex-col items-center justify-center"
+          style={{ width: '70px', height: '32px', borderRadius: '8px' }}
+        >
+          <div 
+            className="font-bold text-[10px]"
+            style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+          >
+            {username}
+          </div>
+          <div 
+            className="font-bold text-[10px]"
+            style={{ color: '#D2A21B' }}
+          >
+            ${balance}
+          </div>
         </div>
       </div>
 
