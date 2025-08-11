@@ -6,7 +6,7 @@ interface GameInfoProps {
 }
 
 export function GameInfo({ gameState }: GameInfoProps) {
-  const { pot, status, round, rake } = gameState;
+  const { status, round, rake } = gameState;
   
   // Получаем последние 5 действий из лога
   const recentActions = gameState.log.slice(-5).reverse();

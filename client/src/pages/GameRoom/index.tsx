@@ -18,9 +18,6 @@ interface GameRoomPropsExtended extends GameRoomProps {
 
 import backgroundImage from '../../assets/game/background.jpg';
 
-import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
-import { SeatButton } from '../../components/GameProcess/SeatButton';
-
 // Функция для получения стилей позиционирования
 const getPositionStyle = (position: number): React.CSSProperties => {
   switch (position) {
