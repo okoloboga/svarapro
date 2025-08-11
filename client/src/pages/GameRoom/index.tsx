@@ -36,7 +36,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
   const [showBetSlider, setShowBetSlider] = useState(false);
 
   const launchParams = retrieveLaunchParams();
-  const userData = launchParams.initDataUnsafe?.user || {};
+  const userData = (launchParams.initDataUnsafe as { user?: any })?.user || {};
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
