@@ -60,8 +60,9 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
 
   const sitDown = useCallback((position: number, userData: any) => {
     if (socket) {
-      console.log('Emitting sit_down:', { roomId, position, userData });
-      socket.emit('sit_down', { roomId, position, userData });
+      const payload = { roomId, position, userData };
+      console.log('Emitting sit_down with payload:', payload);
+      socket.emit('sit_down', payload);
     } else {
       console.error('Cannot sit down: socket not initialized');
     }
