@@ -132,8 +132,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
     <div style={containerStyle} className="flex flex-col relative">
       {/* Заголовок */}
       <div className="text-white p-4 flex justify-between items-center">
-        <h2 className="text-lg font-semibold">
-          {t('game_room')} №{roomId.slice(0, 8)}
+        <h2 className="text-xs font-semibold">
+          Комната №{roomId.slice(0, 8)}
         </h2>
         <div>
           <span className="mr-2">Баланс: ${currentPlayer?.balance || balance}</span>
