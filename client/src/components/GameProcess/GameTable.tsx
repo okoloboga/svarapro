@@ -25,20 +25,26 @@ const GameTable: React.FC<GameTableProps> = ({ gameState }) => {
     position: 'relative',
   };
 
-  const potStyle: React.CSSProperties = {
+  const potContainerStyle: React.CSSProperties = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%) rotate(-90deg)',
-    textAlign: 'center',
+    backgroundColor: 'rgba(19, 18, 23, 0.35)',
+    width: '80px',
+    height: '21px',
+    borderRadius: '2px',
+    border: '0.5px solid rgba(255, 255, 255, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     color: 'white',
   };
 
   return (
     <div style={tableStyle}>
-      <div style={potStyle}>
-        <h3 className="text-lg font-semibold">Банк</h3>
-        <p className="text-2xl font-bold text-green-400">${gameState.pot}</p>
+      <div style={potContainerStyle}>
+        <span className="text-xs">Банк: ${gameState.pot}</span>
       </div>
     </div>
   );
