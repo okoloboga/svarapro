@@ -170,7 +170,6 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
                     type="sitdown"
                     position={position}
                     onSitDown={handleSitDown}
-                    disabled={isSeated}
                   />
                 )}
               </div>
@@ -181,7 +180,7 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
       
       {/* Панель действий (показываем только если пользователь сидит за столом) */}
       {isSeated && (
-        <div className="bg-gray-900 p-4">
+        <div className="p-4">
           <div className="flex justify-between">
             {/* Информация об игре */}
             <div className="w-1/3">
