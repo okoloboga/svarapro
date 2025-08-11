@@ -94,6 +94,7 @@ export class GameService {
     if (!room.players.includes(telegramId)) {
       room.players.push(telegramId);
       await this.redisService.setRoom(roomId, room);
+      await this.redisService.addPlayerToRoom(roomId, telegramId);
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
