@@ -173,9 +173,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
                   />
                 ) : (
                   <SeatButton 
-                    type="sitdown"
+                    type={isSeated ? 'invite' : 'sitdown'}
                     position={position}
                     onSitDown={handleSitDown}
+                    onInvite={() => {}} // Placeholder for invite functionality
                   />
                 )}
               </div>

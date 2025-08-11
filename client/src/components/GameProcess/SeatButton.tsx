@@ -20,22 +20,21 @@ export function SeatButton({ type, position, onSitDown, onInvite, disabled }: Se
     }
   };
 
+  const imageClass = type === 'sitdown' ? 'w-[71px] h-[90px]' : 'w-[71px] h-[71px]';
+
   return (
     <button 
       onClick={handleClick}
-      className={`flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 rounded-lg p-2 transition-all ${
-        disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-opacity-90'
+      className={`transition-all ${
+        disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
       }`}
       disabled={disabled}
     >
       <img 
         src={type === 'sitdown' ? sitdownImage : inviteImage} 
         alt={type === 'sitdown' ? 'Сесть' : 'Пригласить'} 
-        className="w-12 h-12 mb-1"
+        className={imageClass}
       />
-      <span className="text-white text-sm">
-        {type === 'sitdown' ? 'Сесть' : 'Пригласить'}
-      </span>
     </button>
   );
 }
