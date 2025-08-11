@@ -11,10 +11,10 @@ import { Socket } from 'socket.io-client';
 import { LoadingPage } from '../../components/LoadingPage'; // Добавляем импорт
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
-import { useNavigate } from 'react-router-dom';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
+  setCurrentPage: (page: 'dashboard') => void;
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
@@ -32,9 +32,8 @@ const getPositionStyle = (position: number): React.CSSProperties => {
   }
 };
 
-export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
+export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
-  const navigate = useNavigate();
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
 
@@ -119,7 +118,7 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
 
   const handleLeaveRoom = () => {
     actions.leaveRoom();
-    navigate('/');
+    setCurrentPage('dashboard');
   };
 
   const containerStyle = {
