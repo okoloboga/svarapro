@@ -93,7 +93,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps
             className="absolute rounded-full overflow-hidden"
             style={{ width: '61px', height: '61px' }}
           >
-            <img src={avatar ? avatar : 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
+            {avatar ? (
+              <img src={avatar} alt={username} className="w-full h-full object-cover" />
+            ) : (
+              <img src="https://via.placeholder.com/61" alt={username} className="w-full h-full object-cover" />
+            )}
           </div>
         </div>
         <div className="relative" style={{ width: '70px', height: '32px' }}>
