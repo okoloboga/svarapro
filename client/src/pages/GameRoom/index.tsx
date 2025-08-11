@@ -21,12 +21,12 @@ import backgroundImage from '../../assets/game/background.jpg';
 // Функция для получения стилей позиционирования
 const getPositionStyle = (position: number): React.CSSProperties => {
   switch (position) {
-    case 1: return { top: '5%', left: '50%', transform: 'translateX(-50%)' }; // Top
-    case 2: return { top: '40%', right: '5%', transform: 'translateY(-50%)' }; // Right-Top
-    case 3: return { bottom: '20%', right: '5%', transform: 'translateY(50%)' }; // Right-Bottom
-    case 4: return { bottom: '5%', left: '50%', transform: 'translateX(-50%)' }; // Bottom
-    case 5: return { bottom: '20%', left: '5%', transform: 'translateY(50%)' }; // Left-Bottom
-    case 6: return { top: '40%', left: '5%', transform: 'translateY(-50%)' }; // Left-Top
+    case 1: return { top: '-40%', left: '50%', transform: 'translateX(-50%)' }; // Top
+    case 2: return { top: '20%', right: '15%', transform: 'translateY(-50%)' }; // Right-Top
+    case 3: return { bottom: '20%', right: '15%', transform: 'translateY(50%)' }; // Right-Bottom
+    case 4: return { bottom: '-40%', left: '50%', transform: 'translateX(-50%)' }; // Bottom
+    case 5: return { bottom: '20%', left: '15%', transform: 'translateY(50%)' }; // Left-Bottom
+    case 6: return { top: '20%', left: '15%', transform: 'translateY(-50%)' }; // Left-Top
     default: return {};
   }
 };
