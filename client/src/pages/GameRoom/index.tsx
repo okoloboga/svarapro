@@ -165,11 +165,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
             return (
               <div key={position} style={positionStyle} className="absolute">
                 {player ? (
-                  <PlayerSpot 
-                    player={player}
-                    isCurrentUser={player.id === currentUserId}
-                    showCards={showCards}
-                  />
+                  (() => {
+                    if (player.id.toString() === userData.id.toString()) {
+                      const mergedPlayer = {
+                        ...player,
+                        username: userData.username || player.username,
+                        avatar: userData.photo_url || player.avatar,
+                      };
+                      return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} />;
+                    }
+                    return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} />;
+                  })()
                 ) : (
                   <SeatButton 
                     type={isSeated ? 'invite' : 'sitdown'}
