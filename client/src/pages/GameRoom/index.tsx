@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
-import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
 import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
@@ -14,6 +13,7 @@ import { SeatButton } from '../../components/GameProcess/SeatButton';
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
   setCurrentPage: (page: 'dashboard') => void;
+  userData: any;
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
@@ -31,12 +31,9 @@ const getPositionStyle = (position: number): React.CSSProperties => {
   }
 };
 
-export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPropsExtended) {
+export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
-
-  const launchParams = retrieveLaunchParams();
-  const userData = (launchParams.initDataUnsafe as { user?: any })?.user || {};
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
