@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
@@ -32,7 +31,6 @@ const getPositionStyle = (position: number): React.CSSProperties => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPropsExtended) {
-  const { t } = useTranslation('common');
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
 
