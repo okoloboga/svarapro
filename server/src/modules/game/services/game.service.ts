@@ -43,19 +43,36 @@ export class GameService {
       return;
     }
 
+    // Remove from spectator list
     room.players = room.players.filter((playerId) => playerId !== telegramId);
+    await this.redisService.setRoom(roomId, room);
+    await this.redisService.publishRoomUpdate(roomId, room);
 
-    if (room.players.length === 0) {
-      console.log(`Room ${roomId} is empty, removing`);
-      await this.redisService.removeRoom(roomId);
-      await this.redisService.clearGameData(roomId);
-    } else {
-      console.log(`Updating room ${roomId} after player ${telegramId} left`);
-      await this.redisService.setRoom(roomId, room);
-      await this.redisService.publishRoomUpdate(roomId, room);
+    const gameState = await this.redisService.getGameState(roomId);
+    if (gameState) {
+      const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
 
-      if (room.status === 'playing') {
-        await this.markPlayerInactive(roomId, telegramId);
+      if (playerIndex > -1) {
+        // Player is seated, remove them
+        const removedPlayer = gameState.players.splice(playerIndex, 1)[0];
+
+        const action: GameAction = {
+          type: 'leave',
+          telegramId,
+          timestamp: Date.now(),
+          message: `Игрок ${removedPlayer.username} покинул стол`,
+        };
+        gameState.log.push(action);
+
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+      }
+
+      // Check if the room is now empty of seated players
+      if (gameState.players.length === 0) {
+        console.log(`Room ${roomId} is empty of players, removing`);
+        await this.redisService.removeRoom(roomId);
+        await this.redisService.clearGameData(roomId);
       }
     }
 
