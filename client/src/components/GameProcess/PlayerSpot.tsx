@@ -11,6 +11,8 @@ interface PlayerSpotProps {
 
 export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
+  console.log('PlayerSpot.tsx: Received player prop:', player);
+  const [showNotification, setShowNotification] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
 
@@ -93,7 +95,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps
             className="absolute rounded-full overflow-hidden"
             style={{ width: '61px', height: '61px' }}
           >
-            <img src={avatar ? avatar : 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
+            <img src={avatar || 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
           </div>
         </div>
         <div className="relative" style={{ width: '70px', height: '32px' }}>

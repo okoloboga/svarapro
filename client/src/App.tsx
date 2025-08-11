@@ -89,7 +89,7 @@ function App() {
 
   const userData = useMemo(() => {
     const params = retrieveLaunchParams() as LaunchParams;
-    console.log('Retrieved userData:', params.tgWebAppData?.user);
+    console.log('App.tsx: Retrieved userData from launch params:', params.tgWebAppData?.user);
     return (params.tgWebAppData as { user?: UserData })?.user || {};
   }, []);
 

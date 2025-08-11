@@ -159,6 +159,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
           Array.from({ length: 6 }).map((_, index) => {
             const position = index + 1;
             const player = gameState.players.find(p => p.position === position);
+            if (player) {
+              console.log(`GameRoom.tsx: Player at position ${position}:`, player);
+            }
             const positionStyle = getPositionStyle(position);
 
             return (
