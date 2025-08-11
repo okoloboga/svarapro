@@ -41,8 +41,8 @@ export function GameRoom({ roomId, balance, socket }: GameRoomPropsExtended) {
 
   useEffect(() => {
     if (socket) {
-      console.log('Emitting join_game from GameRoom:', { roomId, currentUserId });
-      socket.emit('join_game', { roomId });
+      console.log('Emitting join_room from GameRoom:', { roomId, currentUserId });
+      socket.emit('join_room', { roomId });
     } else {
       console.error('Socket is not initialized in GameRoom');
     }

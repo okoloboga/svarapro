@@ -31,8 +31,8 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     });
   }
 
-@SubscribeMessage('join_game')
-  async handleJoinGame(
+@SubscribeMessage('join_room')
+  async handleJoinRoom(
     client: Socket,
     payload: { roomId: string },
   ): Promise<void> {
@@ -44,10 +44,10 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       client.handshake.headers['x-telegram-id'];
     const userData = client.handshake.auth?.userData || {};
 
-    console.log('Handling join_game:', { roomId, telegramId, userData });
+    console.log('Handling join_room:', { roomId, telegramId, userData });
 
     if (!telegramId) {
-      console.error('No telegramId provided for join_game');
+      console.error('No telegramId provided for join_room');
       client.emit('error', { message: 'Требуется авторизация (telegramId)' });
       return;
     }
@@ -55,18 +55,18 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     client.join(roomId); // Присоединяем клиента к комнате сокетов
     console.log(`Client ${telegramId} joined room ${roomId}`);
 
-    const result = await this.gameService.joinGame(
+    const result = await this.gameService.joinRoom(
       roomId,
       telegramId as string,
       userData,
     );
-    console.log('join_game result:', result);
+    console.log('join_room result:', result);
 
     if (result.success) {
       console.log(`Emitting game_state to client ${telegramId} for room ${roomId}`);
       client.emit('game_state', result.gameState);
     } else {
-      console.error(`Error in join_game for ${telegramId}:`, result.error);
+      console.error(`Error in join_room for ${telegramId}:`, result.error);
       client.emit('error', { message: result.error });
     }
   }

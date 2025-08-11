@@ -62,87 +62,23 @@ export class GameService {
     await this.redisService.removePlayerFromRoom(roomId, telegramId);
   }
 
-  async joinGame(
+  async joinRoom(
     roomId: string,
     telegramId: string,
     userData: any,
   ): Promise<GameActionResult> {
-    console.log('Handling joinGame:', { roomId, telegramId, userData });
+    console.log('Handling joinRoom:', { roomId, telegramId, userData });
     const room = await this.redisService.getRoom(roomId);
     if (!room) {
       console.log(`Room ${roomId} not found`);
       return { success: false, error: 'Комната не найдена' };
     }
 
-    if (room.players.length >= room.maxPlayers) {
-      console.log(`Room ${roomId} is full`);
-      return { success: false, error: 'Комната заполнена' };
-    }
-
-    const fetchedUserData = await this.getUserData(telegramId);
-    if (!fetchedUserData) {
-      console.log(`Failed to get user data for ${telegramId}`);
-      return { success: false, error: 'Не удалось получить данные пользователя' };
-    }
-
-    let gameState = await this.redisService.getGameState(roomId);
+    const gameState = await this.redisService.getGameState(roomId);
     console.log(`Retrieved gameState from Redis for room ${roomId}:`, gameState);
-    if (room.players.includes(telegramId)) {
-      console.log(`Player ${telegramId} already in room ${roomId}`);
-      if (!gameState) {
-        console.log(`Creating initial game state for room ${roomId} as it was not found`);
-        gameState = this.gameStateService.createInitialGameState(
-          roomId,
-          room.minBet,
-        );
-        const newPlayer = this.playerService.createPlayer(
-          telegramId,
-          fetchedUserData,
-          gameState.players.length,
-        );
-        gameState.players.push(newPlayer);
-        await this.redisService.setGameState(roomId, gameState);
-        console.log(`Game state created and saved for room ${roomId}`);
-      }
-      return { success: true, gameState };
-    }
-
-    room.players.push(telegramId);
-    await this.redisService.setRoom(roomId, room);
-    await this.redisService.addPlayerToRoom(roomId, telegramId);
-    await this.redisService.publishRoomUpdate(roomId, room);
-    console.log(`Player ${telegramId} added to room ${roomId}`);
 
     if (!gameState) {
-      console.log(`Creating initial game state for room ${roomId}`);
-      gameState = this.gameStateService.createInitialGameState(
-        roomId,
-        room.minBet,
-      );
-    }
-
-    const newPlayer = this.playerService.createPlayer(
-      telegramId,
-      fetchedUserData,
-      gameState.players.length,
-    );
-    gameState.players.push(newPlayer);
-
-    const action: GameAction = {
-      type: 'join',
-      telegramId,
-      timestamp: Date.now(),
-      message: `Игрок ${newPlayer.username} присоединился к игре`,
-    };
-    gameState.log.push(action);
-
-    await this.redisService.setGameState(roomId, gameState);
-    await this.redisService.publishGameUpdate(roomId, gameState);
-    console.log(`Game state updated for room ${roomId}:`, gameState);
-
-    if (room.players.length >= 2 && room.status === 'waiting') {
-      console.log(`Starting game for room ${roomId}`);
-      await this.startGame(roomId);
+        return { success: false, error: 'Игра не найдена' };
     }
 
     return { success: true, gameState };
