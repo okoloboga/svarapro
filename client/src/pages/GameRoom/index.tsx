@@ -6,7 +6,6 @@ import { CardComponent } from '../../components/GameProcess/CardComponent';
 import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
-import { GameInfo } from '../../components/GameProcess/GameInfo';
 import { Socket } from 'socket.io-client';
 import { LoadingPage } from '../../components/LoadingPage'; // Добавляем импорт
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
@@ -189,11 +188,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
       {isSeated && (
         <div className="p-4">
           <div className="flex justify-between">
-            {/* Информация об игре */}
-            <div className="w-1/3">
-              <GameInfo gameState={gameState} />
-            </div>
-            
             {/* Карты текущего игрока */}
             <div className="flex justify-center items-center space-x-2">
               {currentPlayer?.cards.map((card, index) => (
