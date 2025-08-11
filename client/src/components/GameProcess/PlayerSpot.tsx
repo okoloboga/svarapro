@@ -87,13 +87,29 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
       )}
       
       {/* Аватар и имя */}
-      <div className="flex items-center mb-2">
-        <div className="w-10 h-10 rounded-full overflow-hidden mr-2">
-          <img src={avatar || 'https://via.placeholder.com/40'} alt={username} className="w-full h-full object-cover" />
+      <div className="flex flex-col items-center mb-2">
+        <div className="relative w-[71px] h-[71px] flex items-center justify-center mb-1">
+          {/* Bottom Layer */}
+          <div 
+            className="absolute rounded-full"
+            style={{ width: '71px', height: '71px', backgroundColor: '#ECEBF5' }}
+          ></div>
+          {/* Middle Layer */}
+          <div 
+            className="absolute rounded-full"
+            style={{ width: '65px', height: '65px', backgroundColor: '#555456' }}
+          ></div>
+          {/* Top Layer (Avatar) */}
+          <div 
+            className="absolute rounded-full overflow-hidden"
+            style={{ width: '61px', height: '61px' }}
+          >
+            <img src={avatar || 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
+          </div>
         </div>
         <div>
-          <div className="font-semibold text-sm">{username}</div>
-          <div className="text-xs text-gray-600">${balance}</div>
+          <div className="font-semibold text-sm text-center">{username}</div>
+          <div className="text-xs text-gray-600 text-center">${balance}</div>
         </div>
       </div>
 
