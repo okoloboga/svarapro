@@ -12,6 +12,13 @@ interface GameTableProps {
 }
 
 const GameTable: React.FC<GameTableProps> = ({ gameState }) => {
+  const containerStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '15vh',
+    left: '50%',
+    transform: 'translateX(-50%)',
+  };
+
   const tableStyle: React.CSSProperties = {
     width: '493px',
     height: '315px',
@@ -42,9 +49,11 @@ const GameTable: React.FC<GameTableProps> = ({ gameState }) => {
   };
 
   return (
-    <div style={tableStyle}>
-      <div style={potContainerStyle}>
-        <span className="text-xs">Банк: ${gameState.pot}</span>
+    <div style={containerStyle}>
+      <div style={tableStyle}>
+        <div style={potContainerStyle}>
+          <span className="text-xs">Банк: ${gameState.pot}</span>
+        </div>
       </div>
     </div>
   );
