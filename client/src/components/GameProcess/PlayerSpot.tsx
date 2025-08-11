@@ -107,21 +107,36 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
             <img src={avatar || 'https://via.placeholder.com/61'} alt={username} className="w-full h-full object-cover" />
           </div>
         </div>
-        <div 
-          className="flex flex-col items-center justify-center"
-          style={{ width: '70px', height: '32px', borderRadius: '8px' }}
-        >
+        <div className="relative" style={{ width: '70px', height: '32px' }}>
+          {/* Bottom Layer (Border) */}
           <div 
-            className="font-bold text-[10px]"
-            style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-          >
-            {username}
-          </div>
+            className="absolute inset-0"
+            style={{
+              borderRadius: '8px',
+              background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)'
+            }}
+          ></div>
+          {/* Top Layer (Content) */}
           <div 
-            className="font-bold text-[10px]"
-            style={{ color: '#D2A21B' }}
+            className="absolute flex flex-col items-center justify-center"
+            style={{
+              top: '1px', left: '1px', right: '1px', bottom: '1px',
+              borderRadius: '7px',
+              background: 'linear-gradient(to top, #000000, #36333B)'
+            }}
           >
-            ${balance}
+            <div 
+              className="font-bold text-[10px]"
+              style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+            >
+              {username}
+            </div>
+            <div 
+              className="font-bold text-[10px]"
+              style={{ color: '#D2A21B' }}
+            >
+              ${balance}
+            </div>
           </div>
         </div>
       </div>
