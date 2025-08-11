@@ -145,14 +145,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage }: GameRoomPr
       
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4 flex items-center justify-center">
-        <GameTable 
-          gameState={gameState}
-          currentUserId={currentUserId}
-          showCards={showCards}
-          onSitDown={handleSitDown}
-          onInvite={actions.invitePlayer}
-          maxPlayers={6}
-        />
+        <div className="flex-shrink-0">
+          <GameTable 
+            gameState={gameState}
+            currentUserId={currentUserId}
+            showCards={showCards}
+            onSitDown={handleSitDown}
+            onInvite={actions.invitePlayer}
+            maxPlayers={6}
+          />
+        </div>
         {
           Array.from({ length: 6 }).map((_, index) => {
             const position = index + 1;
