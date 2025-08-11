@@ -22,11 +22,11 @@ import backgroundImage from '../../assets/game/background.jpg';
 const getPositionStyle = (position: number): React.CSSProperties => {
   switch (position) {
     case 1: return { top: '5%', left: '50%', transform: 'translateX(-50%)' }; // Top
-    case 2: return { top: '30%', right: '5%', transform: 'translateY(-50%)' }; // Right-Top
-    case 3: return { bottom: '30%', right: '5%', transform: 'translateY(50%)' }; // Right-Bottom
+    case 2: return { top: '20%', right: '5%', transform: 'translateY(-50%)' }; // Right-Top
+    case 3: return { bottom: '20%', right: '5%', transform: 'translateY(50%)' }; // Right-Bottom
     case 4: return { bottom: '5%', left: '50%', transform: 'translateX(-50%)' }; // Bottom
-    case 5: return { bottom: '30%', left: '5%', transform: 'translateY(50%)' }; // Left-Bottom
-    case 6: return { top: '30%', left: '5%', transform: 'translateY(-50%)' }; // Left-Top
+    case 5: return { bottom: '20%', left: '5%', transform: 'translateY(50%)' }; // Left-Bottom
+    case 6: return { top: '20%', left: '5%', transform: 'translateY(-50%)' }; // Left-Top
     default: return {};
   }
 };
@@ -145,49 +145,51 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
       </div>
       
       {/* Игровой стол и места для игроков */}
-      <div className="flex-grow relative p-4 flex items-center justify-center">
-        <div className="flex-shrink-0">
-          <GameTable 
-            gameState={gameState}
-            currentUserId={currentUserId}
-            showCards={showCards}
-            onSitDown={handleSitDown}
-            onInvite={actions.invitePlayer}
-            maxPlayers={6}
-          />
-        </div>
-        {
-          Array.from({ length: 6 }).map((_, index) => {
-            const position = index + 1;
-            const player = gameState.players.find(p => p.position === position);
-            const positionStyle = getPositionStyle(position);
+      <div className="flex-grow relative p-4">
+        <div className="relative w-full h-full flex justify-center" style={{ paddingTop: '15vh' }}>
+          <div className="flex-shrink-0">
+            <GameTable 
+              gameState={gameState}
+              currentUserId={currentUserId}
+              showCards={showCards}
+              onSitDown={handleSitDown}
+              onInvite={actions.invitePlayer}
+              maxPlayers={6}
+            />
+          </div>
+          {
+            Array.from({ length: 6 }).map((_, index) => {
+              const position = index + 1;
+              const player = gameState.players.find(p => p.position === position);
+              const positionStyle = getPositionStyle(position);
 
-            return (
-              <div key={position} style={positionStyle} className="absolute">
-                {player ? (
-                  (() => {
-                    if (player.id.toString() === userData.id.toString()) {
-                      const mergedPlayer = {
-                        ...player,
-                        username: userData.username || player.username,
-                        avatar: userData.photo_url || player.avatar,
-                      };
-                      return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} />;
-                    }
-                    return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} />;
-                  })()
-                ) : (
-                  <SeatButton 
-                    type={isSeated ? 'invite' : 'sitdown'}
-                    position={position}
-                    onSitDown={handleSitDown}
-                    onInvite={() => {}} // Placeholder for invite functionality
-                  />
-                )}
-              </div>
-            )
-          })
-        }
+              return (
+                <div key={position} style={positionStyle} className="absolute">
+                  {player ? (
+                    (() => {
+                      if (player.id.toString() === userData.id.toString()) {
+                        const mergedPlayer = {
+                          ...player,
+                          username: userData.username || player.username,
+                          avatar: userData.photo_url || player.avatar,
+                        };
+                        return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} />;
+                      }
+                      return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} />;
+                    })()
+                  ) : (
+                    <SeatButton 
+                      type={isSeated ? 'invite' : 'sitdown'}
+                      position={position}
+                      onSitDown={handleSitDown}
+                      onInvite={() => {}} // Placeholder for invite functionality
+                    />
+                  )}
+                </div>
+              )
+            })
+          }
+        </div>
       </div>
       
       {/* Панель действий (показываем только если пользователь сидит за столом) */}
