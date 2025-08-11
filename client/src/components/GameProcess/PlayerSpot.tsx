@@ -132,6 +132,13 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
               {username}
             </div>
             <div 
+              style={{
+                width: '66px',
+                height: '1px',
+                backgroundColor: 'rgba(255, 255, 255, 0.07)'
+              }}
+            ></div>
+            <div 
               className="font-bold text-[10px]"
               style={{ color: '#D2A21B' }}
             >
