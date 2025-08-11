@@ -65,9 +65,7 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
   // Определяем стили для рамки игрока
   const spotClasses = `
     relative rounded-lg p-3 flex flex-col items-center
-    ${isCurrentPlayer ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-100 border border-gray-300'}
     ${hasFolded ? 'opacity-60' : ''}
-    ${isCurrentUser ? 'bg-blue-100' : ''}
   `;
 
   return (
@@ -78,13 +76,6 @@ export function PlayerSpot({ player, isCurrentPlayer, isCurrentUser, showCards }
         visible={showNotification}
         onHide={() => setShowNotification(false)}
       />
-      
-      {/* Индикатор текущего игрока */}
-      {isCurrentPlayer && (
-        <div className="absolute -top-3 -right-3">
-          <img src={starImage} alt="Current player" className="w-6 h-6" />
-        </div>
-      )}
       
       {/* Аватар и имя */}
       <div className="flex flex-col items-center mb-2">
