@@ -165,8 +165,8 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     if (telegramId) {
       const rooms = await this.redisService.getPlayerRooms(telegramId as string);
       for (const roomId of rooms) {
-        console.log(`Marking player ${telegramId} inactive in room ${roomId}`);
-        await this.gameService.markPlayerInactive(roomId, telegramId as string);
+        console.log(`Player ${telegramId} is leaving room ${roomId} due to disconnect`);
+        await this.gameService.leaveRoom(roomId, telegramId as string);
       }
     }
   }

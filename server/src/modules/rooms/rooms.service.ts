@@ -14,6 +14,16 @@ import { JoinRoomDto } from './dto/join-room.dto';
 import { Room as RoomType } from '../../types/game';
 import { GameStateService } from '../game/services/game-state.service';
 
+const generateNumericId = (length: number): string => {
+  let result = '';
+  const characters = '0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
+
 @Injectable()
 export class RoomsService {
   constructor(
@@ -48,7 +58,11 @@ export class RoomsService {
         );
       }
     } else {
-      roomId = uuidv4();
+      let isUnique = false;
+      do {
+        roomId = generateNumericId(6);
+        isUnique = await this.redisService.isRoomIdUnique(roomId);
+      } while (!isUnique);
     }
 
     const room: RoomType = {
