@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
+import defaultAvatar from '@/assets/main_logo.png';
 
 interface PlayerSpotProps {
   player: Player;
@@ -96,7 +97,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards }: PlayerSpotProps
             {avatar ? (
               <img src={avatar} alt={username} className="w-full h-full object-cover" />
             ) : (
-              <img src="https://via.placeholder.com/61" alt={username} className="w-full h-full object-cover" />
+              <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" />
             )}
           </div>
         </div>
