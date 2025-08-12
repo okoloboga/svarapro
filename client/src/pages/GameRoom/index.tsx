@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
