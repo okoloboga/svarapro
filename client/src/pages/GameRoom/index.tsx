@@ -45,7 +45,7 @@ const useTablePositioning = () => {
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
-    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30";
+    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30 w-20 h-24 flex items-center justify-center";
     
     // Классы позиционирования в зависимости от позиции
     const positionClasses = {
