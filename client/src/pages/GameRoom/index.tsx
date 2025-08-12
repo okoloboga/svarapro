@@ -39,9 +39,7 @@ const useTablePositioning = () => {
   const [windowWidth, windowHeight] = useWindowSize();
   const [tableSize] = useState({ width: 315, height: 493 }); // base size of the table image
 
-  const scaleForWidth = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
-  const scaleForHeight = windowHeight > 0 ? (windowHeight * 0.60) / tableSize.height : 0;
-  const scale = Math.min(scaleForWidth, scaleForHeight);
+  const scale = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
