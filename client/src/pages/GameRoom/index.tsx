@@ -45,7 +45,7 @@ const useTablePositioning = () => {
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
-    const baseClasses = "absolute z-10 transition-all duration-300 ease-in-out hover:scale-105 hover:z-20";
+    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30";
     
     // Классы позиционирования в зависимости от позиции
     const positionClasses = {
@@ -60,9 +60,13 @@ const useTablePositioning = () => {
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
 
-  const getPositionStyle = (): React.CSSProperties => {
+  const getPositionStyle = (position: number): React.CSSProperties => {
+    let transform = `scale(${scale})`;
+    if (position === 1 || position === 4) {
+      transform += ' translateX(-50%)';
+    }
     return {
-      transform: `scale(${scale})`,
+      transform,
     };
   };
 
@@ -193,7 +197,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
           Комната №{roomId.slice(0, 8)}
         </h2>
         <div className="flex items-center space-x-3">
-          <span className="text-sm">Баланс: ${currentPlayer?.balance || balance}</span>
           <button 
             onClick={handleMenuClick}
             className="transition-all duration-200 ease-in-out hover:opacity-75"
@@ -231,7 +234,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
               Array.from({ length: 6 }).map((_, index) => {
                 const position = index + 1;
                 const player = gameState.players.find(p => p.position === position);
-                const positionStyle = getPositionStyle();
+                const positionStyle = getPositionStyle(position);
 
                 return (
                   <div key={position} style={positionStyle} className={getPositionClasses(position)}>
