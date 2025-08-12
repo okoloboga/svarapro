@@ -18,6 +18,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   
   const tableStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
+    
     height: `${baseHeight * scale}px`,
     borderRadius: `${149 * scale}px`,
     transform: 'rotate(90deg)',
