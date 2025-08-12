@@ -21,7 +21,7 @@ import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 
 // Хук для адаптивного позиционирования игроков
-const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement>) => {
+const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement | null>) => {
   const [tableSize] = useState({ width: 493, height: 315 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
