@@ -45,16 +45,16 @@ const useTablePositioning = () => {
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
-    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30";
+    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30 w-20 h-24 flex items-center justify-center";
     
     // Классы позиционирования в зависимости от позиции
     const positionClasses = {
-      1: "-top-14 left-1/2",      // Top-center
-      2: "top-1/4 -right-5",                       // Right-top (closer)
-      3: "bottom-1/4 -right-5",                    // Right-bottom (closer)
-      4: "-bottom-14 left-1/2",   // Bottom-center
-      5: "bottom-1/4 -left-5",                     // Left-bottom (closer)
-      6: "top-1/4 -left-5",                        // Left-top (closer)
+      1: "-top-12 left-1/2 -translate-x-1/2",      // Top-center
+      2: "top-1/4 -right-4",                       // Right-top (closer)
+      3: "bottom-1/4 -right-4",                    // Right-bottom (closer)
+      4: "-bottom-12 left-1/2 -translate-x-1/2",   // Bottom-center
+      5: "bottom-1/4 -left-4",                     // Left-bottom (closer)
+      6: "top-1/4 -left-4",                        // Left-top (closer)
     };
     
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
