@@ -36,7 +36,7 @@ const useWindowSize = () => {
 
 // Хук для адаптивного позиционирования игроков
 const useTablePositioning = () => {
-  const [windowWidth, windowHeight] = useWindowSize();
+  const [windowWidth] = useWindowSize();
   const [tableSize] = useState({ width: 315, height: 493 }); // base size of the table image
 
   const scale = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
