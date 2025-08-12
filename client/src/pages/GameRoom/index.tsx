@@ -214,7 +214,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
           {/* Контейнер стола с позиционированием игроков */}
           <div className="relative flex justify-center items-center w-full h-full">
             {/* Игровой стол */}
-            <div className="flex-shrink-0 relative z-30">
+            <div className="flex-shrink-0 relative z-10">
               <GameTable 
                 gameState={gameState}
                 currentUserId={currentUserId}
