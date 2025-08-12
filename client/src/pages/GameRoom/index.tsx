@@ -48,11 +48,11 @@ const useTablePositioning = () => {
     // Классы позиционирования в зависимости от позиции
     const positionClasses = {
       1: "-top-10 left-1/2",      // Top-center
-      2: "top-1/5 -right-5",                       // Right-top (closer)
-      3: "bottom-1/5 -right-5",                    // Right-bottom (closer)
+      2: "top-1/3 -right-5",                       // Right-top (closer)
+      3: "bottom-1/3 -right-5",                    // Right-bottom (closer)
       4: "-bottom-10 left-1/2",   // Bottom-center
-      5: "bottom-1/5 -left-5",                     // Left-bottom (closer)
-      6: "top-1/5 -left-5",                        // Left-top (closer)
+      5: "bottom-1/3 -left-5",                     // Left-bottom (closer)
+      6: "top-1/3 -left-5",                        // Left-top (closer)
     };
     
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
