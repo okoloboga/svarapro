@@ -73,7 +73,7 @@ const useTablePositioning = () => {
   return { getPositionStyle, getPositionClasses, scale };
 };
 
-export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
+export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
