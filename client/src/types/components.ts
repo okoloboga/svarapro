@@ -160,6 +160,17 @@ export type GameRoomProps = {
   balance: string;
 };
 
+export type GameMenuProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onExit: () => void;
+};
+
+export type ExitMenuProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+};
+
 export type SlidePanelProps = {
   isOpen: boolean;
   onClose: () => void;

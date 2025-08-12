@@ -77,14 +77,26 @@ interface CardComponentProps {
   card?: Card;
   hidden?: boolean;
   size?: 'small' | 'medium' | 'large';
+  scale?: number;
 }
 
-export function CardComponent({ card, hidden = false, size = 'medium' }: CardComponentProps) {
-  const sizeClasses = {
-    small: 'w-12 h-16',
-    medium: 'w-16 h-22',
-    large: 'w-24 h-32',
+export function CardComponent({ card, hidden = false, size = 'medium', scale = 1 }: CardComponentProps) {
+  const baseSizes = {
+    small: { width: 48, height: 64 },
+    medium: { width: 64, height: 88 },
+    large: { width: 96, height: 128 },
   };
+
+  const selectedSize = baseSizes[size];
+  const scaledWidth = selectedSize.width * scale;
+  const scaledHeight = selectedSize.height * scale;
+
+  const cardStyle: React.CSSProperties = {
+    width: `${scaledWidth}px`,
+    height: `${scaledHeight}px`,
+  };
+
+  const cardClasses = `overflow-hidden shadow-md rounded-lg`;
 
   // Функция для получения пути к изображению карты
   const getCardImagePath = (card: Card): string => {
@@ -119,14 +131,14 @@ export function CardComponent({ card, hidden = false, size = 'medium' }: CardCom
 
   if (hidden || !card) {
     return (
-      <div className={`${sizeClasses[size]} rounded-lg overflow-hidden shadow-md`}>
+      <div style={cardStyle} className={cardClasses}>
         <img src={backImage} alt="Card back" className="w-full h-full object-cover" />
       </div>
     );
   }
 
   return (
-    <div className={`${sizeClasses[size]} rounded-lg overflow-hidden shadow-md`}>
+    <div style={cardStyle} className={cardClasses}>
       <img 
         src={getCardImagePath(card)} 
         alt={`${card.rank} of ${card.suit}`} 

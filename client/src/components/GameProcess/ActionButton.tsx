@@ -1,110 +1,70 @@
-import React from 'react';
+
+import passIcon from '../../assets/game/pass.svg';
+import lookIcon from '../../assets/game/look.svg';
+import raiseIcon from '../../assets/game/raise.svg';
 
 interface ActionButtonsProps {
   canFold: boolean;
-  canCheck: boolean;
   canCall: boolean;
   canRaise: boolean;
   canLook: boolean;
   callAmount: number;
   onFold: () => void;
-  onCheck: () => void;
   onCall: () => void;
-  onRaise: (amount: number) => void;
+  onRaise: () => void;
   onLook: () => void;
-  currentBet: number;
-  minRaise: number;
-  maxRaise: number;
 }
 
 export function ActionButtons({
   canFold,
-  canCheck,
   canCall,
   canRaise,
   canLook,
   callAmount,
   onFold,
-  onCheck,
   onCall,
   onRaise,
   onLook,
-  minRaise,
-  maxRaise,
 }: ActionButtonsProps) {
-  const [raiseAmount, setRaiseAmount] = React.useState(minRaise);
-
-  // Обработчик изменения слайдера
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRaiseAmount(parseInt(e.target.value));
-  };
-
   return (
-    <div className="flex flex-col items-center space-y-4 p-4 bg-gray-800 rounded-lg">
-      {/* Кнопки действий */}
-      <div className="flex space-x-2">
-        {canFold && (
-          <button
-            onClick={onFold}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            Сбросить
-          </button>
-        )}
-        
-        {canCheck && (
-          <button
-            onClick={onCheck}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
-          >
-            Пропустить
-          </button>
-        )}
-        
-        {canCall && (
-          <button
-            onClick={onCall}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Уравнять ${callAmount}
-          </button>
-        )}
-        
-        {canLook && (
-          <button
-            onClick={onLook}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            Посмотреть карты
-          </button>
-        )}
-      </div>
+    <div className="flex items-center justify-center space-x-2 p-2">
+      {canFold && (
+        <button
+          onClick={onFold}
+          className="flex flex-col items-center justify-center w-20 h-16 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          <img src={passIcon} alt="" className="w-6 h-6 mb-1" />
+          <span>Пас</span>
+        </button>
+      )}
       
-      {/* Слайдер для повышения ставки */}
+      {canCall && (
+        <button
+          onClick={onCall}
+          className="flex flex-col items-center justify-center w-20 h-16 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          <span>Заплатить {callAmount > 0 ? `${callAmount}` : ''}</span>
+        </button>
+      )}
+
       {canRaise && (
-        <div className="w-full">
-          <div className="flex justify-between text-white text-sm mb-1">
-            <span>${minRaise}</span>
-            <span>${maxRaise}</span>
-          </div>
-          <input
-            type="range"
-            min={minRaise}
-            max={maxRaise}
-            value={raiseAmount}
-            onChange={handleSliderChange}
-            className="w-full"
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-white">Повысить до: ${raiseAmount}</span>
-            <button
-              onClick={() => onRaise(raiseAmount)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              Повысить
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={onRaise}
+          className="flex flex-col items-center justify-center w-20 h-16 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          <img src={raiseIcon} alt="" className="w-6 h-6 mb-1" />
+          <span>Повысить</span>
+        </button>
+      )}
+      
+      {canLook && (
+        <button
+          onClick={onLook}
+          className="flex flex-col items-center justify-center w-20 h-16 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+        >
+          <img src={lookIcon} alt="" className="w-6 h-6 mb-1" />
+          <span>Открыть</span>
+        </button>
       )}
     </div>
   );

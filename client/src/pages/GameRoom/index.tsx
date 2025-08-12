@@ -17,23 +17,63 @@ interface GameRoomPropsExtended extends GameRoomProps {
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
+import menuIcon from '../../assets/game/menu.svg';
+import { GameMenu } from '../../components/GameProcess/GameMenu';
 
-// Функция для получения стилей позиционирования
-const getPositionStyle = (position: number): React.CSSProperties => {
-  switch (position) {
-    case 1: return { top: '-25%', left: '50%', transform: 'translateX(-50%)' }; // Top
-    case 2: return { top: '0%', right: '5%', transform: 'translateY(-50%)' }; // Right-Top
-    case 3: return { bottom: '40%', right: '5%', transform: 'translateY(50%)' }; // Right-Bottom
-    case 4: return { bottom: '20%', left: '50%', transform: 'translateX(-50%)' }; // Bottom
-    case 5: return { bottom: '40%', left: '5%', transform: 'translateY(50%)' }; // Left-Bottom
-    case 6: return { top: '0%', left: '5%', transform: 'translateY(-50%)' }; // Left-Top
-    default: return {};
-  }
+// Хук для адаптивного позиционирования игроков
+const useTablePositioning = () => {
+  const [tableSize] = useState({ width: 493, height: 315 });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateSizes = () => {
+      const container = document.querySelector('.game-table-container');
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updateSizes();
+    window.addEventListener('resize', updateSizes);
+    return () => window.removeEventListener('resize', updateSizes);
+  }, []);
+
+  const getPositionClasses = (position: number): string => {
+    // Базовые классы для всех позиций
+    const baseClasses = "absolute z-10 transition-all duration-300 ease-in-out hover:scale-105 hover:z-20";
+    
+    // Классы позиционирования в зависимости от позиции
+    // Учитываем поворот стола на 90 градусов
+    const positionClasses = {
+      1: "top-1/2 -translate-y-1/2 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Левая сторона повернутого стола
+      2: "-top-24 sm:-top-28 md:-top-32 lg:-top-36 left-1/2 -translate-x-1/2", // Верхняя сторона повернутого стола
+      3: "top-1/2 -translate-y-1/2 -right-24 sm:-right-28 md:-right-32 lg:-right-36", // Правая сторона повернутого стола
+      4: "-bottom-24 sm:-bottom-28 md:-bottom-32 lg:-bottom-36 left-1/2 -translate-x-1/2", // Нижняя сторона повернутого стола
+      5: "-bottom-24 sm:-bottom-28 md:-bottom-32 lg:-bottom-36 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Нижняя левая
+      6: "-top-24 sm:-top-28 md:-top-32 lg:-top-36 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Верхняя левая
+    };
+    
+    return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
+  };
+
+  const getPositionStyle = (): React.CSSProperties => {
+    // Масштабирующий коэффициент для адаптивности
+    const scale = Math.min(containerSize.width / (tableSize.width + 300), containerSize.height / (tableSize.height + 300), 1);
+    
+    return {
+      transform: `scale(${scale})`,
+    };
+  };
+
+  return { getPositionStyle, getPositionClasses, scale: Math.min(containerSize.width / (tableSize.width + 200), containerSize.height / (tableSize.height + 200), 1) };
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false);
+  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -82,7 +122,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
   
   // Определяем возможные действия
   const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished';
-  const canCheck = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) === gameState.currentBet;
+  
   const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting' && !currentPlayer?.hasLooked;
@@ -115,8 +155,27 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
   };
 
   const handleLeaveRoom = () => {
+    // Закрываем все модальные окна
+    setShowMenuModal(false);
+    setShowBetSlider(false);
+    
+    // Выполняем выход из комнаты
     actions.leaveRoom();
+    
+    // Переходим на dashboard
     setCurrentPage('dashboard');
+  };
+
+  const handleMenuClick = () => {
+    setShowMenuModal(true);
+  };
+
+  const handleCloseMenuModal = () => {
+    setShowMenuModal(false);
+  };
+
+  const handleExitClick = () => {
+    handleLeaveRoom();
   };
 
   const containerStyle = {
@@ -133,23 +192,29 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
         <h2 className="text-xs font-semibold">
           Комната №{roomId.slice(0, 8)}
         </h2>
-        <div>
-          <span className="mr-2">Баланс: ${currentPlayer?.balance || balance}</span>
+        <div className="flex items-center space-x-3">
+          <span className="text-sm">Баланс: ${currentPlayer?.balance || balance}</span>
           <button 
-            onClick={handleLeaveRoom}
-            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+            onClick={handleMenuClick}
+            className="p-2 bg-gray-800 bg-opacity-50 hover:bg-opacity-70 rounded-lg transition-all duration-200 ease-in-out"
           >
-            Выйти
+            <img 
+              src={menuIcon} 
+              alt="Меню" 
+              className="w-5 h-5"
+            />
           </button>
         </div>
       </div>
       
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4">
-        {/* Сцена: общий контейнер для стола и позиций игроков */}
-        <div className="absolute left-1/2" style={{ top: '15vh', transform: 'translateX(-50%)' }}>
-          <div className="relative flex justify-center items-start" style={{ width: '100vw', maxWidth: '100%', height: '70vh' }}>
-            <div className="flex-shrink-0">
+        {/* Центральный контейнер для стола и позиций игроков */}
+        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6">
+          {/* Контейнер стола с позиционированием игроков */}
+          <div className="relative flex justify-center items-center w-full h-full">
+            {/* Игровой стол */}
+            <div className="flex-shrink-0 relative z-10">
               <GameTable 
                 gameState={gameState}
                 currentUserId={currentUserId}
@@ -157,16 +222,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
                 onSitDown={handleSitDown}
                 onInvite={actions.invitePlayer}
                 maxPlayers={6}
+                scale={scale}
               />
             </div>
+            
+            {/* Позиции игроков вокруг стола */}
             {
               Array.from({ length: 6 }).map((_, index) => {
                 const position = index + 1;
                 const player = gameState.players.find(p => p.position === position);
-                const positionStyle = getPositionStyle(position);
+                const positionStyle = getPositionStyle();
 
                 return (
-                  <div key={position} style={positionStyle} className="absolute">
+                  <div key={position} style={positionStyle} className={getPositionClasses(position)}>
                     {player ? (
                       (() => {
                         if (player.id.toString() === userData.id.toString()) {
@@ -175,9 +243,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
                             username: userData.username || player.username,
                             avatar: userData.photo_url || player.avatar,
                           };
-                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} />;
+                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} />;
                         }
-                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} />;
+                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} />;
                       })()
                     ) : (
                       <SeatButton 
@@ -185,6 +253,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
                         position={position}
                         onSitDown={handleSitDown}
                         onInvite={() => {}} // Placeholder for invite functionality
+                        scale={scale}
                       />
                     )}
                   </div>
@@ -207,6 +276,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
                   card={currentPlayer.hasLooked ? card : undefined} 
                   hidden={!currentPlayer.hasLooked}
                   size="large" 
+                  scale={scale}
                 />
               ))}
             </div>
@@ -216,19 +286,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
               {isCurrentUserTurn ? (
                 <ActionButtons 
                   canFold={canFold}
-                  canCheck={canCheck}
                   canCall={canCall}
                   canRaise={canRaise}
                   canLook={canLook}
                   callAmount={callAmount}
                   onFold={actions.fold}
-                  onCheck={actions.call} // Проверка - это по сути уравнивание нулевой ставки
                   onCall={actions.call}
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
-                  currentBet={gameState.currentBet}
-                  minRaise={minRaise}
-                  maxRaise={maxRaise}
                 />
               ) : (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
@@ -290,6 +355,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
           </div>
         </div>
       )}
+      
+      {/* Модальное окно меню */}
+      <GameMenu 
+        isOpen={showMenuModal}
+        onClose={handleCloseMenuModal}
+        onExit={handleExitClick}
+      />
     </div>
   );
 }

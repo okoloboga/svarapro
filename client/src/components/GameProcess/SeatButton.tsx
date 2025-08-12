@@ -8,9 +8,10 @@ interface SeatButtonProps {
   onSitDown: (position: number) => void;
   onInvite?: (position: number) => void;
   disabled?: boolean;
+  scale?: number;
 }
 
-export function SeatButton({ type, position, onSitDown, onInvite, disabled }: SeatButtonProps) {
+export function SeatButton({ type, position, onSitDown, onInvite, disabled, scale = 1 }: SeatButtonProps) {
   const handleClick = () => {
     if (disabled) return;
     if (type === 'sitdown') {
@@ -20,20 +21,30 @@ export function SeatButton({ type, position, onSitDown, onInvite, disabled }: Se
     }
   };
 
-  const imageClass = type === 'sitdown' ? 'w-[71px] h-[90px]' : 'w-[71px] h-[71px]';
+  const baseWidth = type === 'sitdown' ? 71 : 71;
+  const baseHeight = type === 'sitdown' ? 90 : 71;
+  
+  const buttonClasses = `
+    transition-all duration-200 ease-in-out
+    ${disabled ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer hover:opacity-80'}
+  `;
+
+  const imageStyle: React.CSSProperties = {
+    width: `${baseWidth * scale}px`,
+    height: `${baseHeight * scale}px`,
+  };
 
   return (
     <button 
       onClick={handleClick}
-      className={`transition-all ${
-        disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
-      }`}
+      className={buttonClasses}
       disabled={disabled}
     >
       <img 
         src={type === 'sitdown' ? sitdownImage : inviteImage} 
         alt={type === 'sitdown' ? 'Сесть' : 'Пригласить'} 
-        className={imageClass}
+        style={imageStyle}
+        className="object-contain"
       />
     </button>
   );
