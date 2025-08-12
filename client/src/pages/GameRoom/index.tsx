@@ -20,24 +20,29 @@ import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 
-// Хук для адаптивного позиционирования игроков
-const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement | null>) => {
-  const [tableSize] = useState({ width: 493, height: 315 });
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-
+// Hook to get window size
+const useWindowSize = () => {
+  const [size, setSize] = useState([typeof window !== 'undefined' ? window.innerWidth : 0, typeof window !== 'undefined' ? window.innerHeight : 0]);
   useEffect(() => {
-    const updateSizes = () => {
-      const container = containerRef.current;
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        setContainerSize({ width: rect.width, height: rect.height });
-      }
-    };
+    function updateSize() {
+      setSize([window.innerWidth, window.innerHeight]);
+    }
+    window.addEventListener('resize', updateSize);
+    updateSize();
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+  return size;
+};
 
-    updateSizes();
-    window.addEventListener('resize', updateSizes);
-    return () => window.removeEventListener('resize', updateSizes);
-  }, [containerRef]);
+// Хук для адаптивного позиционирования игроков
+const useTablePositioning = () => {
+  const [windowWidth, windowHeight] = useWindowSize();
+  const [tableSize] = useState({ width: 493, height: 315 }); // base size of the table image
+
+  // The table is rotated, so for calculation purposes, its visual width is based on its element height, and vice versa.
+  const scaleForWidth = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.height : 0;
+  const scaleForHeight = windowHeight > 0 ? (windowHeight * 0.60) / tableSize.width : 0;
+  const scale = Math.min(scaleForWidth, scaleForHeight);
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
@@ -58,23 +63,19 @@ const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement | null
   };
 
   const getPositionStyle = (): React.CSSProperties => {
-    // Масштабирующий коэффициент для адаптивности
-    const scale = Math.min(containerSize.width / (tableSize.width + 300), containerSize.height / (tableSize.height + 300), 1);
-    
     return {
       transform: `scale(${scale})`,
     };
   };
 
-  return { getPositionStyle, getPositionClasses, scale: Math.min(containerSize.width / (tableSize.width + 200), containerSize.height / (tableSize.height + 200), 1) };
+  return { getPositionStyle, getPositionClasses, scale };
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
-  const tableContainerRef = useRef<HTMLDivElement>(null);
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
-  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning(tableContainerRef);
+  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -211,7 +212,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4 z-10">
         {/* Центральный контейнер для стола и позиций игроков */}
-        <div ref={tableContainerRef} className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container">
+        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container">
           {/* Контейнер стола с позиционированием игроков */}
           <div className="relative flex justify-center items-center w-full h-full">
             {/* Игровой стол */}
