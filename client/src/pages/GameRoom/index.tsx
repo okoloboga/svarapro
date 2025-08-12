@@ -210,7 +210,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4 z-10">
         {/* Центральный контейнер для стола и позиций игроков */}
-        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6">
+        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container">
           {/* Контейнер стола с позиционированием игроков */}
           <div className="relative flex justify-center items-center w-full h-full">
             {/* Игровой стол */}
