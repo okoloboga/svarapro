@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { GameRoomProps } from '@/types/game';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
@@ -21,13 +21,13 @@ import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 
 // Хук для адаптивного позиционирования игроков
-const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement>) => {
+const useTablePositioning = () => {
   const [tableSize] = useState({ width: 493, height: 315 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const updateSizes = () => {
-      const container = containerRef.current;
+      const container = document.querySelector('.game-table-container');
       if (container) {
         const rect = container.getBoundingClientRect();
         setContainerSize({ width: rect.width, height: rect.height });
@@ -37,7 +37,7 @@ const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement>) => {
     updateSizes();
     window.addEventListener('resize', updateSizes);
     return () => window.removeEventListener('resize', updateSizes);
-  }, [containerRef]);
+  }, []);
 
   const getPositionClasses = (position: number): string => {
     // Базовые классы для всех позиций
@@ -70,11 +70,10 @@ const useTablePositioning = (containerRef: React.RefObject<HTMLDivElement>) => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
-  const tableContainerRef = useRef<HTMLDivElement>(null);
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
-  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning(tableContainerRef);
+  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
 
   // ID текущего пользователя (получаем из Telegram Mini App)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
@@ -211,7 +210,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4 z-10">
         {/* Центральный контейнер для стола и позиций игроков */}
-        <div ref={tableContainerRef} className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container">
+        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container">
+          <div className="absolute top-0 left-0 bg-red-500 text-white p-2 z-50">
+            DEBUG: Game Table Container
+          </div>
           {/* Контейнер стола с позиционированием игроков */}
           <div className="relative flex justify-center items-center w-full h-full">
             {/* Игровой стол */}
