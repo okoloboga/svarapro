@@ -178,16 +178,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
     handleLeaveRoom();
   };
 
-  const backgroundStyle = {
+  const containerStyle = {
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
+    minHeight: '100vh',
   };
 
   return (
-    <div className="relative min-h-screen">
-      <div style={backgroundStyle} className="absolute inset-0" />
-      <div className="relative z-10 flex flex-col h-screen overflow-y-auto">
+    <div style={containerStyle} className="flex flex-col relative">
       {/* Заголовок */}
       <div className="text-white p-4 flex justify-between items-center">
         <h2 className="text-xs font-semibold">
@@ -363,7 +362,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
         onClose={handleCloseMenuModal}
         onExit={handleExitClick}
       />
-    </div>
     </div>
   );
 }
