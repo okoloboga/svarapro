@@ -196,7 +196,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData }: 
           <span className="text-sm">Баланс: ${currentPlayer?.balance || balance}</span>
           <button 
             onClick={handleMenuClick}
-            className="p-2 bg-gray-800 bg-opacity-50 hover:bg-opacity-70 rounded-lg transition-all duration-200 ease-in-out"
+            className="transition-all duration-200 ease-in-out hover:opacity-75"
           >
             <img 
               src={menuIcon} 
