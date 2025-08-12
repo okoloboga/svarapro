@@ -48,11 +48,11 @@ const useTablePositioning = () => {
     // Классы позиционирования в зависимости от позиции
     const positionClasses = {
       1: "-top-10 left-1/2",      // Top-center
-      2: "top-1/4 -right-5",                       // Right-top (closer)
-      3: "bottom-1/4 -right-5",                    // Right-bottom (closer)
+      2: "top-1/5 -right-5",                       // Right-top (closer)
+      3: "bottom-1/5 -right-5",                    // Right-bottom (closer)
       4: "-bottom-10 left-1/2",   // Bottom-center
-      5: "bottom-1/4 -left-5",                     // Left-bottom (closer)
-      6: "top-1/4 -left-5",                        // Left-top (closer)
+      5: "bottom-1/5 -left-5",                     // Left-bottom (closer)
+      6: "top-1/5 -left-5",                        // Left-top (closer)
     };
     
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
@@ -211,7 +211,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
       {/* Игровой стол и места для игроков */}
       <div className="flex-grow relative p-4 z-10">
         {/* Центральный контейнер для стола и позиций игроков */}
-        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-16">
+        <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           {/* Контейнер стола с позиционированием игроков */}
           <div className="relative flex justify-center items-center w-full h-full">
             {/* Игровой стол */}
