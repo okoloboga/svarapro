@@ -1,4 +1,3 @@
-
 import sitdownImage from '@/assets/game/sitdown.png';
 import inviteImage from '@/assets/game/invite.png';
 
