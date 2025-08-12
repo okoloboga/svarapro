@@ -13,14 +13,13 @@ interface GameTableProps {
 }
 
 const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
-  const baseWidth = 493;
-  const baseHeight = 315;
+  const baseWidth = 315;
+  const baseHeight = 493;
   
   const tableStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
     height: `${baseHeight * scale}px`,
     borderRadius: `${149 * scale}px`,
-    transform: 'rotate(90deg)',
     border: `${16 * scale}px solid #333238`,
     backgroundImage: `url(${tableImage})`,
     backgroundSize: 'cover',
@@ -31,10 +30,9 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   const tableClasses = "relative";
 
   // Стили для дополнительной рамки (65% от размера стола)
-  // Учитываем поворот стола на 90 градусов
   const outerBorderStyle: React.CSSProperties = {
-    width: `${baseHeight * scale * 0.65}px`, // Используем высоту стола как ширину рамки
-    height: `${baseWidth * scale * 0.65}px`, // Используем ширину стола как высоту рамки
+    width: `${baseWidth * scale * 0.65}px`,
+    height: `${baseHeight * scale * 0.65}px`,
     borderRadius: `${164 * scale}px`,
     border: `${1 * scale}px solid rgba(158, 158, 159, 0.4)`, // #9E9E9F 40%
     position: 'absolute',
@@ -48,7 +46,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: 'translate(-50%, -50%) rotate(-90deg)',
+    transform: 'translate(-50%, -50%)',
     backgroundColor: 'rgba(19, 18, 23, 0.35)',
     width: `${80 * scale}px`,
     height: `${21 * scale}px`,
@@ -65,7 +63,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     position: 'absolute',
     top: '70%', // 30% от низа = 70% от верха
     left: '50%',
-    transform: 'translate(-50%, -50%) rotate(-90deg)', // Учитываем поворот стола
+    transform: 'translate(-50%, -50%)',
     color: 'rgba(255, 255, 255, 0.16)', // #FFFFFF 16%
     fontWeight: 800,
     fontStyle: 'normal',

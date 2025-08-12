@@ -37,11 +37,10 @@ const useWindowSize = () => {
 // Хук для адаптивного позиционирования игроков
 const useTablePositioning = () => {
   const [windowWidth, windowHeight] = useWindowSize();
-  const [tableSize] = useState({ width: 493, height: 315 }); // base size of the table image
+  const [tableSize] = useState({ width: 315, height: 493 }); // base size of the table image
 
-  // The table is rotated, so for calculation purposes, its visual width is based on its element height, and vice versa.
-  const scaleForWidth = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.height : 0;
-  const scaleForHeight = windowHeight > 0 ? (windowHeight * 0.60) / tableSize.width : 0;
+  const scaleForWidth = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
+  const scaleForHeight = windowHeight > 0 ? (windowHeight * 0.60) / tableSize.height : 0;
   const scale = Math.min(scaleForWidth, scaleForHeight);
 
   const getPositionClasses = (position: number): string => {
@@ -49,14 +48,13 @@ const useTablePositioning = () => {
     const baseClasses = "absolute z-10 transition-all duration-300 ease-in-out hover:scale-105 hover:z-20";
     
     // Классы позиционирования в зависимости от позиции
-    // Учитываем поворот стола на 90 градусов
     const positionClasses = {
-      1: "top-1/2 -translate-y-1/2 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Левая сторона повернутого стола
-      2: "-top-24 sm:-top-28 md:-top-32 lg:-top-36 left-1/2 -translate-x-1/2", // Верхняя сторона повернутого стола
-      3: "top-1/2 -translate-y-1/2 -right-24 sm:-right-28 md:-right-32 lg:-right-36", // Правая сторона повернутого стола
-      4: "-bottom-24 sm:-bottom-28 md:-bottom-32 lg:-bottom-36 left-1/2 -translate-x-1/2", // Нижняя сторона повернутого стола
-      5: "-bottom-24 sm:-bottom-28 md:-bottom-32 lg:-bottom-36 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Нижняя левая
-      6: "-top-24 sm:-top-28 md:-top-32 lg:-top-36 -left-24 sm:-left-28 md:-left-32 lg:-left-36", // Верхняя левая
+      1: "-top-16 left-1/2 -translate-x-1/2",                               // Top-center
+      2: "top-1/4 -right-16",                                                // Right-top
+      3: "bottom-1/4 -right-16",                                             // Right-bottom
+      4: "-bottom-16 left-1/2 -translate-x-1/2",                             // Bottom-center
+      5: "bottom-1/4 -left-16",                                              // Left-bottom
+      6: "top-1/4 -left-16",                                                 // Left-top
     };
     
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
