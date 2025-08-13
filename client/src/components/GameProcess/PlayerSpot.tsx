@@ -144,13 +144,16 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
                 >
                   <div
                     className="font-bold"
-                    style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: `${10 * scale}px` }}
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: `${10 * scale}px`,
+                      paddingBottom: `${2 * scale}px`,
+                      marginBottom: `${2 * scale}px`,
+                      borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.3)`
+                    }}
                   >
                     {username}
                   </div>
-                  <div
-                    style={{ width: `${66 * scale}px`, height: `${1 * scale}px`, backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
-                  ></div>
                   <div
                     className="font-bold"
                     style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}
