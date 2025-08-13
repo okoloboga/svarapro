@@ -10,7 +10,7 @@ interface ActionButtonsProps {
   onRaise: () => void;
   onLook: () => void;
   onBlindBet: () => void;
-  disabled?: boolean;
+  blindButtonsDisabled?: boolean;
 }
 
 export function ActionButtons({
@@ -25,7 +25,7 @@ export function ActionButtons({
   onRaise,
   onLook,
   onBlindBet,
-  disabled,
+  blindButtonsDisabled,
 }: ActionButtonsProps) {
   return (
     <div className="flex items-center justify-center space-x-2 p-2">
@@ -63,10 +63,10 @@ export function ActionButtons({
         <button
           onClick={onLook}
           className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
+            blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
-          disabled={disabled}
+          disabled={blindButtonsDisabled}
         >
           <span>Открыть</span>
         </button>
@@ -76,10 +76,10 @@ export function ActionButtons({
         <button
           onClick={onBlindBet}
           className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
+            blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
-          disabled={disabled}
+          disabled={blindButtonsDisabled}
         >
           <span>Вслепую</span>
         </button>
