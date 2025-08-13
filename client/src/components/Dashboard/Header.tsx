@@ -33,7 +33,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           className="text-white font-inter font-semibold text-[14px] leading-[21px] text-center"
           style={{ letterSpacing: '-0.011em', textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)' }}
         >
-          {truncateUsername(user?.username)}
+          {truncateUsername(user?.username || user?.first_name)}
         </p>
       </div>
       <div className="text-left">
