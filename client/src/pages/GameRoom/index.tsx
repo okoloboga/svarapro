@@ -305,6 +305,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
+                  disabled={isGameWaiting}
                 />
               ) : (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
