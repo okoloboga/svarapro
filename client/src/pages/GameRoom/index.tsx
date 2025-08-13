@@ -130,6 +130,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting' && !currentPlayer?.hasLooked;
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting' && !currentPlayer?.hasLooked;
+  const isGameWaiting = gameState.status === 'waiting';
   
   // Вычисляем суммы для ставок
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
