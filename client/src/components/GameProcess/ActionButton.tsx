@@ -1,18 +1,15 @@
-
-import passIcon from '../../assets/game/pass.svg';
-import lookIcon from '../../assets/game/look.svg';
-import raiseIcon from '../../assets/game/raise.svg';
-
 interface ActionButtonsProps {
   canFold: boolean;
   canCall: boolean;
   canRaise: boolean;
   canLook: boolean;
+  canBlindBet: boolean;
   callAmount: number;
   onFold: () => void;
   onCall: () => void;
   onRaise: () => void;
   onLook: () => void;
+  onBlindBet: () => void;
 }
 
 export function ActionButtons({
@@ -20,20 +17,22 @@ export function ActionButtons({
   canCall,
   canRaise,
   canLook,
+  canBlindBet,
   callAmount,
   onFold,
   onCall,
   onRaise,
   onLook,
+  onBlindBet,
 }: ActionButtonsProps) {
   return (
     <div className="flex items-center justify-center space-x-2 p-2">
       {canFold && (
         <button
           onClick={onFold}
-          className="flex flex-col items-center justify-center w-20 h-16 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          style={{ backgroundColor: '#FF443A' }}
         >
-          <img src={passIcon} alt="" className="w-6 h-6 mb-1" />
           <span>Пас</span>
         </button>
       )}
@@ -41,7 +40,8 @@ export function ActionButtons({
       {canCall && (
         <button
           onClick={onCall}
-          className="flex flex-col items-center justify-center w-20 h-16 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          style={{ backgroundColor: '#0E5C89' }}
         >
           <span>Заплатить {callAmount > 0 ? `${callAmount}` : ''}</span>
         </button>
@@ -50,9 +50,9 @@ export function ActionButtons({
       {canRaise && (
         <button
           onClick={onRaise}
-          className="flex flex-col items-center justify-center w-20 h-16 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          style={{ backgroundColor: '#56BF00' }}
         >
-          <img src={raiseIcon} alt="" className="w-6 h-6 mb-1" />
           <span>Повысить</span>
         </button>
       )}
@@ -60,10 +60,20 @@ export function ActionButtons({
       {canLook && (
         <button
           onClick={onLook}
-          className="flex flex-col items-center justify-center w-20 h-16 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          style={{ backgroundColor: '#0E5C89' }}
         >
-          <img src={lookIcon} alt="" className="w-6 h-6 mb-1" />
           <span>Открыть</span>
+        </button>
+      )}
+
+      {canBlindBet && (
+        <button
+          onClick={onBlindBet}
+          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          style={{ backgroundColor: '#0E5C89' }}
+        >
+          <span>Вслепую</span>
         </button>
       )}
     </div>

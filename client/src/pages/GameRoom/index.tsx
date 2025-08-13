@@ -74,6 +74,7 @@ const useTablePositioning = () => {
 export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
+  const [showBlindBetSlider, setShowBlindBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
 
@@ -123,7 +124,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
   // Определяем возможные действия
-  const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished';
+  const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished' && gameState.status !== 'blind_betting';
   
   const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
@@ -142,13 +143,20 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
   const handleRaiseClick = () => {
     setShowBetSlider(true);
   };
-  
-  
+
+  const handleBlindBetClick = () => {
+    setShowBlindBetSlider(true);
+  };
   
   // Обработчик подтверждения ставки
   const handleBetConfirm = (amount: number) => {
     actions.raise(amount);
     setShowBetSlider(false);
+  };
+
+  const handleBlindBetConfirm = (amount: number) => {
+    actions.blindBet(amount);
+    setShowBlindBetSlider(false);
   };
   
   // Обработчик нажатия на кнопку "Сесть"
@@ -290,11 +298,13 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
                   canCall={canCall}
                   canRaise={canRaise}
                   canLook={canLook}
+                  canBlindBet={canBlindBet}
                   callAmount={callAmount}
                   onFold={actions.fold}
                   onCall={actions.call}
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
+                  onBlindBet={handleBlindBetClick}
                 />
               ) : (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
@@ -307,29 +317,24 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
       )}
       
       {/* Модальное окно для ставки вслепую */}
-      {canBlindBet && (
+      {showBlindBetSlider && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-white text-xl font-bold mb-4">Ставка вслепую</h3>
-            <p className="text-gray-300 mb-4">
-              Вы можете сделать ставку, не глядя на свои карты, или посмотреть карты.
-            </p>
-            <div className="space-y-4">
-              <BetSlider 
-                minBet={gameState.lastBlindBet * 2 || gameState.minBet}
-                maxBet={maxRaise}
-                initialBet={gameState.lastBlindBet * 2 || gameState.minBet}
-                onConfirm={(amount) => actions.blindBet(amount)}
-              />
-              <div className="flex justify-center">
-                <button
-                  onClick={actions.lookCards}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Посмотреть карты
-                </button>
-              </div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-white text-xl font-bold">Ставка вслепую</h3>
+              <button 
+                onClick={() => setShowBlindBetSlider(false)}
+                className="text-white text-2xl"
+              >
+                &times;
+              </button>
             </div>
+            <BetSlider 
+              minBet={gameState.lastBlindBet * 2 || gameState.minBet}
+              maxBet={maxRaise}
+              initialBet={gameState.lastBlindBet * 2 || gameState.minBet}
+              onConfirm={handleBlindBetConfirm}
+            />
           </div>
         </div>
       )}
