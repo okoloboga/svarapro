@@ -276,7 +276,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
       {/* Панель действий (показываем только если пользователь сидит за столом) */}
       {isSeated && (
         <div className="p-4">
-          <div className="flex justify-between">
+          <div className="flex flex-col items-center space-y-4">
             {/* Карты текущего игрока */}
             <div className="flex justify-center items-center space-x-2">
               {currentPlayer?.cards.map((card, index) => (
@@ -291,7 +291,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
             </div>
             
             {/* Кнопки действий */}
-            <div className="w-1/3">
+            <div>
               {isCurrentUserTurn ? (
                 <ActionButtons 
                   canFold={canFold}
