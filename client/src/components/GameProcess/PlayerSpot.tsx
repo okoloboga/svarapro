@@ -177,7 +177,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
         
         {/* Card deck, positioned to the right and overlapping */}
         {!hasFolded && (
-          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ right: '15px' }}>
+          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ top: '45%', right: '20px' }}>
             <div className="relative" style={{ width: '42px', height: '42px' }}>
               <img
                 src={cardBack}
