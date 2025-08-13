@@ -12,11 +12,7 @@ export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
   const handleJoin = async () => {
     setIsJoining(true);
     try {
-      const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-      if (!telegramId) {
-        throw new Error('Telegram user ID not found');
-      }
-      await apiService.joinRoom(roomId, telegramId);
+      await apiService.joinRoom(roomId);
       setCurrentPage('gameRoom', { roomId, autoSit: true });
     } catch (error) {
       console.error('Failed to join room:', error);
@@ -28,11 +24,7 @@ export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
   const handleWatch = async () => {
     setIsJoining(true);
     try {
-      const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-      if (!telegramId) {
-        throw new Error('Telegram user ID not found');
-      }
-      await apiService.joinRoom(roomId, telegramId);
+      await apiService.joinRoom(roomId);
       setCurrentPage('gameRoom', { roomId });
     } catch (error) {
       console.error('Failed to join room:', error);

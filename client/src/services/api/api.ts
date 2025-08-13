@@ -111,10 +111,10 @@ export const apiService = {
     return response.data;
   },
 
-  async joinRoom(roomId: string, telegramId: string): Promise<Room> {
+  async joinRoom(roomId: string): Promise<Room> {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('No token available');
-    const response = await api.post(`/rooms/${roomId}/join`, { telegramId }, {
+    const response = await api.post(`/rooms/${roomId}/join`, {}, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
