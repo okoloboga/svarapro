@@ -250,7 +250,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
                         if (player.id.toString() === userData.id.toString()) {
                           const mergedPlayer = {
                             ...player,
-                            username: userData.username || player.username,
+                            username: userData.username || userData.first_name || player.username,
                             avatar: userData.photo_url || player.avatar,
                           };
                           return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} />;

@@ -43,6 +43,7 @@ type PageData = {
 type UserData = {
   id?: number | string;
   username?: string;
+  first_name?: string;
   photo_url?: string;
 };
 
