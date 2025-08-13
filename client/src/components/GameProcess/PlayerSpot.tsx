@@ -98,20 +98,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
         <div className="flex items-center">
           {/* Avatar */}
           <div className="relative flex items-center justify-center" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
-            {/* Bottom Layer */}
+            {/* Bottom Layer (Gray) */}
             <div
               className="absolute rounded-full"
-              style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#ECEBF5' }}
+              style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#555456' }}
             ></div>
-            {/* Middle Layer */}
+            {/* Middle Layer (White) */}
             <div
               className="absolute rounded-full"
-              style={{ width: `${(avatarSize - 6) * scale}px`, height: `${(avatarSize - 6) * scale}px`, backgroundColor: '#555456' }}
+              style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}
             ></div>
             {/* Top Layer (Avatar) */}
             <div
               className="absolute rounded-full overflow-hidden"
-              style={{ width: `${(avatarSize - 10) * scale}px`, height: `${(avatarSize - 10) * scale}px` }}
+              style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}
             >
               {avatar ? (
                 <img src={avatar} alt={username} className="w-full h-full object-cover" />
