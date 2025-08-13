@@ -307,6 +307,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
                   blindButtonsDisabled={blindButtonsDisabled}
+                  minBet={gameState.minBet}
                 />
               ) : (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">

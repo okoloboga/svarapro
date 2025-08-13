@@ -1,3 +1,5 @@
+import lookIcon from '../../assets/game/look.svg';
+
 interface ActionButtonsProps {
   canFold: boolean;
   canCall: boolean;
@@ -5,6 +7,7 @@ interface ActionButtonsProps {
   canLook: boolean;
   canBlindBet: boolean;
   callAmount: number;
+  minBet: number;
   onFold: () => void;
   onCall: () => void;
   onRaise: () => void;
@@ -20,6 +23,7 @@ export function ActionButtons({
   canLook,
   canBlindBet,
   callAmount,
+  minBet,
   onFold,
   onCall,
   onRaise,
@@ -62,12 +66,13 @@ export function ActionButtons({
       {canLook && (
         <button
           onClick={onLook}
-          className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
             blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
           disabled={blindButtonsDisabled}
         >
+          <img src={lookIcon} alt="" className="w-6 h-6" />
           <span>Открыть</span>
         </button>
       )}
@@ -75,12 +80,13 @@ export function ActionButtons({
       {canBlindBet && (
         <button
           onClick={onBlindBet}
-          className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
             blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
           disabled={blindButtonsDisabled}
         >
+          <span>${minBet}</span>
           <span>Вслепую</span>
         </button>
       )}
