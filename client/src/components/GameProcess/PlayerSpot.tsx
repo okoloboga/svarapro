@@ -149,7 +149,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
                     {username}
                   </div>
                   <div
-                    style={{ width: `${66 * scale}px`, height: `${1 * scale}px`, backgroundColor: 'rgba(255, 255, 255, 0.07)' }}
+                    style={{ width: `${66 * scale}px`, height: `${1 * scale}px`, backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
                   ></div>
                   <div
                     className="font-bold"
