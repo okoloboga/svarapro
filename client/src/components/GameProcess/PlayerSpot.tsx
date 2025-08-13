@@ -123,7 +123,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
           </div>
 
           {/* Info block, overlapping the bottom of the avatar */}
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-8px' }}>
             <div className="flex flex-col items-center">
               {/* Name */}
               <div className="relative" style={{ width: `${nameWidth}px`, height: `${nameHeight}px` }}>
