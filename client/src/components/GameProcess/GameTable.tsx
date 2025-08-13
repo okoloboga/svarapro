@@ -15,16 +15,26 @@ interface GameTableProps {
 const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
-  
-  const tableStyle: React.CSSProperties = {
+
+  const containerStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
     height: `${baseHeight * scale}px`,
     borderRadius: `${149 * scale}px`,
     border: `${16 * scale}px solid #333238`,
+    position: 'relative',
+    overflow: 'hidden', // This is important to contain the rotated background
+  };
+
+  const backgroundStyle: React.CSSProperties = {
+    position: 'absolute',
+    width: `${baseHeight * scale}px`, // Swap width and height for rotation
+    height: `${baseWidth * scale}px`, // Swap width and height for rotation
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%) rotate(90deg)',
     backgroundImage: `url(${tableImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    opacity: 1,
   };
 
   const tableClasses = "relative";
@@ -40,6 +50,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none', // Чтобы рамка не мешала взаимодействию
+    zIndex: 2,
   };
 
   const potContainerStyle: React.CSSProperties = {
@@ -56,6 +67,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     alignItems: 'center',
     justifyContent: 'center',
     color: 'white',
+    zIndex: 2,
   };
 
   // Стили для надписи "Svarapro"
@@ -72,10 +84,13 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     letterSpacing: '0%',
     textAlign: 'center',
     pointerEvents: 'none', // Чтобы текст не мешал взаимодействию
+    zIndex: 2,
   };
 
   return (
-    <div style={tableStyle} className={tableClasses}>
+    <div style={containerStyle} className={tableClasses}>
+      <div style={backgroundStyle}></div>
+      
       {/* Дополнительная рамка вокруг стола */}
       <div style={outerBorderStyle}></div>
       
