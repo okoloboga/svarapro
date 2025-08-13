@@ -123,7 +123,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
           </div>
 
           {/* Info block, overlapping the bottom of the avatar */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-8px' }}>
+          <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
             <div className="flex flex-col items-center">
               {/* Name */}
               <div className="relative" style={{ width: `${nameWidth}px`, height: `${nameHeight}px` }}>
@@ -177,7 +177,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
         
         {/* Card deck, positioned to the right and overlapping */}
         {!hasFolded && (
-          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ top: '45%', right: '20px' }}>
+          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ top: '0%', left: '20px' }}>
             <div className="relative" style={{ width: '42px', height: '42px' }}>
               <img
                 src={cardBack}
