@@ -14,6 +14,7 @@ interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
   setCurrentPage: (page: 'dashboard') => void;
   userData: any;
+  pageData: any;
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
@@ -71,7 +72,7 @@ const useTablePositioning = () => {
   return { getPositionStyle, getPositionClasses, scale };
 };
 
-export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomPropsExtended) {
+export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showBlindBetSlider, setShowBlindBetSlider] = useState(false);
@@ -96,6 +97,20 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData }: GameRoomP
       }
     };
   }, [roomId, socket]);
+
+  useEffect(() => {
+    if (pageData?.autoSit && !isSeated && gameState) {
+      // Find first available seat
+      const seatedPositions = gameState.players.map(p => p.position);
+      let positionToSit = 1;
+      while(seatedPositions.includes(positionToSit)) {
+        positionToSit++;
+      }
+      if (positionToSit <= 6) {
+        actions.sitDown(positionToSit, userData);
+      }
+    }
+  }, [pageData, isSeated, gameState, actions, userData]);
 
   if (loading) {
     return <LoadingPage isLoading={loading} />;

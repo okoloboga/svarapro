@@ -41,7 +41,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
       const bet = parseFloat(stake);
       const room = await apiService.createRoom(bet, 'private', password);
       onClose();
-      setCurrentPage('gameRoom', { roomId: room.roomId });
+      setCurrentPage('gameRoom', { roomId: room.roomId, autoSit: true });
     } catch (error: unknown) {
       setError((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to create room');
     } finally {

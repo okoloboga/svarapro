@@ -28,7 +28,7 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
       const bet = parseFloat(inputValue);
       const room = await apiService.createRoom(bet, 'public');
       onClose();
-      setCurrentPage('gameRoom', { roomId: room.roomId });
+      setCurrentPage('gameRoom', { roomId: room.roomId, autoSit: true });
     } catch (error) {
       console.error('Failed to create room:', error);
     } finally {
