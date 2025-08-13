@@ -147,9 +147,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
                     style={{
                       color: 'rgba(255, 255, 255, 0.8)',
                       fontSize: `${10 * scale}px`,
-                      paddingBottom: `${2 * scale}px`,
-                      marginBottom: `${2 * scale}px`,
-                      borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.3)`
+                      borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)`
                     }}
                   >
                     {username}
