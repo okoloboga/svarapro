@@ -6,7 +6,7 @@ import completeIcon from '@/assets/completeSmallGreen.png';
 import { apiService } from '@/services/api/api';
 import { CreatePublicProps } from '@/types/components';
 
-export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage, balance, setNotification }) => {
+export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage, balance }) => {
   const { t } = useTranslation('common');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
@@ -25,9 +25,6 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
 
   const handleCreate = async () => {
     const stake = parseFloat(inputValue);
-    const userBalance = parseFloat(balance);
-
-
 
     if (!isValid) return;
     setIsCreating(true);

@@ -95,7 +95,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
         </div>
       )}
       {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
-      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} />}
       {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
       {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
       <Notification type={notification} onClose={() => setNotification(null)} />

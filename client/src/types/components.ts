@@ -16,7 +16,6 @@ export type CreatePublicProps = {
   openModal: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
-  setNotification: (type: NotificationType | null) => void;
 };
 
 export type CreatePrivateProps = {
