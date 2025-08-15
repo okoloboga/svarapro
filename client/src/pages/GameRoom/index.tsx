@@ -10,13 +10,14 @@ import { LoadingPage } from '../../components/LoadingPage'; // Добавляе�
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 
+import { UserData, PageData } from '@/types/entities';
 import { Page } from '@/types/page';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
-  userData: any;
-  pageData: any;
+  userData: UserData;
+  pageData: PageData | null;
 }
 
 import backgroundImage from '../../assets/game/background.jpg';
@@ -98,7 +99,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
         socket.emit('leave_room', { roomId });
       }
     };
-  }, [roomId, socket]);
+  }, [roomId, socket, currentUserId]);
 
   useEffect(() => {
     if (pageData?.autoSit && !isSeated && gameState) {

@@ -26,11 +26,10 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
     setIsJoining(true);
     setError(null);
     try {
-      const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-      if (!telegramId) {
+      if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
         throw new Error('Telegram user ID not found');
       }
-      await apiService.joinRoom(inputValue, telegramId);
+      await apiService.joinRoom(inputValue);
       onClose();
       setCurrentPage('gameRoom', { roomId: inputValue });
     } catch (error: unknown) {

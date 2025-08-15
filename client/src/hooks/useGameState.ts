@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
-import { GameState } from '@/types/game';
+import { GameState, UserData } from '@/types/game';
 
 export const useGameState = (roomId: string, socket: Socket | null) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -58,7 +58,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     }
   }, [roomId, socket]);
 
-  const sitDown = useCallback((position: number, userData: any) => {
+  const sitDown = useCallback((position: number, userData: UserData) => {
     if (socket) {
       const payload = { roomId, position, userData };
       console.log('Emitting sit_down with payload:', payload);

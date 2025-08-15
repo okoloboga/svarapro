@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
+import { UserData } from '@/types/entities';
 
-export const initSocket = (telegramId?: string, userData?: any): Socket => {
+export const initSocket = (telegramId?: string, userData?: UserData): Socket => {
   const defaultTelegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
   const defaultUserData = {
     username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Unknown',
