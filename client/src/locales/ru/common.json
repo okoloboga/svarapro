@@ -168,5 +168,6 @@
   "join_room": "Подключиться к комнате",
   "min_stake": "Мин. ставка",
   "password_for_entry": "Пароль для входа",
-  "come_up_with_a_password": "Придумайте пароль"
+  "come_up_with_a_password": "Придумайте пароль",
+  "not_enough_balance_for_stake": "Вашего баланса недостаточно для создания комнаты с такой ставкой"
 }

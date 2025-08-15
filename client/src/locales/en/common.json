@@ -168,5 +168,6 @@
   "join_room": "Join room",
   "min_stake": "Min. stake",
   "password_for_entry": "Password for entry",
-  "come_up_with_a_password": "Come up with a password"
+  "come_up_with_a_password": "Come up with a password",
+  "not_enough_balance_for_stake": "Your balance is not enough to create a room with this stake"
 }

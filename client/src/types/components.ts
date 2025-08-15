@@ -15,12 +15,14 @@ export type CreatePublicProps = {
   onClose: () => void;
   openModal: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
+  balance: string;
 };
 
 export type CreatePrivateProps = {
   onClose: () => void;
   openModal: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
+  balance: string;
 };
 
 export type ConnectRoomProps = {

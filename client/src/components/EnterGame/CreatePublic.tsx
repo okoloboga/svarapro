@@ -6,23 +6,32 @@ import completeIcon from '@/assets/completeSmallGreen.png';
 import { apiService } from '@/services/api/api';
 import { CreatePublicProps } from '@/types/components';
 
-export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage }) => {
+export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage, balance }) => {
   const { t } = useTranslation('common');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d*$/.test(value)) {
       setInputValue(value);
       const numValue = parseFloat(value);
-      setIsValid(!isNaN(numValue) && numValue > 0);
+      const userBalance = parseFloat(balance);
+      const isValidInput = !isNaN(numValue) && numValue > 0;
+      setIsValid(isValidInput);
+
+      if (isValidInput && userBalance < numValue * 3) {
+        setBalanceError(t('not_enough_balance_for_stake'));
+      } else {
+        setBalanceError(null);
+      }
     }
   };
 
   const handleCreate = async () => {
-    if (!isValid) return;
+    if (!isValid || balanceError) return;
     setIsCreating(true);
     try {
       const bet = parseFloat(inputValue);
@@ -41,10 +50,13 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
     openModal();
   };
 
+  const hasEnoughBalance = !balanceError;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#47444C] w-[316px] h-[200px] rounded-lg flex flex-col items-center py-4 px-4 relative">
+      <div className="bg-[#47444C] w-[316px] h-[220px] rounded-lg flex flex-col items-center py-4 px-4 relative">
         <h2 className="text-white font-semibold text-lg mb-4">{t('create_room')}</h2>
+        {balanceError && <p className="text-red-500 text-xs mb-2">{balanceError}</p>}
         <div className="relative w-full mb-4">
           <img src={dollarIcon} alt="dollar" className="absolute left-3 top-1/2 -translate-y-1/2 w-[11px] h-[17px]" />
           <input
@@ -58,9 +70,9 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
         </div>
         <div className="absolute bottom-0 left-0 w-full flex">
           <button 
-            className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-r border-white border-opacity-10"
+            className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-r border-white border-opacity-10 disabled:opacity-50"
             onClick={handleCreate}
-            disabled={isCreating || !isValid}
+            disabled={isCreating || !isValid || !hasEnoughBalance}
           >
             {t('create')}
           </button>
