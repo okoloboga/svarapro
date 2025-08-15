@@ -6,13 +6,13 @@ interface ActionNotificationProps {
   onHide: () => void;
 }
 
-// Placeholder configuration for styles and text. User will provide final values.
+// Final configuration for styles and text.
 const actionConfig = {
-  blind: { text: 'Blind', color: '#4B0082' }, // Indigo
-  paid: { text: 'Paid', color: '#0000FF' },   // Blue
-  pass: { text: 'Pass', color: '#808080' },   // Grey
-  rais: { text: 'Raise', color: '#008000' },  // Green
-  win: { text: 'Win', color: '#FFD700' },     // Gold
+  blind: { text: 'ВСЛЕПУЮ', color: '#0E5C89' },
+  paid: { text: 'ОПЛАТИЛ', color: '#0E5C89' },
+  pass: { text: 'ПАС', color: '#FF3131' },
+  rais: { text: 'ПОВЫСИЛ', color: '#56BF00' },
+  win: { text: 'ВЫИГРАЛ', color: '#56BF00' },
 };
 
 export function ActionNotification({ action, visible, onHide }: ActionNotificationProps) {
@@ -46,7 +46,7 @@ export function ActionNotification({ action, visible, onHide }: ActionNotificati
         backgroundColor: config.color,
       }}
     >
-      <span className="text-white text-xs font-semibold">{config.text}</span>
+      <span className="text-white text-[10px] font-extrabold leading-none text-center">{config.text}</span>
     </div>
   );
 }
