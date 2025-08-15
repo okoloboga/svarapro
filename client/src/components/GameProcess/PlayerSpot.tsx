@@ -189,8 +189,8 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
             top: `${-60 * scale}px`, 
-            width: `${cardWidth * 3 + step * 2}px`, 
-            height: `${cardHeight + 8}px` 
+            width: `${cardWidth + step * 2}px`, 
+            height: `${cardHeight + 8}px`
           }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
@@ -219,8 +219,8 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
                     <CardComponent
                       card={card}
                       hidden={false}
-                      size="large"
-                      scale={1} // Используем фиксированный масштаб для карт
+                      customWidth={cardWidth}
+                      customHeight={cardHeight}
                     />
                   </div>
                 );

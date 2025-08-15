@@ -78,22 +78,24 @@ interface CardComponentProps {
   hidden?: boolean;
   size?: 'small' | 'medium' | 'large';
   scale?: number;
+  customWidth?: number;
+  customHeight?: number;
 }
 
-export function CardComponent({ card, hidden = false, size = 'medium', scale = 1 }: CardComponentProps) {
+export function CardComponent({ card, hidden = false, size = 'medium', scale = 1, customWidth, customHeight }: CardComponentProps) {
   const baseSizes = {
     small: { width: 48, height: 64 },
     medium: { width: 64, height: 88 },
     large: { width: 96, height: 128 },
   };
 
-  const selectedSize = baseSizes[size];
-  const scaledWidth = selectedSize.width * scale;
-  const scaledHeight = selectedSize.height * scale;
+  // Используем кастомные размеры, если они переданы, иначе используем стандартные
+  const finalWidth = customWidth || baseSizes[size].width * scale;
+  const finalHeight = customHeight || baseSizes[size].height * scale;
 
   const cardStyle: React.CSSProperties = {
-    width: `${scaledWidth}px`,
-    height: `${scaledHeight}px`,
+    width: `${finalWidth}px`,
+    height: `${finalHeight}px`,
   };
 
   const cardClasses = `overflow-hidden shadow-md rounded-lg`;
