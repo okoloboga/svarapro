@@ -242,9 +242,14 @@ export class GameService {
       gameState,
       gameState.minBet,
     );
-    gameState.log.push(...actions);
+    
+    // Используем обновленное состояние игры
+    let currentGameState = { ...updatedGameState };
+    currentGameState.log.push(...actions);
 
-    const activePlayers = gameState.players.filter((p) => p.isActive);
+    const activePlayers = currentGameState.players.filter((p) => p.isActive);
+    console.log(`Active players after ante: ${activePlayers.length}`, activePlayers.map(p => ({ id: p.id, username: p.username, isActive: p.isActive })));
+    
     if (activePlayers.length < 2) {
       if (activePlayers.length === 1) {
         console.log(`Ending game with single winner for room ${roomId}`);
@@ -257,22 +262,24 @@ export class GameService {
     }
 
     const dealResult =
-      this.gameStateService.dealCardsToPlayers(updatedGameState);
-    gameState.log.push(...dealResult.actions);
+      this.gameStateService.dealCardsToPlayers(currentGameState);
+    currentGameState = dealResult.updatedGameState;
+    currentGameState.log.push(...dealResult.actions);
 
     const phaseResult = this.gameStateService.moveToNextPhase(
-      dealResult.updatedGameState,
+      currentGameState,
       'blind_betting',
     );
-    gameState.log.push(...phaseResult.actions);
+    currentGameState = phaseResult.updatedGameState;
+    currentGameState.log.push(...phaseResult.actions);
 
-    gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
-      gameState.players,
-      gameState.dealerIndex,
+    currentGameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+      currentGameState.players,
+      currentGameState.dealerIndex,
     );
 
-    await this.redisService.setGameState(roomId, gameState);
-    await this.redisService.publishGameUpdate(roomId, gameState);
+    await this.redisService.setGameState(roomId, currentGameState);
+    await this.redisService.publishGameUpdate(roomId, currentGameState);
     console.log(
       `Ante phase completed, moved to blind_betting for room ${roomId}`,
     );
