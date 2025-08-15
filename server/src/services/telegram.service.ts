@@ -25,10 +25,14 @@ export class TelegramService {
         parse_mode: 'Markdown', // Опционально: для форматирования
       });
     } catch (error) {
-      console.error(
-        'Failed to send Telegram message:',
-        error.response?.data || error.message,
-      );
+      if (axios.isAxiosError(error)) {
+        console.error(
+          'Failed to send Telegram message:',
+          error.response?.data || error.message,
+        );
+      } else {
+        console.error('Failed to send Telegram message:', String(error));
+      }
       throw new InternalServerErrorException('Failed to send Telegram message');
     }
   }

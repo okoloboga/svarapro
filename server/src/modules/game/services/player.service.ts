@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Player, GameAction, Card } from '../../../types/game';
+import { UserDataDto } from '../dto/user-data.dto';
 
 @Injectable()
 export class PlayerService {
   // Создание нового игрока
-  createPlayer(telegramId: string, userData: any, position: number, balance: number): Player {
+  createPlayer(
+    telegramId: string,
+    userData: UserDataDto,
+    position: number,
+    balance: number,
+  ): Player {
     return {
       id: telegramId,
       username: userData.username || 'Player',
@@ -76,10 +82,16 @@ export class PlayerService {
     updatedPlayer.tableBalance += amount;
     updatedPlayer.currentBet += amount;
     updatedPlayer.totalBet += amount;
-    updatedPlayer.lastAction = action as any;
+    updatedPlayer.lastAction = action as
+      | 'fold'
+      | 'check'
+      | 'call'
+      | 'raise'
+      | 'blind'
+      | 'look';
 
     const gameAction: GameAction = {
-      type: action as any,
+      type: action as GameAction['type'],
       telegramId: player.id,
       amount,
       timestamp: Date.now(),

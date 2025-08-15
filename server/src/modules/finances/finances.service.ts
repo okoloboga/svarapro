@@ -8,6 +8,7 @@ import { TransactionGateway } from './transactions.gateway';
 import { v4 as uuidv4 } from 'uuid';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { TransactionStatusDto } from './dto/transaction-status.dto';
 
 @Injectable()
 export class FinancesService {
@@ -145,18 +146,19 @@ export class FinancesService {
       `Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`,
     );
 
-    let transactionData: any;
+    let transactionData: TransactionStatusDto;
     try {
       transactionData = await this.apiService.getTransactionStatus(trackerId);
       this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to get transaction status for trackerId: ${trackerId}`,
-        error.stack,
-        { error: error.message },
+        error instanceof Error ? error.stack : undefined,
+        { error: message },
       );
       throw new BadRequestException(
-        `Failed to get transaction status: ${error.message}`,
+        `Failed to get transaction status: ${message}`,
       );
     }
 
@@ -198,17 +200,19 @@ export class FinancesService {
 
           try {
             // Отправляем уведомление через WebSocket
-            this.transactionGateway.notifyTransactionConfirmed(
+            void this.transactionGateway.notifyTransactionConfirmed(
               user.telegramId,
               user.balance,
               transactionData.amount,
               transaction.currency,
             );
           } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
             this.logger.error(
               `Failed to notify user ${user.telegramId} via WebSocket`,
-              error.stack,
-              { error: error.message },
+              error instanceof Error ? error.stack : undefined,
+              { error: message },
             );
           }
 
@@ -295,10 +299,11 @@ export class FinancesService {
         `Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`,
       );
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to add to callback queue for trackerId: ${trackerId}`,
-        error.stack,
-        { error: error.message },
+        error instanceof Error ? error.stack : undefined,
+        { error: message },
       );
       throw error;
     }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GameState, Player, GameAction } from '../../../types/game';
+import { GameState, GameAction } from '../../../types/game';
 import { CardService } from './card.service';
 import { PlayerService } from './player.service';
 
@@ -151,7 +151,8 @@ export class GameStateService {
     updatedGameState.status = nextPhase;
 
     // Добавляем действие в лог
-    const phaseMessages = {
+    const phaseMessages: Record<GameState['status'], string> = {
+      waiting: 'Ожидание игроков',
       ante: 'Начинается фаза входных ставок',
       blind_betting: 'Начинается фаза ставок вслепую',
       betting: 'Начинается фаза обычных ставок',
@@ -159,11 +160,12 @@ export class GameStateService {
       finished: 'Игра завершена',
     };
 
+    const message = phaseMessages[nextPhase] || `Переход к фазе: ${nextPhase}`;
     const action: GameAction = {
       type: 'join',
       telegramId: 'system',
       timestamp: Date.now(),
-      message: phaseMessages[nextPhase] || `Переход к фазе: ${nextPhase}`,
+      message,
     };
     actions.push(action);
 

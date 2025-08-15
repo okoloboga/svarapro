@@ -3,7 +3,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
@@ -37,8 +37,8 @@ export class TransactionGateway {
 
   // Подключение клиента
   @SubscribeMessage('join')
-  handleJoin(client: any, userId: string) {
-    client.join(userId); // Логируем только в debug-режиме
+  handleJoin(client: Socket, userId: string) {
+    void client.join(userId); // Логируем только в debug-режиме
     if (process.env.NODE_ENV !== 'production') {
       this.logger.debug(`Client joined: userId=${userId}`);
     }

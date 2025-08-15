@@ -104,7 +104,7 @@ export class CardService {
 
     // Проверяем карты одной масти
     const suits = cards.map((card) => card.suit);
-    const suitCounts = {};
+    const suitCounts: { [key: string]: number } = {};
     for (const suit of suits) {
       suitCounts[suit] = (suitCounts[suit] || 0) + 1;
     }

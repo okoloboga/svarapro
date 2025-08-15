@@ -26,11 +26,12 @@ export class CallbackProcessor {
       this.logger.log(
         `Successfully processed callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
       );
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to process callback for trackerId: ${job.data.trackerId}, jobId: ${job.id}`,
-        error.stack,
-        { error: error.message, details: error },
+        error instanceof Error ? error.stack : undefined,
+        { error: message, details: String(error) },
       );
       throw error; // Позволяем Bull повторить попытку
     }

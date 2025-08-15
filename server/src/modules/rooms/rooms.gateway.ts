@@ -9,7 +9,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { RoomsService } from './rooms.service';
 import { RedisService } from '../../services/redis.service'; // Импортируем RedisService
-import { Room } from '../../types/game';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class RoomsGateway
@@ -23,9 +22,9 @@ export class RoomsGateway
     private readonly redisService: RedisService, // Инжектируем RedisService
   ) {}
 
-  afterInit(server: Server) {
+  afterInit() {
     console.log('Subscribing to room updates');
-    this.redisService.subscribeToRoomUpdates((roomId, room) => {
+    void this.redisService.subscribeToRoomUpdates((roomId, room) => {
       console.log('Received room update from Redis:', roomId, room);
       this.server.emit('room_update', { roomId, room });
     });
@@ -36,7 +35,7 @@ export class RoomsGateway
     client.emit('rooms', { action: 'initial', rooms });
   }
 
-  handleDisconnect(client: Socket) {
+  handleDisconnect() {
     // Можно добавить логику при отключении клиента
   }
 

@@ -10,8 +10,13 @@ import {
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    telegramId: string;
+  };
+}
 
 @Controller('rooms')
 export class RoomsController {
@@ -19,7 +24,10 @@ export class RoomsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createRoom(@Body() createRoomDto: CreateRoomDto, @Request() req) {
+  async createRoom(
+    @Body() createRoomDto: CreateRoomDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const telegramId = req.user.telegramId; // Предполагаем, что telegramId есть в JWT
     if (!telegramId) {
       throw new BadRequestException('User telegramId not found');
@@ -34,7 +42,10 @@ export class RoomsController {
 
   @Post(':roomId/join')
   @UseGuards(JwtAuthGuard)
-  async joinRoom(@Param('roomId') roomId: string, @Request() req) {
+  async joinRoom(
+    @Param('roomId') roomId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const telegramId = req.user.telegramId;
     if (!telegramId) {
       throw new BadRequestException('User telegramId not found in token');

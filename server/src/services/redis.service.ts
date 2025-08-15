@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { Room, GameState } from '../types/game';
+import { Room, GameState, GameAction } from '../types/game';
 
 @Injectable()
 export class RedisService {
@@ -9,18 +9,20 @@ export class RedisService {
   constructor() {
     this.client = new Redis({
       host: process.env.REDIS_HOST || 'redis',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
+      port: parseInt(process.env.REDIS_PORT || '6379', 10),
     });
   }
 
-  // Существующие методы
   async setRoom(roomId: string, room: Room): Promise<void> {
     await this.client.set(`rooms:${roomId}`, JSON.stringify(room));
   }
 
   async getRoom(roomId: string): Promise<Room | null> {
     const roomData = await this.client.get(`rooms:${roomId}`);
-    return roomData ? JSON.parse(roomData) : null;
+    if (!roomData) {
+      return null;
+    }
+    return JSON.parse(roomData) as Room;
   }
 
   async addToActiveRooms(roomId: string): Promise<void> {
@@ -59,20 +61,22 @@ export class RedisService {
 
     subClient.on('message', (channel, message) => {
       if (channel === 'rooms') {
-        const { room } = JSON.parse(message);
-        callback(room.roomId, room);
+        const data = JSON.parse(message) as { room: Room };
+        callback(data.room.roomId, data.room);
       }
     });
   }
 
-  // Новые методы для игры
   async setGameState(roomId: string, gameState: GameState): Promise<void> {
     await this.client.set(`game:${roomId}`, JSON.stringify(gameState));
   }
 
   async getGameState(roomId: string): Promise<GameState | null> {
     const gameData = await this.client.get(`game:${roomId}`);
-    return gameData ? JSON.parse(gameData) : null;
+    if (!gameData) {
+      return null;
+    }
+    return JSON.parse(gameData) as GameState;
   }
 
   async publishGameUpdate(roomId: string, gameState: GameState): Promise<void> {
@@ -88,7 +92,7 @@ export class RedisService {
     subClient.on('pmessage', (pattern, channel, message) => {
       if (pattern === 'game:*') {
         const roomId = channel.split(':')[1];
-        const gameState = JSON.parse(message);
+        const gameState = JSON.parse(message) as GameState;
         callback(roomId, gameState);
       }
     });
@@ -112,13 +116,13 @@ export class RedisService {
     return this.client.smembers(`player_rooms:${playerId}`);
   }
 
-  async addGameAction(roomId: string, action: any): Promise<void> {
+  async addGameAction(roomId: string, action: GameAction): Promise<void> {
     await this.client.rpush(`game_log:${roomId}`, JSON.stringify(action));
   }
 
-  async getGameActions(roomId: string): Promise<any[]> {
+  async getGameActions(roomId: string): Promise<GameAction[]> {
     const actions = await this.client.lrange(`game_log:${roomId}`, 0, -1);
-    return actions.map((action) => JSON.parse(action));
+    return actions.map((action) => JSON.parse(action) as GameAction);
   }
 
   async clearGameData(roomId: string): Promise<void> {

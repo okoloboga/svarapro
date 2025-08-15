@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../../../services/redis.service';
-import { GameState, GameAction, GameActionResult } from '../../../types/game';
+import {
+  GameState,
+  GameAction,
+  GameActionResult,
+  Room,
+} from '../../../types/game';
 import { CardService } from './card.service';
 import { PlayerService } from './player.service';
 import { BettingService } from './betting.service';
 import { GameStateService } from './game-state.service';
 import { UsersService } from '../../users/users.service';
-import { Room } from '../../../types/game';
-import { warn } from 'console';
+import { UserDataDto } from '../dto/user-data.dto';
 
 @Injectable()
 export class GameService {
@@ -50,7 +54,9 @@ export class GameService {
 
     const gameState = await this.redisService.getGameState(roomId);
     if (gameState) {
-      const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
+      const playerIndex = gameState.players.findIndex(
+        (p) => p.id === telegramId,
+      );
 
       if (playerIndex > -1) {
         // Player is seated, remove them
@@ -82,7 +88,7 @@ export class GameService {
   async joinRoom(
     roomId: string,
     telegramId: string,
-    userData: any,
+    userData: UserDataDto,
   ): Promise<GameActionResult> {
     console.log('Handling joinRoom:', { roomId, telegramId, userData });
     const room = await this.redisService.getRoom(roomId);
@@ -99,10 +105,13 @@ export class GameService {
     }
 
     const gameState = await this.redisService.getGameState(roomId);
-    console.log(`Retrieved gameState from Redis for room ${roomId}:`, gameState);
+    console.log(
+      `Retrieved gameState from Redis for room ${roomId}:`,
+      gameState,
+    );
 
     if (!gameState) {
-        return { success: false, error: 'Игра не найдена' };
+      return { success: false, error: 'Игра не найдена' };
     }
 
     return { success: true, gameState };
@@ -112,9 +121,14 @@ export class GameService {
     roomId: string,
     telegramId: string,
     position: number,
-    userData: any,
+    userData: UserDataDto,
   ): Promise<GameActionResult> {
-    console.log('Handling sitDown:', { roomId, telegramId, position, userData });
+    console.log('Handling sitDown:', {
+      roomId,
+      telegramId,
+      position,
+      userData,
+    });
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
       console.log(`Game state not found for room ${roomId}`);
@@ -157,7 +171,9 @@ export class GameService {
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-    console.log(`Player ${telegramId} seated at position ${position} in room ${roomId}`);
+    console.log(
+      `Player ${telegramId} seated at position ${position} in room ${roomId}`,
+    );
 
     const room = await this.redisService.getRoom(roomId);
     if (room && gameState.players.length >= 2 && room.status === 'waiting') {
@@ -172,7 +188,10 @@ export class GameService {
     console.log('Starting game for room:', roomId);
     const room = await this.redisService.getRoom(roomId);
     if (!room || room.status !== 'waiting' || room.players.length < 2) {
-      console.log(`Cannot start game for room ${roomId}:`, { room, players: room?.players });
+      console.log(`Cannot start game for room ${roomId}:`, {
+        room,
+        players: room?.players,
+      });
       return;
     }
 
@@ -245,7 +264,9 @@ export class GameService {
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-    console.log(`Ante phase completed, moved to blind_betting for room ${roomId}`);
+    console.log(
+      `Ante phase completed, moved to blind_betting for room ${roomId}`,
+    );
   }
 
   async processAction(
@@ -301,7 +322,9 @@ export class GameService {
           amount,
         );
       default:
-        console.log(`Invalid action ${action} for game status ${gameState.status}`);
+        console.log(
+          `Invalid action ${action} for game status ${gameState.status}`,
+        );
         return {
           success: false,
           error: 'Недопустимое действие в текущей фазе',
@@ -319,7 +342,10 @@ export class GameService {
         balance: user.balance,
       };
     } catch (error) {
-      console.error(`Failed to get user data for telegramId: ${telegramId}`, error);
+      console.error(
+        `Failed to get user data for telegramId: ${telegramId}`,
+        error,
+      );
       return null;
     }
   }
@@ -331,7 +357,12 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
-    console.log('Processing blind betting action:', { roomId, playerIndex, action, amount });
+    console.log('Processing blind betting action:', {
+      roomId,
+      playerIndex,
+      action,
+      amount,
+    });
     const player = gameState.players[playerIndex];
 
     switch (action) {
@@ -347,7 +378,10 @@ export class GameService {
         }
 
         if (player.balance < amount) {
-          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, amount });
+          console.log(`Insufficient funds for ${player.id}:`, {
+            balance: player.balance,
+            amount,
+          });
           return { success: false, error: 'Недостаточно средств' };
         }
 
@@ -458,7 +492,12 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
-    console.log('Processing betting action:', { roomId, playerIndex, action, amount });
+    console.log('Processing betting action:', {
+      roomId,
+      playerIndex,
+      action,
+      amount,
+    });
     const player = gameState.players[playerIndex];
 
     switch (action) {
@@ -466,7 +505,10 @@ export class GameService {
         const callAmount = gameState.currentBet - player.currentBet;
 
         if (player.balance < callAmount) {
-          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, callAmount });
+          console.log(`Insufficient funds for ${player.id}:`, {
+            balance: player.balance,
+            callAmount,
+          });
           return { success: false, error: 'Недостаточно средств' };
         }
 
@@ -502,7 +544,10 @@ export class GameService {
         const raiseAmount = raiseTotal - player.currentBet;
 
         if (player.balance < raiseAmount) {
-          console.log(`Insufficient funds for ${player.id}:`, { balance: player.balance, raiseAmount });
+          console.log(`Insufficient funds for ${player.id}:`, {
+            balance: player.balance,
+            raiseAmount,
+          });
           return { success: false, error: 'Недостаточно средств' };
         }
 

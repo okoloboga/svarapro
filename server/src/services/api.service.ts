@@ -140,10 +140,17 @@ export class ApiService {
         destTag: response.data.dest_tag || null,
       };
     } catch (error) {
-      this.logger.error(
-        `Exnode API error (createDepositAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
-      );
-      throw new BadRequestException(`Exnode API error: ${error.message}`);
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Exnode API error (createDepositAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Exnode API error (createDepositAddress): ${String(error)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${String(error)}`);
+      }
     }
   }
 
@@ -232,10 +239,17 @@ export class ApiService {
         trackerId: response.data.tracker_id,
       };
     } catch (error) {
-      this.logger.error(
-        `Exnode API error (createWithdrawAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
-      );
-      throw new BadRequestException(`Exnode API error: ${error.message}`);
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Exnode API error (createWithdrawAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Exnode API error (createWithdrawAddress): ${String(error)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${String(error)}`);
+      }
     }
   }
 
@@ -308,10 +322,17 @@ export class ApiService {
         token: response.data.transaction.token,
       };
     } catch (error) {
-      this.logger.error(
-        `Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
-      );
-      throw new BadRequestException(`Exnode API error: ${error.message}`);
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Exnode API error (getTransactionStatus): ${String(error)}`,
+        );
+        throw new BadRequestException(`Exnode API error: ${String(error)}`);
+      }
     }
   }
 }

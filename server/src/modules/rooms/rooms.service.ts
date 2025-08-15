@@ -1,16 +1,10 @@
-import {
-  Injectable,
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room } from '../../entities/rooms.entity';
 import { RedisService } from '../../services/redis.service';
 import { TelegramService } from '../../services/telegram.service';
-import { v4 as uuidv4 } from 'uuid';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
 import { Room as RoomType } from '../../types/game';
 import { GameStateService } from '../game/services/game-state.service';
 
@@ -80,7 +74,10 @@ export class RoomsService {
     await this.redisService.setRoom(roomId, room);
     await this.redisService.addToActiveRooms(roomId);
 
-    const initialGameState = this.gameStateService.createInitialGameState(roomId, minBet);
+    const initialGameState = this.gameStateService.createInitialGameState(
+      roomId,
+      minBet,
+    );
     await this.redisService.setGameState(roomId, initialGameState);
 
     if (type === 'private') {

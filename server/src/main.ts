@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { json, urlencoded, Request, Response, NextFunction } from 'express';
+import { json, urlencoded, Request, Response } from 'express';
 import helmet from 'helmet';
 
 async function bootstrap() {
