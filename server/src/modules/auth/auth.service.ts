@@ -51,7 +51,6 @@ export class AuthService {
         telegramId: tgUser.id.toString(),
         username: tgUser.username,
         avatar: tgUser.photo_url ? tgUser.photo_url : null,
-        balance: 0,
         refBalance: 0,
         refBonus: 0,
         totalDeposit: 0,
