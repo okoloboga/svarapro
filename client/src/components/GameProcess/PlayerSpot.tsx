@@ -160,24 +160,26 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
                   </div>
                 </div>
               </div>
-              {/* Revealed Cards */}
-              <div className="flex space-x-1 mt-1 justify-center">
-                {cards.map((card, index) => (
-                  <CardComponent
-                    key={index}
-                    card={showCards || (isCurrentUser && hasLooked) ? card : undefined}
-                    hidden={!showCards && (!isCurrentUser || !hasLooked)}
-                    size="small"
-                    scale={scale}
-                  />
-                ))}
-              </div>
+              {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
+              {(showCards || (isCurrentUser && hasLooked)) && (
+                <div className="flex space-x-1 mt-1 justify-center">
+                  {cards.map((card, index) => (
+                    <CardComponent
+                      key={index}
+                      card={card}
+                      hidden={false}
+                      size="small"
+                      scale={scale}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
         
-        {/* Card deck, positioned to the right and overlapping */}
-        {!hasFolded && (
+        {/* Card deck - показываем только в blind фазе (когда игрок не посмотрел карты) */}
+        {!hasFolded && !hasLooked && (
           <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ top: '40%', left: '50px' }}>
             <div className="relative" style={{ width: '42px', height: '42px' }}>
               <img
