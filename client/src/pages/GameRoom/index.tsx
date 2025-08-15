@@ -154,34 +154,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
   // Определяем возможные действия
-  const canFold = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante');
+  const canFold = isCurrentUserTurn && gameState.status === 'betting';
   
   const canCall = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante') && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
-  const canRaise = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante') && (currentPlayer?.balance || 0) > 0;
+  const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
-  // Отладочная информация
-  console.log('GameRoom Debug:', {
-    isSeated,
-    isCurrentUserTurn,
-    gameState: {
-      status: gameState.status,
-      currentPlayerIndex: gameState.currentPlayerIndex,
-      players: gameState.players.map(p => ({ id: p.id, position: p.position }))
-    },
-    currentUserId,
-    currentPlayer: currentPlayer ? { id: currentPlayer.id, position: currentPlayer.position } : null,
-    buttons: {
-      canFold,
-      canCall,
-      canRaise,
-      canLook,
-      canBlindBet,
-      blindButtonsDisabled
-    }
-  });
+
   
   // Вычисляем суммы для ставок
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
@@ -362,7 +343,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             
             {/* Кнопки действий */}
             <div>
-              {(() => { console.log('Rendering buttons section:', { isCurrentUserTurn, isSeated }); return null; })()}
               {isCurrentUserTurn ? (
                 <ActionButtons 
                   canFold={canFold}
