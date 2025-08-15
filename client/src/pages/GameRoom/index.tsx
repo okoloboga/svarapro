@@ -137,6 +137,15 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
 
   // Находим текущего игрока
   const currentPlayer = gameState.players.find(p => p.id === currentUserId);
+  const currentUserPosition = currentPlayer?.position;
+
+  const getScreenPosition = (absolutePosition: number) => {
+    if (!currentUserPosition || !isSeated) {
+      return absolutePosition; // Если пользователь не сидит, показываем абсолютные позиции
+    }
+    const offset = 4 - currentUserPosition;
+    return ((absolutePosition + offset - 1 + 6) % 6) + 1;
+  };
   
   // Определяем, чей сейчас ход
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
@@ -257,12 +266,14 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
             {/* Позиции игроков вокруг стола */}
             {
               Array.from({ length: 6 }).map((_, index) => {
-                const position = index + 1;
-                const player = gameState.players.find(p => p.position === position);
-                const positionStyle = getPositionStyle(position);
+                const absolutePosition = index + 1;
+                const screenPosition = getScreenPosition(absolutePosition);
+                const player = gameState.players.find(p => p.position === absolutePosition);
+                const positionStyle = getPositionStyle(screenPosition);
+                const positionClasses = getPositionClasses(screenPosition);
 
                 return (
-                  <div key={position} style={positionStyle} className={getPositionClasses(position)}>
+                  <div key={absolutePosition} style={positionStyle} className={positionClasses}>
                     {player ? (
                       (() => {
                         if (userData && userData.id && player.id.toString() === userData.id.toString()) {
@@ -278,7 +289,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
                     ) : (
                       <SeatButton 
                         type={isSeated ? 'invite' : 'sitdown'}
-                        position={position}
+                        position={absolutePosition} // Pass absolute position for sitdown action
                         onSitDown={handleSitDown}
                         onInvite={() => {}} // Placeholder for invite functionality
                         scale={scale}
