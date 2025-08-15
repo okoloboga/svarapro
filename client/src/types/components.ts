@@ -135,7 +135,7 @@ export type ConfirmWithdrawProps = {
 };
 
 export type DepositHistoryProps = {
-  setCurrentPage: (page: Page) => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   userId: string;
 };
 
@@ -145,13 +145,13 @@ export type DepositProps = {
 
 export type WithdrawProps = {
   balance: string;
-  setCurrentPage: (page: Page) => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   setWithdrawAmount: (amount: string) => void;
 };
 
 export type MoreProps = {
   userData?: UserData;
-  setCurrentPage: (page: Page) => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
 };
 
 export type GameRoomProps = {
