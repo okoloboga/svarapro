@@ -8,7 +8,6 @@ import { RoomsListProps } from '@/types/components';
 const ITEMS_PER_PAGE = 10;
 
 export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage, balance, setNotification }: RoomsListProps) {
-  console.log('RoomsList rendering, socket status:', socket ? 'connected' : 'disconnected');
   const { t } = useTranslation('common');
   const [currentPage, setPage] = useState(1);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -17,13 +16,11 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
     if (socket) {
       const handleInitialRooms = (data: { action: string; rooms?: Room[] }) => {
         if (data.action === 'initial' && data.rooms) {
-          console.log('Received initial rooms:', data.rooms);
           setRooms(data.rooms);
         }
       };
 
       const handleRoomUpdate = (data: { roomId: string; room: Room }) => {
-        console.log('Received room update:', data);
         setRooms((prevRooms) => {
           const updatedRooms = prevRooms.filter((r) => r.roomId !== data.roomId);
           return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
@@ -45,8 +42,6 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
     setPage(1); // Сбрасываем страницу при изменении фильтров
   }, [searchId, isAvailableFilter, stakeRange]);
 
-  console.log('Rendering RoomsList. All rooms in state:', rooms);
-
   const filteredRooms = rooms.filter((room) => {
     const matchesSearch = searchId === '' || room.roomId === searchId;
     const matchesAvailability = !isAvailableFilter || room.players.length < room.maxPlayers;
@@ -54,17 +49,9 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
     return matchesSearch && matchesAvailability && matchesStake && room.type === 'public'; // Только публичные
   });
 
-  console.log('Filtered rooms:', filteredRooms);
-
   const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedRooms = filteredRooms.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  console.log('Paginated rooms to display:', paginatedRooms);
-
-  if (paginatedRooms.length === 0) {
-    console.log('No rooms to display after filtering and pagination.');
-  }
 
   return (
     <div className="space-y-4 mx-auto w-[93vw]">

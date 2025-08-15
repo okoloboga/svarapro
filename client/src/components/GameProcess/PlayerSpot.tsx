@@ -10,9 +10,10 @@ interface PlayerSpotProps {
   isCurrentUser: boolean;
   showCards: boolean;
   scale?: number;
+  gameState?: any;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction, score } = player;
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
@@ -168,7 +169,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
         {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
-            top: `${-45 * scale}px`, 
+            top: `${-60 * scale}px`, 
             width: `${195 * scale}px`, 
             height: `${90 * scale}px` 
           }}>
@@ -241,7 +242,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
             {getPlayerStatus()}
           </div>
         )}
-        {tableBalance > 0 && (
+        {tableBalance > 0 && gameState?.status !== 'ante' && (
           <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
             ${tableBalance}
           </div>

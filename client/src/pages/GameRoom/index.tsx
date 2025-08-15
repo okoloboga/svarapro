@@ -157,6 +157,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
+  
+  // Отладочная информация для кнопок
+  console.log('Button debug:', {
+    isCurrentUserTurn,
+    gameStateStatus: gameState.status,
+    currentPlayerBet: currentPlayer?.currentBet,
+    gameStateCurrentBet: gameState.currentBet,
+    canCall,
+    canFold,
+    canRaise
+  });
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
@@ -300,9 +311,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             username: userData.username || userData.first_name || player.username,
                             avatar: userData.photo_url || player.avatar,
                           };
-                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} />;
+                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} gameState={gameState} />;
                         }
-                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} />;
+                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} gameState={gameState} />;
                       })()
                     ) : (
                       <SeatButton 

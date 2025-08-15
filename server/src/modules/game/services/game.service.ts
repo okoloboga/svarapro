@@ -446,6 +446,16 @@ export class GameService {
         
         console.log(`Game status after look action: ${gameState.status}`);
 
+        // Все игроки автоматически смотрят карты при переходе в betting
+        for (let i = 0; i < gameState.players.length; i++) {
+          if (gameState.players[i].isActive && !gameState.players[i].hasFolded) {
+            gameState.players[i] = this.playerService.updatePlayerStatus(
+              gameState.players[i],
+              { hasLooked: true }
+            );
+          }
+        }
+
         if (gameState.lastBlindBet > 0) {
           const requiredBet = gameState.lastBlindBet * 2;
           if (player.balance < requiredBet) {
