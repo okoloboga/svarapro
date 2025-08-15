@@ -265,7 +265,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
                   <div key={position} style={positionStyle} className={getPositionClasses(position)}>
                     {player ? (
                       (() => {
-                        if (player.id.toString() === userData.id.toString()) {
+                        if (userData && userData.id && player.id.toString() === userData.id.toString()) {
                           const mergedPlayer = {
                             ...player,
                             username: userData.username || userData.first_name || player.username,
