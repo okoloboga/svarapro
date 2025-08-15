@@ -98,7 +98,7 @@ export function CardComponent({ card, hidden = false, size = 'medium', scale = 1
     height: `${finalHeight}px`,
   };
 
-  const cardClasses = `overflow-hidden shadow-md rounded-lg`;
+  const cardClasses = `overflow-hidden rounded-lg`;
 
   // Функция для получения пути к изображению карты
   const getCardImagePath = (card: Card): string => {
@@ -134,7 +134,7 @@ export function CardComponent({ card, hidden = false, size = 'medium', scale = 1
   if (hidden || !card) {
     return (
       <div style={cardStyle} className={cardClasses}>
-        <img src={backImage} alt="Card back" className="w-full h-full object-cover" />
+        <img src={backImage} alt="Card back" className="w-full h-full object-contain" />
       </div>
     );
   }
@@ -144,7 +144,7 @@ export function CardComponent({ card, hidden = false, size = 'medium', scale = 1
       <img 
         src={getCardImagePath(card)} 
         alt={`${card.rank} of ${card.suit}`} 
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
       />
     </div>
   );

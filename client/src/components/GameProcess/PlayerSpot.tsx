@@ -177,7 +177,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
         {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
-            top: `${-60 * scale}px`, 
+            top: `${-50 * scale}px`, 
             width: `${cardWidth}px`, 
             height: `${cardHeight}px`
           }}>
