@@ -109,7 +109,7 @@ export type HeaderProps = {
   user?: UserData;
   balance: string | number;
   onWithdrawClick: () => void;
-  setCurrentPage: (page: 'deposit') => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
 };
 
 export type FilterProps = {
