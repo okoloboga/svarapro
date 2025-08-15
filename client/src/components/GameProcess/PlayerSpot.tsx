@@ -170,14 +170,14 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
             top: `${-60 * scale}px`, 
-            width: `${195 * scale}px`, 
-            height: `${90 * scale}px` 
+            width: `65px`, 
+            height: `90px` 
           }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
-                const cardWidth = 65 * scale;
-                const cardHeight = 90 * scale;
-                const step = 30 * scale;
+                const cardWidth = 65;
+                const cardHeight = 90;
+                const step = 30;
                 const centerOffset = (cards.length - 1) * step / 2;
                 const left = index * step - centerOffset;
                 
