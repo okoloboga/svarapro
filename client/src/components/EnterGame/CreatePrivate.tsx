@@ -33,6 +33,8 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     }
   };
 
+  const hasEnoughBalance = parseFloat(balance) >= parseFloat(stake) * 3;
+
   const handleCreate = async () => {
     const bet = parseFloat(stake);
     const userBalance = parseFloat(balance);
@@ -90,7 +92,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
             placeholder={t('min_stake')}
             className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-12 rounded-lg pl-10 pr-10"
           />
-          <img src={isStakeValid ? completeIcon : incompleteIcon} alt="complete" className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6" />
+          <img src={hasEnoughBalance ? completeIcon : incompleteIcon} alt="complete" className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6" />
         </div>
         <div className="absolute bottom-0 left-0 w-full flex">
           <button 
