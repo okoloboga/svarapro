@@ -4,12 +4,12 @@ import { Player, GameAction, Card } from '../../../types/game';
 @Injectable()
 export class PlayerService {
   // Создание нового игрока
-  createPlayer(telegramId: string, userData: any, position: number): Player {
+  createPlayer(telegramId: string, userData: any, position: number, balance: number): Player {
     return {
       id: telegramId,
       username: userData.username || 'Player',
       avatar: userData.photo_url || null,
-      balance: userData.balance || 0,
+      balance: balance || 0,
       tableBalance: 0,
       cards: [],
       isActive: true,

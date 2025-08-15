@@ -137,10 +137,13 @@ export class GameService {
       return { success: false, error: 'Вы уже сидите за столом' };
     }
 
+    const userProfile = await this.usersService.getProfile(telegramId);
+
     const newPlayer = this.playerService.createPlayer(
       telegramId,
       userData,
       position,
+      userProfile.balance,
     );
     gameState.players.push(newPlayer);
 
