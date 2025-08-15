@@ -3,7 +3,6 @@ import { GameRoomProps } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
-import { CardComponent } from '../../components/GameProcess/CardComponent';
 import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
