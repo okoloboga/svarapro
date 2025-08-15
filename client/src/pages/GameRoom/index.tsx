@@ -162,6 +162,27 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
+  // Отладочная информация
+  console.log('GameRoom Debug:', {
+    isSeated,
+    isCurrentUserTurn,
+    gameState: {
+      status: gameState.status,
+      currentPlayerIndex: gameState.currentPlayerIndex,
+      players: gameState.players.map(p => ({ id: p.id, position: p.position }))
+    },
+    currentUserId,
+    currentPlayer: currentPlayer ? { id: currentPlayer.id, position: currentPlayer.position } : null,
+    buttons: {
+      canFold,
+      canCall,
+      canRaise,
+      canLook,
+      canBlindBet,
+      blindButtonsDisabled
+    }
+  });
+  
   // Вычисляем суммы для ставок
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaise = gameState.currentBet + gameState.minBet;
@@ -337,10 +358,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   />
                 ))}
               </div>
-            )}
+            )}ф
             
             {/* Кнопки действий */}
             <div>
+              {(() => { console.log('Rendering buttons section:', { isCurrentUserTurn, isSeated }); return null; })()}
               {isCurrentUserTurn ? (
                 <ActionButtons 
                   canFold={canFold}
