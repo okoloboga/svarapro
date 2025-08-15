@@ -154,10 +154,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
   // Определяем возможные действия
-  const canFold = isCurrentUserTurn && gameState.status === 'betting';
+  const canFold = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante');
   
-  const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
-  const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
+  const canCall = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante') && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
+  const canRaise = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante') && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
