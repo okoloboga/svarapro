@@ -385,13 +385,14 @@ export class GameService {
 
     switch (action) {
       case 'blind_bet': {
-        if (!amount || amount < gameState.lastBlindBet * 2) {
-          console.log(`Invalid blind bet amount for ${player.id}:`, amount);
+        // Проверяем минимальную ставку: первая ставка = minBet, следующие = в 2 раза больше
+        const minBlindBet = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+        
+        if (!amount || amount < minBlindBet) {
+          console.log(`Invalid blind bet amount for ${player.id}:`, amount, `min required: ${minBlindBet}`);
           return {
             success: false,
-            error: `Минимальная ставка вслепую: ${
-              gameState.lastBlindBet * 2 || gameState.minBet
-            }`,
+            error: `Минимальная ставка вслепую: ${minBlindBet}`,
           };
         }
 
@@ -418,6 +419,8 @@ export class GameService {
         break;
       }
       case 'look': {
+        console.log(`Player ${player.username} looked at cards, transitioning to betting phase`);
+        
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           { hasLooked: true, lastAction: 'look' },
@@ -431,11 +434,17 @@ export class GameService {
         };
         gameState.log.push(lookAction);
 
+        // Переходим в фазу betting
         const phaseResult = this.gameStateService.moveToNextPhase(
           gameState,
           'betting',
         );
+        
+        // Используем обновленное состояние
+        gameState = phaseResult.updatedGameState;
         gameState.log.push(...phaseResult.actions);
+        
+        console.log(`Game status after look action: ${gameState.status}`);
 
         if (gameState.lastBlindBet > 0) {
           const requiredBet = gameState.lastBlindBet * 2;

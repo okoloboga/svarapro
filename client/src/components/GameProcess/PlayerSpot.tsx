@@ -13,7 +13,7 @@ interface PlayerSpotProps {
 }
 
 export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: PlayerSpotProps) {
-  const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction } = player;
+  const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction, score } = player;
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
 
@@ -160,23 +160,54 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
                   </div>
                 </div>
               </div>
-              {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
-              {(showCards || (isCurrentUser && hasLooked)) && (
-                <div className="flex space-x-1 mt-1 justify-center">
-                  {cards.map((card, index) => (
-                    <CardComponent
-                      key={index}
-                      card={card}
-                      hidden={false}
-                      size="small"
-                      scale={scale}
-                    />
-                  ))}
-                </div>
-              )}
+
             </div>
           </div>
         </div>
+        
+        {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
+        {(showCards || (isCurrentUser && hasLooked)) && (
+          <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
+            top: `${-45 * scale}px`, 
+            width: `${195 * scale}px`, 
+            height: `${90 * scale}px` 
+          }}>
+            <div className="relative w-full h-full">
+              {cards.map((card, index) => {
+                const cardWidth = 65 * scale;
+                const cardHeight = 90 * scale;
+                const step = 30 * scale;
+                const centerOffset = (cards.length - 1) * step / 2;
+                const left = index * step - centerOffset;
+                
+                // Углы поворота: левая карта -12°, центральная 0°, правая +12°
+                const rotation = index === 0 ? -12 : index === 1 ? 0 : 12;
+                
+                return (
+                  <div
+                    key={index}
+                    className="absolute"
+                    style={{
+                      left: `${left}px`,
+                      top: '0',
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`,
+                      transform: `rotate(${rotation}deg)`,
+                      zIndex: index + 1
+                    }}
+                  >
+                    <CardComponent
+                      card={card}
+                      hidden={false}
+                      size="large"
+                      scale={scale}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         
         {/* Card deck - показываем только в blind фазе (когда игрок не посмотрел карты) */}
         {!hasFolded && !hasLooked && (
@@ -213,6 +244,36 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1 }: Play
         {tableBalance > 0 && (
           <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
             ${tableBalance}
+          </div>
+        )}
+        
+        {/* Score display - показываем только когда карты открыты и есть очки */}
+        {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
+          <div 
+            className="absolute z-40 flex items-center justify-center"
+            style={{ 
+              left: `${-45 * scale}px`,
+              top: `${-11 * scale}px`,
+              width: `${22 * scale}px`,
+              height: `${22 * scale}px`,
+              backgroundColor: '#FF443A',
+              borderRadius: '50%'
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 500,
+                fontStyle: 'normal',
+                fontSize: `${14 * scale}px`,
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                color: '#FFFFFF'
+              }}
+            >
+              {score}
+            </span>
           </div>
         )}
       </div>

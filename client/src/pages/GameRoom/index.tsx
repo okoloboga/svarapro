@@ -326,20 +326,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       {isSeated && (
         <div className="p-4">
           <div className="flex flex-col items-center space-y-4">
-            {/* Карты текущего игрока - показываем только если игрок посмотрел карты или игра закончилась */}
-            {(currentPlayer?.hasLooked || showCards) && (
-              <div className="flex justify-center items-center space-x-2">
-                {currentPlayer?.cards.map((card, index) => (
-                  <CardComponent 
-                    key={index} 
-                    card={card}
-                    hidden={false}
-                    size="large" 
-                    scale={scale}
-                  />
-                ))}
-              </div>
-            )}ф
+
             
             {/* Кнопки действий */}
             <div>
