@@ -16,6 +16,7 @@ export type CreatePublicProps = {
   openModal: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
+  setNotification: (type: NotificationType | null) => void;
 };
 
 export type CreatePrivateProps = {
@@ -23,6 +24,7 @@ export type CreatePrivateProps = {
   openModal: () => void;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
+  setNotification: (type: NotificationType | null) => void;
 };
 
 export type ConnectRoomProps = {
@@ -38,6 +40,7 @@ export type RoomsListProps = {
   socket: Socket | null;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
+  setNotification: (type: NotificationType | null) => void;
 };
 
 export type RoomProps = {
@@ -46,6 +49,7 @@ export type RoomProps = {
   stake: number;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
+  setNotification: (type: NotificationType | null) => void;
 };
 
 export type ReferralProps = {
@@ -57,7 +61,7 @@ export type PopSuccessProps = {
   onClose: () => void;
 };
 
-export type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon';
+export type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon' | 'insufficientBalance';
 
 export type NotificationProps = {
   type: NotificationType | null;

@@ -24,7 +24,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   const [isAvailableFilter, setIsAvailableFilter] = useState(false);
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
   const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
-  const [notification, setNotification] = useState<'comingSoon' | null>(null);
+  const [notification, setNotification] = useState<NotificationType | null>(null);
   const [isEnterGameMenuVisible, setIsEnterGameMenuVisible] = useState(false);
   const [activeModal, setActiveModal] = useState<'createPublic' | 'createPrivate' | 'connectRoom' | null>(null);
 
@@ -79,6 +79,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
           socket={socket}
           setCurrentPage={setCurrentPage}
           balance={balance}
+          setNotification={setNotification}
         />
       </div>
       <Footer />

@@ -7,7 +7,7 @@ import { RoomsListProps } from '@/types/components';
 
 const ITEMS_PER_PAGE = 10;
 
-export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage, balance }: RoomsListProps) {
+export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, setCurrentPage, balance, setNotification }: RoomsListProps) {
   console.log('RoomsList rendering, socket status:', socket ? 'connected' : 'disconnected');
   const { t } = useTranslation('common');
   const [currentPage, setPage] = useState(1);
@@ -78,6 +78,7 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
             stake={room.minBet}
             setCurrentPage={setCurrentPage}
             balance={balance}
+            setNotification={setNotification}
           />
         ))
       ) : (

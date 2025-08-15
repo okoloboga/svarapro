@@ -80,6 +80,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showBlindBetSlider, setShowBlindBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
+  const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
 
   // ID текущего пользователя (получаем из Telegram Mini App)
@@ -190,6 +191,10 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
+    if (!hasEnoughBalance) {
+      setNotification('insufficientBalance');
+      return;
+    }
     actions.sitDown(position, userData);
   };
 
@@ -294,7 +299,6 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
                         onSitDown={handleSitDown}
                         onInvite={() => {}} // Placeholder for invite functionality
                         scale={scale}
-                        disabled={!isSeated && !hasEnoughBalance}
                       />
                     )}
                   </div>
@@ -402,6 +406,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
         onClose={handleCloseMenuModal}
         onExit={handleExitClick}
       />
+      {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
     </div>
   );
 }

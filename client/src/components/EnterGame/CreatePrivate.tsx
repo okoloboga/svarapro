@@ -7,7 +7,7 @@ import completeIcon from '@/assets/completeSmallGreen.png';
 import { apiService } from '@/services/api/api';
 import { CreatePrivateProps } from '@/types/components';
 
-export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal, setCurrentPage, balance }) => {
+export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal, setCurrentPage, balance, setNotification }) => {
   const { t } = useTranslation('common');
   const [password, setPassword] = useState('');
   const [stake, setStake] = useState('');
@@ -15,7 +15,6 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
   const [isStakeValid, setIsStakeValid] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -30,24 +29,23 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     if (/^\d*\.?\d*$/.test(value)) {
       setStake(value);
       const numValue = parseFloat(value);
-      const userBalance = parseFloat(balance);
-      const isValidInput = !isNaN(numValue) && numValue > 0;
-      setIsStakeValid(isValidInput);
-
-      if (isValidInput && userBalance < numValue * 3) {
-        setBalanceError(t('not_enough_balance_for_stake'));
-      } else {
-        setBalanceError(null);
-      }
+      setIsStakeValid(!isNaN(numValue) && numValue > 0);
     }
   };
 
   const handleCreate = async () => {
-    if (!isPasswordValid || !isStakeValid || balanceError) return;
+    const bet = parseFloat(stake);
+    const userBalance = parseFloat(balance);
+
+    if (userBalance < bet * 3) {
+      setNotification('insufficientBalance');
+      return;
+    }
+
+    if (!isPasswordValid || !isStakeValid) return;
     setIsCreating(true);
     setError(null);
     try {
-      const bet = parseFloat(stake);
       const room = await apiService.createRoom(bet, 'private', password);
       onClose();
       setCurrentPage('gameRoom', { roomId: room.roomId, autoSit: true });
@@ -63,7 +61,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     openModal();
   };
 
-  const isFormValid = isPasswordValid && isStakeValid && !balanceError;
+  const isFormValid = isPasswordValid && isStakeValid;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -72,7 +70,6 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
         {error && (
           <p className="text-red-500 text-sm mb-2">{error}</p>
         )}
-        {balanceError && <p className="text-red-500 text-xs mb-2">{balanceError}</p>}
         <div className="relative w-full mb-4">
           <img src={lockIcon} alt="lock" className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6" />
           <input

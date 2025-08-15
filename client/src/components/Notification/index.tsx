@@ -22,6 +22,10 @@ const notificationContent = {
     icon: cupIcon,
     textKey: 'coming_soon',
   },
+  insufficientBalance: {
+    icon: errorIcon,
+    textKey: 'insufficient_balance_x3_error',
+  },
 };
 
 export function Notification({ type, onClose }: NotificationProps) {
