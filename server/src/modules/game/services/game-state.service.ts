@@ -157,6 +157,7 @@ export class GameStateService {
       blind_betting: 'Начинается фаза ставок вслепую',
       betting: 'Начинается фаза обычных ставок',
       showdown: 'Начинается вскрытие карт',
+      svara: 'Объявлена свара',
       finished: 'Игра завершена',
     };
 
