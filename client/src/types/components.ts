@@ -37,6 +37,7 @@ export type RoomsListProps = {
   stakeRange: [number, number];
   socket: Socket | null;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
+  balance: string;
 };
 
 export type RoomProps = {
@@ -44,6 +45,7 @@ export type RoomProps = {
   players: number;
   stake: number;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
+  balance: string;
 };
 
 export type ReferralProps = {

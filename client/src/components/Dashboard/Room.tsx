@@ -5,11 +5,14 @@ import { apiService } from '@/services/api/api';
 import { useState } from 'react';
 import { RoomProps } from '@/types/components';
 
-export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
+export function Room({ roomId, players, stake, setCurrentPage, balance }: RoomProps) {
   const { t } = useTranslation('common');
   const [isJoining, setIsJoining] = useState(false);
 
+  const hasEnoughBalance = parseFloat(balance) >= stake * 3;
+
   const handleJoin = async () => {
+    if (!hasEnoughBalance) return;
     setIsJoining(true);
     try {
       await apiService.joinRoom(roomId);
@@ -52,7 +55,7 @@ export function Room({ roomId, players, stake, setCurrentPage }: RoomProps) {
         <YellowButton 
           style={{ marginTop: '5px' }} 
           onClick={handleJoin}
-          disabled={isJoining}
+          disabled={isJoining || !hasEnoughBalance}
         >
           {t('enter')}
         </YellowButton>

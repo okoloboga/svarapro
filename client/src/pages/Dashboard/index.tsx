@@ -78,6 +78,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
           stakeRange={stakeRange}
           socket={socket}
           setCurrentPage={setCurrentPage}
+          balance={balance}
         />
       </div>
       <Footer />
