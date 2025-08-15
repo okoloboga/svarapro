@@ -163,6 +163,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaise = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
+  const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
   
   // Определяем, показывать ли карты (в конце игры)
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished';
@@ -293,6 +294,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
                         onSitDown={handleSitDown}
                         onInvite={() => {}} // Placeholder for invite functionality
                         scale={scale}
+                        disabled={!isSeated && !hasEnoughBalance}
                       />
                     )}
                   </div>
