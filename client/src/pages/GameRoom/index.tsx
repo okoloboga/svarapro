@@ -10,9 +10,11 @@ import { LoadingPage } from '../../components/LoadingPage'; // Добавляе�
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 
+import { Page } from '@/types/page';
+
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
-  setCurrentPage: (page: 'dashboard') => void;
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   userData: any;
   pageData: any;
 }
