@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GameRoomProps } from '@/types/game';
+import { NotificationType } from '@/types/components';
+import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
 import { CardComponent } from '../../components/GameProcess/CardComponent';
 import GameTable from '../../components/GameProcess/GameTable';
@@ -164,7 +166,7 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaise = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
-  const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
+  const hasEnoughBalance = (currentPlayer?.balance || 0) >= gameState.minBet * 3;
   
   // Определяем, показывать ли карты (в конце игры)
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished';

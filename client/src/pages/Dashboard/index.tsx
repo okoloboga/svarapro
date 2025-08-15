@@ -11,7 +11,7 @@ import EnterGameMenu from '@/components/EnterGame/EnterGameMenu';
 import { CreatePublic } from '@/components/EnterGame/CreatePublic';
 import { CreatePrivate } from '@/components/EnterGame/CreatePrivate';
 import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
-import { DashboardProps } from '@/types/components';
+import { DashboardProps, NotificationType } from '@/types/components';
 
 export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
   console.log('Dashboard rendering, socket status:', socket ? 'connected' : 'disconnected');
@@ -95,8 +95,8 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
         </div>
       )}
       {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
-      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} />}
-      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
+      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
       {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>
