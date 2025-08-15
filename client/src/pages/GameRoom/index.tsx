@@ -156,7 +156,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Определяем возможные действия
   const canFold = isCurrentUserTurn && gameState.status === 'betting';
   
-  const canCall = isCurrentUserTurn && (gameState.status === 'betting' || gameState.status === 'ante') && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
+  const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
   const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
   const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
@@ -343,7 +343,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             
             {/* Кнопки действий */}
             <div>
-              {isCurrentUserTurn ? (
+              {gameState.status === 'ante' ? (
+                <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
+                  <p className="text-xl">Внесение начальных ставок...</p>
+                </div>
+              ) : isCurrentUserTurn ? (
                 <ActionButtons 
                   canFold={canFold}
                   canCall={canCall}

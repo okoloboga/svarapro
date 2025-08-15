@@ -314,14 +314,6 @@ export class GameService {
     }
 
     switch (gameState.status) {
-      case 'ante':
-        return await this.processAnteAction(
-          roomId,
-          gameState,
-          playerIndex,
-          action,
-          amount,
-        );
       case 'blind_betting':
         return await this.processBlindBettingAction(
           roomId,
@@ -367,69 +359,7 @@ export class GameService {
     }
   }
 
-  private async processAnteAction(
-    roomId: string,
-    gameState: GameState,
-    playerIndex: number,
-    action: string,
-    amount?: number,
-  ): Promise<GameActionResult> {
-    console.log('Processing ante action:', {
-      roomId,
-      playerIndex,
-      action,
-      amount,
-    });
-    const player = gameState.players[playerIndex];
 
-    switch (action) {
-      case 'call': {
-        // В фазе ante игрок должен внести минимальную ставку
-        const anteAmount = gameState.minBet;
-        
-        if (player.balance < anteAmount) {
-          console.log(`Insufficient funds for ante for ${player.id}:`, {
-            balance: player.balance,
-            anteAmount,
-          });
-          return { success: false, error: 'Недостаточно средств для анте' };
-        }
-
-        const { updatedPlayer, action: anteAction } =
-          this.playerService.processPlayerBet(player, anteAmount, 'ante');
-
-        gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += anteAmount;
-        gameState.log.push(anteAction);
-
-        gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
-          gameState.players,
-          gameState.currentPlayerIndex,
-        );
-
-        // Если все игроки сделали анте, переходим к следующей фазе
-        const allPlayersAnted = gameState.players.every(p => 
-          p.isActive && p.totalBet >= gameState.minBet
-        );
-        
-        if (allPlayersAnted) {
-          await this.startAntePhase(roomId);
-        } else {
-          await this.redisService.setGameState(roomId, gameState);
-          await this.redisService.publishGameUpdate(roomId, gameState);
-        }
-        break;
-      }
-      default:
-        console.log(`Invalid ante action: ${action}`);
-        return {
-          success: false,
-          error: 'Недопустимое действие в фазе анте',
-        };
-    }
-
-    return { success: true, gameState };
-  }
 
   private async processBlindBettingAction(
     roomId: string,
