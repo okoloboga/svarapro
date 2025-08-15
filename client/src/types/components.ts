@@ -61,7 +61,7 @@ export type PopSuccessProps = {
   onClose: () => void;
 };
 
-export type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon' | 'insufficientBalance';
+export type NotificationType = 'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | 'comingSoon' | 'insufficientBalance' | 'gameJoinError';
 
 export type NotificationProps = {
   type: NotificationType | null;

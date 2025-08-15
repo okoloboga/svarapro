@@ -22,7 +22,16 @@ export class GameService {
     private readonly bettingService: BettingService,
     private readonly gameStateService: GameStateService,
     private readonly usersService: UsersService,
-  ) {}
+  ) {
+    // Запускаем периодическую очистку мертвых игроков каждые 5 минут
+    setInterval(async () => {
+      try {
+        await this.redisService.cleanupDeadPlayers();
+      } catch (error) {
+        console.error('Error during periodic cleanup:', error);
+      }
+    }, 5 * 60 * 1000); // 5 минут
+  }
 
   async getRooms(): Promise<Room[]> {
     console.log('Fetching active rooms');

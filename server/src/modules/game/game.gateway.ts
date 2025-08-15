@@ -30,6 +30,9 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       console.log(`Publishing game_update to room ${roomId}:`, gameState);
       this.server.to(roomId).emit('game_update', gameState);
     });
+    
+    // Очищаем мертвых игроков при старте сервера
+    void this.redisService.cleanupDeadPlayers();
   }
 
   private getTelegramId(client: Socket): string | undefined {
@@ -180,12 +183,18 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     console.log('Client disconnected:', { telegramId });
 
     if (telegramId) {
-      const rooms = await this.redisService.getPlayerRooms(telegramId);
-      for (const roomId of rooms) {
-        console.log(
-          `Player ${telegramId} is leaving room ${roomId} due to disconnect`,
-        );
-        await this.gameService.leaveRoom(roomId, telegramId);
+      try {
+        const rooms = await this.redisService.getPlayerRooms(telegramId);
+        console.log(`Player ${telegramId} was in rooms:`, rooms);
+        
+        for (const roomId of rooms) {
+          console.log(
+            `Player ${telegramId} is leaving room ${roomId} due to disconnect`,
+          );
+          await this.gameService.leaveRoom(roomId, telegramId);
+        }
+      } catch (error) {
+        console.error(`Error handling disconnect for player ${telegramId}:`, error);
       }
     }
   }

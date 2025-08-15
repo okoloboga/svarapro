@@ -20,8 +20,17 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
     try {
       await apiService.joinRoom(roomId);
       setCurrentPage('gameRoom', { roomId, autoSit: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to join room:', error);
+      
+      // Если игра уже началась, автоматически переключаемся в режим watch
+      if (error.response?.data?.message?.includes('game already started')) {
+        console.log('Game already started, switching to watch mode');
+        setCurrentPage('gameRoom', { roomId, autoSit: false });
+      } else {
+        // Для других ошибок показываем уведомление
+        setNotification('gameJoinError');
+      }
     } finally {
       setIsJoining(false);
     }
@@ -30,10 +39,11 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
   const handleWatch = async () => {
     setIsJoining(true);
     try {
-      await apiService.joinRoom(roomId);
-      setCurrentPage('gameRoom', { roomId });
+      // Для watch режима не нужно вызывать joinRoom, просто переходим в комнату как наблюдатель
+      setCurrentPage('gameRoom', { roomId, autoSit: false });
     } catch (error) {
-      console.error('Failed to join room:', error);
+      console.error('Failed to watch room:', error);
+      setNotification('gameJoinError');
     } finally {
       setIsJoining(false);
     }

@@ -26,6 +26,10 @@ const notificationContent = {
     icon: errorIcon,
     textKey: 'insufficient_balance_x3_error',
   },
+  gameJoinError: {
+    icon: errorIcon,
+    textKey: 'game_join_error',
+  },
 };
 
 export function Notification({ type, onClose }: NotificationProps) {
