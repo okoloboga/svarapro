@@ -77,7 +77,7 @@ const useTablePositioning = () => {
   return { getPositionStyle, getPositionClasses, scale };
 };
 
-export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
+export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showBlindBetSlider, setShowBlindBetSlider] = useState(false);
@@ -154,19 +154,19 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
   // Определяем возможные действия
-  const canFold = isCurrentUserTurn && gameState.status !== 'showdown' && gameState.status !== 'finished' && gameState.status !== 'blind_betting' && gameState.status !== 'waiting';
+  const canFold = isCurrentUserTurn && gameState.status === 'betting';
   
   const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
   const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
-  const canLook = isCurrentUserTurn;
-  const canBlindBet = isCurrentUserTurn;
+  const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
+  const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
   // Вычисляем суммы для ставок
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaise = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
-  const hasEnoughBalance = (currentPlayer?.balance || 0) >= gameState.minBet * 3;
+  const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
   
   // Определяем, показывать ли карты (в конце игры)
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished';
@@ -193,6 +193,15 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
   
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
+    console.log('handleSitDown called:', { 
+      position, 
+      balance: balance, 
+      balanceNumber: parseFloat(balance), 
+      minBet: gameState.minBet, 
+      hasEnoughBalance,
+      requiredBalance: gameState.minBet * 3 
+    });
+    
     if (!hasEnoughBalance) {
       setNotification('insufficientBalance');
       return;
@@ -315,18 +324,20 @@ export function GameRoom({ roomId, socket, setCurrentPage, userData, pageData }:
       {isSeated && (
         <div className="p-4">
           <div className="flex flex-col items-center space-y-4">
-            {/* Карты текущего игрока */}
-            <div className="flex justify-center items-center space-x-2">
-              {currentPlayer?.cards.map((card, index) => (
-                <CardComponent 
-                  key={index} 
-                  card={currentPlayer.hasLooked ? card : undefined} 
-                  hidden={!currentPlayer.hasLooked}
-                  size="large" 
-                  scale={scale}
-                />
-              ))}
-            </div>
+            {/* Карты текущего игрока - показываем только если игрок посмотрел карты или игра закончилась */}
+            {(currentPlayer?.hasLooked || showCards) && (
+              <div className="flex justify-center items-center space-x-2">
+                {currentPlayer?.cards.map((card, index) => (
+                  <CardComponent 
+                    key={index} 
+                    card={card}
+                    hidden={false}
+                    size="large" 
+                    scale={scale}
+                  />
+                ))}
+              </div>
+            )}
             
             {/* Кнопки действий */}
             <div>

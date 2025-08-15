@@ -69,5 +69,5 @@ export interface GameAction {
 // Обновляем тип GameRoomProps
 export interface GameRoomProps {
   roomId: string;
-  balance: number;
+  balance: string;
 }
