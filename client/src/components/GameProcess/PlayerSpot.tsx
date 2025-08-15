@@ -18,25 +18,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   
-  // Динамические размеры карт
-  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowHeight(window.innerHeight);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  // Высота карты = 8% от высоты экрана
-  const cardHeight = Math.round(windowHeight * 0.08);
-  // Ширина карты = высота * (65/90) для сохранения пропорций PNG
-  const cardWidth = Math.round(cardHeight * (65/90));
-  // Шаг между картами = ширина карты * 0.46 (30/65)
-  const step = Math.round(cardWidth * 0.46);
-
   // Показываем уведомление при изменении действия игрока
   useEffect(() => {
     if (lastAction) {
@@ -92,6 +73,14 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
   const avatarSize = baseAvatarSize * scale;
   const nameWidth = baseNameWidth * scale;
   const nameHeight = baseNameHeight * scale;
+
+  // Динамические размеры карт на основе размера аватарки
+  // Высота карты = 1.5 * высота аватарки
+  const cardHeight = Math.round(avatarSize * 1.5);
+  // Ширина карты = высота * (65/90) для сохранения пропорций PNG
+  const cardWidth = Math.round(cardHeight * (65/90));
+  // Шаг между картами = ширина карты * 0.46 (30/65)
+  const step = Math.round(cardWidth * 0.46);
 
   // Определяем стили для рамки игрока
   const spotClasses = `
@@ -189,8 +178,8 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
             top: `${-60 * scale}px`, 
-            width: `${cardWidth + step * 2}px`, 
-            height: `${cardHeight + 8}px`
+            width: `${cardWidth}px`, 
+            height: `${cardHeight}px`
           }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
