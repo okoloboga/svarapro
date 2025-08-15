@@ -17,6 +17,25 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
   const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction, score } = player;
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
+  
+  // Динамические размеры карт
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Высота карты = 8% от высоты экрана
+  const cardHeight = Math.round(windowHeight * 0.08);
+  // Ширина карты = высота * (65/90) для сохранения пропорций PNG
+  const cardWidth = Math.round(cardHeight * (65/90));
+  // Шаг между картами = ширина карты * 0.46 (30/65)
+  const step = Math.round(cardWidth * 0.46);
 
   // Показываем уведомление при изменении действия игрока
   useEffect(() => {
@@ -170,19 +189,19 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
             top: `${-60 * scale}px`, 
-            width: `65px`, 
-            height: `90px` 
+            width: `${cardWidth * 3 + step * 2}px`, 
+            height: `${cardHeight + 8}px` 
           }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
-                const cardWidth = 65;
-                const cardHeight = 90;
-                const step = 30;
                 const centerOffset = (cards.length - 1) * step / 2;
                 const left = index * step - centerOffset;
                 
                 // Углы поворота: левая карта -12°, центральная 0°, правая +12°
                 const rotation = index === 0 ? -12 : index === 1 ? 0 : 12;
+                
+                // Боковые карты ниже центральной на 4px
+                const topOffset = index === 1 ? 0 : 4;
                 
                 return (
                   <div
@@ -190,7 +209,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
                     className="absolute"
                     style={{
                       left: `${left}px`,
-                      top: '0',
+                      top: `${topOffset}px`,
                       width: `${cardWidth}px`,
                       height: `${cardHeight}px`,
                       transform: `rotate(${rotation}deg)`,
@@ -201,7 +220,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
                       card={card}
                       hidden={false}
                       size="large"
-                      scale={scale}
+                      scale={1} // Используем фиксированный масштаб для карт
                     />
                   </div>
                 );
