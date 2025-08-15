@@ -1,3 +1,1 @@
-export class JoinRoomDto {
-  telegramId: string;
-}
+export class JoinRoomDto {}

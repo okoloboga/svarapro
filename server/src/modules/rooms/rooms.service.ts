@@ -115,7 +115,7 @@ export class RoomsService {
     return this.redisService.getRoom(roomId);
   }
 
-  async joinRoom(roomId: string, joinRoomDto: JoinRoomDto): Promise<RoomType> {
+  async joinRoom(roomId: string, telegramId: string): Promise<RoomType> {
     const room = await this.redisService.getRoom(roomId);
     if (!room) {
       throw new BadRequestException('Room not found');
@@ -126,11 +126,11 @@ export class RoomsService {
     if (room.players.length >= room.maxPlayers) {
       throw new BadRequestException('Room is full');
     }
-    if (room.players.includes(joinRoomDto.telegramId)) {
+    if (room.players.includes(telegramId)) {
       throw new BadRequestException('Player already in room');
     }
 
-    room.players.push(joinRoomDto.telegramId);
+    room.players.push(telegramId);
     await this.redisService.setRoom(roomId, room);
     await this.redisService.publishRoomUpdate(roomId, room);
 

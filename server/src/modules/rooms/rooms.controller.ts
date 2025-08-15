@@ -34,11 +34,12 @@ export class RoomsController {
 
   @Post(':roomId/join')
   @UseGuards(JwtAuthGuard)
-  async joinRoom(
-    @Param('roomId') roomId: string,
-    @Body() joinRoomDto: JoinRoomDto,
-  ) {
-    return this.roomsService.joinRoom(roomId, joinRoomDto);
+  async joinRoom(@Param('roomId') roomId: string, @Request() req) {
+    const telegramId = req.user.telegramId;
+    if (!telegramId) {
+      throw new BadRequestException('User telegramId not found in token');
+    }
+    return this.roomsService.joinRoom(roomId, telegramId);
   }
 
   @Get(':roomId')
