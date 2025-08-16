@@ -170,6 +170,6 @@
   "password_for_entry": "Password for entry",
   "come_up_with_a_password": "Come up with a password",
   "not_enough_balance_for_stake": "Your balance is not enough to create a room with this stake",
-  "insufficient_balance_x3_error": "Your balance must be at least 3 times the minimum stake.",
+  "insufficient_balance_x3_error": "Your balance must be at least 10 times the minimum stake.",
   "game_join_error": "Failed to join the game. Please try again."
 }

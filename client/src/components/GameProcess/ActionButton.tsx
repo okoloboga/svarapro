@@ -55,13 +55,14 @@ export function ActionButtons({
       {canCall && (
         <button
           onClick={onCall}
-          className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
             isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
           disabled={isCallDisabled}
         >
-          <span>Заплатить {callAmount > 0 ? `${callAmount}` : ''}</span>
+          {callAmount > 0 && <span>${Number(callAmount).toFixed(2)}</span>}
+          <span className={callAmount > 0 ? '-mt-1' : ''}>Заплатить</span>
         </button>
       )}
 
@@ -102,7 +103,7 @@ export function ActionButtons({
           style={{ backgroundColor: '#0E5C89' }}
           disabled={blindButtonsDisabled || isBlindBetDisabled}
         >
-          <span>${minBet}</span>
+          <span>${Number(minBet).toFixed(2)}</span>
           <span className="-mt-1">Вслепую</span>
         </button>
       )}

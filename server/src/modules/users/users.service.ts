@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { ProfileDto } from './dto/profile.dto';
 import { Address } from 'ton-core';
@@ -140,5 +140,54 @@ export class UsersService {
     if (referralCount >= 11) return 5.0;
     if (referralCount >= 1) return 3.0;
     return 0.0;
+  }
+
+  // Обновление баланса одного игрока
+  async updatePlayerBalance(telegramId: string, newBalance: number): Promise<void> {
+    try {
+      const user = await this.usersRepository.findOne({ where: { telegramId } });
+      if (!user) {
+        console.error(`User not found for balance update: ${telegramId}`);
+        return;
+      }
+
+      user.balance = newBalance;
+      await this.usersRepository.save(user);
+      console.log(`Balance updated for user ${telegramId}: ${newBalance}`);
+    } catch (error) {
+      console.error(`Failed to update balance for user ${telegramId}:`, error);
+      throw error;
+    }
+  }
+
+  // Массовое обновление балансов игроков
+  async updateMultiplePlayerBalances(players: { telegramId: string; balance: number }[]): Promise<void> {
+    if (players.length === 0) return;
+
+    try {
+      // Получаем всех пользователей одним запросом
+      const telegramIds = players.map(p => p.telegramId);
+      const users = await this.usersRepository.find({ where: { telegramId: In(telegramIds) } });
+      
+      // Создаем мапу для быстрого поиска
+      const userMap = new Map(users.map(user => [user.telegramId, user]));
+      
+      // Обновляем балансы
+      for (const player of players) {
+        const user = userMap.get(player.telegramId);
+        if (user) {
+          user.balance = player.balance;
+        } else {
+          console.error(`User not found for balance update: ${player.telegramId}`);
+        }
+      }
+
+      // Сохраняем все изменения одной транзакцией
+      await this.usersRepository.save(users);
+      console.log(`Updated balances for ${users.length} players`);
+    } catch (error) {
+      console.error('Failed to update multiple player balances:', error);
+      throw error;
+    }
   }
 }

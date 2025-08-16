@@ -55,6 +55,15 @@ export class GameService {
       const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
       if (playerIndex > -1) {
         const removedPlayer = gameState.players.splice(playerIndex, 1)[0];
+        
+        // Сохраняем баланс игрока в БД при выходе из комнаты
+        try {
+          await this.usersService.updatePlayerBalance(telegramId, removedPlayer.balance);
+          console.log(`Player ${telegramId} left room - balance saved to DB: ${removedPlayer.balance}`);
+        } catch (error) {
+          console.error(`Failed to save balance to DB for leaving player ${telegramId}:`, error);
+        }
+
         const action: GameAction = {
           type: 'leave',
           telegramId,
@@ -271,6 +280,14 @@ export class GameService {
     };
     gameState.log.push(foldAction);
 
+    // Сохраняем баланс игрока в БД при сбросе карт
+    try {
+      await this.usersService.updatePlayerBalance(player.id, player.balance);
+      console.log(`Player ${player.id} folded - balance saved to DB: ${player.balance}`);
+    } catch (error) {
+      console.error(`Failed to save balance to DB for folded player ${player.id}:`, error);
+    }
+
     const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
 
     if (activePlayers.length === 1) {
@@ -461,6 +478,18 @@ export class GameService {
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // Сохраняем балансы всех игроков в БД после завершения раунда
+    try {
+      const playersToUpdate = gameState.players.map(player => ({
+        telegramId: player.id,
+        balance: player.balance
+      }));
+      await this.usersService.updateMultiplePlayerBalances(playersToUpdate);
+      console.log(`Game ${roomId} finished - balances saved to DB for ${playersToUpdate.length} players`);
+    } catch (error) {
+      console.error(`Failed to save balances to DB for game ${roomId}:`, error);
+    }
 
     const room = await this.redisService.getRoom(roomId);
     if (room) {
