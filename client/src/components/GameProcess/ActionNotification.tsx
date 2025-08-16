@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ActionNotificationProps {
   action?: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null;
   visible: boolean;
