@@ -385,31 +385,30 @@ export class GameService {
 
     switch (action) {
       case 'blind_bet': {
-        // Проверяем минимальную ставку: первая ставка = minBet, следующие = в 2 раза больше
-        const minBlindBet = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
-        
-        if (!amount || amount < minBlindBet) {
-          console.log(`Invalid blind bet amount for ${player.id}:`, amount, `min required: ${minBlindBet}`);
-          return {
-            success: false,
-            error: `Минимальная ставка вслепую: ${minBlindBet}`,
-          };
-        }
+        // Сумма ставки вычисляется на сервере, а не принимается от клиента
+        const blindBetAmount =
+          gameState.lastBlindBet > 0
+            ? gameState.lastBlindBet * 2
+            : gameState.minBet;
 
-        if (player.balance < amount) {
+        if (player.balance < blindBetAmount) {
           console.log(`Insufficient funds for ${player.id}:`, {
             balance: player.balance,
-            amount,
+            amount: blindBetAmount,
           });
           return { success: false, error: 'Недостаточно средств' };
         }
 
         const { updatedPlayer, action: blindAction } =
-          this.playerService.processPlayerBet(player, amount, 'blind_bet');
+          this.playerService.processPlayerBet(
+            player,
+            blindBetAmount,
+            'blind_bet',
+          );
 
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += amount;
-        gameState.lastBlindBet = amount;
+        gameState.pot += blindBetAmount;
+        gameState.lastBlindBet = blindBetAmount;
         gameState.log.push(blindAction);
 
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(

@@ -79,7 +79,6 @@ const useTablePositioning = () => {
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
-  const [showBlindBetSlider, setShowBlindBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
@@ -179,6 +178,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const minRaise = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
   const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
+  const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
   
   // Определяем, показывать ли карты (в конце игры)
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished';
@@ -189,18 +189,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
 
   const handleBlindBetClick = () => {
-    setShowBlindBetSlider(true);
+    actions.blindBet(blindBetAmount);
   };
   
   // Обработчик подтверждения ставки
   const handleBetConfirm = (amount: number) => {
     actions.raise(amount);
     setShowBetSlider(false);
-  };
-
-  const handleBlindBetConfirm = (amount: number) => {
-    actions.blindBet(amount);
-    setShowBlindBetSlider(false);
   };
   
   // Обработчик нажатия на кнопку "Сесть"
@@ -358,7 +353,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
                   blindButtonsDisabled={blindButtonsDisabled}
-                  minBet={gameState.minBet}
+                  minBet={blindBetAmount}
                 />
               ) : (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
@@ -366,29 +361,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Модальное окно для ставки вслепую */}
-      {showBlindBetSlider && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-white text-xl font-bold">Ставка вслепую</h3>
-              <button 
-                onClick={() => setShowBlindBetSlider(false)}
-                className="text-white text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-            <BetSlider 
-              minBet={gameState.lastBlindBet * 2 || gameState.minBet}
-              maxBet={maxRaise}
-              initialBet={gameState.lastBlindBet * 2 || gameState.minBet}
-              onConfirm={handleBlindBetConfirm}
-            />
           </div>
         </div>
       )}
