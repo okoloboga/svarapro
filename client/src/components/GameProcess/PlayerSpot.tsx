@@ -12,47 +12,37 @@ interface PlayerSpotProps {
   scale?: number;
   cardSide?: 'left' | 'right';
   isTurn?: boolean;
+  onTimeout?: () => void;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [progress, setProgress] = useState(100);
 
-  // Показываем уведомление о действии игрока
+  // Set notification type based on last action
   useEffect(() => {
     if (lastAction && !isCurrentUser) {
       let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null = null;
-      
       switch (lastAction) {
-        case 'blind':
-          actionType = 'blind';
-          break;
-        case 'call':
-          actionType = 'paid';
-          break;
-        case 'fold':
-          actionType = 'pass';
-          break;
-        case 'raise':
-          actionType = 'rais';
-          break;
-        default:
-          actionType = null;
+        case 'blind': actionType = 'blind'; break;
+        case 'call': actionType = 'paid'; break;
+        case 'fold': actionType = 'pass'; break;
+        case 'raise': actionType = 'rais'; break;
+        default: actionType = null;
       }
-      
-      if (actionType) {
-        setNotificationType(actionType);
-      }
+      setNotificationType(actionType);
+    } else if (!lastAction || isCurrentUser) {
+        setNotificationType(null);
     }
   }, [lastAction, isCurrentUser]);
 
-  // Таймер для прогресс-бара хода
+  // Turn timer progress bar logic
   useEffect(() => {
     if (isTurn && isCurrentUser) {
-      setProgress(100); // Сброс на 100% в начале хода
+      setProgress(100);
       const startTime = Date.now();
-      const duration = 10000; // 10 секунд
+      const duration = 10000; // 10 seconds
 
       const interval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
@@ -61,18 +51,18 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         if (newProgress <= 0) {
           setProgress(0);
           clearInterval(interval);
+          if (onTimeout) onTimeout();
         } else {
           setProgress(newProgress);
         }
-      }, 100); // Обновляем каждые 100мс для плавности
+      }, 100);
 
-      return () => clearInterval(interval); // Очистка при смене хода или размонтировании
+      return () => clearInterval(interval);
     } else {
-      setProgress(100); // Сбрасываем, если не наш ход
+      setProgress(100);
     }
   }, [isTurn, isCurrentUser, onTimeout]);
 
-  // Определяем статус игрока
   const getPlayerStatus = () => {
     if (hasFolded) return 'Сбросил';
     if (lastAction) {
@@ -88,12 +78,10 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     return '';
   };
 
-  // Базовые размеры
   const baseAvatarSize = 71;
   const baseNameWidth = 70;
   const baseNameHeight = 32;
   
-  // Масштабированные размеры
   const avatarSize = baseAvatarSize * scale;
   const nameWidth = baseNameWidth * scale;
   const nameHeight = baseNameHeight * scale;
@@ -147,27 +135,21 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     </div>
   );
 
-  const hue = progress * 1.2; // 100% = 120 (зеленый), 0% = 0 (красный)
+  const hue = progress * 1.2;
   const progressBarColor = `hsl(${hue}, 100%, 50%)`;
 
   return (
     <div className={spotClasses} style={containerStyle}>
       <div className="relative">
-
-        {/* Main container for positioning */}
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
-
-          {/* Avatar is the central element */}
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
             <ActionNotification action={notificationType} visible={!!notificationType && !hasFolded} />
             <div className="absolute rounded-full top-0 left-0" style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#555456' }}></div>
             <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
             <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
-              {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" />}
+              {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
             </div>
           </div>
-
-          {/* Info block, overlapping the bottom of the avatar */}
           <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
             <div className="flex flex-col items-center">
               <div className="relative" style={{ width: `${nameWidth}px`, height: `${nameHeight}px` }}>
@@ -181,37 +163,14 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                   </div>
                 </div>
               </div>
-              {/* Progress Bar Timer */}
               {isTurn && isCurrentUser && (
-                <div 
-                  className="absolute"
-                  style={{ 
-                    bottom: '-10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '68px', 
-                    height: '5px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                    borderRadius: '3px',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div 
-                    style={{
-                      width: `${progress}%`,
-                      height: '100%',
-                      backgroundColor: progressBarColor,
-                      borderRadius: '3px',
-                      transition: 'width 0.1s linear, background-color 0.1s linear'
-                    }} 
-                  />
+                <div className="absolute" style={{ bottom: '-10px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '5px', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${progress}%`, height: '100%', backgroundColor: progressBarColor, borderRadius: '3px', transition: 'width 0.1s linear, background-color 0.1s linear' }} />
                 </div>
               )}
             </div>
           </div>
         </div>
-        
-        {/* Revealed Cards */}
         {(showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: `${-50 * scale}px`, width: `${cardWidth}px`, height: `${cardHeight}px` }}>
             <div className="relative w-full h-full">
@@ -229,8 +188,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             </div>
           </div>
         )}
-        
-        {/* Card deck */}
         {!hasFolded && !hasLooked && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && TotalBetComponent}
@@ -238,8 +195,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             {cardSide === 'right' && TotalBetComponent}
           </div>
         )}
-
-        {/* Other Statuses */}
         {getPlayerStatus() && (
           <div className="absolute -top-2 right-0 bg-gray-800 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
             {getPlayerStatus()}
@@ -250,8 +205,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             +${tableBalance}
           </div>
         )}
-        
-        {/* Score */}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute z-40 flex items-center justify-center" style={{ left: `${-45 * scale}px`, top: `${-11 * scale}px`, width: `${22 * scale}px`, height: `${22 * scale}px`, backgroundColor: '#FF443A', borderRadius: '50%' }}>
             <span style={{ fontWeight: 500, fontStyle: 'normal', fontSize: `${14 * scale}px`, lineHeight: '100%', letterSpacing: '0%', textAlign: 'center', verticalAlign: 'middle', color: '#FFFFFF' }}>

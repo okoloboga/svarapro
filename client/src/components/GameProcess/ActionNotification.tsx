@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 
 interface ActionNotificationProps {
   action?: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null;
   visible: boolean;
-  onHide: () => void;
 }
 
 // Final configuration for styles and text.
