@@ -33,13 +33,13 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     }
   };
 
-  const hasEnoughBalance = parseFloat(balance) >= parseFloat(stake) * 3;
+  const hasEnoughBalance = parseFloat(balance) >= parseFloat(stake) * 20;
 
   const handleCreate = async () => {
     const bet = parseFloat(stake);
     const userBalance = parseFloat(balance);
 
-    if (userBalance < bet * 3) {
+    if (userBalance < bet * 20) {
       setNotification('insufficientBalance');
       return;
     }
