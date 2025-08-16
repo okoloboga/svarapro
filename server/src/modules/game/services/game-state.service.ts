@@ -32,7 +32,7 @@ export class GameStateService {
   }
 
   // Инициализация новой игры
-  initializeNewGame(gameState: GameState): {
+  initializeNewGame(gameState: GameState, previousWinnerId?: string): {
     updatedGameState: GameState;
     actions: GameAction[];
   } {
