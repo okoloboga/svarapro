@@ -83,6 +83,10 @@ export class RedisService {
     await this.client.publish(`game:${roomId}`, JSON.stringify(gameState));
   }
 
+  async publishBalanceUpdate(telegramId: string, balance: number): Promise<void> {
+    await this.client.publish(`balance:${telegramId}`, JSON.stringify({ balance: balance.toFixed(2) }));
+  }
+
   async subscribeToGameUpdates(
     callback: (roomId: string, gameState: GameState) => void,
   ): Promise<void> {
@@ -94,6 +98,21 @@ export class RedisService {
         const roomId = channel.split(':')[1];
         const gameState = JSON.parse(message) as GameState;
         callback(roomId, gameState);
+      }
+    });
+  }
+
+  async subscribeToBalanceUpdates(
+    callback: (telegramId: string, balance: string) => void,
+  ): Promise<void> {
+    const subClient = this.client.duplicate();
+    await subClient.psubscribe('balance:*');
+
+    subClient.on('pmessage', (pattern, channel, message) => {
+      if (pattern === 'balance:*') {
+        const telegramId = channel.split(':')[1];
+        const data = JSON.parse(message) as { balance: string };
+        callback(telegramId, data.balance);
       }
     });
   }

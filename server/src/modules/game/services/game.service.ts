@@ -60,6 +60,9 @@ export class GameService {
         try {
           await this.usersService.updatePlayerBalance(telegramId, removedPlayer.balance);
           console.log(`Player ${telegramId} left room - balance saved to DB: ${removedPlayer.balance}`);
+          
+          // Отправляем обновление баланса игроку
+          await this.redisService.publishBalanceUpdate(telegramId, removedPlayer.balance);
         } catch (error) {
           console.error(`Failed to save balance to DB for leaving player ${telegramId}:`, error);
         }
@@ -284,6 +287,9 @@ export class GameService {
     try {
       await this.usersService.updatePlayerBalance(player.id, player.balance);
       console.log(`Player ${player.id} folded - balance saved to DB: ${player.balance}`);
+      
+      // Отправляем обновление баланса игроку
+      await this.redisService.publishBalanceUpdate(player.id, player.balance);
     } catch (error) {
       console.error(`Failed to save balance to DB for folded player ${player.id}:`, error);
     }
@@ -487,6 +493,11 @@ export class GameService {
       }));
       await this.usersService.updateMultiplePlayerBalances(playersToUpdate);
       console.log(`Game ${roomId} finished - balances saved to DB for ${playersToUpdate.length} players`);
+      
+      // Отправляем обновление баланса всем игрокам
+      for (const player of gameState.players) {
+        await this.redisService.publishBalanceUpdate(player.id, player.balance);
+      }
     } catch (error) {
       console.error(`Failed to save balances to DB for game ${roomId}:`, error);
     }

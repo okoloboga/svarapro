@@ -31,6 +31,12 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       this.server.to(roomId).emit('game_update', gameState);
     });
 
+    // Подписываемся на обновления баланса
+    void this.redisService.subscribeToBalanceUpdates((telegramId, balance) => {
+      console.log(`Publishing balance_update to user ${telegramId}:`, balance);
+      this.server.to(telegramId).emit('balanceUpdated', { balance });
+    });
+
     // Очищаем мертвых игроков при старте сервера
     void this.redisService.cleanupDeadPlayers();
   }
@@ -89,6 +95,23 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     } else {
       console.error(`Error in join_room for ${telegramId}:`, result.error);
       client.emit('error', { message: result.error });
+    }
+  }
+
+  @SubscribeMessage('subscribe_balance')
+  async handleSubscribeBalance(
+    client: Socket,
+    payload: { telegramId: string },
+  ): Promise<void> {
+    const telegramId = this.getTelegramId(client);
+    console.log('Handling subscribe_balance:', { telegramId });
+
+    if (telegramId) {
+      void client.join(telegramId);
+      console.log(`Client ${telegramId} subscribed to balance updates`);
+    } else {
+      console.error('No telegramId provided for subscribe_balance');
+      client.emit('error', { message: 'Требуется авторизация (telegramId)' });
     }
   }
 

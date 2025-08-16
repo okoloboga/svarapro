@@ -152,6 +152,8 @@ function App() {
               socketInstance.on('connect', () => {
                 console.log('WebSocket connected');
                 socketInstance.emit('join', profile.telegramId);
+                // Подписываемся на обновления баланса для конкретного пользователя
+                socketInstance.emit('subscribe_balance', profile.telegramId);
               });
 
               socketInstance.on('transactionConfirmed', (data: {
@@ -163,6 +165,12 @@ function App() {
                 console.log('Transaction confirmed:', data);
                 setBalance(data.balance);
                 setSuccessMessage(data.message);
+              });
+
+              // Обработчик обновления баланса после игры
+              socketInstance.on('balanceUpdated', (data: { balance: string }) => {
+                console.log('Balance updated after game:', data);
+                setBalance(data.balance);
               });
 
               socketInstance.on('disconnect', () => {
