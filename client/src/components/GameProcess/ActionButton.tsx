@@ -1,4 +1,6 @@
 import lookIcon from '../../assets/game/look.svg';
+import passIcon from '../../assets/game/pass.svg';
+import raiseIcon from '../../assets/game/raise.svg';
 
 interface ActionButtonsProps {
   canFold: boolean;
@@ -36,10 +38,11 @@ export function ActionButtons({
       {canFold && (
         <button
           onClick={onFold}
-          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
           style={{ backgroundColor: '#FF443A' }}
         >
-          <span>Пас</span>
+          <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
+          <span className="-mt-1">Пас</span>
         </button>
       )}
       
@@ -56,10 +59,11 @@ export function ActionButtons({
       {canRaise && (
         <button
           onClick={onRaise}
-          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
           style={{ backgroundColor: '#56BF00' }}
         >
-          <span>Повысить</span>
+          <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
+          <span className="-mt-1">Повысить</span>
         </button>
       )}
       
@@ -72,8 +76,8 @@ export function ActionButtons({
           style={{ backgroundColor: '#0E5C89' }}
           disabled={blindButtonsDisabled}
         >
-          <img src={lookIcon} alt="" className="w-6 h-6" />
-          <span>Открыть</span>
+          <img src={lookIcon} alt="Открыть" style={{ width: '42px', height: '13px' }} />
+          <span className="-mt-1">Открыть</span>
         </button>
       )}
 
@@ -87,7 +91,7 @@ export function ActionButtons({
           disabled={blindButtonsDisabled}
         >
           <span>${minBet}</span>
-          <span>Вслепую</span>
+          <span className="-mt-1">Вслепую</span>
         </button>
       )}
     </div>
