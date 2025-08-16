@@ -54,6 +54,7 @@ export interface GameState {
   currentPlayerIndex: number; // индекс текущего игрока
   dealerIndex: number; // индекс дилера
   lastRaiseIndex?: number; // индекс последнего повысившего ставку
+  lastBlindBettorIndex?: number; // индекс последнего, кто ставил вслепую
   minBet: number; // минимальная ставка
   currentBet: number; // текущая ставка в раунде
   lastBlindBet: number; // последняя ставка вслепую

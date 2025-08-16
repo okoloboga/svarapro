@@ -44,19 +44,26 @@ export class GameStateService {
     updatedGameState.round += 1;
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
+    updatedGameState.lastBlindBettorIndex = undefined;
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
 
-    // Выбираем дилера случайным образом или переходим к следующему
-    if (updatedGameState.round === 1) {
-      updatedGameState.dealerIndex =
-        Math.floor(Math.random() * updatedGameState.players.length) || 0;
-    } else {
-      updatedGameState.dealerIndex = this.playerService.findNextActivePlayer(
-        updatedGameState.players,
-        updatedGameState.dealerIndex,
-      );
+    // Выбираем дилера на основе правил
+    let newDealerIndex = -1;
+
+    // При Сваре дилер не меняется
+    if (updatedGameState.isSvara) {
+      newDealerIndex = updatedGameState.dealerIndex;
+    } else if (previousWinnerId) {
+      newDealerIndex = updatedGameState.players.findIndex(p => p.id === previousWinnerId);
     }
+
+    // Если победитель не найден (или ушел), или это первый раунд, или нет победителя - выбираем случайно
+    if (newDealerIndex === -1) {
+      newDealerIndex = Math.floor(Math.random() * updatedGameState.players.length) || 0;
+    }
+
+    updatedGameState.dealerIndex = newDealerIndex;
 
     // Сбрасываем состояние игроков
     for (let i = 0; i < updatedGameState.players.length; i++) {
@@ -107,9 +114,8 @@ export class GameStateService {
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
 
-    // Обновляем дилера (первый из победителей)
-    updatedGameState.dealerIndex =
-      updatedGameState.players.findIndex((p) => p.id === winnerIds[0]) || 0;
+    // Дилер не меняется при сваре, сохраняется предыдущий
+    updatedGameState.isSvara = true;
 
     // Сбрасываем состояние игроков
     for (let i = 0; i < updatedGameState.players.length; i++) {

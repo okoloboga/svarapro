@@ -127,11 +127,22 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     </div>
   );
 
+  const DealerIcon = player.isDealer && (
+    <div 
+      className="w-[15px] h-[15px] bg-black rounded-full flex items-center justify-center text-white font-bold text-[10px]"
+    >
+      D
+    </div>
+  );
+
   const CardDeckComponent = (
-    <div className="relative" style={{ width: '42px', height: '42px' }}>
-      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 3, top: '0', left: '0' }} />
-      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }} />
-      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }} />
+    <div className="flex flex-col items-center space-y-1">
+      <div className="relative" style={{ width: '42px', height: '42px' }}>
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 3, top: '0', left: '0' }} />
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }} />
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }} />
+      </div>
+      {DealerIcon}
     </div>
   );
 

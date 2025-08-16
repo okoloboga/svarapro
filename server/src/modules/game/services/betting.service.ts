@@ -63,10 +63,13 @@ export class BettingService {
       return true;
     }
 
-    // Если не было повышения ставки, используем дилера как точку отсчета
+    // Определяем "якорного" игрока для завершения круга торгов.
+    // Приоритет: последний повысивший -> последний ставивший вслепую -> дилер.
     const startIndex =
       gameState.lastRaiseIndex !== undefined
         ? gameState.lastRaiseIndex
+        : gameState.lastBlindBettorIndex !== undefined
+        ? gameState.lastBlindBettorIndex
         : gameState.dealerIndex;
 
     // Проверяем, что все активные игроки сделали ставки

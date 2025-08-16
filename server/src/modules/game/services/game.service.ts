@@ -147,26 +147,43 @@ export class GameService {
 
   async startGame(roomId: string): Promise<void> {
     const room = await this.redisService.getRoom(roomId);
-    if (!room || (room.status !== 'waiting' && room.status !== 'finished') || room.players.length < 2) {
+    if (!room || (room.status !== 'waiting' && room.status !== 'finished')) {
       return;
     }
 
     let gameState = await this.redisService.getGameState(roomId);
-    // Create a new game state if one doesn't exist or if the previous round was finished.
-    if (!gameState || room.status === 'finished') {
-      gameState = this.gameStateService.createInitialGameState(roomId, room.minBet);
+
+    // Если игра перезапускается, отфильтровываем игроков, которые не могут позволить себе играть
+    if (room.status === 'finished' && gameState) {
+      const minBalance = room.minBet * 3;
+      gameState.players = gameState.players.filter(p => p.balance >= minBalance);
+    }
+
+    // Если после фильтрации (или из состояния ожидания) у нас недостаточно игроков, возвращаемся в режим ожидания
+    if (!gameState || gameState.players.length < 2) {
+      console.log(`Not enough players to start/continue game in room ${roomId}. Going to waiting state.`);
+      room.status = 'waiting';
+      await this.redisService.setRoom(roomId, room);
+      if (gameState) {
+          await this.redisService.setGameState(roomId, gameState);
+          await this.redisService.publishGameUpdate(roomId, gameState);
+      }
+      await this.redisService.publishRoomUpdate(roomId, room);
+      return;
     }
 
     room.status = 'playing';
     await this.redisService.setRoom(roomId, room);
     await this.redisService.publishRoomUpdate(roomId, room);
 
-    const { updatedGameState, actions } = this.gameStateService.initializeNewGame(gameState);
-    gameState = updatedGameState;
-    gameState.log.push(...actions);
+    // Теперь инициализируем новую игру. initializeNewGame будет использовать существующий (и отфильтрованный) массив игроков.
+    const { updatedGameState, actions } = this.gameStateService.initializeNewGame(gameState, room.winner);
+    
+    const finalGameState = updatedGameState;
+    finalGameState.log.push(...actions);
 
-    await this.redisService.setGameState(roomId, gameState);
-    await this.redisService.publishGameUpdate(roomId, gameState);
+    await this.redisService.setGameState(roomId, finalGameState);
+    await this.redisService.publishGameUpdate(roomId, finalGameState);
 
     await this.startAntePhase(roomId);
   }
@@ -290,6 +307,7 @@ export class GameService {
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot += blindBetAmount;
         gameState.lastBlindBet = blindBetAmount;
+        gameState.lastBlindBettorIndex = playerIndex; // Set the index of the blind bettor
         gameState.log.push(blindAction);
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(gameState.players, gameState.currentPlayerIndex);
         break;
