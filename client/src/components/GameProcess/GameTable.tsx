@@ -100,7 +100,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
       </div>
       
       <div style={potContainerStyle}>
-        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>Банк: ${gameState.pot}</span>
+        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>Банк: ${Number(gameState.pot).toFixed(2)}</span>
       </div>
     </div>
   );

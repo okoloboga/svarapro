@@ -14,10 +14,11 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d*\.?\d*$/.test(value)) {
+    // Разрешаем только цифры, точку и максимум 2 знака после запятой
+    if (/^\d*\.?\d{0,2}$/.test(value)) {
       setInputValue(value);
       const numValue = parseFloat(value);
-      setIsValid(!isNaN(numValue) && numValue > 0);
+      setIsValid(!isNaN(numValue) && numValue >= 0.01);
     }
   };
 

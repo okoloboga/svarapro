@@ -123,7 +123,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
       }}
     >
-      {player.totalBet}
+      ${Number(player.totalBet).toFixed(2)}
     </div>
   );
 
@@ -170,7 +170,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                     {username}
                   </div>
                   <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
-                    ${balance}
+                    ${Number(balance).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -213,7 +213,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         )}
         {!isCurrentUser && tableBalance > 0 && !hasFolded && (
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-            ${tableBalance}
+            ${Number(tableBalance).toFixed(2)}
           </div>
         )}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (

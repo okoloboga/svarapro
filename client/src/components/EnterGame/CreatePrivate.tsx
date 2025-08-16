@@ -26,10 +26,11 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
 
   const handleStakeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d*\.?\d*$/.test(value)) {
+    // Разрешаем только цифры, точку и максимум 2 знака после запятой
+    if (/^\d*\.?\d{0,2}$/.test(value)) {
       setStake(value);
       const numValue = parseFloat(value);
-      setIsStakeValid(!isNaN(numValue) && numValue > 0);
+      setIsStakeValid(!isNaN(numValue) && numValue >= 0.01);
     }
   };
 
