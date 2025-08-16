@@ -76,7 +76,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
 
   // Динамические размеры карт на основе размера аватарки
   // Высота карты = 1.5 * высота аватарки
-  const cardHeight = Math.round(avatarSize * 1.5);
+  const cardHeight = Math.round(avatarSize * 1.2);
   // Ширина карты = высота * (65/90) для сохранения пропорций PNG
   const cardWidth = Math.round(cardHeight * (65/90));
   // Шаг между картами = ширина карты * 0.46 (30/65)
