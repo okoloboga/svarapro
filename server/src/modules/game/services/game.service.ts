@@ -151,14 +151,15 @@ export class GameService {
       return;
     }
 
-    room.status = 'playing';
-    await this.redisService.setRoom(roomId, room);
-    await this.redisService.publishRoomUpdate(roomId, room);
-
     let gameState = await this.redisService.getGameState(roomId);
+    // Create a new game state if one doesn't exist or if the previous round was finished.
     if (!gameState || room.status === 'finished') {
       gameState = this.gameStateService.createInitialGameState(roomId, room.minBet);
     }
+
+    room.status = 'playing';
+    await this.redisService.setRoom(roomId, room);
+    await this.redisService.publishRoomUpdate(roomId, room);
 
     const { updatedGameState, actions } = this.gameStateService.initializeNewGame(gameState);
     gameState = updatedGameState;
