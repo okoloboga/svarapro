@@ -23,14 +23,14 @@ export class GameService {
     private readonly gameStateService: GameStateService,
     private readonly usersService: UsersService,
   ) {
-    // Запускаем периодическую очистку мертвых игроков каждые 5 минут
-    setInterval(async () => {
-      try {
-        await this.redisService.cleanupDeadPlayers();
-      } catch (error) {
-        console.error('Error during periodic cleanup:', error);
-      }
-    }, 5 * 60 * 1000); // 5 минут
+    setInterval(
+      () => {
+        this.redisService.cleanupDeadPlayers().catch((error) => {
+          console.error('Error during periodic cleanup:', error);
+        });
+      },
+      5 * 60 * 1000,
+    ); // 5 минут
   }
 
   async getRooms(): Promise<Room[]> {
@@ -242,14 +242,21 @@ export class GameService {
       gameState,
       gameState.minBet,
     );
-    
+
     // Используем обновленное состояние игры
     let currentGameState = { ...updatedGameState };
     currentGameState.log.push(...actions);
 
     const activePlayers = currentGameState.players.filter((p) => p.isActive);
-    console.log(`Active players after ante: ${activePlayers.length}`, activePlayers.map(p => ({ id: p.id, username: p.username, isActive: p.isActive })));
-    
+    console.log(
+      `Active players after ante: ${activePlayers.length}`,
+      activePlayers.map((p) => ({
+        id: p.id,
+        username: p.username,
+        isActive: p.isActive,
+      })),
+    );
+
     if (activePlayers.length < 2) {
       if (activePlayers.length === 1) {
         console.log(`Ending game with single winner for room ${roomId}`);
@@ -273,10 +280,11 @@ export class GameService {
     currentGameState = phaseResult.updatedGameState;
     currentGameState.log.push(...phaseResult.actions);
 
-    currentGameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
-      currentGameState.players,
-      currentGameState.dealerIndex,
-    );
+    currentGameState.currentPlayerIndex =
+      this.playerService.findNextActivePlayer(
+        currentGameState.players,
+        currentGameState.dealerIndex,
+      );
 
     await this.redisService.setGameState(roomId, currentGameState);
     await this.redisService.publishGameUpdate(roomId, currentGameState);
@@ -366,8 +374,6 @@ export class GameService {
     }
   }
 
-
-
   private async processBlindBettingAction(
     roomId: string,
     gameState: GameState,
@@ -418,8 +424,10 @@ export class GameService {
         break;
       }
       case 'look': {
-        console.log(`Player ${player.username} looked at cards, transitioning to betting phase`);
-        
+        console.log(
+          `Player ${player.username} looked at cards, transitioning to betting phase`,
+        );
+
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           { hasLooked: true, lastAction: 'look' },
@@ -438,22 +446,31 @@ export class GameService {
           gameState,
           'betting',
         );
-        
+
         // Используем обновленное состояние
         gameState = phaseResult.updatedGameState;
         gameState.log.push(...phaseResult.actions);
-        
+
         console.log(`Game status after look action: ${gameState.status}`);
 
         // Все игроки автоматически смотрят карты при переходе в betting
         for (let i = 0; i < gameState.players.length; i++) {
-          if (gameState.players[i].isActive && !gameState.players[i].hasFolded) {
+          if (
+            gameState.players[i].isActive &&
+            !gameState.players[i].hasFolded
+          ) {
             gameState.players[i] = this.playerService.updatePlayerStatus(
               gameState.players[i],
-              { hasLooked: true }
+              { hasLooked: true },
             );
           }
         }
+
+        // Теперь, когда все посмотрели карты, вычисляем их очки
+        const scoreResult =
+          this.gameStateService.calculateScoresForPlayers(gameState);
+        gameState = scoreResult.updatedGameState;
+        gameState.log.push(...scoreResult.actions);
 
         if (gameState.lastBlindBet > 0) {
           const requiredBet = gameState.lastBlindBet * 2;

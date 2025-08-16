@@ -132,10 +132,10 @@ export class RedisService {
 
   async cleanupDeadPlayers(): Promise<void> {
     console.log('Starting cleanup of dead players...');
-    
+
     // Получаем все активные комнаты
     const activeRooms = await this.getActiveRooms();
-    
+
     for (const roomId of activeRooms) {
       const room = await this.getRoom(roomId);
       if (!room) {
@@ -147,22 +147,26 @@ export class RedisService {
       const gameState = await this.getGameState(roomId);
       if (gameState) {
         // Проверяем, есть ли игроки в gameState, но нет в room.players
-        const gamePlayerIds = gameState.players.map(p => p.id);
+        const gamePlayerIds = gameState.players.map((p) => p.id);
         const roomPlayerIds = room.players;
-        
+
         // Находим "мертвых" игроков (есть в gameState, но нет в room.players)
-        const deadPlayers = gamePlayerIds.filter(id => !roomPlayerIds.includes(id));
-        
+        const deadPlayers = gamePlayerIds.filter(
+          (id) => !roomPlayerIds.includes(id),
+        );
+
         if (deadPlayers.length > 0) {
           console.log(`Found dead players in room ${roomId}:`, deadPlayers);
-          
+
           // Удаляем мертвых игроков из gameState
-          gameState.players = gameState.players.filter(p => !deadPlayers.includes(p.id));
-          
+          gameState.players = gameState.players.filter(
+            (p) => !deadPlayers.includes(p.id),
+          );
+
           // Сохраняем обновленное состояние
           await this.setGameState(roomId, gameState);
           await this.publishGameUpdate(roomId, gameState);
-          
+
           // Если комната пуста, удаляем её
           if (gameState.players.length === 0) {
             console.log(`Room ${roomId} is empty after cleanup, removing`);
@@ -172,7 +176,7 @@ export class RedisService {
         }
       }
     }
-    
+
     console.log('Cleanup of dead players completed');
   }
 }

@@ -20,7 +20,8 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
     try {
       await apiService.joinRoom(roomId);
       setCurrentPage('gameRoom', { roomId, autoSit: true });
-    } catch (error: any) {
+    } catch (e) {
+      const error = e as { response?: { data?: { message?: string } } };
       console.error('Failed to join room:', error);
       
       // Если игра уже началась, автоматически переключаемся в режим watch

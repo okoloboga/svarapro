@@ -16,6 +16,9 @@ interface ActionButtonsProps {
   onLook: () => void;
   onBlindBet: () => void;
   blindButtonsDisabled?: boolean;
+  isCallDisabled?: boolean;
+  isRaiseDisabled?: boolean;
+  isBlindBetDisabled?: boolean;
 }
 
 export function ActionButtons({
@@ -32,6 +35,9 @@ export function ActionButtons({
   onLook,
   onBlindBet,
   blindButtonsDisabled,
+  isCallDisabled,
+  isRaiseDisabled,
+  isBlindBetDisabled,
 }: ActionButtonsProps) {
   return (
     <div className="flex items-center justify-center space-x-2 p-2">
@@ -49,8 +55,11 @@ export function ActionButtons({
       {canCall && (
         <button
           onClick={onCall}
-          className="flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          className={`flex items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
           style={{ backgroundColor: '#0E5C89' }}
+          disabled={isCallDisabled}
         >
           <span>Заплатить {callAmount > 0 ? `${callAmount}` : ''}</span>
         </button>
@@ -59,8 +68,11 @@ export function ActionButtons({
       {canRaise && (
         <button
           onClick={onRaise}
-          className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
           style={{ backgroundColor: '#56BF00' }}
+          disabled={isRaiseDisabled}
         >
           <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
           <span className="-mt-1">Повысить</span>
@@ -85,10 +97,10 @@ export function ActionButtons({
         <button
           onClick={onBlindBet}
           className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            blindButtonsDisabled || isBlindBetDisabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ backgroundColor: '#0E5C89' }}
-          disabled={blindButtonsDisabled}
+          disabled={blindButtonsDisabled || isBlindBetDisabled}
         >
           <span>${minBet}</span>
           <span className="-mt-1">Вслепую</span>

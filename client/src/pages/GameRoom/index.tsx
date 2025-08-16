@@ -151,34 +151,32 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Определяем, чей сейчас ход
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
   
-  // Определяем возможные действия
-  const canFold = isCurrentUserTurn && gameState.status === 'betting';
-  
-  const canCall = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.currentBet ?? 0) < gameState.currentBet;
-  const canRaise = isCurrentUserTurn && gameState.status === 'betting' && (currentPlayer?.balance || 0) > 0;
-  
-  // Отладочная информация для кнопок
-  console.log('Button debug:', {
-    isCurrentUserTurn,
-    gameStateStatus: gameState.status,
-    currentPlayerBet: currentPlayer?.currentBet,
-    gameStateCurrentBet: gameState.currentBet,
-    canCall,
-    canFold,
-    canRaise
-  });
-  const canLook = isCurrentUserTurn && gameState.status === 'blind_betting';
-  const canBlindBet = isCurrentUserTurn && gameState.status === 'blind_betting';
-  const blindButtonsDisabled = gameState.status !== 'blind_betting';
-  
+  // --- Логика отображения и состояния кнопок ---
 
-  
   // Вычисляем суммы для ставок
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
-  const minRaise = gameState.currentBet + gameState.minBet;
+  const minRaiseAmount = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
-  const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+
+  // Определяем, может ли игрок в принципе выполнять действия в этой фазе
+  const canPerformBettingActions = isCurrentUserTurn && gameState.status === 'betting';
+  const canPerformBlindActions = isCurrentUserTurn && gameState.status === 'blind_betting';
+
+  // Определяем видимость кнопок
+  const canFold = canPerformBettingActions;
+  const canCall = canPerformBettingActions;
+  const canRaise = canPerformBettingActions;
+  const canLook = canPerformBlindActions;
+  const canBlindBet = canPerformBlindActions;
+
+  // Определяем, заблокирована ли кнопка
+  const isCallDisabled = (currentPlayer?.currentBet ?? 0) >= gameState.currentBet;
+  const isRaiseDisabled = (currentPlayer?.balance || 0) < minRaiseAmount;
+  const isBlindBetDisabled = (currentPlayer?.balance || 0) < blindBetAmount;
+  
+  // Общая блокировка для кнопок "вслепую" и "открыть"
+  const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
   // Определяем, показывать ли карты (в конце игры)
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished';
@@ -200,6 +198,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   // Обработчик нажатия на кнопку "Сесть"
   const handleSitDown = (position: number) => {
+    const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 3;
     console.log('handleSitDown called:', { 
       position, 
       balance: balance, 
@@ -296,6 +295,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 const positionStyle = getPositionStyle(screenPosition);
                 const positionClasses = getPositionClasses(screenPosition);
 
+                const cardSide = (screenPosition === 2 || screenPosition === 3) ? 'left' : 'right';
+                const isTurn = gameState.players[gameState.currentPlayerIndex]?.id === player.id;
+
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>
                     {player ? (
@@ -306,9 +308,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             username: userData.username || userData.first_name || player.username,
                             avatar: userData.photo_url || player.avatar,
                           };
-                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} gameState={gameState} />;
+                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} cardSide={cardSide} isTurn={isTurn} onTimeout={actions.fold} />;
                         }
-                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} gameState={gameState} />;
+                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} cardSide={cardSide} isTurn={isTurn} />;
                       })()
                     ) : (
                       <SeatButton 
@@ -335,7 +337,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             
             {/* Кнопки действий */}
             <div>
-              {gameState.status === 'ante' ? (
+              {gameState.status === 'waiting' ? (
+                <div className="p-4 flex items-center justify-center h-full">
+                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">
+                    Ждем игроков
+                  </p>
+                </div>
+              ) : gameState.status === 'ante' ? (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
                   <p className="text-xl">Внесение начальных ставок...</p>
                 </div>
@@ -353,6 +361,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
                   blindButtonsDisabled={blindButtonsDisabled}
+                  isCallDisabled={isCallDisabled}
+                  isRaiseDisabled={isRaiseDisabled}
+                  isBlindBetDisabled={isBlindBetDisabled}
                   minBet={blindBetAmount}
                 />
               ) : (
@@ -368,27 +379,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       )}
       
       {/* Модальное окно для повышения ставки */}
-      {showBetSlider && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-white text-xl font-bold">Повысить ставку</h3>
-              <button 
-                onClick={() => setShowBetSlider(false)}
-                className="text-white text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-            <BetSlider 
-              minBet={minRaise}
-              maxBet={maxRaise}
-              initialBet={minRaise}
-              onConfirm={handleBetConfirm}
-            />
-          </div>
-        </div>
-      )}
+      <BetSlider 
+        isOpen={showBetSlider}
+        onClose={() => setShowBetSlider(false)}
+        minBet={minRaiseAmount}
+        maxBet={maxRaise}
+        initialBet={minRaiseAmount}
+        onConfirm={handleBetConfirm}
+      />
       
       {/* Модальное окно меню */}
       <GameMenu 

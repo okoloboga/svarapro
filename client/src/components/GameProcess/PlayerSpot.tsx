@@ -10,17 +10,18 @@ interface PlayerSpotProps {
   isCurrentUser: boolean;
   showCards: boolean;
   scale?: number;
-  gameState?: any;
+  cardSide?: 'left' | 'right';
+  isTurn?: boolean;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameState }: PlayerSpotProps) {
-  const { username, avatar, balance, tableBalance, cards, isActive, hasFolded, hasLooked, lastAction, score } = player;
-  const [showNotification, setShowNotification] = useState(false);
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false }: PlayerSpotProps) {
+  const { username, avatar, balance, tableBalance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
-  
-  // Показываем уведомление при изменении действия игрока
+  const [progress, setProgress] = useState(100);
+
+  // Показываем уведомление о действии игрока
   useEffect(() => {
-    if (lastAction) {
+    if (lastAction && !isCurrentUser) {
       let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null = null;
       
       switch (lastAction) {
@@ -42,14 +43,37 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
       
       if (actionType) {
         setNotificationType(actionType);
-        setShowNotification(true);
       }
     }
-  }, [lastAction]);
+  }, [lastAction, isCurrentUser]);
+
+  // Таймер для прогресс-бара хода
+  useEffect(() => {
+    if (isTurn && isCurrentUser) {
+      setProgress(100); // Сброс на 100% в начале хода
+      const startTime = Date.now();
+      const duration = 10000; // 10 секунд
+
+      const interval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const newProgress = 100 - (elapsedTime / duration) * 100;
+        
+        if (newProgress <= 0) {
+          setProgress(0);
+          clearInterval(interval);
+        } else {
+          setProgress(newProgress);
+        }
+      }, 100); // Обновляем каждые 100мс для плавности
+
+      return () => clearInterval(interval); // Очистка при смене хода или размонтировании
+    } else {
+      setProgress(100); // Сбрасываем, если не наш ход
+    }
+  }, [isTurn, isCurrentUser, onTimeout]);
 
   // Определяем статус игрока
   const getPlayerStatus = () => {
-    if (!isActive) return 'Неактивен';
     if (hasFolded) return 'Сбросил';
     if (lastAction) {
       switch (lastAction) {
@@ -74,15 +98,10 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
   const nameWidth = baseNameWidth * scale;
   const nameHeight = baseNameHeight * scale;
 
-  // Динамические размеры карт на основе размера аватарки
-  // Высота карты = 1.5 * высота аватарки
   const cardHeight = Math.round(avatarSize * 1.2);
-  // Ширина карты = высота * (65/90) для сохранения пропорций PNG
   const cardWidth = Math.round(cardHeight * (65/90));
-  // Шаг между картами = ширина карты * 0.46 (30/65)
   const step = Math.round(cardWidth * 0.46);
 
-  // Определяем стили для рамки игрока
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
     ${hasFolded ? 'opacity-60' : ''}
@@ -93,124 +112,117 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
     transformOrigin: 'center center',
   };
 
+  const cardDeckStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '40%',
+    transform: 'translateY(-50%)',
+    zIndex: 30,
+  };
+
+  if (cardSide === 'left') {
+    cardDeckStyle.right = '50px';
+  } else {
+    cardDeckStyle.left = '50px';
+  }
+
+  const TotalBetComponent = !isCurrentUser && player.totalBet > 0 && (
+    <div 
+      className="text-white font-semibold text-xs leading-4 flex items-center justify-center"
+      style={{
+        width: '34px',
+        height: '17px',
+        borderRadius: '8px',
+        backgroundColor: 'rgba(35, 34, 40, 0.61)',
+      }}
+    >
+      {player.totalBet}
+    </div>
+  );
+
+  const CardDeckComponent = (
+    <div className="relative" style={{ width: '42px', height: '42px' }}>
+      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 3, top: '0', left: '0' }} />
+      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }} />
+      <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }} />
+    </div>
+  );
+
+  const hue = progress * 1.2; // 100% = 120 (зеленый), 0% = 0 (красный)
+  const progressBarColor = `hsl(${hue}, 100%, 50%)`;
+
   return (
     <div className={spotClasses} style={containerStyle}>
       <div className="relative">
-        {/* Уведомление о действии */}
-        <ActionNotification
-          action={notificationType}
-          visible={showNotification}
-          onHide={() => setShowNotification(false)}
-        />
 
         {/* Main container for positioning */}
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
 
           {/* Avatar is the central element */}
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
-            {/* Bottom Layer (Gray) */}
-            <div
-              className="absolute rounded-full top-0 left-0"
-              style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#555456' }}
-            ></div>
-            {/* Middle Layer (White) */}
-            <div
-              className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-              style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}
-            ></div>
-            {/* Top Layer (Avatar) */}
-            <div
-              className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-              style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}
-            >
-              {avatar ? (
-                <img src={avatar} alt={username} className="w-full h-full object-cover" />
-              ) : (
-                <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" />
-              )}
+            <ActionNotification action={notificationType} visible={!!notificationType && !hasFolded} />
+            <div className="absolute rounded-full top-0 left-0" style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#555456' }}></div>
+            <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
+            <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
+              {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" />}
             </div>
           </div>
 
           {/* Info block, overlapping the bottom of the avatar */}
           <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
             <div className="flex flex-col items-center">
-              {/* Name */}
               <div className="relative" style={{ width: `${nameWidth}px`, height: `${nameHeight}px` }}>
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    borderRadius: `${8 * scale}px`,
-                    background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)'
-                  }}
-                ></div>
-                <div
-                  className="absolute flex flex-col items-center justify-center"
-                  style={{
-                    top: `${1 * scale}px`, left: `${1 * scale}px`, right: `${1 * scale}px`, bottom: `${1 * scale}px`,
-                    borderRadius: `${7 * scale}px`,
-                    background: 'linear-gradient(to top, #000000, #36333B)'
-                  }}
-                >
-                  <div
-                    className="font-bold"
-                    style={{
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      fontSize: `${10 * scale}px`,
-                      borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)`
-                    }}
-                  >
+                <div className="absolute inset-0" style={{ borderRadius: `${8 * scale}px`, background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)' }}></div>
+                <div className="absolute flex flex-col items-center justify-center" style={{ top: `${1 * scale}px`, left: `${1 * scale}px`, right: `${1 * scale}px`, bottom: `${1 * scale}px`, borderRadius: `${7 * scale}px`, background: 'linear-gradient(to top, #000000, #36333B)' }}>
+                  <div className="font-bold" style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: `${10 * scale}px`, borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)` }}>
                     {username}
                   </div>
-                  <div
-                    className="font-bold"
-                    style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}
-                  >
+                  <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
                     ${balance}
                   </div>
                 </div>
               </div>
-
+              {/* Progress Bar Timer */}
+              {isTurn && isCurrentUser && (
+                <div 
+                  className="absolute"
+                  style={{ 
+                    bottom: '-10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '68px', 
+                    height: '5px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '3px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div 
+                    style={{
+                      width: `${progress}%`,
+                      height: '100%',
+                      backgroundColor: progressBarColor,
+                      borderRadius: '3px',
+                      transition: 'width 0.1s linear, background-color 0.1s linear'
+                    }} 
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
         
-        {/* Revealed Cards - показываем только если игрок посмотрел карты или игра закончилась */}
+        {/* Revealed Cards */}
         {(showCards || (isCurrentUser && hasLooked)) && (
-          <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ 
-            top: `${-50 * scale}px`, 
-            width: `${cardWidth}px`, 
-            height: `${cardHeight}px`
-          }}>
+          <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: `${-50 * scale}px`, width: `${cardWidth}px`, height: `${cardHeight}px` }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
                 const centerOffset = (cards.length - 1) * step / 2;
                 const left = index * step - centerOffset;
-                
-                // Углы поворота: левая карта -12°, центральная 0°, правая +12°
                 const rotation = index === 0 ? -12 : index === 1 ? 0 : 12;
-                
-                // Боковые карты ниже центральной на 4px
                 const topOffset = index === 1 ? 0 : 4;
-                
                 return (
-                  <div
-                    key={index}
-                    className="absolute"
-                    style={{
-                      left: `${left}px`,
-                      top: `${topOffset}px`,
-                      width: `${cardWidth}px`,
-                      height: `${cardHeight}px`,
-                      transform: `rotate(${rotation}deg)`,
-                      zIndex: index + 1
-                    }}
-                  >
-                    <CardComponent
-                      card={card}
-                      hidden={false}
-                      customWidth={cardWidth}
-                      customHeight={cardHeight}
-                    />
+                  <div key={index} className="absolute" style={{ left: `${left}px`, top: `${topOffset}px`, width: `${cardWidth}px`, height: `${cardHeight}px`, transform: `rotate(${rotation}deg)`, zIndex: index + 1 }}>
+                    <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
                   </div>
                 );
               })}
@@ -218,69 +230,31 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, gameSt
           </div>
         )}
         
-        {/* Card deck - показываем только в blind фазе (когда игрок не посмотрел карты) */}
+        {/* Card deck */}
         {!hasFolded && !hasLooked && (
-          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-30" style={{ top: '40%', left: '50px' }}>
-            <div className="relative" style={{ width: '42px', height: '42px' }}>
-              <img
-                src={cardBack}
-                alt="card back"
-                className="absolute rounded-sm"
-                style={{ width: '30px', height: '42px', zIndex: 3, top: '0', left: '0' }}
-              />
-              <img
-                src={cardBack}
-                alt="card back"
-                className="absolute rounded-sm"
-                style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }}
-              />
-              <img
-                src={cardBack}
-                alt="card back"
-                className="absolute rounded-sm"
-                style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }}
-              />
-            </div>
+          <div style={cardDeckStyle} className="flex items-center space-x-2">
+            {cardSide === 'left' && TotalBetComponent}
+            {CardDeckComponent}
+            {cardSide === 'right' && TotalBetComponent}
           </div>
         )}
 
-        {/* Other absolutely positioned elements */}
+        {/* Other Statuses */}
         {getPlayerStatus() && (
           <div className="absolute -top-2 right-0 bg-gray-800 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
             {getPlayerStatus()}
           </div>
         )}
-        {tableBalance > 0 && gameState?.status !== 'ante' && (
-          <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
-            ${tableBalance}
+        {!isCurrentUser && tableBalance > 0 && !hasFolded && (
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
+            +${tableBalance}
           </div>
         )}
         
-        {/* Score display - показываем только когда карты открыты и есть очки */}
+        {/* Score */}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
-          <div 
-            className="absolute z-40 flex items-center justify-center"
-            style={{ 
-              left: `${-45 * scale}px`,
-              top: `${-11 * scale}px`,
-              width: `${22 * scale}px`,
-              height: `${22 * scale}px`,
-              backgroundColor: '#FF443A',
-              borderRadius: '50%'
-            }}
-          >
-            <span
-              style={{
-                fontWeight: 500,
-                fontStyle: 'normal',
-                fontSize: `${14 * scale}px`,
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                color: '#FFFFFF'
-              }}
-            >
+          <div className="absolute z-40 flex items-center justify-center" style={{ left: `${-45 * scale}px`, top: `${-11 * scale}px`, width: `${22 * scale}px`, height: `${22 * scale}px`, backgroundColor: '#FF443A', borderRadius: '50%' }}>
+            <span style={{ fontWeight: 500, fontStyle: 'normal', fontSize: `${14 * scale}px`, lineHeight: '100%', letterSpacing: '0%', textAlign: 'center', verticalAlign: 'middle', color: '#FFFFFF' }}>
               {score}
             </span>
           </div>
