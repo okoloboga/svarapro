@@ -124,8 +124,9 @@ export class BettingService {
       }
     }
 
-    // Устанавливаем комиссию
+    // Устанавливаем комиссию и обнуляем банк
     updatedGameState.rake = rake;
+    updatedGameState.pot = 0;
 
     // Добавляем действие о комиссии в лог
     if (rake > 0) {

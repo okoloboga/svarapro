@@ -201,8 +201,8 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         )}
         {!isCurrentUser && tableBalance > 0 && !hasFolded && (
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-            +${tableBalance}
+          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
+            ${tableBalance}
           </div>
         )}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
