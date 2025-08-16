@@ -155,7 +155,7 @@ export class GameService {
 
     // Если игра перезапускается, отфильтровываем игроков, которые не могут позволить себе играть
     if (room.status === 'finished' && gameState) {
-      const minBalance = room.minBet * 20;
+      const minBalance = room.minBet * 10;
       gameState.players = gameState.players.filter(p => p.balance >= minBalance);
     }
 

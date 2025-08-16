@@ -10,7 +10,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
   const [isJoining, setIsJoining] = useState(false);
 
   const handleJoin = async () => {
-    const hasEnoughBalance = parseFloat(balance) >= stake * 20;
+    const hasEnoughBalance = parseFloat(balance) >= stake * 10;
     if (!hasEnoughBalance) {
       setNotification('insufficientBalance');
       return;

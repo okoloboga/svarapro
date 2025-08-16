@@ -168,7 +168,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
   
   const handleSitDown = (position: number) => {
-    const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 20;
+    const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 10;
     if (!hasEnoughBalance) {
       setNotification('insufficientBalance');
       return;

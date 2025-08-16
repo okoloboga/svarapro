@@ -21,13 +21,13 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
     }
   };
 
-  const hasEnoughBalance = parseFloat(balance) >= parseFloat(inputValue) * 20;
+  const hasEnoughBalance = parseFloat(balance) >= parseFloat(inputValue) * 10;
 
   const handleCreate = async () => {
     const stake = parseFloat(inputValue);
     const userBalance = parseFloat(balance);
 
-    if (userBalance < stake * 20) {
+    if (userBalance < stake * 10) {
       setNotification('insufficientBalance');
       return;
     }
