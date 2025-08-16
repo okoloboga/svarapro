@@ -321,6 +321,13 @@ export class GameService {
         gameState = phaseResult.updatedGameState;
         gameState.log.push(...phaseResult.actions);
 
+        // Устанавливаем новую текущую ставку, которую должен сделать игрок
+        const newCurrentBet = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+        gameState.currentBet = newCurrentBet;
+        // Так как это первая ставка в раунде, она же является и последним повышением
+        gameState.lastRaiseIndex = playerIndex;
+
+        // Все игроки автоматически смотрят карты при переходе в betting
         for (let i = 0; i < gameState.players.length; i++) {
           if (gameState.players[i].isActive && !gameState.players[i].hasFolded) {
             gameState.players[i] = this.playerService.updatePlayerStatus(gameState.players[i], { hasLooked: true });
@@ -331,12 +338,11 @@ export class GameService {
         gameState = scoreResult.updatedGameState;
         gameState.log.push(...scoreResult.actions);
 
-        if (gameState.lastBlindBet > 0) {
-          const requiredBet = gameState.lastBlindBet * 2;
-          if (player.balance < requiredBet) {
-            return this.handleFold(roomId, gameState, playerIndex);
-          }
+        // Проверяем, может ли игрок, который посмотрел карты, сделать обязательную ставку
+        if (player.balance < newCurrentBet) {
+          return this.handleFold(roomId, gameState, playerIndex);
         }
+        
         break;
       }
     }
