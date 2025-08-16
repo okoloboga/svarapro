@@ -356,8 +356,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   minBet={blindBetAmount}
                 />
               ) : (
-                <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
-                  <p className="text-xl">Ожидание хода...</p>
+                <div className="p-4 flex items-center justify-center h-full">
+                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">
+                    В ожидании следующего раунда
+                  </p>
                 </div>
               )}
             </div>
