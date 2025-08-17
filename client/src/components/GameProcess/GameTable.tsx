@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
 import ChipsStack from './ChipsStack';
