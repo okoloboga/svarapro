@@ -50,6 +50,7 @@ export interface GameState {
   minBet: number; // минимальная ставка
   currentBet: number; // текущая ставка в раунде
   lastBlindBet: number; // последняя ставка вслепую
+  lastActionAmount: number; // сумма последнего действия (call или raise)
   rake: number; // комиссия (налог)
   winners: Player[]; // победители
   isSvara: boolean; // объявлена ли "свара"

@@ -3,6 +3,8 @@ import coinImage from '../../assets/game/coin.png';
 
 interface ChipsStackProps {
   totalChips: number;
+  gameStatus?: string;
+  pot?: number;
 }
 
 interface ChipPosition {
@@ -12,8 +14,9 @@ interface ChipPosition {
   zIndex: number;
 }
 
-const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
+const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips, gameStatus, pot }) => {
   const [chipPositions, setChipPositions] = useState<ChipPosition[]>([]);
+  const [shouldHide, setShouldHide] = useState(false);
 
   // Вычисляем позиции фишек в столбиках
   useEffect(() => {
@@ -58,7 +61,22 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
     setChipPositions(positions);
   }, [totalChips]);
 
-  if (totalChips === 0) return null;
+  // Логика для скрытия фишек после завершения раунда
+  useEffect(() => {
+    if (pot === 0 || gameStatus === 'finished') {
+      // Задержка для анимации исчезновения
+      const timer = setTimeout(() => {
+        setShouldHide(true);
+      }, 1000); // 1 секунда задержки
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShouldHide(false);
+    }
+  }, [pot, gameStatus]);
+
+  // Скрываем фишки если банк пустой или игра завершена
+  if (totalChips === 0 || shouldHide) return null;
 
   return (
     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ zIndex: 1, marginTop: '30px' }}>

@@ -528,7 +528,10 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        const callAmount = gameState.currentBet - player.currentBet;
+        const callAmount = Number((gameState.currentBet - player.currentBet).toFixed(2));
+        if (callAmount <= 0) {
+          return { success: false, error: 'Сумма уравнивания должна быть больше 0' };
+        }
         if (player.balance < callAmount) {
           return { success: false, error: 'Недостаточно средств' };
         }
@@ -536,17 +539,21 @@ export class GameService {
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+        gameState.lastActionAmount = callAmount; // Сохраняем сумму последнего действия
         gameState.log.push(callAction);
         break;
       }
       case 'raise': {
-        if (!amount || amount <= gameState.currentBet) {
+        if (!amount || amount < gameState.currentBet * 2) {
           return {
             success: false,
-            error: `Повышение должно быть больше текущей ставки ${gameState.currentBet}`,
+            error: `Повышение должно быть минимум в 2 раза больше текущей ставки ${gameState.currentBet}`,
           };
         }
-        const raiseAmount = amount - player.currentBet;
+        const raiseAmount = Number((amount - player.currentBet).toFixed(2));
+        if (raiseAmount <= 0) {
+          return { success: false, error: 'Сумма повышения должна быть больше 0' };
+        }
         if (player.balance < raiseAmount) {
           return { success: false, error: 'Недостаточно средств' };
         }
@@ -554,8 +561,9 @@ export class GameService {
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-        gameState.currentBet = amount;
+        gameState.currentBet = Number(amount.toFixed(2));
         gameState.lastRaiseIndex = playerIndex;
+        gameState.lastActionAmount = amount; // Сохраняем сумму последнего действия
         gameState.log.push(raiseAction);
         break;
       }
@@ -607,7 +615,7 @@ export class GameService {
     if (!wasRaise) {
       const dealer = gameState.players[gameState.dealerIndex];
       if (dealer && dealer.isActive && !dealer.hasFolded) {
-        const potAmount = gameState.pot; // Сохраняем значение банка
+        const potAmount = Number(gameState.pot.toFixed(2)); // Сохраняем значение банка с округлением
         dealer.balance += potAmount;
         gameState.pot = 0.00;
 
@@ -716,12 +724,18 @@ export class GameService {
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) return;
 
+    // Сохраняем значение банка для анимации
+    const originalPot = gameState.pot;
+
     const { updatedGameState, actions } = this.bettingService.processWinnings(
       gameState,
       [winnerId],
     );
     gameState = updatedGameState;
     gameState.log.push(...actions);
+
+    // Восстанавливаем значение банка для анимации
+    gameState.pot = originalPot;
 
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
@@ -747,10 +761,11 @@ export class GameService {
     // Ждем 3 секунды для анимации фишек
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Снимаем флаги анимации
+    // Снимаем флаги анимации и обнуляем банк
     gameState.isAnimating = false;
     gameState.animationType = undefined;
     gameState.showWinnerAnimation = false;
+    gameState.pot = 0.00; // Обнуляем банк после анимации
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 

@@ -11,6 +11,7 @@ interface PlayerSpotProps {
   showCards: boolean;
   scale?: number;
   cardSide?: 'left' | 'right';
+  openCardsPosition?: 'top' | 'bottom' | 'left' | 'right';
   isTurn?: boolean;
   onTimeout?: () => void;
   isWinner?: boolean;
@@ -21,7 +22,7 @@ interface PlayerSpotProps {
   gameState?: { log: Array<{ playerId: string; amount?: number; timestamp: number }> }; // Добавляем gameState для доступа к логу действий
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [progress, setProgress] = useState(100);
@@ -40,7 +41,19 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     if (playerActions.length === 0) return 0;
     
     const lastAction = playerActions[0];
-    return lastAction.amount || 0;
+    const amount = lastAction.amount || 0;
+    
+    // Отладочный лог для функции getLastActionAmount
+    console.log('🔍 getLastActionAmount Debug:', {
+      playerId: player.id,
+      username: player.username,
+      gameStateLogLength: gameState.log.length,
+      playerActionsLength: playerActions.length,
+      lastAction,
+      amount
+    });
+    
+    return amount;
   };
 
   // Set notification type based on last action
@@ -97,7 +110,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       winAmount,
       gameStatus,
       shouldShowAnimation,
-      showWinAnimation
+      showWinAnimation,
+      // Дополнительная отладка
+      isWinnerType: typeof isWinner,
+      winAmountType: typeof winAmount,
+      gameStatusType: typeof gameStatus
     });
     
     if (shouldShowAnimation) {
@@ -269,7 +286,30 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         </div>
         {(showCards || (isCurrentUser && hasLooked)) && (
-          <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: `${-50 * scale}px`, width: `${cardWidth}px`, height: `${cardHeight}px` }}>
+          <div className="absolute z-50" style={{ 
+            width: `${cardWidth}px`, 
+            height: `${cardHeight}px`,
+            ...(openCardsPosition === 'top' && {
+              left: '50%',
+              transform: 'translateX(-50%)',
+              top: `${-50 * scale}px`
+            }),
+            ...(openCardsPosition === 'bottom' && {
+              left: '50%',
+              transform: 'translateX(-50%)',
+              top: `${50 * scale}px`
+            }),
+            ...(openCardsPosition === 'left' && {
+              right: `${50 * scale}px`,
+              top: '50%',
+              transform: 'translateY(-50%)'
+            }),
+            ...(openCardsPosition === 'right' && {
+              left: `${50 * scale}px`,
+              top: '50%',
+              transform: 'translateY(-50%)'
+            })
+          }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
                 const centerOffset = (cards.length - 1) * step / 2;
@@ -293,13 +333,50 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         )}
 
-        {!isCurrentUser && getLastActionAmount() > 0 && !hasFolded && (
-          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-            ${Number(getLastActionAmount()).toFixed(2)}
-          </div>
-        )}
+        {(() => {
+          const lastActionAmount = getLastActionAmount();
+          const shouldShow = lastActionAmount > 0 && !hasFolded;
+          
+          // Отладочный лог для проверки отображения суммы последнего действия
+          console.log('💰 Last Action Amount Debug:', {
+            playerId: player.id,
+            username: player.username,
+            isCurrentUser,
+            lastActionAmount,
+            hasFolded,
+            shouldShow,
+            gameStateLog: gameState?.log?.length || 0
+          });
+          
+          return shouldShow ? (
+            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
+              ${Number(lastActionAmount).toFixed(2)}
+            </div>
+          ) : null;
+        })()}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
-          <div className="absolute z-40 flex items-center justify-center" style={{ left: `${-45 * scale}px`, top: `${-11 * scale}px`, width: `${22 * scale}px`, height: `${22 * scale}px`, backgroundColor: '#FF443A', borderRadius: '50%' }}>
+          <div className="absolute z-40 flex items-center justify-center" style={{ 
+            width: `${22 * scale}px`, 
+            height: `${22 * scale}px`, 
+            backgroundColor: '#FF443A', 
+            borderRadius: '50%',
+            ...(openCardsPosition === 'top' && {
+              left: `${-45 * scale}px`,
+              top: `${-11 * scale}px`
+            }),
+            ...(openCardsPosition === 'bottom' && {
+              left: `${-45 * scale}px`,
+              top: `${11 * scale}px`
+            }),
+            ...(openCardsPosition === 'left' && {
+              right: `${45 * scale}px`,
+              top: `${-11 * scale}px`
+            }),
+            ...(openCardsPosition === 'right' && {
+              left: `${45 * scale}px`,
+              top: `${-11 * scale}px`
+            })
+          }}>
             <span style={{ fontWeight: 500, fontStyle: 'normal', fontSize: `${14 * scale}px`, lineHeight: '100%', letterSpacing: '0%', textAlign: 'center', verticalAlign: 'middle', color: '#FFFFFF' }}>
               {score}
             </span>

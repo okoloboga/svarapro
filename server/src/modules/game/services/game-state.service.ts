@@ -23,6 +23,7 @@ export class GameStateService {
       minBet,
       currentBet: 0,
       lastBlindBet: 0,
+      lastActionAmount: 0, // Инициализируем сумму последнего действия
       rake: 0,
       winners: [],
       isSvara: false,
@@ -48,6 +49,7 @@ export class GameStateService {
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
     updatedGameState.lastBlindBettorIndex = undefined;
+    updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
 
@@ -117,6 +119,7 @@ export class GameStateService {
     updatedGameState.pot = Number(svaraPot.toFixed(2)); // Сохраняем банк с округлением
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
+    updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
 

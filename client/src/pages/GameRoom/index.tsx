@@ -314,6 +314,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, scale, handleChipsToWinner]);
 
+  // Дополнительная логика для очистки фишек после завершения раунда
+  useEffect(() => {
+    if (gameState?.status === 'finished' && gameState?.pot === 0) {
+      console.log('🧹 Clearing chips after round end - pot is 0');
+      // Очищаем все анимации фишек
+      setChipAnimations([]);
+    }
+  }, [gameState?.status, gameState?.pot]);
+
   useEffect(() => {
     if (socket) {
       socket.emit('join_room', { roomId });
@@ -371,8 +380,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating;
   
-  const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
-  const minRaiseAmount = gameState.currentBet + gameState.minBet;
+  // В фазе betting call равен сумме последнего действия, в blind_betting - разнице ставок
+  const callAmount = gameState.status === 'betting' 
+    ? gameState.lastActionAmount || 0 
+    : gameState.currentBet - (currentPlayer?.currentBet || 0);
+  const minRaiseAmount = gameState.currentBet * 2; // Минимальный raise = 2x от текущей ставки
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 
@@ -449,6 +461,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 maxPlayers={6} 
                 scale={scale}
                 onChipsToWinner={handleChipsToWinner}
+                chipAnimations={chipAnimations}
+                onChipAnimationComplete={handleChipAnimationComplete}
               />
             </div>
             
@@ -461,6 +475,21 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 const positionClasses = getPositionClasses(screenPosition);
 
                 const cardSide = (screenPosition === 2 || screenPosition === 3) ? 'left' : 'right';
+                
+                // Логика позиционирования раскрытых карт
+                const getOpenCardsPosition = (position: number) => {
+                  switch (position) {
+                    case 1: return 'bottom'; // Верхний игрок - карты под infoBlock
+                    case 2: return 'left';   // Правый игрок - карты слева
+                    case 3: return 'left';   // Правый игрок - карты слева
+                    case 4: return 'top';    // Текущий игрок - карты выше аватарки
+                    case 5: return 'right';  // Левый игрок - карты справа
+                    case 6: return 'right';  // Левый игрок - карты справа
+                    default: return 'top';
+                  }
+                };
+                
+                const openCardsPosition = getOpenCardsPosition(screenPosition);
                 const isActivePhase = gameState.status === 'blind_betting' || gameState.status === 'betting';
                 const isTurn = isActivePhase && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id && !gameState.isAnimating;
 
@@ -472,6 +501,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const isWinner = gameState.winners && gameState.winners.some(winner => winner.id === player.id);
                         const winAmount = isWinner ? gameState.pot / gameState.winners.length : 0;
                         
+                        // Отладочный лог для проверки данных о победителе
+                        console.log('🎯 GameRoom Winner Debug:', {
+                          playerId: player.id,
+                          playerUsername: player.username,
+                          gameStateWinners: gameState.winners,
+                          gameStatePot: gameState.pot,
+                          isWinner,
+                          winAmount,
+                          gameStatus: gameState.status
+                        });
+                        
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
                           return <PlayerSpot 
@@ -480,6 +520,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             showCards={showCards} 
                             scale={scale} 
                             cardSide={cardSide} 
+                            openCardsPosition={openCardsPosition}
                             isTurn={isTurn} 
                             onTimeout={actions.fold}
                             isWinner={isWinner}
@@ -496,6 +537,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           showCards={showCards} 
                           scale={scale} 
                           cardSide={cardSide} 
+                          openCardsPosition={openCardsPosition}
                           isTurn={isTurn}
                           isWinner={isWinner}
                           winAmount={winAmount}
@@ -545,7 +587,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   isCallDisabled={isCallDisabled}
                   isRaiseDisabled={isRaiseDisabled}
                   isBlindBetDisabled={isBlindBetDisabled}
-                  minBet={blindBetAmount}
+                  minBet={gameState.status === 'blind_betting' ? blindBetAmount : minRaiseAmount}
                 />
               ) : (
                 <div className="p-4 flex items-center justify-center h-full">

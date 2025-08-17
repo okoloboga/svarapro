@@ -77,11 +77,14 @@ export class PlayerService {
     updatedPlayer: Player;
     action: GameAction;
   } {
+    // Округляем сумму до 2 знаков после запятой
+    const roundedAmount = Number(amount.toFixed(2));
+    
     const updatedPlayer = { ...player };
-    updatedPlayer.balance -= amount;
-    updatedPlayer.tableBalance += amount;
-    updatedPlayer.currentBet += amount;
-    updatedPlayer.totalBet += amount;
+    updatedPlayer.balance -= roundedAmount;
+    updatedPlayer.tableBalance += roundedAmount;
+    updatedPlayer.currentBet += roundedAmount;
+    updatedPlayer.totalBet += roundedAmount;
     updatedPlayer.lastAction = action as
       | 'fold'
       | 'check'
@@ -93,11 +96,11 @@ export class PlayerService {
     const gameAction: GameAction = {
       type: action as GameAction['type'],
       telegramId: player.id,
-      amount,
+      amount: roundedAmount,
       timestamp: Date.now(),
       message: `Игрок ${player.username} ${this.getActionDescription(
         action,
-      )} ${amount}`,
+      )} ${roundedAmount}`,
     };
 
     return { updatedPlayer, action: gameAction };

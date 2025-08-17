@@ -31,11 +31,12 @@ export class BettingService {
           };
           actions.push(action);
         } else {
-          // Снимаем анте с баланса игрока
-          player.balance -= minBet;
-          player.tableBalance += minBet;
-          player.totalBet += minBet;
-          updatedGameState.pot = Number((updatedGameState.pot + minBet).toFixed(2));
+                  // Снимаем анте с баланса игрока
+        const roundedMinBet = Number(minBet.toFixed(2));
+        player.balance -= roundedMinBet;
+        player.tableBalance += roundedMinBet;
+        player.totalBet += roundedMinBet;
+        updatedGameState.pot = Number((updatedGameState.pot + roundedMinBet).toFixed(2));
 
           // Добавляем действие в лог
           const action: GameAction = {
@@ -113,7 +114,8 @@ export class BettingService {
       const winner = updatedGameState.players.find((p) => p.id === winnerId);
       if (winner) {
         // Добавляем выигрыш победителю
-        winner.balance += winPerPlayer;
+        const roundedWinPerPlayer = Number(winPerPlayer.toFixed(2));
+        winner.balance += roundedWinPerPlayer;
 
         // Добавляем действие в лог
         const action: GameAction = {

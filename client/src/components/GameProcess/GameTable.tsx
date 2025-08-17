@@ -13,21 +13,25 @@ interface GameTableProps {
   maxPlayers: number;
   scale?: number;
   onChipsToWinner?: (winnerX: number, winnerY: number) => void;
-}
-
-const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
-  const baseWidth = 315;
-  const baseHeight = 493;
-  
-  // Состояние для анимаций фишек
-  const [flyingChips, setFlyingChips] = useState<Array<{
+  chipAnimations?: Array<{
     id: string;
     fromX: number;
     fromY: number;
     toX: number;
     toY: number;
     delay: number;
-  }>>([]);
+  }>;
+  onChipAnimationComplete?: (chipId: string) => void;
+}
+
+const GameTable: React.FC<GameTableProps> = ({ 
+  gameState, 
+  scale = 1, 
+  chipAnimations = [], 
+  onChipAnimationComplete 
+}) => {
+  const baseWidth = 315;
+  const baseHeight = 493;
   
   // Подсчет общего количества фишек (каждая ставка = 1 фишка)
   const totalChips = gameState.log.filter(action => 
@@ -112,7 +116,9 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
 
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
-    setFlyingChips(prev => prev.filter(chip => chip.id !== chipId));
+    if (onChipAnimationComplete) {
+      onChipAnimationComplete(chipId);
+    }
   };
 
   // Стили для надписи "налог 5%"
@@ -154,10 +160,14 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
       </div>
       
       {/* Стопки фишек */}
-      <ChipsStack totalChips={totalChips} />
+      <ChipsStack 
+        totalChips={totalChips} 
+        gameStatus={gameState.status}
+        pot={gameState.pot}
+      />
       
       {/* Летящие фишки */}
-      {flyingChips.map(chip => (
+      {chipAnimations.map(chip => (
         <FlyingChip
           key={chip.id}
           fromX={chip.fromX}
