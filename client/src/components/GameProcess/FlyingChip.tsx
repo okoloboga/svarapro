@@ -13,8 +13,8 @@ interface FlyingChipProps {
 const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onComplete, delay = 0 }) => {
   const [position, setPosition] = useState({ x: fromX, y: fromY });
   const [isAnimating, setIsAnimating] = useState(false);
-  const animationRef = useRef<number>();
-  const startTimeRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
+  const startTimeRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const timer = setTimeout(() => {
