@@ -30,15 +30,14 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   }>>([]);
   
   // Подсчет общего количества фишек (каждая ставка = 1 фишка)
-  const totalChips = gameState.players.reduce((total, player) => {
-    // Считаем количество ставок игрока
-    let playerChips = 0;
-    if (player.totalBet > 0) {
-      // Каждая ставка = 1 фишка, независимо от суммы
-      playerChips = 1;
-    }
-    return total + playerChips;
-  }, 0);
+  const totalChips = gameState.log.filter(action => 
+    action.type === 'ante' || 
+    action.type === 'blind_bet' || 
+    action.type === 'call' || 
+    action.type === 'raise'
+  ).length;
+  
+  console.log('GameTable: totalChips =', totalChips, 'log actions =', gameState.log.map(a => a.type));
 
   const containerStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
@@ -119,7 +118,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   // Стили для надписи "налог 5%"
   const taxStyle: React.CSSProperties = {
     position: 'absolute',
-    top: '55%', // Под контейнером банка
+    top: '52%', // Ближе к контейнеру банка
     left: '50%',
     transform: 'translate(-50%, -50%)',
     color: 'rgba(255, 255, 255, 0.6)', // #FFFFFF 60%

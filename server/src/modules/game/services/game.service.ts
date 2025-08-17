@@ -403,6 +403,21 @@ export class GameService {
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex; // Set the index of the blind bettor
         gameState.log.push(blindAction);
+        // Устанавливаем состояние анимации
+        gameState.isAnimating = true;
+        gameState.animationType = 'chip_fly';
+        
+        // Сохраняем состояние с анимацией
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Ждем 1 секунду для анимации
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Снимаем состояние анимации
+        gameState.isAnimating = false;
+        gameState.animationType = undefined;
+        
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
@@ -474,12 +489,27 @@ export class GameService {
         gameState = scoreResult.updatedGameState;
         gameState.log.push(...scoreResult.actions);
 
+                // Устанавливаем состояние анимации
+        gameState.isAnimating = true;
+        gameState.animationType = 'chip_fly';
+        
+        // Сохраняем состояние с анимацией
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Ждем 1 секунду для анимации
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Снимаем состояние анимации
+        gameState.isAnimating = false;
+        gameState.animationType = undefined;
+        
         // Переходим к следующему игроку (важно: ход переходит к следующему!)
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           playerIndex,
         );
-
+        
         break;
       }
     }
@@ -530,6 +560,21 @@ export class GameService {
         break;
       }
     }
+
+    // Устанавливаем состояние анимации
+    gameState.isAnimating = true;
+    gameState.animationType = 'chip_fly';
+    
+    // Сохраняем состояние с анимацией
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+    
+    // Ждем 1 секунду для анимации
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Снимаем состояние анимации
+    gameState.isAnimating = false;
+    gameState.animationType = undefined;
 
     gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
@@ -685,6 +730,27 @@ export class GameService {
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
 
+    // Устанавливаем флаг для показа анимации победы
+    gameState.showWinnerAnimation = true;
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // Ждем 5 секунд для показа карт и анимации победы
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // Запускаем анимацию фишек к победителю
+    gameState.isAnimating = true;
+    gameState.animationType = 'win_animation';
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // Ждем 3 секунды для анимации фишек
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Снимаем флаги анимации
+    gameState.isAnimating = false;
+    gameState.animationType = undefined;
+    gameState.showWinnerAnimation = false;
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
@@ -716,12 +782,12 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    // Auto-restart game after 5 seconds
+    // Auto-restart game after 2 seconds
     setTimeout(() => {
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
       );
-    }, 5000);
+    }, 2000);
   }
 
   private async endGame(roomId: string): Promise<void> {

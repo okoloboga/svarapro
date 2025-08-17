@@ -88,59 +88,62 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для добавления анимации фишки от игрока к столу
   const handlePlayerBet = (playerId: string) => {
-    // Находим позицию игрока на экране
-    const player = gameState?.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    const position = player.position;
-    
-    // Вычисляем координаты аватарки игрока относительно центра стола
-    let playerX = 0;
-    let playerY = 0;
-    
-    // Координаты относительно центра стола (315x493 - размер стола)
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    
-    switch (position) {
-      case 1: // верх
-        playerX = 0;
-        playerY = -tableHeight / 2 - 50;
-        break;
-      case 2: // верх-право
-        playerX = tableWidth / 2 + 50;
-        playerY = -tableHeight / 4;
-        break;
-      case 3: // низ-право
-        playerX = tableWidth / 2 + 50;
-        playerY = tableHeight / 4;
-        break;
-      case 4: // низ
-        playerX = 0;
-        playerY = tableHeight / 2 + 50;
-        break;
-      case 5: // низ-лево
-        playerX = -tableWidth / 2 - 50;
-        playerY = tableHeight / 4;
-        break;
-      case 6: // верх-лево
-        playerX = -tableWidth / 2 - 50;
-        playerY = -tableHeight / 4;
-        break;
+    // Проверяем, идет ли анимация
+    if (gameState?.isAnimating) {
+      // Находим позицию игрока на экране
+      const player = gameState?.players.find(p => p.id === playerId);
+      if (!player) return;
+      
+      const position = player.position;
+      
+      // Вычисляем координаты аватарки игрока относительно центра стола
+      let playerX = 0;
+      let playerY = 0;
+      
+      // Координаты относительно центра стола (315x493 - размер стола)
+      const tableWidth = 315 * scale;
+      const tableHeight = 493 * scale;
+      
+      switch (position) {
+        case 1: // верх
+          playerX = 0;
+          playerY = -tableHeight / 2 - 50;
+          break;
+        case 2: // верх-право
+          playerX = tableWidth / 2 + 50;
+          playerY = -tableHeight / 4;
+          break;
+        case 3: // низ-право
+          playerX = tableWidth / 2 + 50;
+          playerY = tableHeight / 4;
+          break;
+        case 4: // низ
+          playerX = 0;
+          playerY = tableHeight / 2 + 50;
+          break;
+        case 5: // низ-лево
+          playerX = -tableWidth / 2 - 50;
+          playerY = tableHeight / 4;
+          break;
+        case 6: // верх-лево
+          playerX = -tableWidth / 2 - 50;
+          playerY = -tableHeight / 4;
+          break;
+      }
+      
+      const chipId = `chip-${Date.now()}-${Math.random()}`;
+      const toX = 0; // центр стола
+      const toY = 30; // под банком
+      
+      setChipAnimations(prev => [...prev, {
+        id: chipId,
+        fromX: playerX,
+        fromY: playerY,
+        toX,
+        toY,
+        delay: 0
+      }]);
     }
-    
-    const chipId = `chip-${Date.now()}-${Math.random()}`;
-    const toX = 0; // центр стола
-    const toY = 30; // под банком
-    
-    setChipAnimations(prev => [...prev, {
-      id: chipId,
-      fromX: playerX,
-      fromY: playerY,
-      toX,
-      toY,
-      delay: 0
-    }]);
   };
 
 
@@ -186,7 +189,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Отслеживание победы игрока для анимации фишек
   useEffect(() => {
-    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0) {
+    if (gameState?.status === 'finished' && 
+        gameState.winners && 
+        gameState.winners.length > 0 && 
+        gameState.isAnimating && 
+        gameState.animationType === 'win_animation') {
       // Находим позицию победителя для анимации
       const winner = gameState.winners[0]; // берем первого победителя
       const position = winner.position;
@@ -228,7 +235,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Запускаем анимацию фишек к победителю
       handleChipsToWinner(winnerX, winnerY);
     }
-  }, [gameState?.status, gameState?.winners, scale, handleChipsToWinner]);
+  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, scale, handleChipsToWinner]);
 
   useEffect(() => {
     if (socket) {
@@ -285,15 +292,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     return ((absolutePosition + offset - 1 + 6) % 6) + 1;
   };
   
-  const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId;
+  const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating;
   
   const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaiseAmount = gameState.currentBet + gameState.minBet;
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 
-  const canPerformBettingActions = isCurrentUserTurn && gameState.status === 'betting';
-  const canPerformBlindActions = isCurrentUserTurn && gameState.status === 'blind_betting';
+  // Проверяем, идет ли анимация
+  const isAnimating = gameState.isAnimating || false;
+  
+  const canPerformBettingActions = isCurrentUserTurn && gameState.status === 'betting' && !isAnimating;
+  const canPerformBlindActions = isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating;
 
   const canFold = canPerformBettingActions;
   const canCall = canPerformBettingActions;
@@ -307,7 +317,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
-  const showCards = gameState.status === 'showdown' || gameState.status === 'finished';
+  const showCards = gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation || false;
   
   const handleRaiseClick = () => {
     setShowBetSlider(true);
@@ -375,7 +385,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
                 const cardSide = (screenPosition === 2 || screenPosition === 3) ? 'left' : 'right';
                 const isActivePhase = gameState.status === 'blind_betting' || gameState.status === 'betting';
-                const isTurn = isActivePhase && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id;
+                const isTurn = isActivePhase && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id && !gameState.isAnimating;
 
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>
@@ -398,6 +408,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             isWinner={isWinner}
                             winAmount={winAmount}
                             gameStatus={gameState.status}
+                            isAnimating={gameState.isAnimating}
                             onPlayerBet={handlePlayerBet}
                           />;
                         }
@@ -411,6 +422,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           isWinner={isWinner}
                           winAmount={winAmount}
                           gameStatus={gameState.status}
+                          isAnimating={gameState.isAnimating}
                           onPlayerBet={handlePlayerBet}
                         />;
                       })()

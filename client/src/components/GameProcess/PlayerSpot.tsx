@@ -16,10 +16,11 @@ interface PlayerSpotProps {
   isWinner?: boolean;
   winAmount?: number;
   gameStatus?: string;
+  isAnimating?: boolean;
   onPlayerBet?: (playerId: string) => void;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, onPlayerBet }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [progress, setProgress] = useState(100);
@@ -45,7 +46,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   // Turn timer progress bar logic
   useEffect(() => {
-    if (isTurn && isCurrentUser) {
+    if (isTurn && isCurrentUser && !isAnimating) {
       setProgress(100);
       const startTime = Date.now();
       const duration = 10000; // 10 seconds
@@ -67,11 +68,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     } else {
       setProgress(100);
     }
-  }, [isTurn, isCurrentUser, onTimeout]);
+  }, [isTurn, isCurrentUser, onTimeout, isAnimating]);
 
   // Win animation logic
   useEffect(() => {
-    const shouldShowAnimation = isWinner && winAmount > 0 && (gameStatus === 'finished' || gameStatus === 'showdown');
+    const shouldShowAnimation = isWinner && winAmount > 0 && gameStatus === 'finished';
     
     if (shouldShowAnimation) {
       setShowWinAnimation(true);

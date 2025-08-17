@@ -17,12 +17,15 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
 
   // Вычисляем позиции фишек в столбиках
   useEffect(() => {
+    console.log('ChipsStack: totalChips =', totalChips); // Отладочная информация
     const positions: ChipPosition[] = [];
     const chipsPerStack = 5;
     
     for (let i = 0; i < totalChips; i++) {
       const stackIndex = Math.floor(i / chipsPerStack);
       const chipInStack = i % chipsPerStack;
+      
+      console.log(`Chip ${i}: stackIndex=${stackIndex}, chipInStack=${chipInStack}`);
       
       // Позиции столбиков (относительно центра стола)
       let baseX = 0;
@@ -43,8 +46,8 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
       const x = baseX;
       const y = baseY - (chipInStack * 4); // 4px шаг между слоями
       
-      // Прозрачность: верхняя фишка полная, остальные затемнены
-      const opacity = chipInStack === 0 ? 1 : 0.6;
+      // Прозрачность: верхняя фишка полная, нижние затемнены
+      const opacity = chipInStack === chipsPerStack - 1 ? 1 : 0.6;
       
       // Z-index: чем выше в столбике, тем больше z-index
       const zIndex = chipInStack;

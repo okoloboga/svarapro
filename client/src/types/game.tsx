@@ -56,6 +56,9 @@ export interface GameState {
   round: number; // номер раунда
   timer?: number; // таймер для хода
   log: GameAction[]; // лог действий
+  isAnimating?: boolean; // флаг анимации
+  animationType?: 'chip_fly' | 'win_animation'; // тип анимации
+  showWinnerAnimation?: boolean; // флаг показа анимации победы
 }
 
 export interface GameAction {
