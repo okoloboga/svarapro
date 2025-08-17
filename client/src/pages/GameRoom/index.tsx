@@ -353,7 +353,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  const isCallDisabled = (currentPlayer?.currentBet ?? 0) >= gameState.currentBet;
+  // В betting фазе кнопка Call активна, если есть возможность уравнять
+  // В blind_betting фазе кнопка Call деактивируется, если игрок уже сделал максимальную ставку
+  const isCallDisabled = gameState.status === 'betting' 
+    ? false // В betting фазе Call всегда доступен (если нет raise, то это завершит раунд)
+    : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet;
   const isRaiseDisabled = (currentPlayer?.balance || 0) < minRaiseAmount;
   const isBlindBetDisabled = (currentPlayer?.balance || 0) < blindBetAmount;
   
@@ -455,6 +459,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         // Вычисляем сумму выигрыша из лога действий
                         const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
                         const winAmount = winAction ? winAction.amount : 0;
+                        
+
                         
 
                         
