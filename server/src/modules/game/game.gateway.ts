@@ -99,10 +99,7 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   }
 
   @SubscribeMessage('subscribe_balance')
-  async handleSubscribeBalance(
-    client: Socket,
-    payload: { telegramId: string },
-  ): Promise<void> {
+  handleSubscribeBalance(client: Socket): void {
     const telegramId = this.getTelegramId(client);
     console.log('Handling subscribe_balance:', { telegramId });
 

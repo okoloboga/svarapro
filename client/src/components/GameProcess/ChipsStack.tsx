@@ -3,8 +3,6 @@ import coinImage from '../../assets/game/coin.png';
 
 interface ChipsStackProps {
   totalChips: number;
-  scale?: number;
-  onChipAnimationComplete?: () => void;
 }
 
 interface ChipPosition {
@@ -14,14 +12,13 @@ interface ChipPosition {
   zIndex: number;
 }
 
-const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips, scale = 1, onChipAnimationComplete }) => {
+const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
   const [chipPositions, setChipPositions] = useState<ChipPosition[]>([]);
 
   // Вычисляем позиции фишек в столбиках
   useEffect(() => {
     const positions: ChipPosition[] = [];
     const chipsPerStack = 5;
-    const stackCount = Math.ceil(totalChips / chipsPerStack);
     
     for (let i = 0; i < totalChips; i++) {
       const stackIndex = Math.floor(i / chipsPerStack);

@@ -83,8 +83,14 @@ export class RedisService {
     await this.client.publish(`game:${roomId}`, JSON.stringify(gameState));
   }
 
-  async publishBalanceUpdate(telegramId: string, balance: number): Promise<void> {
-    await this.client.publish(`balance:${telegramId}`, JSON.stringify({ balance: balance.toFixed(2) }));
+  async publishBalanceUpdate(
+    telegramId: string,
+    balance: number,
+  ): Promise<void> {
+    await this.client.publish(
+      `balance:${telegramId}`,
+      JSON.stringify({ balance: balance.toFixed(2) }),
+    );
   }
 
   async subscribeToGameUpdates(

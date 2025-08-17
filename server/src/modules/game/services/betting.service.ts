@@ -69,8 +69,8 @@ export class BettingService {
       gameState.lastRaiseIndex !== undefined
         ? gameState.lastRaiseIndex
         : gameState.lastBlindBettorIndex !== undefined
-        ? gameState.lastBlindBettorIndex
-        : gameState.dealerIndex;
+          ? gameState.lastBlindBettorIndex
+          : gameState.dealerIndex;
 
     // Проверяем, что все активные игроки сделали ставки
     let allBet = true;

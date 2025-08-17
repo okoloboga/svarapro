@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { GameRoomProps } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
@@ -143,16 +143,85 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }]);
   };
 
+
+
   // Функция для анимации фишек к победителю
-  const handleChipsToWinner = (winnerX: number, winnerY: number) => {
-    // Эта функция будет вызываться при победе
-    // Пока оставим пустой
-  };
+  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
+    // Подсчитываем количество фишек на столе
+    const chipCount = gameState?.players.reduce((total, player) => {
+      return total + (player.totalBet > 0 ? 1 : 0);
+    }, 0) || 0;
+    
+    // Создаем анимации для каждой фишки
+    const chips = [];
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      const fromX = 0; // центр стола
+      const fromY = 30; // под банком
+      
+      chips.push({
+        id: chipId,
+        fromX,
+        fromY,
+        toX: winnerX,
+        toY: winnerY,
+        delay: i * 100 // задержка 100ms между фишками
+      });
+    }
+    
+    setChipAnimations(prev => [...prev, ...chips]);
+  }, [gameState?.players]);
 
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
     setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
   };
+
+  // Отслеживание победы игрока для анимации фишек
+  useEffect(() => {
+    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0) {
+      // Находим позицию победителя для анимации
+      const winner = gameState.winners[0]; // берем первого победителя
+      const position = winner.position;
+      
+      // Вычисляем координаты аватарки победителя
+      let winnerX = 0;
+      let winnerY = 0;
+      
+      const tableWidth = 315 * scale;
+      const tableHeight = 493 * scale;
+      
+      switch (position) {
+        case 1: // верх
+          winnerX = 0;
+          winnerY = -tableHeight / 2 - 50;
+          break;
+        case 2: // верх-право
+          winnerX = tableWidth / 2 + 50;
+          winnerY = -tableHeight / 4;
+          break;
+        case 3: // низ-право
+          winnerX = tableWidth / 2 + 50;
+          winnerY = tableHeight / 4;
+          break;
+        case 4: // низ
+          winnerX = 0;
+          winnerY = tableHeight / 2 + 50;
+          break;
+        case 5: // низ-лево
+          winnerX = -tableWidth / 2 - 50;
+          winnerY = tableHeight / 4;
+          break;
+        case 6: // верх-лево
+          winnerX = -tableWidth / 2 - 50;
+          winnerY = -tableHeight / 4;
+          break;
+      }
+      
+      // Запускаем анимацию фишек к победителю
+      handleChipsToWinner(winnerX, winnerY);
+    }
+  }, [gameState?.status, gameState?.winners, scale, handleChipsToWinner]);
 
   useEffect(() => {
     if (socket) {
@@ -285,7 +354,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 onInvite={actions.invitePlayer} 
                 maxPlayers={6} 
                 scale={scale}
-                onChipFromPlayer={handlePlayerBet}
                 onChipsToWinner={handleChipsToWinner}
               />
             </div>

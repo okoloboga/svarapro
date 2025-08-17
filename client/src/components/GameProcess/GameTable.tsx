@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
 import ChipsStack from './ChipsStack';
@@ -12,7 +12,6 @@ interface GameTableProps {
   onInvite: () => void;
   maxPlayers: number;
   scale?: number;
-  onChipFromPlayer?: (fromX: number, fromY: number) => void;
   onChipsToWinner?: (winnerX: number, winnerY: number) => void;
 }
 
@@ -112,52 +111,6 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     zIndex: 2,
   };
 
-  // Функция для добавления анимации фишки от игрока к столу
-  const addChipFromPlayer = (fromX: number, fromY: number) => {
-    const chipId = `chip-${Date.now()}-${Math.random()}`;
-    const toX = baseWidth * scale / 2; // центр стола
-    const toY = baseHeight * scale / 2 + 30; // под банком
-    
-    setFlyingChips(prev => [...prev, {
-      id: chipId,
-      fromX,
-      fromY,
-      toX,
-      toY,
-      delay: 0
-    }]);
-  };
-
-  // Функция для анимации фишек к победителю
-  const animateChipsToWinner = (winnerX: number, winnerY: number) => {
-    const chipCount = totalChips;
-    const chips: Array<{
-      id: string;
-      fromX: number;
-      fromY: number;
-      toX: number;
-      toY: number;
-      delay: number;
-    }> = [];
-    
-    for (let i = 0; i < chipCount; i++) {
-      const chipId = `winner-chip-${Date.now()}-${i}`;
-      const fromX = baseWidth * scale / 2; // центр стола
-      const fromY = baseHeight * scale / 2 + 30; // под банком
-      
-      chips.push({
-        id: chipId,
-        fromX,
-        fromY,
-        toX: winnerX,
-        toY: winnerY,
-        delay: i * 100 // задержка 100ms между фишками
-      });
-    }
-    
-    setFlyingChips(prev => [...prev, ...chips]);
-  };
-
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
     setFlyingChips(prev => prev.filter(chip => chip.id !== chipId));
@@ -202,7 +155,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
       </div>
       
       {/* Стопки фишек */}
-      <ChipsStack totalChips={totalChips} scale={scale} />
+      <ChipsStack totalChips={totalChips} />
       
       {/* Летящие фишки */}
       {flyingChips.map(chip => (

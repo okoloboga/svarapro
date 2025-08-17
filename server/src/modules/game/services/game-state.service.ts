@@ -32,7 +32,10 @@ export class GameStateService {
   }
 
   // Инициализация новой игры
-  initializeNewGame(gameState: GameState, previousWinnerId?: string): {
+  initializeNewGame(
+    gameState: GameState,
+    previousWinnerId?: string,
+  ): {
     updatedGameState: GameState;
     actions: GameAction[];
   } {
@@ -55,12 +58,15 @@ export class GameStateService {
     if (updatedGameState.isSvara) {
       newDealerIndex = updatedGameState.dealerIndex;
     } else if (previousWinnerId) {
-      newDealerIndex = updatedGameState.players.findIndex(p => p.id === previousWinnerId);
+      newDealerIndex = updatedGameState.players.findIndex(
+        (p) => p.id === previousWinnerId,
+      );
     }
 
     // Если победитель не найден (или ушел), или это первый раунд, или нет победителя - выбираем случайно
     if (newDealerIndex === -1) {
-      newDealerIndex = Math.floor(Math.random() * updatedGameState.players.length) || 0;
+      newDealerIndex =
+        Math.floor(Math.random() * updatedGameState.players.length) || 0;
     }
 
     updatedGameState.dealerIndex = newDealerIndex;

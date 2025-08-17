@@ -143,9 +143,14 @@ export class UsersService {
   }
 
   // Обновление баланса одного игрока
-  async updatePlayerBalance(telegramId: string, newBalance: number): Promise<void> {
+  async updatePlayerBalance(
+    telegramId: string,
+    newBalance: number,
+  ): Promise<void> {
     try {
-      const user = await this.usersRepository.findOne({ where: { telegramId } });
+      const user = await this.usersRepository.findOne({
+        where: { telegramId },
+      });
       if (!user) {
         console.error(`User not found for balance update: ${telegramId}`);
         return;
@@ -161,24 +166,30 @@ export class UsersService {
   }
 
   // Массовое обновление балансов игроков
-  async updateMultiplePlayerBalances(players: { telegramId: string; balance: number }[]): Promise<void> {
+  async updateMultiplePlayerBalances(
+    players: { telegramId: string; balance: number }[],
+  ): Promise<void> {
     if (players.length === 0) return;
 
     try {
       // Получаем всех пользователей одним запросом
-      const telegramIds = players.map(p => p.telegramId);
-      const users = await this.usersRepository.find({ where: { telegramId: In(telegramIds) } });
-      
+      const telegramIds = players.map((p) => p.telegramId);
+      const users = await this.usersRepository.find({
+        where: { telegramId: In(telegramIds) },
+      });
+
       // Создаем мапу для быстрого поиска
-      const userMap = new Map(users.map(user => [user.telegramId, user]));
-      
+      const userMap = new Map(users.map((user) => [user.telegramId, user]));
+
       // Обновляем балансы
       for (const player of players) {
         const user = userMap.get(player.telegramId);
         if (user) {
           user.balance = player.balance;
         } else {
-          console.error(`User not found for balance update: ${player.telegramId}`);
+          console.error(
+            `User not found for balance update: ${player.telegramId}`,
+          );
         }
       }
 
