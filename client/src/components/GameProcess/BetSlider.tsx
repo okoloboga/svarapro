@@ -191,7 +191,6 @@ export function BetSlider({
               })}
             </div>
 
-            {/* Слайдер */}
             <div className="flex justify-center">
               <StyledContainer className="w-[85%] h-[42px] rounded-[15px]" contentClassName="w-full h-full flex items-center justify-center">
                 <div className="relative w-[82.5%] h-full flex items-center">
