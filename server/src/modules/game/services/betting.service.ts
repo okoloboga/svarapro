@@ -134,7 +134,9 @@ export class BettingService {
     updatedGameState.pot = 0.00;
     
     // Устанавливаем победителей для анимации
-    updatedGameState.winners = winnerIds;
+    updatedGameState.winners = winnerIds.map(id => 
+      updatedGameState.players.find(p => p.id === id)
+    ).filter(Boolean) as Player[];
 
     // Добавляем действие о комиссии в лог
     if (rake > 0) {

@@ -783,7 +783,8 @@ export class GameService {
     gameState.showWinnerAnimation = false;
     gameState.pot = 0.00; // Обнуляем банк после анимации
     // Сохраняем победителей для клиента
-    gameState.winners = [winnerId];
+    const winnerPlayer = gameState.players.find(p => p.id === winnerId);
+    gameState.winners = winnerPlayer ? [winnerPlayer] : [];
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
