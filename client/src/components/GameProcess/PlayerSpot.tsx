@@ -18,14 +18,30 @@ interface PlayerSpotProps {
   gameStatus?: string;
   isAnimating?: boolean;
   onPlayerBet?: (playerId: string) => void;
+  gameState?: { log: Array<{ playerId: string; amount?: number; timestamp: number }> }; // Добавляем gameState для доступа к логу действий
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet }: PlayerSpotProps) {
-  const { username, avatar, balance, tableBalance, cards, hasFolded, hasLooked, lastAction, score } = player;
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
+  const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [progress, setProgress] = useState(100);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
+
+  // Функция для вычисления суммы последнего действия игрока
+  const getLastActionAmount = () => {
+    if (!gameState?.log) return 0;
+    
+    // Находим последнее действие этого игрока
+    const playerActions = gameState.log
+      .filter((action) => action.playerId === player.id)
+      .sort((a, b) => b.timestamp - a.timestamp);
+    
+    if (playerActions.length === 0) return 0;
+    
+    const lastAction = playerActions[0];
+    return lastAction.amount || 0;
+  };
 
   // Set notification type based on last action
   useEffect(() => {
@@ -98,15 +114,16 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     } else {
       setShowWinAnimation(false);
     }
-  }, [isWinner, winAmount, gameStatus, player.id, player.username]);
+  }, [isWinner, winAmount, gameStatus, player.id, player.username, showWinAnimation]);
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
-    if (player.totalBet > lastTotalBet && onPlayerBet) {
+    if (player.totalBet > lastTotalBet && onPlayerBet && !isAnimating) {
+      console.log('🎰 Triggering chip animation for player:', player.username, 'Bet increase:', lastTotalBet, '->', player.totalBet);
       onPlayerBet(player.id);
     }
     setLastTotalBet(player.totalBet);
-  }, [player.totalBet, lastTotalBet, player.id, onPlayerBet]);
+  }, [player.totalBet, lastTotalBet, player.id, player.username, onPlayerBet, isAnimating]);
 
   const baseAvatarSize = 71;
   const baseNameWidth = 70;
@@ -268,7 +285,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             </div>
           </div>
         )}
-        {!hasFolded && !hasLooked && (
+        {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && TotalBetComponent}
             {CardDeckComponent}
@@ -276,9 +293,9 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         )}
 
-        {!isCurrentUser && tableBalance > 0 && !hasFolded && (
+        {!isCurrentUser && getLastActionAmount() > 0 && !hasFolded && (
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-            ${Number(tableBalance).toFixed(2)}
+            ${Number(getLastActionAmount()).toFixed(2)}
           </div>
         )}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (

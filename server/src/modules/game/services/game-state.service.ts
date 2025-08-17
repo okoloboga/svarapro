@@ -17,7 +17,7 @@ export class GameStateService {
       status: 'waiting',
       players: [],
       deck: [],
-      pot: 0,
+      pot: 0.00,
       currentPlayerIndex: 0,
       dealerIndex: 0,
       minBet,
@@ -114,7 +114,7 @@ export class GameStateService {
     // Сбрасываем состояние игры
     updatedGameState.status = 'ante';
     updatedGameState.round += 1;
-    updatedGameState.pot = svaraPot; // Сохраняем банк
+    updatedGameState.pot = Number(svaraPot.toFixed(2)); // Сохраняем банк с округлением
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
     updatedGameState.winners = [];

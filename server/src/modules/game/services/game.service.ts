@@ -399,7 +399,7 @@ export class GameService {
             'blind_bet',
           );
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += blindBetAmount;
+        gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex; // Set the index of the blind bettor
         gameState.log.push(blindAction);
@@ -441,7 +441,7 @@ export class GameService {
         const { updatedPlayer, action: betAction } =
           this.playerService.processPlayerBet(player, mandatoryBet, 'call');
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += mandatoryBet;
+        gameState.pot = Number((gameState.pot + mandatoryBet).toFixed(2));
         gameState.log.push(betAction);
 
         // Отмечаем, что игрок посмотрел карты
@@ -535,7 +535,7 @@ export class GameService {
         const { updatedPlayer, action: callAction } =
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += callAmount;
+        gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
         gameState.log.push(callAction);
         break;
       }
@@ -553,7 +553,7 @@ export class GameService {
         const { updatedPlayer, action: raiseAction } =
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot += raiseAmount;
+        gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.currentBet = amount;
         gameState.lastRaiseIndex = playerIndex;
         gameState.log.push(raiseAction);
@@ -609,7 +609,7 @@ export class GameService {
       if (dealer && dealer.isActive && !dealer.hasFolded) {
         const potAmount = gameState.pot; // Сохраняем значение банка
         dealer.balance += potAmount;
-        gameState.pot = 0;
+        gameState.pot = 0.00;
 
         const dealerWinAction: GameAction = {
           type: 'win',

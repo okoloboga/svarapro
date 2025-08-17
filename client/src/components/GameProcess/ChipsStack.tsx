@@ -28,7 +28,7 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips }) => {
       
       
       // Позиции столбиков (относительно центра стола)
-      let baseX = -10;
+      let baseX = 10;
       let baseY = 0;
       
       if (stackIndex === 0) {

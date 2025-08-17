@@ -27,9 +27,12 @@ export function BetSlider({
   // Reset value when the slider is reopened
   useEffect(() => {
     if (isOpen) {
-      setValue(initialBet || minBet);
+      const initialValue = initialBet || minBet;
+      // Ограничиваем начальное значение балансом пользователя
+      const limitedInitialValue = Math.min(initialValue, maxBet);
+      setValue(limitedInitialValue);
     }
-  }, [isOpen, initialBet, minBet]);
+  }, [isOpen, initialBet, minBet, maxBet]);
 
   // Предустановленные множители ставок
   const multipliers: { label: string; value: number | 'max' }[] = [
@@ -52,9 +55,11 @@ export function BetSlider({
   // Обработчик изменения значения слайдера
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(e.target.value);
-    setValue(newValue);
+    // Ограничиваем значение балансом пользователя
+    const limitedValue = Math.min(newValue, maxBet);
+    setValue(limitedValue);
     if (onChange) {
-      onChange(newValue);
+      onChange(limitedValue);
     }
   };
 
@@ -66,9 +71,11 @@ export function BetSlider({
     } else {
       newValue = Math.min(maxBet, minBet * multiplier);
     }
-    setValue(newValue);
+    // Дополнительная проверка на баланс пользователя
+    const limitedValue = Math.min(newValue, maxBet);
+    setValue(limitedValue);
     if (onChange) {
-      onChange(newValue);
+      onChange(limitedValue);
     }
   };
 
@@ -87,8 +94,7 @@ export function BetSlider({
         className="absolute z-50"
         style={{ 
           top: 'calc(75vh - 60px)', 
-          right: '7.5%', // 100% - 85% = 15%, делим пополам = 7.5%
-          transform: 'translateX(50%)'
+          right: '20px',
         }}
       >
         <img src={closeIcon} alt="Close" className="w-6 h-6" />
@@ -97,18 +103,16 @@ export function BetSlider({
       {/* Bottom Sheet Panel */}
       <div
         className={`w-full transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ height: 'calc(25vh + 20px)', paddingBottom: '20px' }}
+        style={{ height: '25vh' }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
       >
-        {/* BetSlider Container - 85% ширины, border-radius 20px */}
+        {/* BetSlider Container - во всю ширину экрана */}
         <div
-          className="relative mx-auto"
+          className="relative w-full h-full"
           style={{
-            width: '85%',
-            height: '100%',
             background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)',
             boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
-            borderRadius: '20px',
+            borderRadius: '20px 20px 0 0', // Скругление только сверху
           }}
         >
           {/* Inner background */}
@@ -148,8 +152,11 @@ export function BetSlider({
               {/* Кнопка "Повысить" */}
               <button
                 onClick={() => onConfirm(value)}
-                className="w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs"
-                style={{ backgroundColor: '#56BF00' }}
+                className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs ${
+                  value > maxBet ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                style={{ backgroundColor: value > maxBet ? '#666' : '#56BF00' }}
+                disabled={value > maxBet}
               >
                 Повысить
               </button>
@@ -157,22 +164,31 @@ export function BetSlider({
 
             {/* Множители */}
             <div className="grid grid-cols-4 gap-2 mb-4 justify-items-center">
-              {multipliers.map((mult, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleMultiplier(mult.value)}
-                  className="font-medium text-xs leading-none transition flex items-center justify-center"
-                  style={{
-                    width: '27px',
-                    height: '19px',
-                    borderRadius: '4px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    color: '#C9C6CE'
-                  }}
-                >
-                  {mult.label}
-                </button>
-              ))}
+              {multipliers.map((mult, index) => {
+                // Проверяем, не превышает ли множитель баланс
+                const multiplierValue = mult.value === 'max' ? maxBet : minBet * (mult.value as number);
+                const isDisabled = multiplierValue > maxBet;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleMultiplier(mult.value)}
+                    className={`font-medium text-xs leading-none transition flex items-center justify-center ${
+                      isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    style={{
+                      width: '27px',
+                      height: '19px',
+                      borderRadius: '4px',
+                      backgroundColor: isDisabled ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.06)',
+                      color: isDisabled ? '#666' : '#C9C6CE'
+                    }}
+                    disabled={isDisabled}
+                  >
+                    {mult.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Слайдер */}

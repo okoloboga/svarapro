@@ -88,53 +88,70 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для добавления анимации фишки от игрока к столу
   const handlePlayerBet = (playerId: string) => {
-    // Проверяем, идет ли анимация
-    if (gameState?.isAnimating) {
-      // Находим позицию игрока на экране
-      const player = gameState?.players.find(p => p.id === playerId);
-      if (!player) return;
-      
-      const position = player.position;
-      
-      // Вычисляем координаты аватарки игрока относительно центра стола
-      let playerX = 0;
-      let playerY = 0;
-      
-      // Координаты относительно центра стола (315x493 - размер стола)
-      const tableWidth = 315 * scale;
-      const tableHeight = 493 * scale;
-      
-      switch (position) {
-        case 1: // верх
-          playerX = 0;
-          playerY = -tableHeight / 2 - 50;
-          break;
-        case 2: // верх-право
-          playerX = tableWidth / 2 + 50;
-          playerY = -tableHeight / 4;
-          break;
-        case 3: // низ-право
-          playerX = tableWidth / 2 + 50;
-          playerY = tableHeight / 4;
-          break;
-        case 4: // низ
-          playerX = 0;
-          playerY = tableHeight / 2 + 50;
-          break;
-        case 5: // низ-лево
-          playerX = -tableWidth / 2 - 50;
-          playerY = tableHeight / 4;
-          break;
-        case 6: // верх-лево
-          playerX = -tableWidth / 2 - 50;
-          playerY = -tableHeight / 4;
-          break;
-      }
-      
-      const chipId = `chip-${Date.now()}-${Math.random()}`;
-      const toX = 0; // центр стола
-      const toY = 30; // под банком
-      
+    // Находим позицию игрока на экране
+    const player = gameState?.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Получаем абсолютную позицию игрока
+    const absolutePosition = player.position;
+    
+    // Преобразуем в относительную позицию для текущего игрока
+    const relativePosition = getScreenPosition(absolutePosition);
+    
+    // Вычисляем координаты аватарки игрока относительно центра стола
+    let playerX = 0;
+    let playerY = 0;
+    
+    // Координаты относительно центра стола (315x493 - размер стола)
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    
+    // Вычисляем координаты относительно текущего игрока
+    switch (relativePosition) {
+      case 1: // верх
+        playerX = 0;
+        playerY = -tableHeight / 2 - 50;
+        break;
+      case 2: // верх-право
+        playerX = tableWidth / 2 + 50;
+        playerY = -tableHeight / 4;
+        break;
+      case 3: // низ-право
+        playerX = tableWidth / 2 + 50;
+        playerY = tableHeight / 4;
+        break;
+      case 4: // низ
+        playerX = 0;
+        playerY = tableHeight / 2 + 50;
+        break;
+      case 5: // низ-лево
+        playerX = -tableWidth / 2 - 50;
+        playerY = tableHeight / 4;
+        break;
+      case 6: // верх-лево
+        playerX = -tableWidth / 2 - 50;
+        playerY = -tableHeight / 4;
+        break;
+    }
+    
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    const toX = 0; // центр стола (ChipsStack)
+    const toY = 30; // ChipsStack marginTop
+    
+    console.log('🎯 Player bet animation:', {
+      playerId,
+      playerUsername: player.username,
+      absolutePosition,
+      relativePosition,
+      fromX: playerX,
+      fromY: playerY,
+      toX,
+      toY
+    });
+    
+    // Проверяем, нет ли уже анимации для этого игрока
+    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
+    if (!existingAnimation) {
       setChipAnimations(prev => [...prev, {
         id: chipId,
         fromX: playerX,
@@ -143,6 +160,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         toY,
         delay: 0
       }]);
+    } else {
+      console.log('⚠️ Skipping duplicate animation for player:', player.username);
     }
   };
 
@@ -181,8 +200,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }> = [];
     for (let i = 0; i < chipCount; i++) {
       const chipId = `winner-chip-${Date.now()}-${i}`;
-      const fromX = 0; // центр стола
-      const fromY = 30; // под банком
+      const fromX = 0; // центр стола (ChipsStack)
+      const fromY = 30; // ChipsStack marginTop
       
       chips.push({
         id: chipId,
@@ -195,7 +214,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     
     setChipAnimations(prev => [...prev, ...chips]);
-  }, [gameState?.players]);
+  }, [gameState?.log]);
 
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
@@ -235,7 +254,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       });
       // Находим позицию победителя для анимации
       const winner = gameState.winners[0]; // берем первого победителя
-      const position = winner.position;
+      
+      // Получаем абсолютную позицию победителя
+      const absolutePosition = winner.position;
+      
+      // Преобразуем в относительную позицию для текущего игрока
+      const relativePosition = getScreenPosition(absolutePosition);
       
       // Вычисляем координаты аватарки победителя
       let winnerX = 0;
@@ -244,7 +268,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const tableWidth = 315 * scale;
       const tableHeight = 493 * scale;
       
-      switch (position) {
+      // Вычисляем координаты относительно текущего игрока
+      switch (relativePosition) {
         case 1: // верх
           winnerX = 0;
           winnerY = -tableHeight / 2 - 50;
@@ -287,7 +312,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       });
       handleChipsToWinner(winnerX, winnerY);
     }
-  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, scale, handleChipsToWinner]);
+  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, scale, handleChipsToWinner]);
 
   useEffect(() => {
     if (socket) {
@@ -462,6 +487,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             gameStatus={gameState.status}
                             isAnimating={gameState.isAnimating}
                             onPlayerBet={handlePlayerBet}
+                            gameState={gameState}
                           />;
                         }
                         return <PlayerSpot 
@@ -476,6 +502,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           gameStatus={gameState.status}
                           isAnimating={gameState.isAnimating}
                           onPlayerBet={handlePlayerBet}
+                          gameState={gameState}
                         />;
                       })()
                     ) : (

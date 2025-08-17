@@ -35,7 +35,7 @@ export class BettingService {
           player.balance -= minBet;
           player.tableBalance += minBet;
           player.totalBet += minBet;
-          updatedGameState.pot += minBet;
+          updatedGameState.pot = Number((updatedGameState.pot + minBet).toFixed(2));
 
           // Добавляем действие в лог
           const action: GameAction = {
@@ -103,11 +103,11 @@ export class BettingService {
     const actions: GameAction[] = [];
 
     // Вычисляем комиссию (5% от банка)
-    const rake = Math.floor(updatedGameState.pot * 0.05);
-    const winAmount = updatedGameState.pot - rake;
+    const rake = Number((updatedGameState.pot * 0.05).toFixed(2));
+    const winAmount = Number((updatedGameState.pot - rake).toFixed(2));
 
     // Если есть несколько победителей, делим выигрыш поровну
-    const winPerPlayer = Math.floor(winAmount / winnerIds.length);
+    const winPerPlayer = Number((winAmount / winnerIds.length).toFixed(2));
 
     for (const winnerId of winnerIds) {
       const winner = updatedGameState.players.find((p) => p.id === winnerId);
@@ -129,7 +129,7 @@ export class BettingService {
 
     // Устанавливаем комиссию и обнуляем банк
     updatedGameState.rake = rake;
-    updatedGameState.pot = 0;
+    updatedGameState.pot = 0.00;
 
     // Добавляем действие о комиссии в лог
     if (rake > 0) {
