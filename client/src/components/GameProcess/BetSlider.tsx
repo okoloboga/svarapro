@@ -93,11 +93,11 @@ export function BetSlider({
         onClick={onClose} 
         className="absolute z-50"
         style={{ 
-          top: 'calc(75vh - 60px)', 
+          top: 'calc(75vh - 40px)', 
           right: '20px',
         }}
       >
-        <img src={closeIcon} alt="Close" className="w-6 h-6" />
+        <img src={closeIcon} alt="Close" style={{ width: '19px', height: '19px' }} />
       </button>
 
       {/* Bottom Sheet Panel */}
@@ -129,7 +129,7 @@ export function BetSlider({
           {/* Content - без отдельного контейнера */}
           <div className="relative z-10 p-4 h-full flex flex-col justify-around">
             {/* Верхняя часть с индикатором и кнопкой */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 w-[85%] mx-auto">
               {/* Индикатор Ставки */}
               <div className="w-[96px] bg-[#807C7C] h-[5px] rounded-full overflow-hidden">
                 <div 
@@ -163,7 +163,7 @@ export function BetSlider({
             </div>
 
             {/* Множители */}
-            <div className="grid grid-cols-4 gap-2 mb-4 justify-items-center">
+            <div className="grid grid-cols-4 gap-2 mb-4 justify-items-center w-[85%] mx-auto">
               {multipliers.map((mult, index) => {
                 // Проверяем, не превышает ли множитель баланс
                 const multiplierValue = mult.value === 'max' ? maxBet : minBet * (mult.value as number);

@@ -95,10 +95,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Получаем абсолютную позицию игрока
     const absolutePosition = player.position;
     
-    // Преобразуем в относительную позицию для текущего игрока
-    const relativePosition = getScreenPosition(absolutePosition);
+    // Проверяем, является ли это текущим игроком
+    const isCurrentPlayer = player.id === currentUserId;
     
-    // Вычисляем координаты аватарки игрока относительно центра стола
+    // Для текущего игрока используем его реальную позицию на экране
+    // Для других игроков используем относительную позицию
+    const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
+    
+    // Вычисляем координаты аватарки игрока относительно левого верхнего угла GameTable
     let playerX = 0;
     let playerY = 0;
     
@@ -109,38 +113,40 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Вычисляем координаты относительно текущего игрока
     switch (relativePosition) {
       case 1: // верх
-        playerX = 0;
-        playerY = -tableHeight / 2 - 50;
+        playerX = tableWidth / 2;
+        playerY = -50;
         break;
       case 2: // верх-право
-        playerX = tableWidth / 2 + 50;
-        playerY = -tableHeight / 4;
+        playerX = tableWidth + 50;
+        playerY = tableHeight / 4;
         break;
       case 3: // низ-право
-        playerX = tableWidth / 2 + 50;
-        playerY = tableHeight / 4;
+        playerX = tableWidth + 50;
+        playerY = tableHeight * 3 / 4;
         break;
       case 4: // низ
-        playerX = 0;
-        playerY = tableHeight / 2 + 50;
+        playerX = tableWidth / 2;
+        playerY = tableHeight + 50;
         break;
       case 5: // низ-лево
-        playerX = -tableWidth / 2 - 50;
-        playerY = tableHeight / 4;
+        playerX = -50;
+        playerY = tableHeight * 3 / 4;
         break;
       case 6: // верх-лево
-        playerX = -tableWidth / 2 - 50;
-        playerY = -tableHeight / 4;
+        playerX = -50;
+        playerY = tableHeight / 4;
         break;
     }
     
     const chipId = `chip-${Date.now()}-${Math.random()}`;
-    const toX = 0; // центр стола (ChipsStack)
-    const toY = 30; // ChipsStack marginTop
+    // Координаты центра стола (ChipsStack позиционируется с marginTop: 30px от центра)
+    const toX = (315 * scale) / 2; // центр стола по X
+    const toY = (493 * scale) / 2 + 30; // центр стола по Y + marginTop от ChipsStack
     
     console.log('🎯 Player bet animation:', {
       playerId,
       playerUsername: player.username,
+      isCurrentPlayer,
       absolutePosition,
       relativePosition,
       fromX: playerX,
@@ -243,6 +249,26 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Отслеживание победы игрока для анимации фишек
   useEffect(() => {
+    // Отладочный лог для всего gameState при статусе finished
+    if (gameState?.status === 'finished') {
+      console.log('🏆 GameState Debug (finished):', {
+        status: gameState.status,
+        winners: gameState.winners,
+        winnersLength: gameState.winners?.length || 0,
+        pot: gameState.pot,
+        isAnimating: gameState.isAnimating,
+        animationType: gameState.animationType,
+        showWinnerAnimation: gameState.showWinnerAnimation,
+        players: gameState.players.map(p => ({
+          id: p.id,
+          username: p.username,
+          score: p.score,
+          isActive: p.isActive,
+          hasFolded: p.hasFolded
+        }))
+      });
+    }
+    
     if (gameState?.status === 'finished' && 
         gameState.winners && 
         gameState.winners.length > 0 && 
@@ -522,15 +548,28 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const winAmount = isWinner ? gameState.pot / gameState.winners.length : 0;
                         
                         // Отладочный лог для проверки данных о победителе
-                        console.log('🎯 GameRoom Winner Debug:', {
-                          playerId: player.id,
-                          playerUsername: player.username,
-                          gameStateWinners: gameState.winners,
-                          gameStatePot: gameState.pot,
-                          isWinner,
-                          winAmount,
-                          gameStatus: gameState.status
-                        });
+                        if (gameState.status === 'finished') {
+                          console.log('🎯 GameRoom Winner Debug:', {
+                            playerId: player.id,
+                            playerUsername: player.username,
+                            gameStateWinners: gameState.winners,
+                            gameStateWinnersLength: gameState.winners?.length || 0,
+                            gameStatePot: gameState.pot,
+                            isWinner,
+                            winAmount,
+                            gameStatus: gameState.status,
+                            playerScore: player.score,
+                            playerIsActive: player.isActive,
+                            playerHasFolded: player.hasFolded,
+                            allPlayers: gameState.players.map(p => ({
+                              id: p.id,
+                              username: p.username,
+                              score: p.score,
+                              isActive: p.isActive,
+                              hasFolded: p.hasFolded
+                            }))
+                          });
+                        }
                         
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };

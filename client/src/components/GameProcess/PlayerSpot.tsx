@@ -43,16 +43,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     const lastAction = playerActions[0];
     const amount = lastAction.amount || 0;
     
-    // Отладочный лог для функции getLastActionAmount
-    console.log('🔍 getLastActionAmount Debug:', {
-      playerId: player.id,
-      username: player.username,
-      gameStateLogLength: gameState.log.length,
-      playerActionsLength: playerActions.length,
-      lastAction,
-      amount
-    });
-    
     return amount;
   };
 
@@ -346,18 +336,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
         {(() => {
           const lastActionAmount = getLastActionAmount();
-          const shouldShow = lastActionAmount > 0 && !hasFolded;
-          
-          // Отладочный лог для проверки отображения суммы последнего действия
-          console.log('💰 Last Action Amount Debug:', {
-            playerId: player.id,
-            username: player.username,
-            isCurrentUser,
-            lastActionAmount,
-            hasFolded,
-            shouldShow,
-            gameStateLog: gameState?.log?.length || 0
-          });
+          const shouldShow = lastActionAmount > 0 && !hasFolded && !isCurrentUser;
           
           return shouldShow ? (
             <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
