@@ -49,7 +49,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     if (isTurn && isCurrentUser && !isAnimating) {
       setProgress(100);
       const startTime = Date.now();
-      const duration = 10000; // 10 seconds
+      const duration = 20000; // 20 seconds
 
       const interval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
