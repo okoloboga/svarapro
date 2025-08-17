@@ -196,18 +196,47 @@ export class GameStateService {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
+    console.log('🎴 Starting dealCardsToPlayers:', {
+      totalPlayers: updatedGameState.players.length,
+      activePlayers: updatedGameState.players.filter(p => p.isActive).length,
+      deckSize: updatedGameState.deck.length,
+      roomId: updatedGameState.roomId,
+      status: updatedGameState.status
+    });
+
     // Раздаем по 3 карты каждому активному игроку
     for (let i = 0; i < updatedGameState.players.length; i++) {
-      if (updatedGameState.players[i].isActive) {
+      const player = updatedGameState.players[i];
+      console.log(`🎴 Processing player ${i}:`, {
+        playerId: player.id,
+        username: player.username,
+        isActive: player.isActive,
+        position: player.position,
+        currentCards: player.cards.length
+      });
+      
+      if (player.isActive) {
         const { cards, remainingDeck } = this.cardService.dealCards(
           updatedGameState.deck,
           3,
         );
+        
+        console.log(`🎴 Dealt cards to player ${player.username}:`, {
+          cardsCount: cards.length,
+          cards: cards.map(c => `${c.rank}${c.suit}`),
+          remainingDeckSize: remainingDeck.length
+        });
+        
         updatedGameState.players[i] = this.playerService.addCardsToPlayer(
-          updatedGameState.players[i],
+          player,
           cards,
         );
         updatedGameState.deck = remainingDeck;
+        
+        console.log(`🎴 After adding cards to ${player.username}:`, {
+          finalCardsCount: updatedGameState.players[i].cards.length,
+          finalCards: updatedGameState.players[i].cards.map(c => `${c.rank}${c.suit}`)
+        });
       }
     }
 

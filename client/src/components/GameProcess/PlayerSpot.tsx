@@ -26,7 +26,8 @@ interface PlayerSpotProps {
       timestamp: number;
       type?: string;
     }>;
-    winners?: any[]; // Используем any[] для совместимости с GameState
+    winners?: Array<{ id: string; username?: string; position?: number }>; // Типизируем winners
+    status?: string; // Добавляем status для определения фазы игры
   }; // Добавляем gameState для доступа к логу действий
 }
 
@@ -41,7 +42,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const getLastActionAmount = () => {
     if (!gameState?.log) return 0;
     
-    // Находим последнее действие этого игрока
+    // В фазе betting показываем сумму для call
+    if (gameState.status === 'betting') {
+      // Находим последнее действие любого игрока (не только текущего)
+      const allActions = gameState.log
+        .filter(action => action.type === 'call' || action.type === 'raise' || action.type === 'blind_bet')
+        .sort((a, b) => b.timestamp - a.timestamp);
+      
+      if (allActions.length > 0) {
+        const lastAction = allActions[0];
+        return lastAction.amount || 0;
+      }
+    }
+    
+    // Для других фаз показываем последнее действие этого игрока
     const playerActions = gameState.log
       .filter((action) => action.telegramId === player.id)
       .sort((a, b) => b.timestamp - a.timestamp);
@@ -101,31 +115,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   useEffect(() => {
     const shouldShowAnimation = isWinner && winAmount > 0 && (gameStatus === 'finished' || gameStatus === 'ante');
     
-    console.log('🎯 Win Animation Debug:', {
-      playerId: player.id,
-      username: player.username,
-      isWinner,
-      winAmount,
-      gameStatus,
-      shouldShowAnimation,
-      showWinAnimation,
-      // Дополнительная отладка
-      isWinnerType: typeof isWinner,
-      winAmountType: typeof winAmount,
-      gameStatusType: typeof gameStatus,
-      // Добавляем информацию о winners из gameState
-      gameStateWinners: gameState?.winners,
-      gameStateWinnersLength: gameState?.winners?.length || 0,
-      winActions: gameState?.log?.filter(action => action.type === 'win') || []
-    });
-    
     if (shouldShowAnimation) {
-      console.log('🎉 Starting win animation for player:', player.username, 'Amount:', winAmount);
       setShowWinAnimation(true);
       
       // Hide animation after 3 seconds with fade out
       const timer = setTimeout(() => {
-        console.log('⏰ Hiding win animation for player:', player.username);
         setShowWinAnimation(false);
       }, 3000);
       
@@ -291,11 +285,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                   </div>
                 </div>
                 
-                {/* Dealer Icon - позиционируется относительно блока с именем и балансом */}
+                {/* Dealer Icon - позиционируется слева или справа от блока с именем и балансом */}
                 {DealerIcon && (
                   <div className="absolute" style={{ 
-                    top: `${-5 * scale}px`, 
-                    [cardSide === 'left' ? 'right' : 'left']: `${-5 * scale}px`,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    [cardSide === 'left' ? 'right' : 'left']: `${-20 * scale}px`,
                     zIndex: 25
                   }}>
                     {DealerIcon}

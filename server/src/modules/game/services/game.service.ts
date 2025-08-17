@@ -222,7 +222,21 @@ export class GameService {
 
   async startAntePhase(roomId: string): Promise<void> {
     let gameState = await this.redisService.getGameState(roomId);
-    if (!gameState || gameState.status !== 'ante') return;
+    if (!gameState || gameState.status !== 'ante') {
+      console.log('🚫 startAntePhase skipped:', {
+        roomId,
+        hasGameState: !!gameState,
+        status: gameState?.status
+      });
+      return;
+    }
+    
+    console.log('🎯 startAntePhase started:', {
+      roomId,
+      status: gameState.status,
+      playersCount: gameState.players.length,
+      activePlayersCount: gameState.players.filter(p => p.isActive).length
+    });
 
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,
@@ -530,7 +544,8 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        const callAmount = Number((gameState.currentBet - player.currentBet).toFixed(2));
+        // Используем lastActionAmount для корректного расчета call
+        const callAmount = Number((gameState.lastActionAmount - player.currentBet).toFixed(2));
         if (callAmount <= 0) {
           return { success: false, error: 'Сумма уравнивания должна быть больше 0' };
         }
@@ -541,7 +556,7 @@ export class GameService {
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-        gameState.lastActionAmount = callAmount; // Сохраняем сумму последнего действия
+        gameState.lastActionAmount = gameState.lastActionAmount; // Сохраняем сумму последнего действия
         gameState.log.push(callAction);
         break;
       }

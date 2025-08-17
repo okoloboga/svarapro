@@ -57,7 +57,7 @@ const GameTable: React.FC<GameTableProps> = ({
   };
   
   const currentRoundActions = getCurrentRoundActions();
-  const totalChips = currentRoundActions.filter((action: any) => 
+  const totalChips = currentRoundActions.filter((action: { type?: string }) => 
     action.type === 'ante' || 
     action.type === 'blind_bet' || 
     action.type === 'call' || 

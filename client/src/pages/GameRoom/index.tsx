@@ -264,7 +264,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       });
       // Анимация фишек к победителю временно отключена
     }
-  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, scale, handleChipsToWinner]);
+  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, gameState?.showWinnerAnimation, scale, handleChipsToWinner]);
 
   // Дополнительная логика для очистки фишек после завершения раунда
   useEffect(() => {
@@ -335,6 +335,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const callAmount = gameState.status === 'betting' 
     ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
     : gameState.currentBet - (currentPlayer?.currentBet || 0);
+    
+  // Отладочный лог для callAmount
+  if (gameState.status === 'betting') {
+    console.log('🎯 Call Amount Debug:', {
+      status: gameState.status,
+      lastActionAmount: gameState.lastActionAmount,
+      currentBet: gameState.currentBet,
+      currentPlayerBet: currentPlayer?.currentBet || 0,
+      calculatedCallAmount: callAmount,
+      currentPlayerId: currentPlayer?.id,
+      currentPlayerUsername: currentPlayer?.username
+    });
+  }
   const minRaiseAmount = gameState.currentBet * 2; // Минимальный raise = 2x от текущей ставки
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
@@ -454,29 +467,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
                         const winAmount = winAction ? winAction.amount : 0;
                         
-                        // Отладочный лог для проверки данных о победителе
-                        if (gameState.status === 'finished') {
-                          console.log('🎯 GameRoom Winner Debug:', {
-                            playerId: player.id,
-                            playerUsername: player.username,
-                            gameStateWinners: gameState.winners,
-                            gameStateWinnersLength: gameState.winners?.length || 0,
-                            gameStatePot: gameState.pot,
-                            isWinner,
-                            winAmount,
-                            gameStatus: gameState.status,
-                            playerScore: player.score,
-                            playerIsActive: player.isActive,
-                            playerHasFolded: player.hasFolded,
-                            allPlayers: gameState.players.map(p => ({
-                              id: p.id,
-                              username: p.username,
-                              score: p.score,
-                              isActive: p.isActive,
-                              hasFolded: p.hasFolded
-                            }))
-                          });
-                        }
+
                         
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
