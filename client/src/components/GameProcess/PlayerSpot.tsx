@@ -28,6 +28,8 @@ interface PlayerSpotProps {
     }>;
     winners?: Array<{ id: string; username?: string; position?: number }>; // Типизируем winners
     status?: string; // Добавляем status для определения фазы игры
+    lastActionAmount?: number; // Добавляем lastActionAmount для корректного расчета call
+    currentBet?: number; // Добавляем currentBet для расчета разности ставок
   }; // Добавляем gameState для доступа к логу действий
 }
 
@@ -42,17 +44,17 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const getLastActionAmount = () => {
     if (!gameState?.log) return 0;
     
-    // В фазе betting показываем сумму для call
+    // В фазе betting используем ту же логику, что и в GameRoom
     if (gameState.status === 'betting') {
-      // Находим последнее действие любого игрока (не только текущего)
-      const allActions = gameState.log
-        .filter(action => action.type === 'call' || action.type === 'raise' || action.type === 'blind_bet')
-        .sort((a, b) => b.timestamp - a.timestamp);
-      
-      if (allActions.length > 0) {
-        const lastAction = allActions[0];
-        return lastAction.amount || 0;
+      // Используем lastActionAmount из gameState, если он есть
+      if (gameState.lastActionAmount && gameState.lastActionAmount > 0) {
+        return gameState.lastActionAmount;
       }
+      
+      // Иначе вычисляем как разность между currentBet и currentBet игрока
+      const currentPlayerBet = player.currentBet || 0;
+      const gameStateCurrentBet = gameState.currentBet || 0;
+      return Math.max(0, gameStateCurrentBet - currentPlayerBet);
     }
     
     // Для других фаз показываем последнее действие этого игрока
@@ -290,7 +292,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                   <div className="absolute" style={{ 
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    [cardSide === 'left' ? 'right' : 'left']: `${-20 * scale}px`,
+                    [cardSide === 'left' ? 'left' : 'right']: `${-20 * scale}px`,
                     zIndex: 25
                   }}>
                     {DealerIcon}

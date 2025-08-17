@@ -336,18 +336,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
     : gameState.currentBet - (currentPlayer?.currentBet || 0);
     
-  // Отладочный лог для callAmount
-  if (gameState.status === 'betting') {
-    console.log('🎯 Call Amount Debug:', {
-      status: gameState.status,
-      lastActionAmount: gameState.lastActionAmount,
-      currentBet: gameState.currentBet,
-      currentPlayerBet: currentPlayer?.currentBet || 0,
-      calculatedCallAmount: callAmount,
-      currentPlayerId: currentPlayer?.id,
-      currentPlayerUsername: currentPlayer?.username
-    });
-  }
+
   const minRaiseAmount = gameState.currentBet * 2; // Минимальный raise = 2x от текущей ставки
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
