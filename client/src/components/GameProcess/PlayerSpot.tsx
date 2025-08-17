@@ -19,7 +19,15 @@ interface PlayerSpotProps {
   gameStatus?: string;
   isAnimating?: boolean;
   onPlayerBet?: (playerId: string) => void;
-  gameState?: { log: Array<{ telegramId: string; amount?: number; timestamp: number }> }; // Добавляем gameState для доступа к логу действий
+  gameState?: { 
+    log: Array<{ 
+      telegramId: string; 
+      amount?: number; 
+      timestamp: number;
+      type?: string;
+    }>;
+    winners?: any[]; // Используем any[] для совместимости с GameState
+  }; // Добавляем gameState для доступа к логу действий
 }
 
 export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
@@ -91,7 +99,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   // Win animation logic
   useEffect(() => {
-    const shouldShowAnimation = isWinner && winAmount > 0 && gameStatus === 'finished';
+    const shouldShowAnimation = isWinner && winAmount > 0 && (gameStatus === 'finished' || gameStatus === 'ante');
     
     console.log('🎯 Win Animation Debug:', {
       playerId: player.id,
@@ -104,7 +112,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       // Дополнительная отладка
       isWinnerType: typeof isWinner,
       winAmountType: typeof winAmount,
-      gameStatusType: typeof gameStatus
+      gameStatusType: typeof gameStatus,
+      // Добавляем информацию о winners из gameState
+      gameStateWinners: gameState?.winners,
+      gameStateWinnersLength: gameState?.winners?.length || 0,
+      winActions: gameState?.log?.filter(action => action.type === 'win') || []
     });
     
     if (shouldShowAnimation) {
@@ -125,12 +137,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
-    if (player.totalBet > lastTotalBet && onPlayerBet) {
-      console.log('🎰 Triggering chip animation for player:', player.username, 'Bet increase:', lastTotalBet, '->', player.totalBet, 'isAnimating:', isAnimating);
-      onPlayerBet(player.id);
-    }
+    // Временно отключена анимация полета фишек
+    // if (player.totalBet > lastTotalBet && onPlayerBet) {
+    //   onPlayerBet(player.id);
+    // }
     setLastTotalBet(player.totalBet);
-  }, [player.totalBet, lastTotalBet, player.id, player.username, onPlayerBet]);
+  }, [player.totalBet, lastTotalBet, player.id, onPlayerBet]);
 
   const baseAvatarSize = 71;
   const baseNameWidth = 70;
@@ -207,7 +219,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }} />
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }} />
       </div>
-      {DealerIcon}
     </div>
   );
 
@@ -264,6 +275,8 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
               {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
             </div>
+            
+
           </div>
           <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
             <div className="flex flex-col items-center">
@@ -277,6 +290,17 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                     ${Number(balance).toFixed(2)}
                   </div>
                 </div>
+                
+                {/* Dealer Icon - позиционируется относительно блока с именем и балансом */}
+                {DealerIcon && (
+                  <div className="absolute" style={{ 
+                    top: `${-5 * scale}px`, 
+                    [cardSide === 'left' ? 'right' : 'left']: `${-5 * scale}px`,
+                    zIndex: 25
+                  }}>
+                    {DealerIcon}
+                  </div>
+                )}
               </div>
               {isTurn && isCurrentUser && (
                 <div className="absolute" style={{ bottom: '-10px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '5px', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: '3px', overflow: 'hidden' }}>

@@ -132,6 +132,9 @@ export class BettingService {
     // Устанавливаем комиссию и обнуляем банк
     updatedGameState.rake = rake;
     updatedGameState.pot = 0.00;
+    
+    // Устанавливаем победителей для анимации
+    updatedGameState.winners = winnerIds;
 
     // Добавляем действие о комиссии в лог
     if (rake > 0) {

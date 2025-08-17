@@ -21,12 +21,13 @@ export function ActionNotification({ action, visible }: ActionNotificationProps)
 
   return (
     <div 
-      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 mb-2 z-30 flex items-center justify-center"
+      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center"
       style={{ 
         width: '62px',
         height: '18px',
         borderRadius: '4px',
         backgroundColor: config.color,
+        bottom: '5px', // Смещаем на 5px ближе к блоку ниже
       }}
     >
       <span className="text-white text-[10px] font-extrabold leading-none text-center">{config.text}</span>

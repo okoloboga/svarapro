@@ -782,6 +782,8 @@ export class GameService {
     gameState.animationType = undefined;
     gameState.showWinnerAnimation = false;
     gameState.pot = 0.00; // Обнуляем банк после анимации
+    // Сохраняем победителей для клиента
+    gameState.winners = [winnerId];
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 

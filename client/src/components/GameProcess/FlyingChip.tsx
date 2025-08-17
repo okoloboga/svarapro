@@ -17,16 +17,7 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
   const startTimeRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    console.log('🚀 FlyingChip animation started:', {
-      fromX,
-      fromY,
-      toX,
-      toY,
-      delay
-    });
-    
     const timer = setTimeout(() => {
-      console.log('🎬 FlyingChip animation triggered');
       setIsAnimating(true);
       startTimeRef.current = Date.now();
       
@@ -48,7 +39,6 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
-          console.log('✅ FlyingChip animation completed');
           onComplete();
         }
       };

@@ -143,32 +143,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const toX = (315 * scale) / 2; // центр стола по X
     const toY = (493 * scale) / 2 + 30; // центр стола по Y + marginTop от ChipsStack
     
-    console.log('🎯 Player bet animation:', {
-      playerId,
-      playerUsername: player.username,
-      isCurrentPlayer,
-      absolutePosition,
-      relativePosition,
-      fromX: playerX,
-      fromY: playerY,
-      toX,
-      toY
-    });
+
     
     // Проверяем, нет ли уже анимации для этого игрока
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (!existingAnimation) {
-      console.log('🎯 Creating chip animation:', {
-        chipId,
-        playerId,
-        playerUsername: player.username,
-        fromX: playerX,
-        fromY: playerY,
-        toX,
-        toY,
-        currentAnimationsCount: chipAnimations.length
-      });
-      
       setChipAnimations(prev => {
         const newAnimations = [...prev, {
           id: chipId,
@@ -178,11 +157,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           toY,
           delay: 0
         }];
-        console.log('📊 Updated chipAnimations:', newAnimations.length);
         return newAnimations;
       });
-    } else {
-      console.log('⚠️ Skipping duplicate animation for player:', player.username);
     }
   };
 
@@ -198,17 +174,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       action.type === 'raise'
     ).length || 0;
     
-    console.log('🎰 Creating chips animation:', {
-      chipCount,
-      winnerX,
-      winnerY,
-      actions: gameState?.log.filter(action => 
-        action.type === 'ante' || 
-        action.type === 'blind_bet' || 
-        action.type === 'call' || 
-        action.type === 'raise'
-      ).map(a => ({ type: a.type, amount: a.amount }))
-    });
+
     
     // Создаем анимации для каждой фишки
     const chips: Array<{
@@ -239,10 +205,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
-    console.log('🎯 Chip animation completed:', chipId);
     setChipAnimations(prev => {
       const filtered = prev.filter(chip => chip.id !== chipId);
-      console.log('🗑️ Removed chip animation, remaining:', filtered.length);
       return filtered;
     });
   };
@@ -298,72 +262,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           isActive: player.isActive
         }))
       });
-      // Находим позицию победителя для анимации
-      const winner = gameState.winners[0]; // берем первого победителя
-      
-      // Получаем абсолютную позицию победителя
-      const absolutePosition = winner.position;
-      
-      // Преобразуем в относительную позицию для текущего игрока
-      const relativePosition = getScreenPosition(absolutePosition);
-      
-      // Вычисляем координаты аватарки победителя
-      let winnerX = 0;
-      let winnerY = 0;
-      
-      const tableWidth = 315 * scale;
-      const tableHeight = 493 * scale;
-      
-      // Вычисляем координаты относительно текущего игрока
-      switch (relativePosition) {
-        case 1: // верх
-          winnerX = 0;
-          winnerY = -tableHeight / 2 - 50;
-          break;
-        case 2: // верх-право
-          winnerX = tableWidth / 2 + 50;
-          winnerY = -tableHeight / 4;
-          break;
-        case 3: // низ-право
-          winnerX = tableWidth / 2 + 50;
-          winnerY = tableHeight / 4;
-          break;
-        case 4: // низ
-          winnerX = 0;
-          winnerY = tableHeight / 2 + 50;
-          break;
-        case 5: // низ-лево
-          winnerX = -tableWidth / 2 - 50;
-          winnerY = tableHeight / 4;
-          break;
-        case 6: // верх-лево
-          winnerX = -tableWidth / 2 - 50;
-          winnerY = -tableHeight / 4;
-          break;
-      }
-      
-      // Запускаем анимацию фишек к победителю
-      console.log('🎯 Starting chips animation to winner:', {
-        winnerId: winner.id,
-        winnerUsername: winner.username,
-        winnerPosition: winner.position,
-        winnerX,
-        winnerY,
-        chipCount: gameState?.log.filter(action => 
-          action.type === 'ante' || 
-          action.type === 'blind_bet' || 
-          action.type === 'call' || 
-          action.type === 'raise'
-        ).length || 0
-      });
-      handleChipsToWinner(winnerX, winnerY);
+      // Анимация фишек к победителю временно отключена
     }
   }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, scale, handleChipsToWinner]);
 
   // Дополнительная логика для очистки фишек после завершения раунда
   useEffect(() => {
     if (gameState?.status === 'finished' && gameState?.pot === 0) {
-      console.log('🧹 Clearing chips after round end - pot is 0');
       // Очищаем все анимации фишек
       setChipAnimations([]);
     }
@@ -545,7 +450,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = gameState.winners && gameState.winners.some(winner => winner.id === player.id);
-                        const winAmount = isWinner ? gameState.pot / gameState.winners.length : 0;
+                        // Вычисляем сумму выигрыша из лога действий
+                        const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
+                        const winAmount = winAction ? winAction.amount : 0;
                         
                         // Отладочный лог для проверки данных о победителе
                         if (gameState.status === 'finished') {
