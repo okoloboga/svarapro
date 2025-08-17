@@ -34,7 +34,30 @@ const GameTable: React.FC<GameTableProps> = ({
   const baseHeight = 493;
   
   // Подсчет общего количества фишек (каждая ставка = 1 фишка)
-  const totalChips = gameState.log.filter(action => 
+  // Фильтруем только действия текущего раунда
+  // Используем gameState.round для определения текущего раунда
+  const getCurrentRoundActions = () => {
+    const actions = gameState.log;
+    // Ищем последний 'win' action, который означает конец раунда
+    let lastWinIndex = -1;
+    for (let i = actions.length - 1; i >= 0; i--) {
+      if (actions[i].type === 'win') {
+        lastWinIndex = i;
+        break;
+      }
+    }
+    
+    if (lastWinIndex === -1) {
+      // Если нет 'win', берем все действия
+      return actions;
+    } else {
+      // Берем действия после последнего 'win'
+      return actions.slice(lastWinIndex + 1);
+    }
+  };
+  
+  const currentRoundActions = getCurrentRoundActions();
+  const totalChips = currentRoundActions.filter((action: any) => 
     action.type === 'ante' || 
     action.type === 'blind_bet' || 
     action.type === 'call' || 

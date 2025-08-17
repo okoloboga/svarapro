@@ -64,7 +64,7 @@ export interface GameState {
 
 export interface GameAction {
   type: 'join' | 'leave' | 'ante' | 'blind_bet' | 'look' | 'bet' | 'call' | 'raise' | 'fold' | 'win' | 'svara';
-  playerId: string;
+  telegramId: string;
   amount?: number;
   timestamp: number;
   message?: string; // текстовое описание действия

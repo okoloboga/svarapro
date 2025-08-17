@@ -152,14 +152,29 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Проверяем, нет ли уже анимации для этого игрока
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (!existingAnimation) {
-      setChipAnimations(prev => [...prev, {
-        id: chipId,
+      console.log('🎯 Creating chip animation:', {
+        chipId,
+        playerId,
+        playerUsername: player.username,
         fromX: playerX,
         fromY: playerY,
         toX,
         toY,
-        delay: 0
-      }]);
+        currentAnimationsCount: chipAnimations.length
+      });
+      
+      setChipAnimations(prev => {
+        const newAnimations = [...prev, {
+          id: chipId,
+          fromX: playerX,
+          fromY: playerY,
+          toX,
+          toY,
+          delay: 0
+        }];
+        console.log('📊 Updated chipAnimations:', newAnimations.length);
+        return newAnimations;
+      });
     } else {
       console.log('⚠️ Skipping duplicate animation for player:', player.username);
     }
@@ -218,7 +233,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Обработчик завершения анимации фишки
   const handleChipAnimationComplete = (chipId: string) => {
-    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
+    console.log('🎯 Chip animation completed:', chipId);
+    setChipAnimations(prev => {
+      const filtered = prev.filter(chip => chip.id !== chipId);
+      console.log('🗑️ Removed chip animation, remaining:', filtered.length);
+      return filtered;
+    });
   };
 
   // Отслеживание победы игрока для анимации фишек
@@ -237,7 +257,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         winners: gameState.winners.map(w => ({ id: w.id, username: w.username, position: w.position })),
         allActions: gameState.log.map(action => ({
           type: action.type,
-          playerId: action.playerId,
+          telegramId: action.telegramId,
           amount: action.amount,
           timestamp: new Date(action.timestamp).toLocaleTimeString()
         })),
@@ -382,7 +402,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   // В фазе betting call равен сумме последнего действия, в blind_betting - разнице ставок
   const callAmount = gameState.status === 'betting' 
-    ? gameState.lastActionAmount || 0 
+    ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
     : gameState.currentBet - (currentPlayer?.currentBet || 0);
   const minRaiseAmount = gameState.currentBet * 2; // Минимальный raise = 2x от текущей ставки
   const maxRaise = currentPlayer?.balance || 0;

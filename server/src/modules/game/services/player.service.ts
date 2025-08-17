@@ -127,15 +127,41 @@ export class PlayerService {
   // Определение победителей
   determineWinners(players: Player[]): Player[] {
     const activePlayers = players.filter((p) => p.isActive && !p.hasFolded);
+    
+    // Отладочный лог для проверки определения победителей
+    console.log('🎯 Determine Winners Debug:', {
+      totalPlayers: players.length,
+      activePlayersCount: activePlayers.length,
+      activePlayers: activePlayers.map(p => ({ 
+        id: p.id, 
+        username: p.username, 
+        score: p.score, 
+        isActive: p.isActive, 
+        hasFolded: p.hasFolded 
+      })),
+      allPlayers: players.map(p => ({ 
+        id: p.id, 
+        username: p.username, 
+        score: p.score, 
+        isActive: p.isActive, 
+        hasFolded: p.hasFolded 
+      }))
+    });
+    
     if (activePlayers.length === 0) {
+      console.log('❌ No active players found');
       return [];
     }
 
     // Находим максимальный счет
     const maxScore = Math.max(...activePlayers.map((p) => p.score || 0));
+    console.log('📊 Max score:', maxScore);
 
     // Возвращаем всех игроков с максимальным счетом
-    return activePlayers.filter((p) => (p.score || 0) === maxScore);
+    const winners = activePlayers.filter((p) => (p.score || 0) === maxScore);
+    console.log('🏆 Winners found:', winners.map(w => ({ id: w.id, username: w.username, score: w.score })));
+    
+    return winners;
   }
 
   // Нахождение следующего активного игрока

@@ -467,6 +467,8 @@ export class GameService {
 
         // Устанавливаем текущую ставку для фазы betting
         gameState.currentBet = mandatoryBet;
+        // Устанавливаем сумму последнего действия для корректного расчета call
+        gameState.lastActionAmount = mandatoryBet;
         // Устанавливаем последнего повысившего как текущего игрока
         gameState.lastRaiseIndex = playerIndex;
 
@@ -662,6 +664,20 @@ export class GameService {
 
     const winners = this.playerService.determineWinners(gameState.players);
     gameState.winners = winners;
+    
+    // Отладочный лог для проверки победителей
+    console.log('🏆 Winners Debug:', {
+      roomId,
+      winnersCount: winners.length,
+      winners: winners.map(w => ({ id: w.id, username: w.username, score: w.score })),
+      allPlayers: gameState.players.map(p => ({ 
+        id: p.id, 
+        username: p.username, 
+        score: p.score, 
+        isActive: p.isActive, 
+        hasFolded: p.hasFolded 
+      }))
+    });
 
     if (winners.length > 1) {
       gameState.isSvara = true;

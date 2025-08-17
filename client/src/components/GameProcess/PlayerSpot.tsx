@@ -19,7 +19,7 @@ interface PlayerSpotProps {
   gameStatus?: string;
   isAnimating?: boolean;
   onPlayerBet?: (playerId: string) => void;
-  gameState?: { log: Array<{ playerId: string; amount?: number; timestamp: number }> }; // Добавляем gameState для доступа к логу действий
+  gameState?: { log: Array<{ telegramId: string; amount?: number; timestamp: number }> }; // Добавляем gameState для доступа к логу действий
 }
 
 export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
@@ -35,7 +35,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     
     // Находим последнее действие этого игрока
     const playerActions = gameState.log
-      .filter((action) => action.playerId === player.id)
+      .filter((action) => action.telegramId === player.id)
       .sort((a, b) => b.timestamp - a.timestamp);
     
     if (playerActions.length === 0) return 0;
@@ -135,12 +135,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
-    if (player.totalBet > lastTotalBet && onPlayerBet && !isAnimating) {
-      console.log('🎰 Triggering chip animation for player:', player.username, 'Bet increase:', lastTotalBet, '->', player.totalBet);
+    if (player.totalBet > lastTotalBet && onPlayerBet) {
+      console.log('🎰 Triggering chip animation for player:', player.username, 'Bet increase:', lastTotalBet, '->', player.totalBet, 'isAnimating:', isAnimating);
       onPlayerBet(player.id);
     }
     setLastTotalBet(player.totalBet);
-  }, [player.totalBet, lastTotalBet, player.id, player.username, onPlayerBet, isAnimating]);
+  }, [player.totalBet, lastTotalBet, player.id, player.username, onPlayerBet]);
 
   const baseAvatarSize = 71;
   const baseNameWidth = 70;
@@ -150,9 +150,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const nameWidth = baseNameWidth * scale;
   const nameHeight = baseNameHeight * scale;
 
-  const cardHeight = Math.round(avatarSize * 1.2);
-  const cardWidth = Math.round(cardHeight * (65/90));
-  const step = Math.round(cardWidth * 0.46);
+  // Размеры карт для текущего пользователя (больше)
+  const currentUserCardHeight = Math.round(avatarSize * 1.2);
+  const currentUserCardWidth = Math.round(currentUserCardHeight * (65/90));
+  const currentUserStep = Math.round(currentUserCardWidth * 0.46);
+  
+  // Размеры карт для других игроков (меньше)
+  const otherPlayersCardHeight = Math.round(avatarSize);
+  const otherPlayersCardWidth = Math.round(otherPlayersCardHeight * (65/90));
+  const otherPlayersStep = Math.round(otherPlayersCardWidth * 0.46);
+  
+  // Выбираем размеры в зависимости от того, текущий ли это пользователь
+  const cardHeight = isCurrentUser ? currentUserCardHeight : otherPlayersCardHeight;
+  const cardWidth = isCurrentUser ? currentUserCardWidth : otherPlayersCardWidth;
+  const step = isCurrentUser ? currentUserStep : otherPlayersStep;
 
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
@@ -328,7 +339,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && TotalBetComponent}
-            {CardDeckComponent}
+            {!(isCurrentUser && hasLooked) && CardDeckComponent}
             {cardSide === 'right' && TotalBetComponent}
           </div>
         )}
@@ -361,20 +372,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             backgroundColor: '#FF443A', 
             borderRadius: '50%',
             ...(openCardsPosition === 'top' && {
-              left: `${-45 * scale}px`,
-              top: `${-11 * scale}px`
+              left: `${-55 * scale}px`,
+              top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
-              left: `${-45 * scale}px`,
-              top: `${11 * scale}px`
+              left: `${-55 * scale}px`,
+              top: `${10 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${45 * scale}px`,
-              top: `${-11 * scale}px`
+              right: `${55 * scale}px`,
+              top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${45 * scale}px`,
-              top: `${-11 * scale}px`
+              left: `${55 * scale}px`,
+              top: `${-10 * scale}px`
             })
           }}>
             <span style={{ fontWeight: 500, fontStyle: 'normal', fontSize: `${14 * scale}px`, lineHeight: '100%', letterSpacing: '0%', textAlign: 'center', verticalAlign: 'middle', color: '#FFFFFF' }}>

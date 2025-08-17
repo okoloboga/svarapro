@@ -244,6 +244,16 @@ export class GameStateService {
           ...updatedGameState.players[i],
           score,
         };
+        
+        // Отладочный лог для проверки вычисления очков
+        console.log('📊 Score calculation:', {
+          playerId: updatedGameState.players[i].id,
+          username: updatedGameState.players[i].username,
+          score,
+          cards: updatedGameState.players[i].cards,
+          isActive: updatedGameState.players[i].isActive,
+          hasFolded: updatedGameState.players[i].hasFolded
+        });
 
         // Добавляем действие в лог
         const action: GameAction = {
