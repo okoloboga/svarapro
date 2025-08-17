@@ -153,7 +153,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }, 0) || 0;
     
     // Создаем анимации для каждой фишки
-    const chips = [];
+    const chips: Array<{
+      id: string;
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+      delay: number;
+    }> = [];
     for (let i = 0; i < chipCount; i++) {
       const chipId = `winner-chip-${Date.now()}-${i}`;
       const fromX = 0; // центр стола
