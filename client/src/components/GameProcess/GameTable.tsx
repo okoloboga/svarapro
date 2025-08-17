@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
+import ChipsStack from './ChipsStack';
+import FlyingChip from './FlyingChip';
 
 interface GameTableProps {
   gameState: GameState;
@@ -10,11 +12,34 @@ interface GameTableProps {
   onInvite: () => void;
   maxPlayers: number;
   scale?: number;
+  onChipFromPlayer?: (fromX: number, fromY: number) => void;
+  onChipsToWinner?: (winnerX: number, winnerY: number) => void;
 }
 
 const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
+  
+  // Состояние для анимаций фишек
+  const [flyingChips, setFlyingChips] = useState<Array<{
+    id: string;
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    delay: number;
+  }>>([]);
+  
+  // Подсчет общего количества фишек (каждая ставка = 1 фишка)
+  const totalChips = gameState.players.reduce((total, player) => {
+    // Считаем количество ставок игрока
+    let playerChips = 0;
+    if (player.totalBet > 0) {
+      // Каждая ставка = 1 фишка, независимо от суммы
+      playerChips = 1;
+    }
+    return total + playerChips;
+  }, 0);
 
   const containerStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
@@ -87,6 +112,74 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     zIndex: 2,
   };
 
+  // Функция для добавления анимации фишки от игрока к столу
+  const addChipFromPlayer = (fromX: number, fromY: number) => {
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    const toX = baseWidth * scale / 2; // центр стола
+    const toY = baseHeight * scale / 2 + 30; // под банком
+    
+    setFlyingChips(prev => [...prev, {
+      id: chipId,
+      fromX,
+      fromY,
+      toX,
+      toY,
+      delay: 0
+    }]);
+  };
+
+  // Функция для анимации фишек к победителю
+  const animateChipsToWinner = (winnerX: number, winnerY: number) => {
+    const chipCount = totalChips;
+    const chips: Array<{
+      id: string;
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+      delay: number;
+    }> = [];
+    
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      const fromX = baseWidth * scale / 2; // центр стола
+      const fromY = baseHeight * scale / 2 + 30; // под банком
+      
+      chips.push({
+        id: chipId,
+        fromX,
+        fromY,
+        toX: winnerX,
+        toY: winnerY,
+        delay: i * 100 // задержка 100ms между фишками
+      });
+    }
+    
+    setFlyingChips(prev => [...prev, ...chips]);
+  };
+
+  // Обработчик завершения анимации фишки
+  const handleChipAnimationComplete = (chipId: string) => {
+    setFlyingChips(prev => prev.filter(chip => chip.id !== chipId));
+  };
+
+  // Стили для надписи "налог 5%"
+  const taxStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '55%', // Под контейнером банка
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    color: 'rgba(255, 255, 255, 0.6)', // #FFFFFF 60%
+    fontWeight: 400,
+    fontStyle: 'normal',
+    fontSize: `${10 * scale}px`,
+    lineHeight: '100%',
+    letterSpacing: '0%',
+    textAlign: 'center',
+    pointerEvents: 'none', // Чтобы текст не мешал взаимодействию
+    zIndex: 2,
+  };
+
   return (
     <div style={containerStyle} className={tableClasses}>
       <div style={backgroundStyle}></div>
@@ -102,6 +195,27 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
       <div style={potContainerStyle}>
         <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>Банк: ${Number(gameState.pot).toFixed(2)}</span>
       </div>
+      
+      {/* Надпись "налог 5%" */}
+      <div style={taxStyle}>
+        налог 5%
+      </div>
+      
+      {/* Стопки фишек */}
+      <ChipsStack totalChips={totalChips} scale={scale} />
+      
+      {/* Летящие фишки */}
+      {flyingChips.map(chip => (
+        <FlyingChip
+          key={chip.id}
+          fromX={chip.fromX}
+          fromY={chip.fromY}
+          toX={chip.toX}
+          toY={chip.toY}
+          delay={chip.delay}
+          onComplete={() => handleChipAnimationComplete(chip.id)}
+        />
+      ))}
     </div>
   );
 };

@@ -11,6 +11,7 @@ import { LoadingPage } from '../../components/LoadingPage';
 import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 import { UserData, PageData } from '@/types/entities';
+import FlyingChip from '../../components/GameProcess/FlyingChip';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
@@ -72,8 +73,86 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
+  
+  // Состояние для анимаций фишек
+  const [chipAnimations, setChipAnimations] = useState<Array<{
+    id: string;
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    delay: number;
+  }>>([]);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+
+  // Функция для добавления анимации фишки от игрока к столу
+  const handlePlayerBet = (playerId: string) => {
+    // Находим позицию игрока на экране
+    const player = gameState?.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const position = player.position;
+    
+    // Вычисляем координаты аватарки игрока относительно центра стола
+    let playerX = 0;
+    let playerY = 0;
+    
+    // Координаты относительно центра стола (315x493 - размер стола)
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    
+    switch (position) {
+      case 1: // верх
+        playerX = 0;
+        playerY = -tableHeight / 2 - 50;
+        break;
+      case 2: // верх-право
+        playerX = tableWidth / 2 + 50;
+        playerY = -tableHeight / 4;
+        break;
+      case 3: // низ-право
+        playerX = tableWidth / 2 + 50;
+        playerY = tableHeight / 4;
+        break;
+      case 4: // низ
+        playerX = 0;
+        playerY = tableHeight / 2 + 50;
+        break;
+      case 5: // низ-лево
+        playerX = -tableWidth / 2 - 50;
+        playerY = tableHeight / 4;
+        break;
+      case 6: // верх-лево
+        playerX = -tableWidth / 2 - 50;
+        playerY = -tableHeight / 4;
+        break;
+    }
+    
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    const toX = 0; // центр стола
+    const toY = 30; // под банком
+    
+    setChipAnimations(prev => [...prev, {
+      id: chipId,
+      fromX: playerX,
+      fromY: playerY,
+      toX,
+      toY,
+      delay: 0
+    }]);
+  };
+
+  // Функция для анимации фишек к победителю
+  const handleChipsToWinner = (winnerX: number, winnerY: number) => {
+    // Эта функция будет вызываться при победе
+    // Пока оставим пустой
+  };
+
+  // Обработчик завершения анимации фишки
+  const handleChipAnimationComplete = (chipId: string) => {
+    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
+  };
 
   useEffect(() => {
     if (socket) {
@@ -198,7 +277,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
             <div className="flex-shrink-0 relative z-10">
-              <GameTable gameState={gameState} currentUserId={currentUserId} showCards={showCards} onSitDown={handleSitDown} onInvite={actions.invitePlayer} maxPlayers={6} scale={scale} />
+              <GameTable 
+                gameState={gameState} 
+                currentUserId={currentUserId} 
+                showCards={showCards} 
+                onSitDown={handleSitDown} 
+                onInvite={actions.invitePlayer} 
+                maxPlayers={6} 
+                scale={scale}
+                onChipFromPlayer={handlePlayerBet}
+                onChipsToWinner={handleChipsToWinner}
+              />
             </div>
             
             {
@@ -218,11 +307,37 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                     {player ? (
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
+                        const isWinner = gameState.winners && gameState.winners.some(winner => winner.id === player.id);
+                        const winAmount = isWinner ? gameState.pot / gameState.winners.length : 0;
+                        
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
-                          return <PlayerSpot player={mergedPlayer} isCurrentUser={true} showCards={showCards} scale={scale} cardSide={cardSide} isTurn={isTurn} onTimeout={actions.fold} />;
+                          return <PlayerSpot 
+                            player={mergedPlayer} 
+                            isCurrentUser={true} 
+                            showCards={showCards} 
+                            scale={scale} 
+                            cardSide={cardSide} 
+                            isTurn={isTurn} 
+                            onTimeout={actions.fold}
+                            isWinner={isWinner}
+                            winAmount={winAmount}
+                            gameStatus={gameState.status}
+                            onPlayerBet={handlePlayerBet}
+                          />;
                         }
-                        return <PlayerSpot player={player} isCurrentUser={false} showCards={showCards} scale={scale} cardSide={cardSide} isTurn={isTurn} />;
+                        return <PlayerSpot 
+                          player={player} 
+                          isCurrentUser={false} 
+                          showCards={showCards} 
+                          scale={scale} 
+                          cardSide={cardSide} 
+                          isTurn={isTurn}
+                          isWinner={isWinner}
+                          winAmount={winAmount}
+                          gameStatus={gameState.status}
+                          onPlayerBet={handlePlayerBet}
+                        />;
                       })()
                     ) : (
                       <SeatButton type={isSeated ? 'invite' : 'sitdown'} position={absolutePosition} onSitDown={handleSitDown} onInvite={() => {}} scale={scale} />
@@ -281,6 +396,21 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <GameMenu isOpen={showMenuModal} onClose={() => setShowMenuModal(false)} onExit={handleLeaveRoom} />
 
       {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
+      
+      {/* Летящие фишки */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ zIndex: 1000 }}>
+        {chipAnimations.map(chip => (
+          <FlyingChip
+            key={chip.id}
+            fromX={chip.fromX}
+            fromY={chip.fromY}
+            toX={chip.toX}
+            toY={chip.toY}
+            delay={chip.delay}
+            onComplete={() => handleChipAnimationComplete(chip.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

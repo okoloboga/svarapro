@@ -13,12 +13,18 @@ interface PlayerSpotProps {
   cardSide?: 'left' | 'right';
   isTurn?: boolean;
   onTimeout?: () => void;
+  isWinner?: boolean;
+  winAmount?: number;
+  gameStatus?: string;
+  onPlayerBet?: (playerId: string) => void;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, onPlayerBet }: PlayerSpotProps) {
   const { username, avatar, balance, tableBalance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [progress, setProgress] = useState(100);
+  const [showWinAnimation, setShowWinAnimation] = useState(false);
+  const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
 
   // Set notification type based on last action
   useEffect(() => {
@@ -63,20 +69,31 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     }
   }, [isTurn, isCurrentUser, onTimeout]);
 
-  const getPlayerStatus = () => {
-    if (hasFolded) return 'Сбросил';
-    if (lastAction) {
-      switch (lastAction) {
-        case 'fold': return 'Сбросил';
-        case 'check': return 'Пропустил';
-        case 'call': return 'Уравнял';
-        case 'raise': return 'Повысил';
-        case 'blind': return 'Вслепую';
-        default: return '';
-      }
+  // Win animation logic
+  useEffect(() => {
+    const shouldShowAnimation = isWinner && winAmount > 0 && (gameStatus === 'finished' || gameStatus === 'showdown');
+    
+    if (shouldShowAnimation) {
+      setShowWinAnimation(true);
+      
+      // Hide animation after 3 seconds with fade out
+      const timer = setTimeout(() => {
+        setShowWinAnimation(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowWinAnimation(false);
     }
-    return '';
-  };
+  }, [isWinner, winAmount, gameStatus]);
+
+  // Отслеживание изменений ставок для анимации фишек
+  useEffect(() => {
+    if (player.totalBet > lastTotalBet && onPlayerBet) {
+      onPlayerBet(player.id);
+    }
+    setLastTotalBet(player.totalBet);
+  }, [player.totalBet, lastTotalBet, player.id, onPlayerBet]);
 
   const baseAvatarSize = 71;
   const baseNameWidth = 70;
@@ -155,7 +172,46 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
             <ActionNotification action={notificationType} visible={!!notificationType && !hasFolded} />
-            <div className="absolute rounded-full top-0 left-0" style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, backgroundColor: '#555456' }}></div>
+            
+            {/* Win amount container */}
+            {showWinAnimation && (
+              <div 
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
+                style={{ 
+                  width: `${55 * scale}px`, 
+                  height: `${21 * scale}px`,
+                  borderRadius: `${12 * scale}px`,
+                  background: '#212027',
+                  boxShadow: '0px 0px 4px 2px #EC8800',
+                  zIndex: 50,
+                  marginBottom: `${8 * scale}px`
+                }}
+              >
+                <span style={{
+                  fontWeight: 600,
+                  fontStyle: 'normal',
+                  fontSize: `${15 * scale}px`,
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  color: '#D2A21B'
+                }}>
+                  +${Number(winAmount).toFixed(2)}
+                </span>
+              </div>
+            )}
+            
+            {/* Avatar with win animation shadow */}
+            <div 
+              className="absolute rounded-full top-0 left-0 transition-all duration-500" 
+              style={{ 
+                width: `${avatarSize}px`, 
+                height: `${avatarSize}px`, 
+                backgroundColor: '#555456',
+                boxShadow: showWinAnimation ? '0px 0px 4px 2px #EC8800' : 'none'
+              }}
+            ></div>
             <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
             <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
               {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
@@ -206,11 +262,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             {cardSide === 'right' && TotalBetComponent}
           </div>
         )}
-        {getPlayerStatus() && (
-          <div className="absolute -top-2 right-0 bg-gray-800 text-white px-2 py-1 rounded-full z-40" style={{ fontSize: `${12 * scale}px` }}>
-            {getPlayerStatus()}
-          </div>
-        )}
+
         {!isCurrentUser && tableBalance > 0 && !hasFolded && (
           <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
             ${Number(tableBalance).toFixed(2)}

@@ -336,18 +336,34 @@ export class GameService {
         break;
       }
       case 'look': {
-        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(player, { hasLooked: true, lastAction: 'look' });
+        // Вычисляем обязательную ставку при просмотре карт
+        const mandatoryBet = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+        
+        // Проверяем, достаточно ли средств для обязательной ставки
+        if (player.balance < mandatoryBet) {
+          // Если недостаточно средств, игрок автоматически выбывает
+          return this.handleFold(roomId, gameState, playerIndex);
+        }
+
+        // Списываем обязательную ставку с баланса игрока
+        const { updatedPlayer, action: betAction } = this.playerService.processPlayerBet(player, mandatoryBet, 'call');
+        gameState.players[playerIndex] = updatedPlayer;
+        gameState.pot += mandatoryBet;
+        gameState.log.push(betAction);
+
+        // Отмечаем, что игрок посмотрел карты
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(gameState.players[playerIndex], { hasLooked: true, lastAction: 'look' });
         const lookAction: GameAction = { type: 'look', telegramId: player.id, timestamp: Date.now(), message: `Игрок ${player.username} посмотрел карты` };
         gameState.log.push(lookAction);
 
+        // Переходим в фазу betting
         const phaseResult = this.gameStateService.moveToNextPhase(gameState, 'betting');
         gameState = phaseResult.updatedGameState;
         gameState.log.push(...phaseResult.actions);
 
-        // Устанавливаем новую текущую ставку, которую должен сделать игрок
-        const newCurrentBet = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
-        gameState.currentBet = newCurrentBet;
-        // Так как это первая ставка в раунде, она же является и последним повышением
+        // Устанавливаем текущую ставку для фазы betting
+        gameState.currentBet = mandatoryBet;
+        // Устанавливаем последнего повысившего как текущего игрока
         gameState.lastRaiseIndex = playerIndex;
 
         // Все игроки автоматически смотрят карты при переходе в betting
@@ -357,14 +373,13 @@ export class GameService {
           }
         }
 
+        // Вычисляем очки для всех игроков
         const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
         gameState = scoreResult.updatedGameState;
         gameState.log.push(...scoreResult.actions);
 
-        // Проверяем, может ли игрок, который посмотрел карты, сделать обязательную ставку
-        if (player.balance < newCurrentBet) {
-          return this.handleFold(roomId, gameState, playerIndex);
-        }
+        // Переходим к следующему игроку (важно: ход переходит к следующему!)
+        gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(gameState.players, playerIndex);
         
         break;
       }
@@ -426,6 +441,45 @@ export class GameService {
     const phaseResult = this.gameStateService.moveToNextPhase(gameState, 'showdown');
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
+
+    // Проверяем, был ли кто-то повысивший ставку
+    const wasRaise = gameState.lastRaiseIndex !== undefined;
+    
+    // Если никто не повышал ставки, дилер получает весь банк
+    if (!wasRaise) {
+      const dealer = gameState.players[gameState.dealerIndex];
+      if (dealer && dealer.isActive && !dealer.hasFolded) {
+        const potAmount = gameState.pot; // Сохраняем значение банка
+        dealer.balance += potAmount;
+        gameState.pot = 0;
+        
+        const dealerWinAction: GameAction = {
+          type: 'win',
+          telegramId: dealer.id,
+          amount: potAmount,
+          timestamp: Date.now(),
+          message: `Дилер получает весь банк (${potAmount}) - никто не повышал ставки`,
+        };
+        gameState.log.push(dealerWinAction);
+        
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Сохраняем баланс дилера в БД
+        try {
+          await this.usersService.updatePlayerBalance(dealer.id, dealer.balance);
+          await this.redisService.publishBalanceUpdate(dealer.id, dealer.balance);
+        } catch (error) {
+          console.error(`Failed to save dealer balance to DB:`, error);
+        }
+        
+        // Перезапускаем игру
+        setTimeout(() => {
+          this.startGame(roomId).catch(err => console.error(`Failed to auto-restart game ${roomId}`, err));
+        }, 5000);
+        return;
+      }
+    }
 
     const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
