@@ -74,11 +74,23 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   useEffect(() => {
     const shouldShowAnimation = isWinner && winAmount > 0 && gameStatus === 'finished';
     
+    console.log('🎯 Win Animation Debug:', {
+      playerId: player.id,
+      username: player.username,
+      isWinner,
+      winAmount,
+      gameStatus,
+      shouldShowAnimation,
+      showWinAnimation
+    });
+    
     if (shouldShowAnimation) {
+      console.log('🎉 Starting win animation for player:', player.username, 'Amount:', winAmount);
       setShowWinAnimation(true);
       
       // Hide animation after 3 seconds with fade out
       const timer = setTimeout(() => {
+        console.log('⏰ Hiding win animation for player:', player.username);
         setShowWinAnimation(false);
       }, 3000);
       
@@ -86,7 +98,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     } else {
       setShowWinAnimation(false);
     }
-  }, [isWinner, winAmount, gameStatus]);
+  }, [isWinner, winAmount, gameStatus, player.id, player.username]);
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {

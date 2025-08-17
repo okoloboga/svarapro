@@ -37,7 +37,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
     action.type === 'raise'
   ).length;
   
-  console.log('GameTable: totalChips =', totalChips, 'log actions =', gameState.log.map(a => a.type));
+  
 
   const containerStyle: React.CSSProperties = {
     width: `${baseWidth * scale}px`,
@@ -118,7 +118,7 @@ const GameTable: React.FC<GameTableProps> = ({ gameState, scale = 1 }) => {
   // Стили для надписи "налог 5%"
   const taxStyle: React.CSSProperties = {
     position: 'absolute',
-    top: '52%', // Ближе к контейнеру банка
+    top: '54%', // Ближе к контейнеру банка
     left: '50%',
     transform: 'translate(-50%, -50%)',
     color: 'rgba(255, 255, 255, 0.6)', // #FFFFFF 60%

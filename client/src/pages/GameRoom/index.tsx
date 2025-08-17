@@ -150,10 +150,25 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для анимации фишек к победителю
   const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
-    // Подсчитываем количество фишек на столе
-    const chipCount = gameState?.players.reduce((total, player) => {
-      return total + (player.totalBet > 0 ? 1 : 0);
-    }, 0) || 0;
+    // Подсчитываем количество фишек на столе (как в ChipsStack)
+    const chipCount = gameState?.log.filter(action => 
+      action.type === 'ante' || 
+      action.type === 'blind_bet' || 
+      action.type === 'call' || 
+      action.type === 'raise'
+    ).length || 0;
+    
+    console.log('🎰 Creating chips animation:', {
+      chipCount,
+      winnerX,
+      winnerY,
+      actions: gameState?.log.filter(action => 
+        action.type === 'ante' || 
+        action.type === 'blind_bet' || 
+        action.type === 'call' || 
+        action.type === 'raise'
+      ).map(a => ({ type: a.type, amount: a.amount }))
+    });
     
     // Создаем анимации для каждой фишки
     const chips: Array<{
@@ -194,6 +209,30 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         gameState.winners.length > 0 && 
         gameState.isAnimating && 
         gameState.animationType === 'win_animation') {
+      
+      // Лог отладки действий игроков за раунд
+      console.log('📊 Round Actions Summary:', {
+        roomId: gameState.roomId,
+        round: gameState.round,
+        pot: gameState.pot,
+        winners: gameState.winners.map(w => ({ id: w.id, username: w.username, position: w.position })),
+        allActions: gameState.log.map(action => ({
+          type: action.type,
+          playerId: action.playerId,
+          amount: action.amount,
+          timestamp: new Date(action.timestamp).toLocaleTimeString()
+        })),
+        playerActions: gameState.players.map(player => ({
+          id: player.id,
+          username: player.username,
+          position: player.position,
+          totalBet: player.totalBet,
+          currentBet: player.currentBet,
+          hasFolded: player.hasFolded,
+          hasLooked: player.hasLooked,
+          isActive: player.isActive
+        }))
+      });
       // Находим позицию победителя для анимации
       const winner = gameState.winners[0]; // берем первого победителя
       const position = winner.position;
@@ -233,6 +272,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       }
       
       // Запускаем анимацию фишек к победителю
+      console.log('🎯 Starting chips animation to winner:', {
+        winnerId: winner.id,
+        winnerUsername: winner.username,
+        winnerPosition: winner.position,
+        winnerX,
+        winnerY,
+        chipCount: gameState?.log.filter(action => 
+          action.type === 'ante' || 
+          action.type === 'blind_bet' || 
+          action.type === 'call' || 
+          action.type === 'raise'
+        ).length || 0
+      });
       handleChipsToWinner(winnerX, winnerY);
     }
   }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, scale, handleChipsToWinner]);

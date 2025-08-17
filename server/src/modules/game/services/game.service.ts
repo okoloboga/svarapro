@@ -735,8 +735,8 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // Ждем 5 секунд для показа карт и анимации победы
-    await new Promise(resolve => setTimeout(resolve, 5000));
+            // Ждем 3 секунды для показа карт и анимации победы
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Запускаем анимацию фишек к победителю
     gameState.isAnimating = true;

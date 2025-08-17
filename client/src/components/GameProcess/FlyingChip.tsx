@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import coinImage from '../../assets/game/coin.png';
 
 interface FlyingChipProps {
@@ -11,22 +11,48 @@ interface FlyingChipProps {
 }
 
 const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onComplete, delay = 0 }) => {
+  const [position, setPosition] = useState({ x: fromX, y: fromY });
   const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef<number>();
+  const startTimeRef = useRef<number>();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsAnimating(true);
+      startTimeRef.current = Date.now();
       
-      // Анимация длится 1 секунду
-      const animationTimer = setTimeout(() => {
-        onComplete();
-      }, 1000);
+      const animate = () => {
+        if (!startTimeRef.current) return;
+        
+        const elapsed = Date.now() - startTimeRef.current;
+        const duration = 1000; // 1 секунда
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function для более естественного движения
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        const newX = fromX + (toX - fromX) * easeOut;
+        const newY = fromY + (toY - fromY) * easeOut;
+        
+        setPosition({ x: newX, y: newY });
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          onComplete();
+        }
+      };
       
-      return () => clearTimeout(animationTimer);
+      animationRef.current = requestAnimationFrame(animate);
     }, delay);
 
-    return () => clearTimeout(timer);
-  }, [delay, onComplete]);
+    return () => {
+      clearTimeout(timer);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [delay, onComplete, fromX, fromY, toX, toY]);
 
   if (!isAnimating) return null;
 
@@ -34,12 +60,11 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
     <div
       className="absolute pointer-events-none"
       style={{
-        left: `${fromX}px`,
-        top: `${fromY}px`,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
         width: '13px',
         height: '11px',
-        transition: 'all 1s ease-out',
-        transform: `translate(${toX - fromX}px, ${toY - fromY}px)`,
+        zIndex: 1000,
       }}
     >
       <img 
