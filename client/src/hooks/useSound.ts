@@ -21,9 +21,12 @@ export const useSound = () => {
 
   useEffect(() => {
     localStorage.setItem('soundEnabled', String(isSoundEnabled));
+    console.log('Sound enabled changed to:', isSoundEnabled);
   }, [isSoundEnabled]);
 
   const playSound = useCallback((type: SoundType) => {
+    console.log(`playSound called for: ${type}, soundEnabled: ${isSoundEnabled}`);
+    
     if (!isSoundEnabled) {
       console.log(`Sound disabled, not playing: ${type}`);
       return;

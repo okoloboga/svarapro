@@ -350,14 +350,18 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             </div>
           </div>
         </div>
-        {(showCards || showCardsPhase || (isCurrentUser && hasLooked)) && (
+        {(
+          (isWinner && winAmount > 0 && gameStatus === 'finished') ? 
+            showCardsPhase : // Для победителей используем только нашу логику
+            (showCards || (isCurrentUser && hasLooked)) // Для остальных - обычная логика
+        ) && (
           <div className="absolute z-50" style={{ 
             width: `${cardWidth}px`, 
             height: `${cardHeight}px`,
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${-30 * scale}px`
+              top: `${30 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
               left: '50%',

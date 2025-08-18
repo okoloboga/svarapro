@@ -90,7 +90,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
-  const [lastLogLength, setLastLogLength] = useState(0);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
@@ -127,22 +126,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     if (!gameState?.log) return;
     
-    const currentLogLength = gameState.log.length;
-    
-    // Проверяем только новые действия с момента последней проверки
-    if (currentLogLength > lastLogLength) {
-      const newActions = gameState.log.slice(lastLogLength);
-      
-      // Ищем fold среди новых действий
-      const foldAction = newActions.find(action => action.type === 'fold');
-      if (foldAction) {
-        console.log('Fold action detected, playing sound:', foldAction);
-        actions.playSound('fold');
-      }
-      
-      setLastLogLength(currentLogLength);
+    // Простая проверка: смотрим на последнее действие
+    const lastAction = gameState.log[gameState.log.length - 1];
+    if (lastAction && lastAction.type === 'fold') {
+      console.log('Fold action detected, playing sound:', lastAction);
+      actions.playSound('fold');
     }
-  }, [gameState?.log, actions, lastLogLength]);
+  }, [gameState?.log?.length, actions]); // Зависимость только от длины лога
 
   // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
@@ -151,10 +141,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       if (gameState?.status !== 'finished') {
         setWinSoundPlayed(false);
       }
-      // Reset log tracking when game restarts
-      if (gameState?.status === 'waiting' || gameState?.status === 'ante') {
-        setLastLogLength(0);
-      }
+
       return;
     }
     
