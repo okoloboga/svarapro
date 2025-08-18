@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { hapticFeedback, isTMA } from '@telegram-apps/sdk';
+import { hapticFeedback } from '@telegram-apps/sdk';
+import { isTMA } from '@telegram-apps/sdk-react';
 
 export const useHapticFeedback = () => {
   const [isEnabled, setIsEnabled] = useState(() => {
@@ -16,8 +17,28 @@ export const useHapticFeedback = () => {
   }, []);
 
   const triggerImpact = useCallback((style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-    if (isEnabled && isTMA()) {
-      hapticFeedback.impactOccurred(style);
+    console.log('triggerImpact called:', { 
+      style, 
+      isEnabled, 
+      isTMA: isTMA(), 
+      isSupported: hapticFeedback.isSupported(),
+      isAvailable: hapticFeedback.impactOccurred.isAvailable()
+    });
+    
+    if (isEnabled && isTMA() && hapticFeedback.impactOccurred.isAvailable()) {
+      try {
+        hapticFeedback.impactOccurred(style);
+        console.log('Haptic feedback triggered successfully');
+      } catch (error) {
+        console.error('Error triggering haptic feedback:', error);
+      }
+    } else {
+      console.log('Haptic feedback not triggered:', { 
+        isEnabled, 
+        isTMA: isTMA(), 
+        isSupported: hapticFeedback.isSupported(),
+        isAvailable: hapticFeedback.impactOccurred.isAvailable()
+      });
     }
   }, [isEnabled]);
 

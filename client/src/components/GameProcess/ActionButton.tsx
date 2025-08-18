@@ -43,7 +43,7 @@ export function ActionButtons({
 }: ActionButtonsProps) {
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="flex items-center justify-center space-x-2 p-2">
+      <div className="relative flex items-center justify-center space-x-2 p-2">
         {canFold && (
           <button
             onClick={onFold}
@@ -110,19 +110,21 @@ export function ActionButtons({
             <span className="-mt-1">Вслепую</span>
           </button>
         )}
+        {canFold && (
+          <div 
+            className="absolute text-white"
+            style={{
+              fontWeight: 500,
+              fontSize: '12px',
+              lineHeight: '100%',
+              left: '8px',
+              bottom: '-20px',
+            }}
+          >
+            ({turnTimer}) сек
+          </div>
+        )}
       </div>
-      {canFold && (
-        <div 
-          className="text-center text-white mt-1"
-          style={{
-            fontWeight: 500,
-            fontSize: '12px',
-            lineHeight: '100%',
-          }}
-        >
-          ({turnTimer}) сек
-        </div>
-      )}
     </div>
   );
 }

@@ -86,6 +86,19 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     }
   }, [lastAction, isCurrentUser]);
 
+  // Show WIN notification at the end of the game for winners (non-current user)
+  useEffect(() => {
+    const shouldShowWinNotification =
+      !isCurrentUser &&
+      isWinner &&
+      winAmount > 0 &&
+      (gameStatus === 'finished' || gameStatus === 'ante');
+
+    if (shouldShowWinNotification) {
+      setNotificationType('win');
+    }
+  }, [isCurrentUser, isWinner, winAmount, gameStatus]);
+
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
   // Win animation logic
@@ -226,7 +239,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       <div className="relative">
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
-            <ActionNotification action={notificationType} visible={!!notificationType && !hasFolded} />
+            <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
             
             {/* Win amount container */}
             {showWinAnimation && (
@@ -314,21 +327,21 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${-50 * scale}px`
+              top: `${-60 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${50 * scale}px`
+              top: `${60 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${50 * scale}px`,
-              top: '50%',
+              right: `${60 * scale}px`,
+              top: '40%',
               transform: 'translateY(-50%)'
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${50 * scale}px`,
-              top: '50%',
+              left: `${60 * scale}px`,
+              top: '40%',
               transform: 'translateY(-50%)'
             })
           }}>

@@ -121,6 +121,26 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [isCurrentUserTurn, triggerImpact, actions]);
 
+  // Track fold actions for all players and play fold sound
+  useEffect(() => {
+    if (!gameState?.log) return;
+    
+    const lastAction = gameState.log[gameState.log.length - 1];
+    if (lastAction && lastAction.type === 'fold') {
+      actions.playSound('fold');
+    }
+  }, [gameState?.log, actions]);
+
+  // Play win sound for current user if they won
+  useEffect(() => {
+    if (!gameState?.winners || gameState.status !== 'finished') return;
+    
+    const currentUserWon = gameState.winners.some(winner => winner.id === currentUserId);
+    if (currentUserWon) {
+      actions.playSound('win');
+    }
+  }, [gameState?.winners, gameState?.status, currentUserId, actions]);
+
 
   const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
     const chipCount = gameState?.log.filter(action => 

@@ -510,7 +510,11 @@ export class GameService {
             blindBetAmount,
             'blind_bet',
           );
-        gameState.players[playerIndex] = updatedPlayer;
+        // Устанавливаем lastAction для отображения уведомления
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+          updatedPlayer,
+          { lastAction: 'blind' },
+        );
         gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex; // Set the index of the blind bettor
