@@ -102,6 +102,8 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     call: useCallback(() => performAction('call'), [performAction]),
     raise: useCallback((amount: number) => performAction('raise', amount), [performAction]),
     fold: useCallback(() => performAction('fold'), [performAction]),
+    joinSvara: useCallback(() => performAction('join_svara'), [performAction]),
+    skipSvara: useCallback(() => performAction('skip_svara'), [performAction]),
     sitDown,
     invitePlayer,
     leaveRoom,

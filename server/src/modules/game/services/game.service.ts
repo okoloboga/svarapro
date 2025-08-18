@@ -275,12 +275,98 @@ export class GameService {
     await this.redisService.publishGameUpdate(roomId, gameState);
   }
 
+  // Новая логика свары
+  private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
+  
+  async joinSvara(
+    roomId: string,
+    telegramId: string,
+  ): Promise<GameActionResult> {
+    const gameState = await this.redisService.getGameState(roomId);
+    if (!gameState || gameState.status !== 'svara_pending') {
+      return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
+    }
+
+    const player = gameState.players.find((p) => p.id === telegramId);
+    if (!player) {
+      return { success: false, error: 'Игрок не найден' };
+    }
+
+    // Проверяем, не является ли игрок уже участником свары (изначальным)
+    if (gameState.svaraParticipants.includes(telegramId)) {
+      return { success: false, error: 'Вы уже участвуете в сваре' };
+    }
+
+    const svaraBuyInAmount = gameState.pot;
+    if (player.balance < svaraBuyInAmount) {
+      return { success: false, error: 'Недостаточно средств для входа в свару' };
+    }
+
+    // Списываем деньги и добавляем в банк
+    player.balance -= svaraBuyInAmount;
+    gameState.pot += svaraBuyInAmount;
+    
+    // Добавляем игрока в список участников свары
+    gameState.svaraParticipants.push(telegramId);
+
+    const action: GameAction = {
+      type: 'join',
+      telegramId,
+      timestamp: Date.now(),
+      message: `Игрок ${player.username} присоединился к сваре, добавив в банк ${svaraBuyInAmount}`,
+    };
+    gameState.log.push(action);
+
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    return { success: true, gameState };
+  }
+
+  async skipSvara(
+    roomId: string,
+    telegramId: string,
+  ): Promise<GameActionResult> {
+    const gameState = await this.redisService.getGameState(roomId);
+    if (!gameState || gameState.status !== 'svara_pending') {
+      return { success: false, error: 'Сейчас нельзя пропустить свару' };
+    }
+
+    const player = gameState.players.find((p) => p.id === telegramId);
+    if (!player) {
+      return { success: false, error: 'Игрок не найден' };
+    }
+
+    // Просто логируем действие, чтобы UI мог закрыться
+    // Никаких изменений в состоянии игры не требуется, 
+    // так как resolveSvara все равно сработает по таймеру
+    const action: GameAction = {
+      type: 'fold', // Используем fold для простоты, можно создать и новый тип
+      telegramId,
+      timestamp: Date.now(),
+      message: `Игрок ${player.username} решил пропустить свару`,
+    };
+    gameState.log.push(action);
+
+    // Отправляем обновление, чтобы клиент мог отреагировать (например, закрыть окно)
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    return { success: true, gameState };
+  }
+
   async processAction(
     roomId: string,
     telegramId: string,
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    if (action === 'join_svara') {
+      return this.joinSvara(roomId, telegramId);
+    }
+    if (action === 'skip_svara') {
+      return this.skipSvara(roomId, telegramId);
+    }
+    
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
       return { success: false, error: 'Игра не найдена' };
@@ -695,20 +781,37 @@ export class GameService {
     });
 
     if (winners.length > 1) {
+      // Новая логика для обработки свары
+      const phaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'svara_pending',
+      );
+      gameState = phaseResult.updatedGameState;
+      gameState.log.push(...phaseResult.actions);
+
       gameState.isSvara = true;
+      gameState.svaraParticipants = winners.map((w) => w.id);
+      gameState.winners = winners;
+
       const svaraAction: GameAction = {
         type: 'svara',
         telegramId: 'system',
         timestamp: Date.now(),
-        message: 'Объявлена "Свара"!',
+        message: 'Объявлена "Свара"! Игроки могут присоединиться в течение 20 секунд.',
       };
       gameState.log.push(svaraAction);
+
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
-      await this.startSvaraGame(
-        roomId,
-        winners.map((w) => w.id),
-      );
+
+      // Устанавливаем таймер для завершения свары
+      const timer = setTimeout(() => {
+        this.resolveSvara(roomId).catch((error) => {
+          console.error(`Error resolving svara for room ${roomId}:`, error);
+        });
+      }, 20000); // 20 секунд
+      this.svaraTimers.set(roomId, timer);
+
     } else if (winners.length === 1) {
       await this.endGameWithWinner(roomId, winners[0].id);
     } else {
@@ -716,15 +819,40 @@ export class GameService {
     }
   }
 
+  private async resolveSvara(roomId: string): Promise<void> {
+    // Очищаем таймер
+    if (this.svaraTimers.has(roomId)) {
+      clearTimeout(this.svaraTimers.get(roomId));
+      this.svaraTimers.delete(roomId);
+    }
+
+    const gameState = await this.redisService.getGameState(roomId);
+    if (!gameState || gameState.status !== 'svara_pending') {
+      return; // Игра уже не в состоянии ожидания свары
+    }
+
+    const participants = gameState.svaraParticipants;
+    if (participants.length >= 2) {
+      // Если есть как минимум 2 участника, начинаем свару
+      await this.startSvaraGame(roomId, participants);
+    } else if (participants.length === 1) {
+      // Если только один участник (остальные не присоединились), он забирает банк
+      await this.endGameWithWinner(roomId, participants[0]);
+    } else {
+      // Если участников нет (маловероятно, но возможно), просто завершаем игру
+      await this.endGame(roomId);
+    }
+  }
+
   private async startSvaraGame(
     roomId: string,
-    winnerIds: string[],
+    participantIds: string[],
   ): Promise<void> {
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) return;
 
     const { updatedGameState, actions } =
-      this.gameStateService.initializeSvaraGame(gameState, winnerIds);
+      this.gameStateService.initializeSvaraGame(gameState, participantIds);
     gameState = updatedGameState;
     gameState.log.push(...actions);
 

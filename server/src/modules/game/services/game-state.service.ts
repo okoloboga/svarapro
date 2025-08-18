@@ -102,7 +102,7 @@ export class GameStateService {
   // Инициализация игры для "свары"
   initializeSvaraGame(
     gameState: GameState,
-    winnerIds: string[],
+    participantIds: string[],
   ): {
     updatedGameState: GameState;
     actions: GameAction[];
@@ -110,27 +110,28 @@ export class GameStateService {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
-    // Сохраняем банк для новой игры
-    const svaraPot = updatedGameState.pot;
+    // Банк уже обновлен теми, кто присоединился к сваре
 
     // Сбрасываем состояние игры
     updatedGameState.status = 'ante';
     updatedGameState.round += 1;
-    updatedGameState.pot = Number(svaraPot.toFixed(2)); // Сохраняем банк с округлением
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
-    updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
+    updatedGameState.lastActionAmount = 0;
     updatedGameState.winners = [];
-    updatedGameState.isSvara = false;
+    updatedGameState.isSvara = true; // Флаг, что это раунд свары
+    updatedGameState.svaraParticipants = []; // Очищаем после использования
 
-    // Дилер не меняется при сваре, сохраняется предыдущий
-    updatedGameState.isSvara = true;
+    // Дилер не меняется при сваре
 
     // Сбрасываем состояние игроков
     for (let i = 0; i < updatedGameState.players.length; i++) {
+      const player = updatedGameState.players[i];
+      const isParticipant = participantIds.includes(player.id);
+      
       updatedGameState.players[i] = this.playerService.resetPlayerForNewGame(
-        updatedGameState.players[i],
-        winnerIds.includes(updatedGameState.players[i].id),
+        player,
+        isParticipant, // Активен только если участник свары
       );
       updatedGameState.players[i].isDealer = i === updatedGameState.dealerIndex;
     }
@@ -145,7 +146,7 @@ export class GameStateService {
       type: 'svara',
       telegramId: 'system',
       timestamp: Date.now(),
-      message: 'Начинается новая игра для "Свары"',
+      message: 'Начинается раунд свары!',
     };
     actions.push(action);
 
@@ -173,6 +174,7 @@ export class GameStateService {
       betting: 'Начинается фаза обычных ставок',
       showdown: 'Начинается вскрытие карт',
       svara: 'Объявлена свара',
+      svara_pending: 'Ожидание игроков для свары',
       finished: 'Игра завершена',
     };
 

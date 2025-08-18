@@ -16,6 +16,7 @@ import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
+import { SvaraJoinPopup } from '../../components/SvaraJoinPopup';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -396,6 +397,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
+      {gameState?.status === 'svara_pending' && (
+        <SvaraJoinPopup 
+          gameState={gameState}
+          userData={userData}
+          actions={actions}
+        />
+      )}
+
       <div className="text-white p-4 flex justify-between items-center">
         <h2 className="text-xs font-semibold">Комната №{roomId.slice(0, 8)}</h2>
         <div className="flex items-center space-x-3">

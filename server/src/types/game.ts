@@ -47,6 +47,7 @@ export interface GameState {
     | 'betting'
     | 'showdown'
     | 'svara'
+    | 'svara_pending' // Ожидание решения игроков по сваре
     | 'finished';
   players: Player[];
   deck: Card[]; // колода
@@ -62,6 +63,7 @@ export interface GameState {
   rake: number; // комиссия (налог)
   winners: Player[]; // победители
   isSvara: boolean; // объявлена ли "свара"
+  svaraParticipants?: string[]; // Игроки, участвующие в сваре (включая тех, кто докупил)
   round: number; // номер раунда
   timer?: number; // таймер для хода
   log: GameAction[]; // лог действий
