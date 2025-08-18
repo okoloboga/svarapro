@@ -197,6 +197,31 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const hue = progress * 1.2;
   const progressBarColor = `hsl(${hue}, 100%, 50%)`;
 
+  // Render a placeholder for players waiting for the next round
+  if (!player.isActive && !player.hasFolded) {
+    return (
+      <div className={spotClasses} style={containerStyle}>
+        <div className="relative flex flex-col items-center justify-center w-full h-full">
+          <div 
+            className="absolute rounded-full top-0 left-0"
+            style={{ 
+              width: `${avatarSize}px`, 
+              height: `${avatarSize}px`, 
+              backgroundColor: '#555456',
+            }}
+          ></div>
+          <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
+          <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
+            {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
+          </div>
+          <div className="absolute -bottom-8 text-white text-xs text-center font-semibold">
+            В ожидании следующего раунда
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={spotClasses} style={containerStyle}>
       <div className="relative">

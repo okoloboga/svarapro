@@ -146,11 +146,13 @@ export class GameService {
     }
 
     const userProfile = await this.usersService.getProfile(telegramId);
+    const isGameInProgress = gameState.status !== 'waiting';
     const newPlayer = this.playerService.createPlayer(
       telegramId,
       userData,
       position,
       userProfile.balance,
+      !isGameInProgress, // isActive is false if game is in progress
     );
     gameState.players.push(newPlayer);
 

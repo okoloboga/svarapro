@@ -10,6 +10,7 @@ export class PlayerService {
     userData: UserDataDto,
     position: number,
     balance: number,
+    isActive = true,
   ): Player {
     return {
       id: telegramId,
