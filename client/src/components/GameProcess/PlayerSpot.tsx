@@ -4,6 +4,7 @@ import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
 import defaultAvatar from '@/assets/main_logo.png';
 import cardBack from '@/assets/game/back.png';
+import { TURN_DURATION_SECONDS } from '@/constants';
 
 interface PlayerSpotProps {
   player: Player;
@@ -13,7 +14,7 @@ interface PlayerSpotProps {
   cardSide?: 'left' | 'right';
   openCardsPosition?: 'top' | 'bottom' | 'left' | 'right';
   isTurn?: boolean;
-  onTimeout?: () => void;
+  turnTimer?: number;
   isWinner?: boolean;
   winAmount?: number;
   gameStatus?: string;
@@ -33,10 +34,9 @@ interface PlayerSpotProps {
   }; // Добавляем gameState для доступа к логу действий
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, onTimeout, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
-  const [progress, setProgress] = useState(100);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
 
@@ -87,31 +87,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     }
   }, [lastAction, isCurrentUser]);
 
-  // Turn timer progress bar logic
-  useEffect(() => {
-    if (isTurn && isCurrentUser && !isAnimating) {
-      setProgress(100);
-      const startTime = Date.now();
-      const duration = 20000; // 20 seconds
-
-      const interval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const newProgress = 100 - (elapsedTime / duration) * 100;
-        
-        if (newProgress <= 0) {
-          setProgress(0);
-          clearInterval(interval);
-          if (onTimeout) onTimeout();
-        } else {
-          setProgress(newProgress);
-        }
-      }, 100);
-
-      return () => clearInterval(interval);
-    } else {
-      setProgress(100);
-    }
-  }, [isTurn, isCurrentUser, onTimeout, isAnimating]);
+  const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
   // Win animation logic
   useEffect(() => {

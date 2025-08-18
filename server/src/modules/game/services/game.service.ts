@@ -12,6 +12,7 @@ import { BettingService } from './betting.service';
 import { GameStateService } from './game-state.service';
 import { UsersService } from '../../users/users.service';
 import { UserDataDto } from '../dto/user-data.dto';
+import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 
 @Injectable()
 export class GameService {
@@ -639,6 +640,13 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
+        // Если текущий игрок - последний, кто делал рейз, и он делает колл,
+        // это означает, что круг торгов завершен.
+        if (playerIndex === gameState.lastRaiseIndex) {
+          await this.endBettingRound(roomId, gameState);
+          return { success: true, gameState };
+        }
+
         // Используем lastActionAmount для корректного расчета call
         const callAmount = Number(
           (gameState.lastActionAmount - player.currentBet).toFixed(2),
@@ -830,7 +838,7 @@ export class GameService {
         this.resolveSvara(roomId).catch((error) => {
           console.error(`Error resolving svara for room ${roomId}:`, error);
         });
-      }, 20000); // 20 секунд
+      }, TURN_DURATION_SECONDS * 1000); // 20 секунд
       this.svaraTimers.set(roomId, timer);
     } else if (winners.length === 1) {
       await this.endGameWithWinner(roomId, winners[0].id);

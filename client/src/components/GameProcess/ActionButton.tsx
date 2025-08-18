@@ -10,6 +10,7 @@ interface ActionButtonsProps {
   canBlindBet: boolean;
   callAmount: number;
   minBet: number;
+  turnTimer: number;
   onFold: () => void;
   onCall: () => void;
   onRaise: () => void;
@@ -29,6 +30,7 @@ export function ActionButtons({
   canBlindBet,
   callAmount,
   minBet,
+  turnTimer,
   onFold,
   onCall,
   onRaise,
@@ -40,72 +42,86 @@ export function ActionButtons({
   isBlindBetDisabled,
 }: ActionButtonsProps) {
   return (
-    <div className="flex items-center justify-center space-x-2 p-2">
+    <div className="flex flex-col items-center justify-center">
+      <div className="flex items-center justify-center space-x-2 p-2">
+        {canFold && (
+          <button
+            onClick={onFold}
+            className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+            style={{ backgroundColor: '#FF443A' }}
+          >
+            <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
+            <span className="-mt-1">Пас</span>
+          </button>
+        )}
+        
+        {canCall && (
+          <button
+            onClick={onCall}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#0E5C89' }}
+            disabled={isCallDisabled}
+          >
+            {callAmount > 0 && <span>${Number(callAmount).toFixed(2)}</span>}
+            <span className={callAmount > 0 ? '-mt-1' : ''}>Заплатить</span>
+          </button>
+        )}
+
+        {canRaise && (
+          <button
+            onClick={onRaise}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#56BF00' }}
+            disabled={isRaiseDisabled}
+          >
+            <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
+            <span className="-mt-1">Повысить</span>
+          </button>
+        )}
+        
+        {canLook && (
+          <button
+            onClick={onLook}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#0E5C89' }}
+            disabled={blindButtonsDisabled}
+          >
+            <img src={lookIcon} alt="Открыть" style={{ width: '42px', height: '13px' }} />
+            <span className="-mt-1">Открыть</span>
+          </button>
+        )}
+
+        {canBlindBet && (
+          <button
+            onClick={onBlindBet}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              blindButtonsDisabled || isBlindBetDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#0E5C89' }}
+            disabled={blindButtonsDisabled || isBlindBetDisabled}
+          >
+            <span>${Number(minBet).toFixed(2)}</span>
+            <span className="-mt-1">Вслепую</span>
+          </button>
+        )}
+      </div>
       {canFold && (
-        <button
-          onClick={onFold}
-          className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
-          style={{ backgroundColor: '#FF443A' }}
+        <div 
+          className="text-center text-white mt-1"
+          style={{
+            fontWeight: 500,
+            fontSize: '12px',
+            lineHeight: '100%',
+          }}
         >
-          <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
-          <span className="-mt-1">Пас</span>
-        </button>
-      )}
-      
-      {canCall && (
-        <button
-          onClick={onCall}
-          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          style={{ backgroundColor: '#0E5C89' }}
-          disabled={isCallDisabled}
-        >
-          {callAmount > 0 && <span>${Number(callAmount).toFixed(2)}</span>}
-          <span className={callAmount > 0 ? '-mt-1' : ''}>Заплатить</span>
-        </button>
-      )}
-
-      {canRaise && (
-        <button
-          onClick={onRaise}
-          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          style={{ backgroundColor: '#56BF00' }}
-          disabled={isRaiseDisabled}
-        >
-          <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
-          <span className="-mt-1">Повысить</span>
-        </button>
-      )}
-      
-      {canLook && (
-        <button
-          onClick={onLook}
-          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          style={{ backgroundColor: '#0E5C89' }}
-          disabled={blindButtonsDisabled}
-        >
-          <img src={lookIcon} alt="Открыть" style={{ width: '42px', height: '13px' }} />
-          <span className="-mt-1">Открыть</span>
-        </button>
-      )}
-
-      {canBlindBet && (
-        <button
-          onClick={onBlindBet}
-          className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-            blindButtonsDisabled || isBlindBetDisabled ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          style={{ backgroundColor: '#0E5C89' }}
-          disabled={blindButtonsDisabled || isBlindBetDisabled}
-        >
-          <span>${Number(minBet).toFixed(2)}</span>
-          <span className="-mt-1">Вслепую</span>
-        </button>
+          ({turnTimer}) сек
+        </div>
       )}
     </div>
   );

@@ -190,17 +190,24 @@ export class BettingService {
         }
         return { canPerform: true };
 
-      case 'call':
+      case 'call': {
         if (gameState.status !== 'betting') {
           return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
         }
-        if (player.currentBet >= gameState.currentBet) {
+        // Разрешаем колл, если игрок является последним, кто повышал ставку.
+        // Это действие завершит раунд торгов.
+        const isLastRaiser =
+          gameState.lastRaiseIndex !== undefined &&
+          gameState.players[gameState.lastRaiseIndex]?.id === player.id;
+
+        if (player.currentBet >= gameState.currentBet && !isLastRaiser) {
           return {
             canPerform: false,
             error: 'Вы уже сделали максимальную ставку',
           };
         }
         return { canPerform: true };
+      }
 
       case 'raise':
         if (gameState.status !== 'betting') {

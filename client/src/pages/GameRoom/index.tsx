@@ -17,6 +17,7 @@ import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { SvaraJoinPopup } from '../../components/SvaraJoinPopup';
+import { TURN_DURATION_SECONDS } from '@/constants';
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -74,6 +75,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
+  const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   
   // Состояние для анимаций фишек
   const [chipAnimations, setChipAnimations] = useState<Array<{
@@ -301,6 +303,26 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [pageData, isSeated, gameState, actions, userData]);
 
+  // Turn timer logic
+  useEffect(() => {
+    if (isCurrentUserTurn) {
+      setTurnTimer(TURN_DURATION_SECONDS);
+      const interval = setInterval(() => {
+        setTurnTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            actions.fold(); // Auto-fold on timeout
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setTurnTimer(TURN_DURATION_SECONDS); // Reset timer when it's not the user's turn
+    }
+  }, [isCurrentUserTurn, actions]);
+
   if (loading) return <LoadingPage isLoading={loading} />;
 
   if (error) {
@@ -483,7 +505,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             cardSide={cardSide} 
                             openCardsPosition={openCardsPosition}
                             isTurn={isTurn} 
-                            onTimeout={actions.fold}
+                            turnTimer={turnTimer}
                             isWinner={isWinner}
                             winAmount={winAmount}
                             gameStatus={gameState.status}
@@ -500,13 +522,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           cardSide={cardSide} 
                           openCardsPosition={openCardsPosition}
                           isTurn={isTurn}
-                          isWinner={isWinner}
-                          winAmount={winAmount}
-                          gameStatus={gameState.status}
-                          isAnimating={gameState.isAnimating}
-                          onPlayerBet={handlePlayerBet}
-                          gameState={gameState}
-                        />;
+                          turnTimer={turnTimer}
                       })()
                     ) : (
                       <SeatButton type={isSeated ? 'invite' : 'sitdown'} position={absolutePosition} onSitDown={handleSitDown} onInvite={() => {}} scale={scale} />
@@ -539,6 +555,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   canLook={canLook}
                   canBlindBet={canBlindBet}
                   callAmount={callAmount}
+                  turnTimer={turnTimer}
                   onFold={actions.fold}
                   onCall={actions.call}
                   onRaise={handleRaiseClick}
