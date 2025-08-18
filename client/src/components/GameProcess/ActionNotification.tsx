@@ -27,7 +27,7 @@ export function ActionNotification({ action, visible }: ActionNotificationProps)
         height: '18px',
         borderRadius: '4px',
         backgroundColor: config.color,
-        bottom: '5px', // Смещаем на 5px ближе к блоку ниже
+        bottom: '3px', 
       }}
     >
       <span className="text-white text-[10px] font-extrabold leading-none text-center">{config.text}</span>

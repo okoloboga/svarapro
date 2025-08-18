@@ -8,9 +8,9 @@ import winSoundSrc from '@/assets/game/win.mp3';
 export type SoundType = 'fold' | 'turn' | 'win';
 
 export const useSound = () => {
-  const [volume, setVolume] = useState(() => {
-    const storedVolume = localStorage.getItem('gameVolume');
-    return storedVolume ? parseFloat(storedVolume) : 0.5; // Default volume 50%
+  const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
+    const storedEnabled = localStorage.getItem('soundEnabled');
+    return storedEnabled !== 'false'; // По умолчанию включено
   });
 
   const sounds = useMemo(() => ({
@@ -20,27 +20,31 @@ export const useSound = () => {
   }), []);
 
   useEffect(() => {
-    localStorage.setItem('gameVolume', String(volume));
-  }, [volume]);
+    localStorage.setItem('soundEnabled', String(isSoundEnabled));
+  }, [isSoundEnabled]);
 
   const playSound = useCallback((type: SoundType) => {
+    if (!isSoundEnabled) {
+      console.log(`Sound disabled, not playing: ${type}`);
+      return;
+    }
+    
     try {
       const sound = sounds[type];
       if (sound) {
-        sound.volume = volume;
+        sound.volume = 0.5; // Фиксированная громкость 50%
         sound.currentTime = 0;
-        console.log(`Playing sound: ${type} with volume: ${volume}`);
+        console.log(`Playing sound: ${type}`);
         sound.play().catch(error => console.error(`Error playing sound: ${type}`, error));
       }
     } catch (error) {
       console.error(`Error accessing sound: ${type}`, error);
     }
-  }, [sounds, volume]);
+  }, [sounds, isSoundEnabled]);
 
-  const handleSetVolume = useCallback((value: number) => {
-    // value is from 0 to 100
-    setVolume(value / 100);
+  const toggleSound = useCallback(() => {
+    setIsSoundEnabled(prev => !prev);
   }, []);
 
-  return { volume: Math.round(volume * 100), setVolume: handleSetVolume, playSound };
+  return { isSoundEnabled, toggleSound, playSound };
 };

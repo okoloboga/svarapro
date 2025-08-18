@@ -93,6 +93,15 @@ export class GameService {
         gameState.log.push(action);
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Проверяем, остался ли один игрок во время активной игры
+        const activeStatuses = ['ante', 'blind_betting', 'betting', 'showdown'];
+        if (gameState.players.length === 1 && activeStatuses.includes(gameState.status)) {
+          const remainingPlayer = gameState.players[0];
+          console.log(`Only one player remaining during active game. Auto-win for player: ${remainingPlayer.id}`);
+          await this.endGameWithWinner(roomId, remainingPlayer.id);
+          return;
+        }
       }
       if (gameState.players.length === 0) {
         await this.redisService.removeRoom(roomId);

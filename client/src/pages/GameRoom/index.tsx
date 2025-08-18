@@ -90,6 +90,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
+  const [lastLogLength, setLastLogLength] = useState(0);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
@@ -126,26 +127,46 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     if (!gameState?.log) return;
     
-    const lastAction = gameState.log[gameState.log.length - 1];
-    if (lastAction && lastAction.type === 'fold') {
-      actions.playSound('fold');
+    const currentLogLength = gameState.log.length;
+    
+    // Проверяем только новые действия с момента последней проверки
+    if (currentLogLength > lastLogLength) {
+      const newActions = gameState.log.slice(lastLogLength);
+      
+      // Ищем fold среди новых действий
+      const foldAction = newActions.find(action => action.type === 'fold');
+      if (foldAction) {
+        console.log('Fold action detected, playing sound:', foldAction);
+        actions.playSound('fold');
+      }
+      
+      setLastLogLength(currentLogLength);
     }
-  }, [gameState?.log, actions]);
+  }, [gameState?.log, actions, lastLogLength]);
 
-  // Play win sound for current user if they won (only once)
+  // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
     if (!gameState?.winners || gameState.status !== 'finished') {
-      // Reset flag when game is not finished
+      // Reset flags when game is not finished
       if (gameState?.status !== 'finished') {
         setWinSoundPlayed(false);
+      }
+      // Reset log tracking when game restarts
+      if (gameState?.status === 'waiting' || gameState?.status === 'ante') {
+        setLastLogLength(0);
       }
       return;
     }
     
     const currentUserWon = gameState.winners.some(winner => winner.id === currentUserId);
     if (currentUserWon && !winSoundPlayed) {
-      actions.playSound('win');
-      setWinSoundPlayed(true);
+      // Wait 3 seconds (cards phase) then play win sound during animation phase
+      const winSoundTimer = setTimeout(() => {
+        actions.playSound('win');
+        setWinSoundPlayed(true);
+      }, 3000);
+      
+      return () => clearTimeout(winSoundTimer);
     }
   }, [gameState?.winners, gameState?.status, currentUserId, actions, winSoundPlayed]);
 

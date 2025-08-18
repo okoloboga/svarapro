@@ -37,6 +37,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
+  const [showCardsPhase, setShowCardsPhase] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
 
   // Функция для вычисления суммы последнего действия игрока
@@ -101,23 +102,34 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
-  // Win animation logic
+  // Win sequence logic: first show cards for 3 seconds, then show win animation
   useEffect(() => {
-    const shouldShowAnimation = isWinner && winAmount > 0 && (gameStatus === 'finished' || gameStatus === 'ante');
+    const shouldStartSequence = isWinner && winAmount > 0 && gameStatus === 'finished';
     
-    if (shouldShowAnimation) {
-      setShowWinAnimation(true);
+    if (shouldStartSequence) {
+      // Phase 1: Show cards for 3 seconds
+      setShowCardsPhase(true);
+      setShowWinAnimation(false);
       
-      // Hide animation after 3 seconds with fade out
-      const timer = setTimeout(() => {
-        setShowWinAnimation(false);
+      const cardsTimer = setTimeout(() => {
+        // Phase 2: Hide cards and show win animation
+        setShowCardsPhase(false);
+        setShowWinAnimation(true);
+        
+        // Hide win animation after 2 seconds
+        const winTimer = setTimeout(() => {
+          setShowWinAnimation(false);
+        }, 2000);
+        
+        return () => clearTimeout(winTimer);
       }, 3000);
       
-      return () => clearTimeout(timer);
+      return () => clearTimeout(cardsTimer);
     } else {
+      setShowCardsPhase(false);
       setShowWinAnimation(false);
     }
-  }, [isWinner, winAmount, gameStatus, player.id, player.username, showWinAnimation]);
+  }, [isWinner, winAmount, gameStatus]);
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
@@ -154,6 +166,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
     ${hasFolded ? 'opacity-60' : ''}
+    ${!player.isActive && !player.hasFolded ? 'opacity-70' : ''}
   `;
 
   const containerStyle: React.CSSProperties = {
@@ -213,21 +226,37 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   if (!player.isActive && !player.hasFolded) {
     return (
       <div className={spotClasses} style={containerStyle}>
-        <div className="relative flex flex-col items-center justify-center w-full h-full">
-          <div 
-            className="absolute rounded-full top-0 left-0"
-            style={{ 
-              width: `${avatarSize}px`, 
-              height: `${avatarSize}px`, 
-              backgroundColor: '#555456',
-            }}
-          ></div>
-          <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
-          <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
-            {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
-          </div>
-          <div className="absolute -bottom-8 text-white text-xs text-center font-semibold">
-            В ожидании следующего раунда
+        <div className="relative">
+          <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
+            <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
+              <div 
+                className="absolute rounded-full top-0 left-0"
+                style={{ 
+                  width: `${avatarSize}px`, 
+                  height: `${avatarSize}px`, 
+                  backgroundColor: '#555456',
+                }}
+              ></div>
+              <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
+              <div className="absolute rounded-full overflow-hidden top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (10 * scale)}px`, height: `${avatarSize - (10 * scale)}px` }}>
+                {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
+              </div>
+            </div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
+              <div className="flex flex-col items-center">
+                <div className="relative" style={{ width: `${nameWidth}px`, height: `${nameHeight}px` }}>
+                  <div className="absolute inset-0" style={{ borderRadius: `${8 * scale}px`, background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)' }}></div>
+                  <div className="absolute flex flex-col items-center justify-center" style={{ top: `${1 * scale}px`, left: `${1 * scale}px`, right: `${1 * scale}px`, bottom: `${1 * scale}px`, borderRadius: `${7 * scale}px`, background: 'linear-gradient(to top, #000000, #36333B)' }}>
+                    <div className="font-bold" style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: `${10 * scale}px`, borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)` }}>
+                      {username}
+                    </div>
+                    <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
+                      ${Number(balance).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -244,8 +273,9 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             {/* Win amount container */}
             {showWinAnimation && (
               <div 
-                className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
+                className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
                 style={{ 
+                  top: '3px',
                   width: `${55 * scale}px`, 
                   height: `${21 * scale}px`,
                   borderRadius: `${12 * scale}px`,
@@ -320,7 +350,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             </div>
           </div>
         </div>
-        {(showCards || (isCurrentUser && hasLooked)) && (
+        {(showCards || showCardsPhase || (isCurrentUser && hasLooked)) && (
           <div className="absolute z-50" style={{ 
             width: `${cardWidth}px`, 
             height: `${cardHeight}px`,
@@ -335,12 +365,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${70 * scale}px`,
+              right: `${90 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${70 * scale}px`,
+              left: `${90 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             })
