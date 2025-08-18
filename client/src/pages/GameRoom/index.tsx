@@ -77,7 +77,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   
-  // Состояние для анимаций фишек
   const [chipAnimations, setChipAnimations] = useState<Array<{
     id: string;
     fromX: number;
@@ -88,240 +87,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }>>([]);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
-
-  // Функция для добавления анимации фишки от игрока к столу
-  const handlePlayerBet = (playerId: string) => {
-    // Находим позицию игрока на экране
-    const player = gameState?.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    // Получаем абсолютную позицию игрока
-    const absolutePosition = player.position;
-    
-    // Проверяем, является ли это текущим игроком
-    const isCurrentPlayer = player.id === currentUserId;
-    
-    // Для текущего игрока используем его реальную позицию на экране
-    // Для других игроков используем относительную позицию
-    const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
-    
-    // Вычисляем координаты аватарки игрока относительно левого верхнего угла GameTable
-    let playerX = 0;
-    let playerY = 0;
-    
-    // Координаты относительно центра стола (315x493 - размер стола)
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    
-    // Вычисляем координаты относительно текущего игрока
-    switch (relativePosition) {
-      case 1: // верх
-        playerX = tableWidth / 2;
-        playerY = -50;
-        break;
-      case 2: // верх-право
-        playerX = tableWidth + 50;
-        playerY = tableHeight / 4;
-        break;
-      case 3: // низ-право
-        playerX = tableWidth + 50;
-        playerY = tableHeight * 3 / 4;
-        break;
-      case 4: // низ
-        playerX = tableWidth / 2;
-        playerY = tableHeight + 50;
-        break;
-      case 5: // низ-лево
-        playerX = -50;
-        playerY = tableHeight * 3 / 4;
-        break;
-      case 6: // верх-лево
-        playerX = -50;
-        playerY = tableHeight / 4;
-        break;
-    }
-    
-    const chipId = `chip-${Date.now()}-${Math.random()}`;
-    // Координаты центра стола (ChipsStack позиционируется с marginTop: 30px от центра)
-    const toX = (315 * scale) / 2; // центр стола по X
-    const toY = (493 * scale) / 2 + 30; // центр стола по Y + marginTop от ChipsStack
-    
-
-    
-    // Проверяем, нет ли уже анимации для этого игрока
-    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
-    if (!existingAnimation) {
-      setChipAnimations(prev => {
-        const newAnimations = [...prev, {
-          id: chipId,
-          fromX: playerX,
-          fromY: playerY,
-          toX,
-          toY,
-          delay: 0
-        }];
-        return newAnimations;
-      });
-    }
-  };
-
-
-
-  // Функция для анимации фишек к победителю
-  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
-    // Подсчитываем количество фишек на столе (как в ChipsStack)
-    const chipCount = gameState?.log.filter(action => 
-      action.type === 'ante' || 
-      action.type === 'blind_bet' || 
-      action.type === 'call' || 
-      action.type === 'raise'
-    ).length || 0;
-    
-
-    
-    // Создаем анимации для каждой фишки
-    const chips: Array<{
-      id: string;
-      fromX: number;
-      fromY: number;
-      toX: number;
-      toY: number;
-      delay: number;
-    }> = [];
-    for (let i = 0; i < chipCount; i++) {
-      const chipId = `winner-chip-${Date.now()}-${i}`;
-      const fromX = 0; // центр стола (ChipsStack)
-      const fromY = 30; // ChipsStack marginTop
-      
-      chips.push({
-        id: chipId,
-        fromX,
-        fromY,
-        toX: winnerX,
-        toY: winnerY,
-        delay: i * 100 // задержка 100ms между фишками
-      });
-    }
-    
-    setChipAnimations(prev => [...prev, ...chips]);
-  }, [gameState?.log]);
-
-  // Обработчик завершения анимации фишки
-  const handleChipAnimationComplete = (chipId: string) => {
-    setChipAnimations(prev => {
-      const filtered = prev.filter(chip => chip.id !== chipId);
-      return filtered;
-    });
-  };
-
-  // Отслеживание победы игрока для анимации фишек
-  useEffect(() => {
-    // Отладочный лог для всего gameState при статусе finished
-    if (gameState?.status === 'finished') {
-      console.log('🏆 GameState Debug (finished):', {
-        status: gameState.status,
-        winners: gameState.winners,
-        winnersLength: gameState.winners?.length || 0,
-        pot: gameState.pot,
-        isAnimating: gameState.isAnimating,
-        animationType: gameState.animationType,
-        showWinnerAnimation: gameState.showWinnerAnimation,
-        players: gameState.players.map(p => ({
-          id: p.id,
-          username: p.username,
-          score: p.score,
-          isActive: p.isActive,
-          hasFolded: p.hasFolded
-        }))
-      });
-    }
-    
-    if (gameState?.status === 'finished' && 
-        gameState.winners && 
-        gameState.winners.length > 0 && 
-        gameState.isAnimating && 
-        gameState.animationType === 'win_animation') {
-      
-      // Лог отладки действий игроков за раунд
-      console.log('📊 Round Actions Summary:', {
-        roomId: gameState.roomId,
-        round: gameState.round,
-        pot: gameState.pot,
-        winners: gameState.winners.map(w => ({ id: w.id, username: w.username, position: w.position })),
-        allActions: gameState.log.map(action => ({
-          type: action.type,
-          telegramId: action.telegramId,
-          amount: action.amount,
-          timestamp: new Date(action.timestamp).toLocaleTimeString()
-        })),
-        playerActions: gameState.players.map(player => ({
-          id: player.id,
-          username: player.username,
-          position: player.position,
-          totalBet: player.totalBet,
-          currentBet: player.currentBet,
-          hasFolded: player.hasFolded,
-          hasLooked: player.hasLooked,
-          isActive: player.isActive
-        }))
-      });
-      // Анимация фишек к победителю временно отключена
-    }
-  }, [gameState?.status, gameState?.winners, gameState?.isAnimating, gameState?.animationType, gameState?.log, gameState?.players, gameState?.pot, gameState?.roomId, gameState?.round, gameState?.showWinnerAnimation, scale, handleChipsToWinner]);
-
-  // Дополнительная логика для очистки фишек после завершения раунда
-  useEffect(() => {
-    if (gameState?.status === 'finished' && gameState?.pot === 0) {
-      // Очищаем все анимации фишек
-      setChipAnimations([]);
-    }
-  }, [gameState?.status, gameState?.pot]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.emit('join_room', { roomId });
-    } else {
-      console.error('Socket is not initialized in GameRoom');
-    }
-    return () => {
-      if (socket) {
-        socket.emit('leave_room', { roomId });
-      }
-    };
-  }, [roomId, socket]);
-
-  useEffect(() => {
-    if (pageData?.autoSit && !isSeated && gameState) {
-      const seatedPositions = gameState.players.map(p => p.position);
-      let positionToSit = 1;
-      while(seatedPositions.includes(positionToSit)) {
-        positionToSit++;
-      }
-      if (positionToSit <= 6) {
-        actions.sitDown(positionToSit, userData);
-      }
-    }
-  }, [pageData, isSeated, gameState, actions, userData]);
-
-  // Turn timer logic
-  useEffect(() => {
-    if (isCurrentUserTurn) {
-      setTurnTimer(TURN_DURATION_SECONDS);
-      const interval = setInterval(() => {
-        setTurnTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            actions.fold(); // Auto-fold on timeout
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setTurnTimer(TURN_DURATION_SECONDS); // Reset timer when it's not the user's turn
-    }
-  }, [isCurrentUserTurn, actions]);
 
   if (loading) return <LoadingPage isLoading={loading} />;
 
@@ -354,17 +119,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating;
   
-  // В фазе betting call равен сумме последнего действия, в blind_betting - разнице ставок
   const callAmount = gameState.status === 'betting' 
     ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
     : gameState.currentBet - (currentPlayer?.currentBet || 0);
     
-
-  const minRaiseAmount = gameState.currentBet * 2; // Минимальный raise = 2x от текущей ставки
+  const minRaiseAmount = gameState.currentBet * 2;
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 
-  // Проверяем, идет ли анимация
   const isAnimating = gameState.isAnimating || false;
   
   const canPerformBettingActions = isCurrentUserTurn && gameState.status === 'betting' && !isAnimating;
@@ -376,10 +138,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  // В betting фазе кнопка Call активна, если есть возможность уравнять
-  // В blind_betting фазе кнопка Call деактивируется, если игрок уже сделал максимальную ставку
   const isCallDisabled = gameState.status === 'betting' 
-    ? false // В betting фазе Call всегда доступен (если нет raise, то это завершит раунд)
+    ? false
     : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet;
   const isRaiseDisabled = (currentPlayer?.balance || 0) < minRaiseAmount;
   const isBlindBetDisabled = (currentPlayer?.balance || 0) < blindBetAmount;
@@ -387,29 +147,134 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const blindButtonsDisabled = gameState.status !== 'blind_betting';
   
   const showCards = gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation || false;
-  
-  const handleRaiseClick = () => {
-    setShowBetSlider(true);
+
+  useEffect(() => {
+    if (isCurrentUserTurn) {
+      setTurnTimer(TURN_DURATION_SECONDS);
+      const interval = setInterval(() => {
+        setTurnTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            actions.fold();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setTurnTimer(TURN_DURATION_SECONDS);
+    }
+  }, [isCurrentUserTurn, actions]);
+
+  const handlePlayerBet = (playerId: string) => {
+    const player = gameState?.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const absolutePosition = player.position;
+    const isCurrentPlayer = player.id === currentUserId;
+    const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
+    
+    let playerX = 0;
+    let playerY = 0;
+    
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    
+    switch (relativePosition) {
+      case 1: playerX = tableWidth / 2; playerY = -50; break;
+      case 2: playerX = tableWidth + 50; playerY = tableHeight / 4; break;
+      case 3: playerX = tableWidth + 50; playerY = tableHeight * 3 / 4; break;
+      case 4: playerX = tableWidth / 2; playerY = tableHeight + 50; break;
+      case 5: playerX = -50; playerY = tableHeight * 3 / 4; break;
+      case 6: playerX = -50; playerY = tableHeight / 4; break;
+    }
+    
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    const toX = (315 * scale) / 2;
+    const toY = (493 * scale) / 2 + 30;
+    
+    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
+    if (!existingAnimation) {
+      setChipAnimations(prev => [...prev, { id: chipId, fromX: playerX, fromY: playerY, toX, toY, delay: 0 }]);
+    }
   };
 
-  const handleBlindBetClick = () => {
-    actions.blindBet(blindBetAmount);
+  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
+    const chipCount = gameState?.log.filter(action => 
+      action.type === 'ante' || 
+      action.type === 'blind_bet' || 
+      action.type === 'call' || 
+      action.type === 'raise'
+    ).length || 0;
+    
+    const chips: Array<any> = [];
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      chips.push({ id: chipId, fromX: 0, fromY: 30, toX: winnerX, toY: winnerY, delay: i * 100 });
+    }
+    
+    setChipAnimations(prev => [...prev, ...chips]);
+  }, [gameState?.log]);
+
+  const handleChipAnimationComplete = (chipId: string) => {
+    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
   };
-  
+
+  useEffect(() => {
+    if (gameState?.status === 'finished') {
+      console.log('🏆 GameState Debug (finished):', { ...gameState });
+    }
+    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0 && isAnimating && gameState.animationType === 'win_animation') {
+      console.log('📊 Round Actions Summary:', { ...gameState });
+    }
+  }, [gameState, isAnimating, scale, handleChipsToWinner]);
+
+  useEffect(() => {
+    if (gameState?.status === 'finished' && gameState?.pot === 0) {
+      setChipAnimations([]);
+    }
+  }, [gameState?.status, gameState?.pot]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.emit('join_room', { roomId });
+    } else {
+      console.error('Socket is not initialized in GameRoom');
+    }
+    return () => {
+      if (socket) {
+        socket.emit('leave_room', { roomId });
+      }
+    };
+  }, [roomId, socket]);
+
+  useEffect(() => {
+    if (pageData?.autoSit && !isSeated && gameState) {
+      const seatedPositions = gameState.players.map(p => p.position);
+      let positionToSit = 1;
+      while(seatedPositions.includes(positionToSit)) {
+        positionToSit++;
+      }
+      if (positionToSit <= 6) {
+        actions.sitDown(positionToSit, userData);
+      }
+    }
+  }, [pageData, isSeated, gameState, actions, userData]);
+
+  const handleRaiseClick = () => setShowBetSlider(true);
+  const handleBlindBetClick = () => actions.blindBet(blindBetAmount);
   const handleBetConfirm = (amount: number) => {
     actions.raise(amount);
     setShowBetSlider(false);
   };
-  
   const handleSitDown = (position: number) => {
-    const hasEnoughBalance = parseFloat(balance) >= gameState.minBet * 10;
-    if (!hasEnoughBalance) {
+    if (parseFloat(balance) < gameState.minBet * 10) {
       setNotification('insufficientBalance');
       return;
     }
     actions.sitDown(position, userData);
   };
-
   const handleLeaveRoom = () => {
     setShowMenuModal(false);
     setShowBetSlider(false);
@@ -419,7 +284,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
-      {gameState?.status === 'svara_pending' && (
+      {gameState.status === 'svara_pending' && (
         <SvaraJoinPopup 
           gameState={gameState}
           userData={userData}
@@ -464,22 +329,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
                 const cardSide = (screenPosition === 2 || screenPosition === 3) ? 'left' : 'right';
                 
-                // Логика позиционирования раскрытых карт
                 const getOpenCardsPosition = (position: number) => {
                   switch (position) {
-                    case 1: return 'bottom'; // Верхний игрок - карты под infoBlock
-                    case 2: return 'left';   // Правый игрок - карты слева
-                    case 3: return 'left';   // Правый игрок - карты слева
-                    case 4: return 'top';    // Текущий игрок - карты выше аватарки
-                    case 5: return 'right';  // Левый игрок - карты справа
-                    case 6: return 'right';  // Левый игрок - карты справа
+                    case 1: return 'bottom';
+                    case 2: return 'left';
+                    case 3: return 'left';
+                    case 4: return 'top';
+                    case 5: return 'right';
+                    case 6: return 'right';
                     default: return 'top';
                   }
                 };
                 
                 const openCardsPosition = getOpenCardsPosition(screenPosition);
-                const isActivePhase = gameState.status === 'blind_betting' || gameState.status === 'betting';
-                const isTurn = isActivePhase && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id && !gameState.isAnimating;
+                const isTurn = isCurrentUserTurn && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id;
 
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>
@@ -487,13 +350,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = gameState.winners && gameState.winners.some(winner => winner.id === player.id);
-                        // Вычисляем сумму выигрыша из лога действий
                         const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
                         const winAmount = winAction ? winAction.amount : 0;
-                        
-
-                        
-
                         
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
@@ -509,7 +367,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             isWinner={isWinner}
                             winAmount={winAmount}
                             gameStatus={gameState.status}
-                            isAnimating={gameState.isAnimating}
                             onPlayerBet={handlePlayerBet}
                             gameState={gameState}
                           />;
@@ -523,6 +380,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           openCardsPosition={openCardsPosition}
                           isTurn={isTurn}
                           turnTimer={turnTimer}
+                          isWinner={isWinner}
+                          winAmount={winAmount}
+                          gameStatus={gameState.status}
+                          onPlayerBet={handlePlayerBet}
+                          gameState={gameState}
+                        />;
                       })()
                     ) : (
                       <SeatButton type={isSeated ? 'invite' : 'sitdown'} position={absolutePosition} onSitDown={handleSitDown} onInvite={() => {}} scale={scale} />
@@ -583,7 +446,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
       {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       
-      {/* Летящие фишки */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ zIndex: 1000 }}>
         {chipAnimations.map(chip => (
           <FlyingChip

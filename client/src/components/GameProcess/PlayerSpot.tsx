@@ -18,7 +18,6 @@ interface PlayerSpotProps {
   isWinner?: boolean;
   winAmount?: number;
   gameStatus?: string;
-  isAnimating?: boolean;
   onPlayerBet?: (playerId: string) => void;
   gameState?: { 
     log: Array<{ 
@@ -34,7 +33,7 @@ interface PlayerSpotProps {
   }; // Добавляем gameState для доступа к логу действий
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, isAnimating = false, onPlayerBet, gameState }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, onPlayerBet, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
