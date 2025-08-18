@@ -327,20 +327,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${-60 * scale}px`
+              top: `${-30 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${60 * scale}px`
+              top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${60 * scale}px`,
+              right: `${70 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${60 * scale}px`,
+              left: `${70 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             })

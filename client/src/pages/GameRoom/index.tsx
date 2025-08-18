@@ -89,6 +89,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { triggerImpact } = useHapticFeedback();
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
+  const [winSoundPlayed, setWinSoundPlayed] = useState(false);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
@@ -131,15 +132,22 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState?.log, actions]);
 
-  // Play win sound for current user if they won
+  // Play win sound for current user if they won (only once)
   useEffect(() => {
-    if (!gameState?.winners || gameState.status !== 'finished') return;
+    if (!gameState?.winners || gameState.status !== 'finished') {
+      // Reset flag when game is not finished
+      if (gameState?.status !== 'finished') {
+        setWinSoundPlayed(false);
+      }
+      return;
+    }
     
     const currentUserWon = gameState.winners.some(winner => winner.id === currentUserId);
-    if (currentUserWon) {
+    if (currentUserWon && !winSoundPlayed) {
       actions.playSound('win');
+      setWinSoundPlayed(true);
     }
-  }, [gameState?.winners, gameState?.status, currentUserId, actions]);
+  }, [gameState?.winners, gameState?.status, currentUserId, actions, winSoundPlayed]);
 
 
   const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {

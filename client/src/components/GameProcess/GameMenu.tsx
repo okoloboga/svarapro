@@ -29,7 +29,9 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setVolume(Number(e.target.value));
+    const newVolume = Number(e.target.value);
+    console.log('Volume changed:', newVolume);
+    setVolume(newVolume);
   };
 
   return (
@@ -45,26 +47,28 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
           className="w-full h-full rounded-lg"
           contentClassName="flex flex-col items-center justify-center p-4 space-y-2"
         >
-          {/* Vibration Toggle */}
-          <div
-            className="w-[225px] h-8 rounded-lg flex items-center justify-between px-3 transition-all duration-200 ease-in-out"
-            style={{ backgroundColor: 'rgba(19, 18, 23, 0.7)' }}
-          >
-            <div className="flex items-center space-x-2">
-              <img src={vibroIcon} alt="Вибрация" className="w-4 h-4" />
-              <span className="text-white" style={{ fontWeight: 500, fontSize: '12px' }}>Вибрация</span>
-            </div>
+          {/* Vibration Toggle - temporarily hidden */}
+          {false && (
             <div
-              className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer transition-colors duration-300"
-              style={{ background: isHapticEnabled ? '#31EA3D' : '#2F2E35' }}
-              onClick={toggleHaptic}
+              className="w-[225px] h-8 rounded-lg flex items-center justify-between px-3 transition-all duration-200 ease-in-out"
+              style={{ backgroundColor: 'rgba(19, 18, 23, 0.7)' }}
             >
+              <div className="flex items-center space-x-2">
+                <img src={vibroIcon} alt="Вибрация" className="w-4 h-4" />
+                <span className="text-white" style={{ fontWeight: 500, fontSize: '12px' }}>Вибрация</span>
+              </div>
               <div
-                className="w-[16px] h-[16px] bg-white rounded-full transition-all duration-300"
-                style={{ transform: isHapticEnabled ? 'translateX(20px)' : 'translateX(0)' }}
-              ></div>
+                className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer transition-colors duration-300"
+                style={{ background: isHapticEnabled ? '#31EA3D' : '#2F2E35' }}
+                onClick={toggleHaptic}
+              >
+                <div
+                  className="w-[16px] h-[16px] bg-white rounded-full transition-all duration-300"
+                  style={{ transform: isHapticEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+                ></div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Volume Slider */}
           <div
@@ -87,8 +91,12 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
                 max="100"
                 value={volume}
                 onChange={handleVolumeChange}
-                className="absolute w-full h-full appearance-none bg-transparent cursor-pointer"
-                style={{ WebkitAppearance: 'none' }}
+                className="absolute w-full h-full appearance-none bg-transparent cursor-pointer opacity-0"
+                style={{ 
+                  WebkitAppearance: 'none',
+                  background: 'transparent',
+                  outline: 'none'
+                }}
               />
               <div 
                 className="absolute top-1/2 -translate-y-1/2 w-[18px] h-[18px] bg-white rounded-full shadow pointer-events-none"

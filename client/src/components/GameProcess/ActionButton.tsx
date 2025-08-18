@@ -118,7 +118,9 @@ export function ActionButtons({
               fontSize: '12px',
               lineHeight: '100%',
               left: '8px',
-              bottom: '-20px',
+              width: '95px',
+              textAlign: 'center',
+              bottom: '-15px',
             }}
           >
             ({turnTimer}) сек

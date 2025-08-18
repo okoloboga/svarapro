@@ -29,6 +29,7 @@ export const useSound = () => {
       if (sound) {
         sound.volume = volume;
         sound.currentTime = 0;
+        console.log(`Playing sound: ${type} with volume: ${volume}`);
         sound.play().catch(error => console.error(`Error playing sound: ${type}`, error));
       }
     } catch (error) {
