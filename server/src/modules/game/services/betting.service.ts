@@ -31,12 +31,14 @@ export class BettingService {
           };
           actions.push(action);
         } else {
-                  // Снимаем анте с баланса игрока
-        const roundedMinBet = Number(minBet.toFixed(2));
-        player.balance -= roundedMinBet;
-        player.tableBalance += roundedMinBet;
-        player.totalBet += roundedMinBet;
-        updatedGameState.pot = Number((updatedGameState.pot + roundedMinBet).toFixed(2));
+          // Снимаем анте с баланса игрока
+          const roundedMinBet = Number(minBet.toFixed(2));
+          player.balance -= roundedMinBet;
+          player.tableBalance += roundedMinBet;
+          player.totalBet += roundedMinBet;
+          updatedGameState.pot = Number(
+            (updatedGameState.pot + roundedMinBet).toFixed(2),
+          );
 
           // Добавляем действие в лог
           const action: GameAction = {
@@ -109,7 +111,7 @@ export class BettingService {
 
     // Если есть несколько победителей, делим выигрыш поровну
     const winPerPlayer = Number((winAmount / winnerIds.length).toFixed(2));
-    
+
     // Отладочный лог для проверки выигрыша
     console.log('🎯 Win Calculation Debug:', {
       pot: updatedGameState.pot,
@@ -117,7 +119,7 @@ export class BettingService {
       winAmount,
       winnerIds,
       winnerIdsLength: winnerIds.length,
-      winPerPlayer
+      winPerPlayer,
     });
 
     for (const winnerId of winnerIds) {
@@ -141,12 +143,12 @@ export class BettingService {
 
     // Устанавливаем комиссию и обнуляем банк
     updatedGameState.rake = rake;
-    updatedGameState.pot = 0.00;
-    
+    updatedGameState.pot = 0.0;
+
     // Устанавливаем победителей для анимации
-    updatedGameState.winners = winnerIds.map(id => 
-      updatedGameState.players.find(p => p.id === id)
-    ).filter(Boolean) as Player[];
+    updatedGameState.winners = winnerIds
+      .map((id) => updatedGameState.players.find((p) => p.id === id))
+      .filter(Boolean) as Player[];
 
     // Добавляем действие о комиссии в лог
     if (rake > 0) {

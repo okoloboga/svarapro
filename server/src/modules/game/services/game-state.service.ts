@@ -17,7 +17,7 @@ export class GameStateService {
       status: 'waiting',
       players: [],
       deck: [],
-      pot: 0.00,
+      pot: 0.0,
       currentPlayerIndex: 0,
       dealerIndex: 0,
       minBet,
@@ -128,7 +128,7 @@ export class GameStateService {
     for (let i = 0; i < updatedGameState.players.length; i++) {
       const player = updatedGameState.players[i];
       const isParticipant = participantIds.includes(player.id);
-      
+
       updatedGameState.players[i] = this.playerService.resetPlayerForNewGame(
         player,
         isParticipant, // Активен только если участник свары
@@ -200,10 +200,10 @@ export class GameStateService {
 
     console.log('🎴 Starting dealCardsToPlayers:', {
       totalPlayers: updatedGameState.players.length,
-      activePlayers: updatedGameState.players.filter(p => p.isActive).length,
+      activePlayers: updatedGameState.players.filter((p) => p.isActive).length,
       deckSize: updatedGameState.deck.length,
       roomId: updatedGameState.roomId,
-      status: updatedGameState.status
+      status: updatedGameState.status,
     });
 
     // Раздаем по 3 карты каждому активному игроку
@@ -214,30 +214,32 @@ export class GameStateService {
         username: player.username,
         isActive: player.isActive,
         position: player.position,
-        currentCards: player.cards.length
+        currentCards: player.cards.length,
       });
-      
+
       if (player.isActive) {
         const { cards, remainingDeck } = this.cardService.dealCards(
           updatedGameState.deck,
           3,
         );
-        
+
         console.log(`🎴 Dealt cards to player ${player.username}:`, {
           cardsCount: cards.length,
-          cards: cards.map(c => `${c.rank}${c.suit}`),
-          remainingDeckSize: remainingDeck.length
+          cards: cards.map((c) => `${c.rank}${c.suit}`),
+          remainingDeckSize: remainingDeck.length,
         });
-        
+
         updatedGameState.players[i] = this.playerService.addCardsToPlayer(
           player,
           cards,
         );
         updatedGameState.deck = remainingDeck;
-        
+
         console.log(`🎴 After adding cards to ${player.username}:`, {
           finalCardsCount: updatedGameState.players[i].cards.length,
-          finalCards: updatedGameState.players[i].cards.map(c => `${c.rank}${c.suit}`)
+          finalCards: updatedGameState.players[i].cards.map(
+            (c) => `${c.rank}${c.suit}`,
+          ),
         });
       }
     }
@@ -275,7 +277,7 @@ export class GameStateService {
           ...updatedGameState.players[i],
           score,
         };
-        
+
         // Отладочный лог для проверки вычисления очков
         console.log('📊 Score calculation:', {
           playerId: updatedGameState.players[i].id,
@@ -283,7 +285,7 @@ export class GameStateService {
           score,
           cards: updatedGameState.players[i].cards,
           isActive: updatedGameState.players[i].isActive,
-          hasFolded: updatedGameState.players[i].hasFolded
+          hasFolded: updatedGameState.players[i].hasFolded,
         });
 
         // Добавляем действие в лог

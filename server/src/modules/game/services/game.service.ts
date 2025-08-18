@@ -226,16 +226,16 @@ export class GameService {
       console.log('🚫 startAntePhase skipped:', {
         roomId,
         hasGameState: !!gameState,
-        status: gameState?.status
+        status: gameState?.status,
       });
       return;
     }
-    
+
     console.log('🎯 startAntePhase started:', {
       roomId,
       status: gameState.status,
       playersCount: gameState.players.length,
-      activePlayersCount: gameState.players.filter(p => p.isActive).length
+      activePlayersCount: gameState.players.filter((p) => p.isActive).length,
     });
 
     const { updatedGameState, actions } = this.bettingService.processAnte(
@@ -277,7 +277,7 @@ export class GameService {
 
   // Новая логика свары
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
-  
+
   async joinSvara(
     roomId: string,
     telegramId: string,
@@ -293,20 +293,29 @@ export class GameService {
     }
 
     // Проверяем, не является ли игрок уже участником свары (изначальным)
-    if (gameState.svaraParticipants.includes(telegramId)) {
+    if (
+      gameState.svaraParticipants &&
+      gameState.svaraParticipants.includes(telegramId)
+    ) {
       return { success: false, error: 'Вы уже участвуете в сваре' };
     }
 
     const svaraBuyInAmount = gameState.pot;
     if (player.balance < svaraBuyInAmount) {
-      return { success: false, error: 'Недостаточно средств для входа в свару' };
+      return {
+        success: false,
+        error: 'Недостаточно средств для входа в свару',
+      };
     }
 
     // Списываем деньги и добавляем в банк
     player.balance -= svaraBuyInAmount;
     gameState.pot += svaraBuyInAmount;
-    
+
     // Добавляем игрока в список участников свары
+    if (!gameState.svaraParticipants) {
+      gameState.svaraParticipants = [];
+    }
     gameState.svaraParticipants.push(telegramId);
 
     const action: GameAction = {
@@ -338,7 +347,7 @@ export class GameService {
     }
 
     // Просто логируем действие, чтобы UI мог закрыться
-    // Никаких изменений в состоянии игры не требуется, 
+    // Никаких изменений в состоянии игры не требуется,
     // так как resolveSvara все равно сработает по таймеру
     const action: GameAction = {
       type: 'fold', // Используем fold для простоты, можно создать и новый тип
@@ -366,7 +375,7 @@ export class GameService {
     if (action === 'skip_svara') {
       return this.skipSvara(roomId, telegramId);
     }
-    
+
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
       return { success: false, error: 'Игра не найдена' };
@@ -506,18 +515,18 @@ export class GameService {
         // Устанавливаем состояние анимации
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
-        
+
         // Сохраняем состояние с анимацией
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
-        
+
         // Ждем 1 секунду для анимации
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // Снимаем состояние анимации
         gameState.isAnimating = false;
         gameState.animationType = undefined;
-        
+
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           gameState.currentPlayerIndex,
@@ -591,27 +600,27 @@ export class GameService {
         gameState = scoreResult.updatedGameState;
         gameState.log.push(...scoreResult.actions);
 
-                // Устанавливаем состояние анимации
+        // Устанавливаем состояние анимации
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
-        
+
         // Сохраняем состояние с анимацией
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
-        
+
         // Ждем 1 секунду для анимации
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // Снимаем состояние анимации
         gameState.isAnimating = false;
         gameState.animationType = undefined;
-        
+
         // Переходим к следующему игроку (важно: ход переходит к следующему!)
         gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
           gameState.players,
           playerIndex,
         );
-        
+
         break;
       }
     }
@@ -631,9 +640,14 @@ export class GameService {
     switch (action) {
       case 'call': {
         // Используем lastActionAmount для корректного расчета call
-        const callAmount = Number((gameState.lastActionAmount - player.currentBet).toFixed(2));
+        const callAmount = Number(
+          (gameState.lastActionAmount - player.currentBet).toFixed(2),
+        );
         if (callAmount <= 0) {
-          return { success: false, error: 'Сумма уравнивания должна быть больше 0' };
+          return {
+            success: false,
+            error: 'Сумма уравнивания должна быть больше 0',
+          };
         }
         if (player.balance < callAmount) {
           return { success: false, error: 'Недостаточно средств' };
@@ -642,7 +656,6 @@ export class GameService {
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-        gameState.lastActionAmount = gameState.lastActionAmount; // Сохраняем сумму последнего действия
         gameState.log.push(callAction);
         break;
       }
@@ -655,7 +668,10 @@ export class GameService {
         }
         const raiseAmount = Number((amount - player.currentBet).toFixed(2));
         if (raiseAmount <= 0) {
-          return { success: false, error: 'Сумма повышения должна быть больше 0' };
+          return {
+            success: false,
+            error: 'Сумма повышения должна быть больше 0',
+          };
         }
         if (player.balance < raiseAmount) {
           return { success: false, error: 'Недостаточно средств' };
@@ -675,14 +691,14 @@ export class GameService {
     // Устанавливаем состояние анимации
     gameState.isAnimating = true;
     gameState.animationType = 'chip_fly';
-    
+
     // Сохраняем состояние с анимацией
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-    
+
     // Ждем 1 секунду для анимации
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Снимаем состояние анимации
     gameState.isAnimating = false;
     gameState.animationType = undefined;
@@ -720,7 +736,7 @@ export class GameService {
       if (dealer && dealer.isActive && !dealer.hasFolded) {
         const potAmount = Number(gameState.pot.toFixed(2)); // Сохраняем значение банка с округлением
         dealer.balance += potAmount;
-        gameState.pot = 0.00;
+        gameState.pot = 0.0;
 
         const dealerWinAction: GameAction = {
           type: 'win',
@@ -765,19 +781,23 @@ export class GameService {
 
     const winners = this.playerService.determineWinners(gameState.players);
     gameState.winners = winners;
-    
+
     // Отладочный лог для проверки победителей
     console.log('🏆 Winners Debug:', {
       roomId,
       winnersCount: winners.length,
-      winners: winners.map(w => ({ id: w.id, username: w.username, score: w.score })),
-      allPlayers: gameState.players.map(p => ({ 
-        id: p.id, 
-        username: p.username, 
-        score: p.score, 
-        isActive: p.isActive, 
-        hasFolded: p.hasFolded 
-      }))
+      winners: winners.map((w) => ({
+        id: w.id,
+        username: w.username,
+        score: w.score,
+      })),
+      allPlayers: gameState.players.map((p) => ({
+        id: p.id,
+        username: p.username,
+        score: p.score,
+        isActive: p.isActive,
+        hasFolded: p.hasFolded,
+      })),
     });
 
     if (winners.length > 1) {
@@ -797,7 +817,8 @@ export class GameService {
         type: 'svara',
         telegramId: 'system',
         timestamp: Date.now(),
-        message: 'Объявлена "Свара"! Игроки могут присоединиться в течение 20 секунд.',
+        message:
+          'Объявлена "Свара"! Игроки могут присоединиться в течение 20 секунд.',
       };
       gameState.log.push(svaraAction);
 
@@ -811,7 +832,6 @@ export class GameService {
         });
       }, 20000); // 20 секунд
       this.svaraTimers.set(roomId, timer);
-
     } else if (winners.length === 1) {
       await this.endGameWithWinner(roomId, winners[0].id);
     } else {
@@ -832,10 +852,11 @@ export class GameService {
     }
 
     const participants = gameState.svaraParticipants;
-    if (participants.length >= 2) {
+
+    if (participants && participants.length >= 2) {
       // Если есть как минимум 2 участника, начинаем свару
       await this.startSvaraGame(roomId, participants);
-    } else if (participants.length === 1) {
+    } else if (participants && participants.length === 1) {
       // Если только один участник (остальные не присоединились), он забирает банк
       await this.endGameWithWinner(roomId, participants[0]);
     } else {
@@ -908,8 +929,8 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-            // Ждем 3 секунды для показа карт и анимации победы
-        await new Promise(resolve => setTimeout(resolve, 3000));
+    // Ждем 3 секунды для показа карт и анимации победы
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Запускаем анимацию фишек к победителю
     gameState.isAnimating = true;
@@ -918,15 +939,15 @@ export class GameService {
     await this.redisService.publishGameUpdate(roomId, gameState);
 
     // Ждем 3 секунды для анимации фишек
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Снимаем флаги анимации и обнуляем банк
     gameState.isAnimating = false;
     gameState.animationType = undefined;
     gameState.showWinnerAnimation = false;
-    gameState.pot = 0.00; // Обнуляем банк после анимации
+    gameState.pot = 0.0; // Обнуляем банк после анимации
     // Сохраняем победителей для клиента
-    const winnerPlayer = gameState.players.find(p => p.id === winnerId);
+    const winnerPlayer = gameState.players.find((p) => p.id === winnerId);
     gameState.winners = winnerPlayer ? [winnerPlayer] : [];
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);

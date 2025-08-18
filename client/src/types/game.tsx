@@ -40,7 +40,7 @@ export interface Player {
 
 export interface GameState {
   roomId: string;
-  status: 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'finished';
+  status: 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'svara_pending' | 'finished';
   players: Player[];
   deck?: Card[]; // колода (на клиенте не нужна полная колода)
   pot: number; // банк
@@ -54,6 +54,7 @@ export interface GameState {
   rake: number; // комиссия (налог)
   winners: Player[]; // победители
   isSvara: boolean; // объявлена ли "свара"
+  svaraParticipants: string[]; // участники свары
   round: number; // номер раунда
   timer?: number; // таймер для хода
   log: GameAction[]; // лог действий

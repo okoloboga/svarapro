@@ -80,10 +80,7 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     void client.join(roomId);
     console.log(`Client ${telegramId} joined room ${roomId}`);
 
-    const result = await this.gameService.joinRoom(
-      roomId,
-      telegramId,
-    );
+    const result = await this.gameService.joinRoom(roomId, telegramId);
     console.log('join_room result:', result);
 
     if (result.success) {
