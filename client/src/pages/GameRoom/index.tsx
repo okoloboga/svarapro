@@ -88,6 +88,76 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
+  const isCurrentUserTurn = !!(isSeated && gameState && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating);
+
+  useEffect(() => {
+    if (isCurrentUserTurn) {
+      setTurnTimer(TURN_DURATION_SECONDS);
+      const interval = setInterval(() => {
+        setTurnTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            actions.fold();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setTurnTimer(TURN_DURATION_SECONDS);
+    }
+  }, [isCurrentUserTurn, actions]);
+
+  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
+    const chipCount = gameState?.log.filter(action => 
+      action.type === 'ante' || 
+      action.type === 'blind_bet' || 
+      action.type === 'call' || 
+      action.type === 'raise'
+    ).length || 0;
+    
+    const chips: Array<any> = [];
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      chips.push({ id: chipId, fromX: 0, fromY: 30, toX: winnerX, toY: winnerY, delay: i * 100 });
+    }
+    
+    setChipAnimations(prev => [...prev, ...chips]);
+  }, [gameState?.log]);
+
+  const handleChipAnimationComplete = (chipId: string) => {
+    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
+  };
+
+  useEffect(() => {
+    if (gameState?.status === 'finished') {
+      console.log('🏆 GameState Debug (finished):', { ...gameState });
+    }
+    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0 && gameState.isAnimating && gameState.animationType === 'win_animation') {
+      console.log('📊 Round Actions Summary:', { ...gameState });
+    }
+  }, [gameState]);
+
+  useEffect(() => {
+    if (gameState?.status === 'finished' && gameState?.pot === 0) {
+      setChipAnimations([]);
+    }
+  }, [gameState?.status, gameState?.pot]);
+
+  useEffect(() => {
+    if (pageData?.autoSit && !isSeated && gameState) {
+      const seatedPositions = gameState.players.map(p => p.position);
+      let positionToSit = 1;
+      while(seatedPositions.includes(positionToSit)) {
+        positionToSit++;
+      }
+      if (positionToSit <= 6) {
+        actions.sitDown(positionToSit, userData);
+      }
+    }
+  }, [pageData, isSeated, gameState, actions, userData]);
+
   if (loading) return <LoadingPage isLoading={loading} />;
 
   if (error) {
@@ -117,8 +187,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     return ((absolutePosition + offset - 1 + 6) % 6) + 1;
   };
   
-  const isCurrentUserTurn = isSeated && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating;
-  
   const callAmount = gameState.status === 'betting' 
     ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
     : gameState.currentBet - (currentPlayer?.currentBet || 0);
@@ -127,10 +195,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 
-  const isAnimating = gameState.isAnimating || false;
+  const isAnimating = !!(gameState.isAnimating);
   
-  const canPerformBettingActions = isCurrentUserTurn && gameState.status === 'betting' && !isAnimating;
-  const canPerformBlindActions = isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating;
+  const canPerformBettingActions = !!(isCurrentUserTurn && gameState.status === 'betting' && !isAnimating);
+  const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating);
 
   const canFold = canPerformBettingActions;
   const canCall = canPerformBettingActions;
@@ -138,37 +206,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  const isCallDisabled = gameState.status === 'betting' 
+  const isCallDisabled = !!(gameState.status === 'betting' 
     ? false
-    : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet;
-  const isRaiseDisabled = (currentPlayer?.balance || 0) < minRaiseAmount;
-  const isBlindBetDisabled = (currentPlayer?.balance || 0) < blindBetAmount;
+    : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet);
+  const isRaiseDisabled = !!((currentPlayer?.balance || 0) < minRaiseAmount);
+  const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
   
-  const blindButtonsDisabled = gameState.status !== 'blind_betting';
+  const blindButtonsDisabled = !!(gameState.status !== 'blind_betting');
   
-  const showCards = gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation || false;
-
-  useEffect(() => {
-    if (isCurrentUserTurn) {
-      setTurnTimer(TURN_DURATION_SECONDS);
-      const interval = setInterval(() => {
-        setTurnTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            actions.fold();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setTurnTimer(TURN_DURATION_SECONDS);
-    }
-  }, [isCurrentUserTurn, actions]);
+  const showCards = !!(gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation);
 
   const handlePlayerBet = (playerId: string) => {
-    const player = gameState?.players.find(p => p.id === playerId);
+    const player = gameState.players.find(p => p.id === playerId);
     if (!player) return;
     
     const absolutePosition = player.position;
@@ -199,57 +248,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       setChipAnimations(prev => [...prev, { id: chipId, fromX: playerX, fromY: playerY, toX, toY, delay: 0 }]);
     }
   };
-
-  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
-    const chipCount = gameState?.log.filter(action => 
-      action.type === 'ante' || 
-      action.type === 'blind_bet' || 
-      action.type === 'call' || 
-      action.type === 'raise'
-    ).length || 0;
-    
-    const chips: Array<any> = [];
-    for (let i = 0; i < chipCount; i++) {
-      const chipId = `winner-chip-${Date.now()}-${i}`;
-      chips.push({ id: chipId, fromX: 0, fromY: 30, toX: winnerX, toY: winnerY, delay: i * 100 });
-    }
-    
-    setChipAnimations(prev => [...prev, ...chips]);
-  }, [gameState?.log]);
-
-  const handleChipAnimationComplete = (chipId: string) => {
-    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
-  };
-
-  useEffect(() => {
-    if (gameState?.status === 'finished') {
-      console.log('🏆 GameState Debug (finished):', { ...gameState });
-    }
-    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0 && isAnimating && gameState.animationType === 'win_animation') {
-      console.log('📊 Round Actions Summary:', { ...gameState });
-    }
-  }, [gameState, isAnimating, scale, handleChipsToWinner]);
-
-  // Дополнительная логика для очистки фишек после завершения раунда
-  useEffect(() => {
-    if (gameState?.status === 'finished' && gameState?.pot === 0) {
-      // Очищаем все анимации фишек
-      setChipAnimations([]);
-    }
-  }, [gameState?.status, gameState?.pot]);
-
-  useEffect(() => {
-    if (pageData?.autoSit && !isSeated && gameState) {
-      const seatedPositions = gameState.players.map(p => p.position);
-      let positionToSit = 1;
-      while(seatedPositions.includes(positionToSit)) {
-        positionToSit++;
-      }
-      if (positionToSit <= 6) {
-        actions.sitDown(positionToSit, userData);
-      }
-    }
-  }, [pageData, isSeated, gameState, actions, userData]);
 
   const handleRaiseClick = () => setShowBetSlider(true);
   const handleBlindBetClick = () => actions.blindBet(blindBetAmount);
