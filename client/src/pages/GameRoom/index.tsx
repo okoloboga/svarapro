@@ -87,8 +87,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const { triggerImpact } = useHapticFeedback();
-  const prevPlayersRef = useRef<Player[]>([]);
-  const prevWinnersRef = useRef<Player[]>([]);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
 
