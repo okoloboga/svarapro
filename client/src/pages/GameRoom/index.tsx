@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { GameRoomProps } from '@/types/game';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { GameRoomProps, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
@@ -18,6 +18,17 @@ import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { SvaraJoinPopup } from '../../components/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useSound } from '@/hooks/useSound';
+
+interface ChipAnimation {
+  id: string;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  delay: number;
+}
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -76,15 +87,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
-  
-  const [chipAnimations, setChipAnimations] = useState<Array<{
-    id: string;
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
-    delay: number;
-  }>>([]);
+  const { triggerImpact } = useHapticFeedback();
+  const { playSound } = useSound();
+  const prevPlayersRef = useRef<Player[]>([]);
+
+  const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
@@ -109,6 +116,39 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [isCurrentUserTurn, actions]);
 
+  useEffect(() => {
+    if (isCurrentUserTurn) {
+      triggerImpact('medium');
+      playSound('turn');
+    }
+  }, [isCurrentUserTurn, triggerImpact, playSound]);
+
+  // Effect for fold and win sounds
+  useEffect(() => {
+    if (gameState && prevPlayersRef.current) {
+      // Fold detection
+      const foldedPlayer = gameState.players.find(p => 
+        p.hasFolded && 
+        !prevPlayersRef.current.find(pp => pp.id === p.id)?.hasFolded
+      );
+      if (foldedPlayer) {
+        playSound('fold');
+      }
+
+      // Win detection
+      const wasWinner = prevPlayersRef.current.some(p => p.id === currentUserId && gameState.winners?.some(w => w.id === p.id));
+      const isNowWinner = gameState.winners?.some(w => w.id === currentUserId);
+
+      if (isNowWinner && !wasWinner) {
+        playSound('win');
+      }
+    }
+
+    // Update previous players ref for next render
+    prevPlayersRef.current = gameState?.players || [];
+  }, [gameState, playSound, currentUserId]);
+
+
   const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
     const chipCount = gameState?.log.filter(action => 
       action.type === 'ante' || 
@@ -117,7 +157,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       action.type === 'raise'
     ).length || 0;
     
-    const chips: Array<any> = [];
+    const chips: Array<ChipAnimation> = [];
     for (let i = 0; i < chipCount; i++) {
       const chipId = `winner-chip-${Date.now()}-${i}`;
       chips.push({ id: chipId, fromX: 0, fromY: 30, toX: winnerX, toY: winnerY, delay: i * 100 });
@@ -129,21 +169,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handleChipAnimationComplete = (chipId: string) => {
     setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
   };
-
-  useEffect(() => {
-    if (gameState?.status === 'finished') {
-      console.log('🏆 GameState Debug (finished):', { ...gameState });
-    }
-    if (gameState?.status === 'finished' && gameState.winners && gameState.winners.length > 0 && gameState.isAnimating && gameState.animationType === 'win_animation') {
-      console.log('📊 Round Actions Summary:', { ...gameState });
-    }
-  }, [gameState]);
-
-  useEffect(() => {
-    if (gameState?.status === 'finished' && gameState?.pot === 0) {
-      setChipAnimations([]);
-    }
-  }, [gameState?.status, gameState?.pot]);
 
   useEffect(() => {
     if (pageData?.autoSit && !isSeated && gameState) {
