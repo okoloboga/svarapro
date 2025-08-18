@@ -92,7 +92,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
-  const isCurrentUserTurn = !!(isSeated && gameState && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating);
+  const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
+  const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
