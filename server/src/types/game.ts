@@ -95,4 +95,5 @@ export interface GameActionResult {
   success: boolean;
   error?: string;
   gameState?: GameState | null;
+  events?: { name: string; payload?: any; to?: string | string[] }[];
 }

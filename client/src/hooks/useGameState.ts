@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Socket } from 'socket.io-client';
 import { GameState } from '@/types/game';
 import { UserData } from '@/types/entities';
+import { useSound, SoundType } from './useSound';
 
 export const useGameState = (roomId: string, socket: Socket | null) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSeated, setIsSeated] = useState(false);
+  const { playSound } = useSound();
 
   useEffect(() => {
     if (!socket) {
@@ -36,6 +38,10 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
       setIsSeated(state.players.some(p => p.id === userId));
     });
+
+    socket.on('play_sound', (sound: SoundType) => {
+      playSound(sound);
+    });
     
     socket.on('error', (data: { message: string }) => {
       console.error('Socket error:', data.message);
@@ -51,8 +57,9 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       socket.off('game_state');
       socket.off('game_update');
       socket.off('error');
+      socket.off('play_sound');
     };
-  }, [roomId, socket]);
+  }, [roomId, socket, playSound]);
 
   const performAction = useCallback((action: string, amount?: number) => {
     if (socket) {
@@ -111,7 +118,8 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     sitDown,
     invitePlayer,
     leaveRoom,
-  }), [performAction, sitDown, invitePlayer, leaveRoom]);
+    playSound,
+  }), [performAction, sitDown, invitePlayer, leaveRoom, playSound]);
 
   return {
     gameState,

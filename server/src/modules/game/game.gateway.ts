@@ -153,6 +153,17 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
         action,
         amount,
       );
+
+      if (result.events) {
+        result.events.forEach((event) => {
+          if (event.to) {
+            this.server.to(event.to).emit(event.name, event.payload);
+          } else {
+            this.server.to(roomId).emit(event.name, event.payload);
+          }
+        });
+      }
+
       if (!result.success) {
         console.error(`Error in game_action for ${telegramId}:`, result.error);
         client.emit('error', { message: result.error });

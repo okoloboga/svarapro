@@ -19,7 +19,6 @@ import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { SvaraJoinPopup } from '../../components/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useSound } from '@/hooks/useSound';
 
 interface ChipAnimation {
   id: string;
@@ -88,7 +87,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const { triggerImpact } = useHapticFeedback();
-  const { playSound } = useSound();
   const prevPlayersRef = useRef<Player[]>([]);
   const prevWinnersRef = useRef<Player[]>([]);
 
@@ -120,37 +118,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     if (isCurrentUserTurn) {
       triggerImpact('medium');
-      playSound('turn');
+      actions.playSound('turn');
     }
-  }, [isCurrentUserTurn, triggerImpact, playSound]);
-
-  // Effect for fold and win sounds
-  useEffect(() => {
-    if (gameState && prevPlayersRef.current.length > 0) {
-      // Fold detection
-      const foldedPlayer = gameState.players.find(p => 
-        p.hasFolded && 
-        !prevPlayersRef.current.find(pp => pp.id === p.id)?.hasFolded
-      );
-      if (foldedPlayer) {
-        playSound('fold');
-      }
-    }
-
-    if (gameState && prevWinnersRef.current) {
-        // Win detection
-        const isNowWinner = gameState.winners?.some(w => w.id === currentUserId);
-        const wasWinner = prevWinnersRef.current.some(w => w.id === currentUserId);
-
-        if (isNowWinner && !wasWinner) {
-            playSound('win');
-        }
-    }
-
-    // Update previous refs for next render
-    prevPlayersRef.current = gameState?.players || [];
-    prevWinnersRef.current = gameState?.winners || [];
-  }, [gameState, playSound, currentUserId]);
+  }, [isCurrentUserTurn, triggerImpact, actions]);
 
 
   const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
