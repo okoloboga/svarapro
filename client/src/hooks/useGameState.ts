@@ -31,6 +31,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     socket.on('game_update', (state: GameState) => {
       console.log('Received game_update:', state);
       setGameState(state);
+      setLoading(false);
       
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
       setIsSeated(state.players.some(p => p.id === userId));
