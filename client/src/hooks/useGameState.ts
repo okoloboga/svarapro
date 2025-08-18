@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Socket } from 'socket.io-client';
 import { GameState } from '@/types/game';
 import { UserData } from '@/types/entities';
@@ -100,18 +100,18 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     }
   }, [roomId, socket]);
 
-  const actions = {
-    blindBet: useCallback((amount: number) => performAction('blind_bet', amount), [performAction]),
-    lookCards: useCallback(() => performAction('look'), [performAction]),
-    call: useCallback(() => performAction('call'), [performAction]),
-    raise: useCallback((amount: number) => performAction('raise', amount), [performAction]),
-    fold: useCallback(() => performAction('fold'), [performAction]),
-    joinSvara: useCallback(() => performAction('join_svara'), [performAction]),
-    skipSvara: useCallback(() => performAction('skip_svara'), [performAction]),
+  const actions = useMemo(() => ({
+    blindBet: (amount: number) => performAction('blind_bet', amount),
+    lookCards: () => performAction('look'),
+    call: () => performAction('call'),
+    raise: (amount: number) => performAction('raise', amount),
+    fold: () => performAction('fold'),
+    joinSvara: () => performAction('join_svara'),
+    skipSvara: () => performAction('skip_svara'),
     sitDown,
     invitePlayer,
     leaveRoom,
-  };
+  }), [performAction, sitDown, invitePlayer, leaveRoom]);
 
   return {
     gameState,

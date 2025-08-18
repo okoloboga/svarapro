@@ -90,6 +90,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { triggerImpact } = useHapticFeedback();
   const { playSound } = useSound();
   const prevPlayersRef = useRef<Player[]>([]);
+  const prevWinnersRef = useRef<Player[]>([]);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
 
@@ -125,7 +126,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Effect for fold and win sounds
   useEffect(() => {
-    if (gameState && prevPlayersRef.current) {
+    if (gameState && prevPlayersRef.current.length > 0) {
       // Fold detection
       const foldedPlayer = gameState.players.find(p => 
         p.hasFolded && 
@@ -134,18 +135,21 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       if (foldedPlayer) {
         playSound('fold');
       }
-
-      // Win detection
-      const wasWinner = prevPlayersRef.current.some(p => p.id === currentUserId && gameState.winners?.some(w => w.id === p.id));
-      const isNowWinner = gameState.winners?.some(w => w.id === currentUserId);
-
-      if (isNowWinner && !wasWinner) {
-        playSound('win');
-      }
     }
 
-    // Update previous players ref for next render
+    if (gameState && prevWinnersRef.current) {
+        // Win detection
+        const isNowWinner = gameState.winners?.some(w => w.id === currentUserId);
+        const wasWinner = prevWinnersRef.current.some(w => w.id === currentUserId);
+
+        if (isNowWinner && !wasWinner) {
+            playSound('win');
+        }
+    }
+
+    // Update previous refs for next render
     prevPlayersRef.current = gameState?.players || [];
+    prevWinnersRef.current = gameState?.winners || [];
   }, [gameState, playSound, currentUserId]);
 
 

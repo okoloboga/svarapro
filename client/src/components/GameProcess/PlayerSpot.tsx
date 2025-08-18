@@ -372,19 +372,19 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             backgroundColor: '#FF443A', 
             borderRadius: '50%',
             ...(openCardsPosition === 'top' && {
-              left: `${-55 * scale}px`,
+              left: `${-65 * scale}px`,
               top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
-              left: `${-55 * scale}px`,
+              left: `${-65 * scale}px`,
               top: `${10 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${55 * scale}px`,
+              right: `${65 * scale}px`,
               top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${55 * scale}px`,
+              left: `${65 * scale}px`,
               top: `${-10 * scale}px`
             })
           }}>

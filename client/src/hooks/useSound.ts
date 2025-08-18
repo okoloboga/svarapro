@@ -21,22 +21,20 @@ export const useSound = () => {
 
   useEffect(() => {
     localStorage.setItem('gameVolume', String(volume));
-    Object.values(sounds).forEach(sound => {
-      sound.volume = volume;
-    });
-  }, [volume, sounds]);
+  }, [volume]);
 
   const playSound = useCallback((type: SoundType) => {
     try {
       const sound = sounds[type];
       if (sound) {
+        sound.volume = volume;
         sound.currentTime = 0;
         sound.play().catch(error => console.error(`Error playing sound: ${type}`, error));
       }
     } catch (error) {
       console.error(`Error accessing sound: ${type}`, error);
     }
-  }, [sounds]);
+  }, [sounds, volume]);
 
   const handleSetVolume = useCallback((value: number) => {
     // value is from 0 to 100
