@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { GameRoomProps } from '@/types/game';
+import { GameRoomProps, GameState } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';

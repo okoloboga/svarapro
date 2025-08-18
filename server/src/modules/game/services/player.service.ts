@@ -19,7 +19,7 @@ export class PlayerService {
       balance: balance || 0,
       tableBalance: 0,
       cards: [],
-      isActive: true,
+      isActive,
       isDealer: false,
       hasFolded: false,
       hasLooked: false,
