@@ -22,7 +22,6 @@ export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
         return;
       }
 
-      console.log('BackButton: Showing for page', handler.toString());
       backButton.show();
       backButton.onClick(handler);
 

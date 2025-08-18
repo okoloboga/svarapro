@@ -230,24 +230,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState, isAnimating, scale, handleChipsToWinner]);
 
+  // Дополнительная логика для очистки фишек после завершения раунда
   useEffect(() => {
     if (gameState?.status === 'finished' && gameState?.pot === 0) {
+      // Очищаем все анимации фишек
       setChipAnimations([]);
     }
   }, [gameState?.status, gameState?.pot]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.emit('join_room', { roomId });
-    } else {
-      console.error('Socket is not initialized in GameRoom');
-    }
-    return () => {
-      if (socket) {
-        socket.emit('leave_room', { roomId });
-      }
-    };
-  }, [roomId, socket]);
 
   useEffect(() => {
     if (pageData?.autoSit && !isSeated && gameState) {

@@ -42,6 +42,9 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       setError(data.message);
       setLoading(false);
     });
+
+    // Emit join_room after listeners are set up
+    socket.emit('join_room', { roomId });
     
     return () => {
       console.log('Cleaning up socket listeners for roomId:', roomId);
