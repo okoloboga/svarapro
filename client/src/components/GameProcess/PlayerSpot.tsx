@@ -361,7 +361,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${-20 * scale}px`
+              top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
@@ -413,18 +413,18 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           ) : null;
         })()}
         {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
-          <div className="absolute z-40 flex items-center justify-center" style={{ 
+          <div className="absolute z-50 flex items-center justify-center" style={{ 
             width: `${22 * scale}px`, 
             height: `${22 * scale}px`, 
             backgroundColor: '#FF443A', 
             borderRadius: '50%',
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
-              bottom: `${-35 * scale}px`,
+              bottom: `${-25 * scale}px`,
               transform: 'translateX(-50%)',
             }),
             ...(openCardsPosition === 'top' && {
-              left: `${50 * scale}px`,
+              left: `${-50 * scale}px`,
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
