@@ -369,12 +369,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${90 * scale}px`,
+              right: `${95 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${90 * scale}px`,
+              left: `${95 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             })

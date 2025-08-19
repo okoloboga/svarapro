@@ -55,6 +55,7 @@ export interface GameState {
   winners: Player[]; // победители
   isSvara: boolean; // объявлена ли "свара"
   svaraParticipants: string[]; // участники свары
+  svaraConfirmed?: string[]; // игроки, подтвердившие участие в сваре
   round: number; // номер раунда
   timer?: number; // таймер для хода
   log: GameAction[]; // лог действий

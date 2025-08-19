@@ -311,6 +311,14 @@ export class GameService {
     if (isOriginalWinner) {
       // Изначальные победители участвуют бесплатно
       console.log(`Player ${telegramId} joins Svara as original winner (free)`);
+      
+      // Помечаем игрока как подтвердившего участие
+      if (!gameState.svaraConfirmed) {
+        gameState.svaraConfirmed = [];
+      }
+      if (!gameState.svaraConfirmed.includes(telegramId)) {
+        gameState.svaraConfirmed.push(telegramId);
+      }
     } else {
       // Обычные игроки должны доплатить сумму равную банку
       const svaraBuyInAmount = gameState.pot;
@@ -332,6 +340,12 @@ export class GameService {
         gameState.svaraParticipants = [];
       }
       gameState.svaraParticipants.push(telegramId);
+      
+      // Помечаем как подтвердившего участие
+      if (!gameState.svaraConfirmed) {
+        gameState.svaraConfirmed = [];
+      }
+      gameState.svaraConfirmed.push(telegramId);
     }
 
     const action: GameAction = {

@@ -87,6 +87,7 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
 
   const svaraWinners = gameState.winners || [];
   const isParticipant = svaraWinners.some(p => p.id === userData.id?.toString());
+  const hasConfirmed = gameState.svaraConfirmed?.includes(userData.id?.toString() || '') || false;
 
   const renderAvatars = () => {
     if (svaraWinners.length === 2) {
@@ -133,18 +134,30 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
             <div className="text-center">
               {isParticipant ? (
                 <>
-                  <p className="font-bold text-sm mb-3">СВАРА! Будете участвовать?</p>
+                  <p className="font-bold text-sm mb-3">
+                    {hasConfirmed ? 'Ждем остальных игроков...' : 'СВАРА! Будете участвовать?'}
+                  </p>
                   <button 
-                    onClick={actions.joinSvara}
-                    className="w-[224px] h-[32px] rounded-lg bg-[#00AF17] text-white font-bold text-sm mb-2"
+                    onClick={hasConfirmed ? undefined : actions.joinSvara}
+                    className={`w-[224px] h-[32px] rounded-lg text-white font-bold text-sm mb-2 ${
+                      hasConfirmed 
+                        ? 'bg-gray-500 cursor-not-allowed opacity-70' 
+                        : 'bg-[#00AF17] hover:bg-[#00AF17]/90 cursor-pointer'
+                    }`}
+                    disabled={hasConfirmed}
                   >
-                    Участвовать (бесплатно)
+                    {hasConfirmed ? '✓ Участвую' : 'Участвовать (бесплатно)'}
                   </button>
                   <button 
-                    onClick={actions.skipSvara}
-                    className="w-[224px] h-[32px] rounded-lg bg-[#FF443A] text-white font-bold text-sm"
+                    onClick={hasConfirmed ? undefined : actions.skipSvara}
+                    className={`w-[224px] h-[32px] rounded-lg text-white font-bold text-sm ${
+                      hasConfirmed 
+                        ? 'bg-gray-500 cursor-not-allowed opacity-70' 
+                        : 'bg-[#FF443A] hover:bg-[#FF443A]/90 cursor-pointer'
+                    }`}
+                    disabled={hasConfirmed}
                   >
-                    Пропустить ({timer} сек)
+                    {hasConfirmed ? 'Решение принято' : `Пропустить (${timer} сек)`}
                   </button>
                 </>
               ) : (

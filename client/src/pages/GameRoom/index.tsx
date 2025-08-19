@@ -128,9 +128,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     // Простая проверка: смотрим на последнее действие
     const lastAction = gameState.log[gameState.log.length - 1];
+    console.log('🔍 Last action in log:', lastAction);
+    
     if (lastAction && lastAction.type === 'fold') {
-      console.log('Fold action detected, playing sound:', lastAction);
+      console.log('🎵 Fold action detected, playing sound:', lastAction);
       actions.playSound('fold');
+    } else {
+      console.log('❌ No fold action or wrong type. Expected "fold", got:', lastAction?.type);
     }
   }, [gameState?.log?.length, actions]); // Зависимость только от длины лога
 

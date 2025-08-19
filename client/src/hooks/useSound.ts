@@ -13,6 +13,33 @@ export const useSound = () => {
     return storedEnabled !== 'false'; // По умолчанию включено
   });
 
+  // Слушаем изменения в localStorage для синхронизации между экземплярами
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'soundEnabled') {
+        const newValue = e.newValue !== 'false';
+        setIsSoundEnabled(newValue);
+        console.log('Sound setting synced from storage:', newValue);
+      }
+    };
+
+    // Также слушаем кастомное событие для синхронизации в рамках одной вкладки
+    const handleSoundToggle = () => {
+      const storedEnabled = localStorage.getItem('soundEnabled');
+      const newValue = storedEnabled !== 'false';
+      setIsSoundEnabled(newValue);
+      console.log('Sound setting synced from custom event:', newValue);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('soundToggled', handleSoundToggle);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('soundToggled', handleSoundToggle);
+    };
+  }, []);
+
   const sounds = useMemo(() => ({
     fold: new Audio(foldSoundSrc),
     turn: new Audio(turnSoundSrc),
@@ -46,7 +73,12 @@ export const useSound = () => {
   }, [sounds, isSoundEnabled]);
 
   const toggleSound = useCallback(() => {
-    setIsSoundEnabled(prev => !prev);
+    setIsSoundEnabled(prev => {
+      const newValue = !prev;
+      // Отправляем кастомное событие для синхронизации других экземпляров хука
+      window.dispatchEvent(new CustomEvent('soundToggled'));
+      return newValue;
+    });
   }, []);
 
   return { isSoundEnabled, toggleSound, playSound };
