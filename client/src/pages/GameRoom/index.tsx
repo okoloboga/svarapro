@@ -372,7 +372,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = gameState.winners && gameState.winners.some(winner => winner.id === player.id);
                         const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
-                        const winAmount = winAction ? winAction.amount : 0;
+                        // Для отображения используем банк минус 5% налог
+                        const winAmount = isWinner && gameState.pot > 0 ? Number((gameState.pot * 0.95).toFixed(2)) : 0;
                         
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };

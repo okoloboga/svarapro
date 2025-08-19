@@ -304,37 +304,43 @@ export class GameService {
       return { success: false, error: 'Игрок не найден' };
     }
 
-    // Проверяем, не является ли игрок уже участником свары (изначальным)
-    if (
-      gameState.svaraParticipants &&
-      gameState.svaraParticipants.includes(telegramId)
-    ) {
-      return { success: false, error: 'Вы уже участвуете в сваре' };
-    }
+    // Проверяем, является ли игрок изначальным участником свары (победителем)
+    const isOriginalWinner = gameState.svaraParticipants && 
+                             gameState.svaraParticipants.includes(telegramId);
 
-    const svaraBuyInAmount = gameState.pot;
-    if (player.balance < svaraBuyInAmount) {
-      return {
-        success: false,
-        error: 'Недостаточно средств для входа в свару',
-      };
-    }
+    if (isOriginalWinner) {
+      // Изначальные победители участвуют бесплатно
+      console.log(`Player ${telegramId} joins Svara as original winner (free)`);
+    } else {
+      // Обычные игроки должны доплатить сумму равную банку
+      const svaraBuyInAmount = gameState.pot;
+      if (player.balance < svaraBuyInAmount) {
+        return {
+          success: false,
+          error: 'Недостаточно средств для входа в свару',
+        };
+      }
 
-    // Списываем деньги и добавляем в банк
-    player.balance -= svaraBuyInAmount;
-    gameState.pot += svaraBuyInAmount;
+      // Списываем деньги и добавляем в банк
+      player.balance -= svaraBuyInAmount;
+      gameState.pot += svaraBuyInAmount;
+      
+      console.log(`Player ${telegramId} joins Svara with buy-in: ${svaraBuyInAmount}`);
 
-    // Добавляем игрока в список участников свары
-    if (!gameState.svaraParticipants) {
-      gameState.svaraParticipants = [];
+      // Добавляем игрока в список участников свары
+      if (!gameState.svaraParticipants) {
+        gameState.svaraParticipants = [];
+      }
+      gameState.svaraParticipants.push(telegramId);
     }
-    gameState.svaraParticipants.push(telegramId);
 
     const action: GameAction = {
       type: 'join',
       telegramId,
       timestamp: Date.now(),
-      message: `Игрок ${player.username} присоединился к сваре, добавив в банк ${svaraBuyInAmount}`,
+      message: isOriginalWinner 
+        ? `Игрок ${player.username} участвует в сваре как победитель`
+        : `Игрок ${player.username} присоединился к сваре, добавив в банк ${gameState.pot}`,
     };
     gameState.log.push(action);
 
@@ -824,6 +830,8 @@ export class GameService {
     });
 
     if (winners.length > 1) {
+      console.log('🔥 SVARA DETECTED! Starting Svara with winners:', winners.map(w => ({ id: w.id, username: w.username, score: w.score })));
+      
       // Новая логика для обработки свары
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,

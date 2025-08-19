@@ -132,7 +132,21 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
 
             <div className="text-center">
               {isParticipant ? (
-                <p className="font-bold text-sm">Ждем игроков</p>
+                <>
+                  <p className="font-bold text-sm mb-3">СВАРА! Будете участвовать?</p>
+                  <button 
+                    onClick={actions.joinSvara}
+                    className="w-[224px] h-[32px] rounded-lg bg-[#00AF17] text-white font-bold text-sm mb-2"
+                  >
+                    Участвовать (бесплатно)
+                  </button>
+                  <button 
+                    onClick={actions.skipSvara}
+                    className="w-[224px] h-[32px] rounded-lg bg-[#FF443A] text-white font-bold text-sm"
+                  >
+                    Пропустить ({timer} сек)
+                  </button>
+                </>
               ) : (
                 <>
                   <p className="font-bold text-sm mb-3">Присоединитесь или пропустите свару?</p>
