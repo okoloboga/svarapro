@@ -729,6 +729,11 @@ export class GameService {
         }
         const { updatedPlayer, action: raiseAction } =
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
+        
+        // Исправляем сообщение в логе для raise - должна быть итоговая ставка
+        raiseAction.amount = Number(amount.toFixed(2));
+        raiseAction.message = `Игрок ${player.username} повысил до ${amount}`;
+        
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.currentBet = Number(amount.toFixed(2));
