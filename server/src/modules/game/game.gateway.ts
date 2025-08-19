@@ -27,7 +27,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   afterInit() {
     console.log('GameGateway initialized, subscribing to game updates');
     void this.redisService.subscribeToGameUpdates((roomId, gameState) => {
-      console.log(`Publishing game_update to room ${roomId}:`, gameState);
       this.server.to(roomId).emit('game_update', gameState);
     });
 

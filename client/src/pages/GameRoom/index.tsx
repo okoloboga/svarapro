@@ -19,6 +19,7 @@ import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useAppBackButton } from '@/hooks/useAppBackButton';
 
 interface ChipAnimation {
   id: string;
@@ -56,7 +57,7 @@ const useTablePositioning = () => {
   const scale = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
 
   const getPositionClasses = (position: number): string => {
-    const baseClasses = "absolute z-20 transition-all duration-300 ease-in-out hover:scale-105 hover:z-30 w-20 h-24 flex items-center justify-center";
+    const baseClasses = "absolute z-30 transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center";
     const positionClasses = {
       1: "-top-10 left-1/2",
       2: "top-1/4 -right-5",
@@ -80,6 +81,7 @@ const useTablePositioning = () => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
+  const backButton = useAppBackButton();
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -87,6 +89,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const { triggerImpact } = useHapticFeedback();
+
+  useEffect(() => {
+    backButton.show();
+    const onBackClick = () => handleLeaveRoom();
+    backButton.onClick(onBackClick);
+
+    return () => {
+      backButton.offClick(onBackClick);
+      backButton.hide();
+    };
+  }, [backButton, handleLeaveRoom]);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
@@ -308,7 +321,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
       {/* Затемняющий оверлей для фазы вскрытия карт */}
-      {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-10 transition-opacity duration-500" />}
+      {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
 
       {gameState.status === 'svara_pending' && (
         <SvaraJoinPopup 
