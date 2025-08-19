@@ -21,7 +21,7 @@ export function ActionNotification({ action, visible }: ActionNotificationProps)
 
   return (
     <div 
-      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center"
+      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center"
       style={{ 
         width: '62px',
         height: '18px',
