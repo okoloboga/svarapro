@@ -93,7 +93,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       !isCurrentUser &&
       isWinner &&
       winAmount > 0 &&
-      (gameStatus === 'finished' || gameStatus === 'ante');
+      (gameStatus === 'finished');
 
     if (shouldShowWinNotification) {
       setNotificationType('win');
@@ -420,11 +420,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             borderRadius: '50%',
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
-              bottom: `${-15 * scale}px`,
+              bottom: `${-35 * scale}px`,
               transform: 'translateX(-50%)',
             }),
             ...(openCardsPosition === 'top' && {
-              left: `${10 * scale}px`,
+              left: `${50 * scale}px`,
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
