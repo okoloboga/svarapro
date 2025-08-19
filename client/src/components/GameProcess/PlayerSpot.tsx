@@ -265,12 +265,10 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   return (
     <div className={spotClasses} style={containerStyle}>
+      <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
       <div className="relative">
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
-            <div className="absolute inset-0 flex items-center justify-center z-50">
-              <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
-            </div>
             
             {/* Win amount container */}
             {showWinAnimation && (
@@ -420,21 +418,21 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             height: `${22 * scale}px`, 
             backgroundColor: '#FF443A', 
             borderRadius: '50%',
-            ...(openCardsPosition === 'top' && {
+            ...(openCardsPosition === 'bottom' && {
               left: '50%',
               bottom: `${-15 * scale}px`,
               transform: 'translateX(-50%)',
             }),
-            ...(openCardsPosition === 'bottom' && {
+            ...(openCardsPosition === 'top' && {
               left: `${10 * scale}px`,
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${65 * scale}px`,
+              right: `${60 * scale}px`,
               top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${65 * scale}px`,
+              left: `${60 * scale}px`,
               top: `${-10 * scale}px`
             })
           }}>

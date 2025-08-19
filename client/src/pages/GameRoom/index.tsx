@@ -321,7 +321,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         />
       )}
 
-      <div className="text-white p-4 flex justify-between items-center">
+      <div className="relative z-30 text-white p-4 flex justify-between items-center">
         <h2 className="text-xs font-semibold">Комната №{roomId.slice(0, 8)}</h2>
         <div className="flex items-center space-x-3">
           <button onClick={() => setShowMenuModal(true)} className="transition-all duration-200 ease-in-out hover:opacity-75">
@@ -333,6 +333,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <div className="flex-grow relative p-4 z-10">
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
+            {/* Затемняющий оверлей для фазы вскрытия карт */}
+            {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
+
             <div className="flex-shrink-0 relative z-10">
               <GameTable 
                 gameState={gameState} 
@@ -489,9 +492,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           />
         ))}
       </div>
-
-      {/* Затемняющий оверлей для фазы вскрытия карт */}
-      {showCards && <div className="fixed inset-0 bg-black bg-opacity-60 z-25 transition-opacity duration-500" />}
     </div>
   );
 }

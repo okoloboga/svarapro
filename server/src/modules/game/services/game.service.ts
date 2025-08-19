@@ -114,6 +114,13 @@ export class GameService {
           await this.endGameWithWinner(roomId, remainingPlayer.id);
           return;
         }
+
+        // Если игрок выходит после завершения раунда, пытаемся запустить новую игру
+        if (gameState.status === 'finished') {
+          console.log(`Player left during 'finished' state. Attempting to start a new game for room ${roomId}.`);
+          await this.startGame(roomId);
+          return; // Выходим, чтобы не выполнять лишний код ниже
+        }
       }
     }
     await this.redisService.removePlayerFromRoom(roomId, telegramId);
