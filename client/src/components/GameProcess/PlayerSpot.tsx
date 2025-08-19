@@ -102,30 +102,32 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
-  // Win sequence logic: first show cards for 3 seconds, then show win animation
+  // Win sequence logic: first show cards, then show win animation, then hide both
   useEffect(() => {
     const shouldStartSequence = isWinner && winAmount > 0 && gameStatus === 'finished';
     
     if (shouldStartSequence) {
-      // Phase 1: Show cards for 3 seconds
+      // Phase 1: Show cards
       setShowCardsPhase(true);
-      setShowWinAnimation(false);
+      setShowWinAnimation(false); // Ensure win animation is hidden initially
       
-      const cardsTimer = setTimeout(() => {
-        // Phase 2: Hide cards and show win animation
-        setShowCardsPhase(false);
+      // Phase 2: Show win animation after a delay (cards remain visible)
+      const winAnimTimer = setTimeout(() => {
         setShowWinAnimation(true);
-        
-        // Hide win animation after 2 seconds
-        const winTimer = setTimeout(() => {
-          setShowWinAnimation(false);
-        }, 2000);
-        
-        return () => clearTimeout(winTimer);
       }, 3000);
       
-      return () => clearTimeout(cardsTimer);
+      // Phase 3: Hide everything after another delay
+      const cleanupTimer = setTimeout(() => {
+        setShowCardsPhase(false);
+        setShowWinAnimation(false);
+      }, 5000); // Total duration 5s
+      
+      return () => {
+        clearTimeout(winAnimTimer);
+        clearTimeout(cleanupTimer);
+      };
     } else {
+      // Ensure everything is hidden if not in the win sequence
       setShowCardsPhase(false);
       setShowWinAnimation(false);
     }
@@ -428,11 +430,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${70 * scale}px`,
+              right: `${50 * scale}px`,
               top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${70 * scale}px`,
+              left: `${50 * scale}px`,
               top: `${-10 * scale}px`
             })
           }}>
