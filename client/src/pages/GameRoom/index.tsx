@@ -333,9 +333,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <div className="flex-grow relative p-4 z-10">
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
-            {/* Затемняющий оверлей для фазы вскрытия карт */}
-            {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
-
             <div className="flex-shrink-0 relative z-10">
               <GameTable 
                 gameState={gameState} 
@@ -492,6 +489,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           />
         ))}
       </div>
+
+      {/* Затемняющий оверлей для фазы вскрытия карт */}
+      {showCards && <div className="fixed inset-0 bg-black bg-opacity-60 z-25 transition-opacity duration-500" />}
     </div>
   );
 }

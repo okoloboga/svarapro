@@ -187,12 +187,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     cardDeckStyle.left = '50px';
   }
 
-  const TotalBetComponent = !isCurrentUser && player.totalBet > 0 && (
+  const TotalBetComponent = !isCurrentUser && player.totalBet > 0 && !showCards && (
     <div 
       className="text-white font-semibold text-xs leading-4 flex items-center justify-center"
       style={{
         width: '34px',
-        height: '17px',
+        height: '19px',
         borderRadius: '8px',
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
       }}
@@ -268,7 +268,9 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       <div className="relative">
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
-            <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
+            </div>
             
             {/* Win amount container */}
             {showWinAnimation && (
@@ -419,12 +421,13 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             backgroundColor: '#FF443A', 
             borderRadius: '50%',
             ...(openCardsPosition === 'top' && {
-              left: `${-65 * scale}px`,
-              top: `${-20 * scale}px`
+              left: '50%',
+              bottom: `${-15 * scale}px`,
+              transform: 'translateX(-50%)',
             }),
             ...(openCardsPosition === 'bottom' && {
-              left: `${-65 * scale}px`,
-              top: `${10 * scale}px`
+              left: `${10 * scale}px`,
+              top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
               right: `${65 * scale}px`,
