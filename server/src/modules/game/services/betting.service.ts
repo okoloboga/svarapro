@@ -35,6 +35,7 @@ export class BettingService {
           const roundedMinBet = Number(minBet.toFixed(2));
           player.balance -= roundedMinBet;
           player.tableBalance += roundedMinBet;
+          player.currentBet += roundedMinBet; // FIX: Update currentBet for the round
           player.totalBet += roundedMinBet;
           updatedGameState.pot = Number(
             (updatedGameState.pot + roundedMinBet).toFixed(2),

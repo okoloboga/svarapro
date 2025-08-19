@@ -63,15 +63,17 @@ export class RedisService {
   }
 
   async subscribeToRoomUpdates(
-    callback: (roomId: string, room: Room) => void,
+    callback: () => void,
   ): Promise<void> {
     const subClient = this.client.duplicate();
     await subClient.subscribe('rooms');
 
     subClient.on('message', (channel, message) => {
       if (channel === 'rooms') {
-        const data = JSON.parse(message) as { room: Room };
-        callback(data.room.roomId, data.room);
+        const data = JSON.parse(message);
+        if (data && data.action) {
+          callback();
+        }
       }
     });
   }
