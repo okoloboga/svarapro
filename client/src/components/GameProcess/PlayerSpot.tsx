@@ -275,7 +275,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
               <div 
                 className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
                 style={{ 
-                  top: '3px',
+                  top: '18px',
                   width: `${55 * scale}px`, 
                   height: `${21 * scale}px`,
                   borderRadius: `${12 * scale}px`,
@@ -428,11 +428,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${60 * scale}px`,
+              right: `${70 * scale}px`,
               top: `${-10 * scale}px`
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${60 * scale}px`,
+              left: `${70 * scale}px`,
               top: `${-10 * scale}px`
             })
           }}>

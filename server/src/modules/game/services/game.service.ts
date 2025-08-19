@@ -314,6 +314,12 @@ export class GameService {
       return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
     }
 
+    // Проверяем, не принимал ли игрок уже решение
+    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
+      console.log(`Player ${telegramId} has already made a decision for svara.`);
+      return { success: true, gameState }; // Просто возвращаем успех
+    }
+
     const player = gameState.players.find((p) => p.id === telegramId);
     if (!player) {
       return { success: false, error: 'Игрок не найден' };
@@ -389,6 +395,12 @@ export class GameService {
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState || gameState.status !== 'svara_pending') {
       return { success: false, error: 'Сейчас нельзя пропустить свару' };
+    }
+
+    // Проверяем, не принимал ли игрок уже решение
+    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
+      console.log(`Player ${telegramId} has already made a decision for svara.`);
+      return { success: true, gameState }; // Просто возвращаем успех
     }
 
     const player = gameState.players.find((p) => p.id === telegramId);
