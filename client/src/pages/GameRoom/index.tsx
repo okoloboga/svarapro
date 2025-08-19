@@ -307,6 +307,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
+      {/* Затемняющий оверлей для фазы вскрытия карт */}
+      {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-10 transition-opacity duration-500" />}
+
       {gameState.status === 'svara_pending' && (
         <SvaraJoinPopup 
           gameState={gameState}
