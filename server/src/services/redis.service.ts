@@ -38,13 +38,22 @@ export class RedisService {
     await this.client.srem('active_rooms', roomId);
   }
 
-  async publishRoomUpdate(roomId: string, room: Room): Promise<void> {
-    await this.client.publish(`room:${roomId}`, JSON.stringify(room));
-    if (room.type === 'public') {
+  async publishRoomUpdate(roomId: string, room: Room | null): Promise<void> {
+    if (room === null) {
+      // Уведомляем об удалении комнаты
+      await this.client.publish(`room:${roomId}`, JSON.stringify({ deleted: true }));
       await this.client.publish(
         'rooms',
-        JSON.stringify({ action: 'update', room }),
+        JSON.stringify({ action: 'delete', roomId }),
       );
+    } else {
+      await this.client.publish(`room:${roomId}`, JSON.stringify(room));
+      if (room.type === 'public') {
+        await this.client.publish(
+          'rooms',
+          JSON.stringify({ action: 'update', room }),
+        );
+      }
     }
   }
 
