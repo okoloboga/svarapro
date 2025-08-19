@@ -369,6 +369,9 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
+    // Проверяем, не завершилась ли свара
+    await this._checkSvaraCompletion(roomId, gameState);
+
     return { success: true, gameState };
   }
 
@@ -386,9 +389,14 @@ export class GameService {
       return { success: false, error: 'Игрок не найден' };
     }
 
-    // Просто логируем действие, чтобы UI мог закрыться
-    // Никаких изменений в состоянии игры не требуется,
-    // так как resolveSvara все равно сработает по таймеру
+    // Помечаем, что игрок отказался
+    if (!gameState.svaraDeclined) {
+      gameState.svaraDeclined = [];
+    }
+    if (!gameState.svaraDeclined.includes(telegramId)) {
+      gameState.svaraDeclined.push(telegramId);
+    }
+
     const action: GameAction = {
       type: 'fold', // Используем fold для простоты, можно создать и новый тип
       telegramId,
@@ -399,6 +407,9 @@ export class GameService {
 
     // Отправляем обновление, чтобы клиент мог отреагировать (например, закрыть окно)
     await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // Проверяем, не завершилась ли свара
+    await this._checkSvaraCompletion(roomId, gameState);
 
     return { success: true, gameState };
   }
@@ -857,6 +868,9 @@ export class GameService {
       gameState.isSvara = true;
       gameState.svaraParticipants = winners.map((w) => w.id);
       gameState.winners = winners;
+      // Инициализируем массивы для отслеживания решений
+      gameState.svaraConfirmed = [];
+      gameState.svaraDeclined = [];
 
       const svaraAction: GameAction = {
         type: 'svara',
@@ -881,6 +895,17 @@ export class GameService {
       await this.endGameWithWinner(roomId, winners[0].id);
     } else {
       await this.endGame(roomId);
+    }
+  }
+
+  private async _checkSvaraCompletion(roomId: string, gameState: GameState): Promise<void> {
+    const participantsCount = gameState.svaraParticipants?.length || 0;
+    const decisionsCount = (gameState.svaraConfirmed?.length || 0) + (gameState.svaraDeclined?.length || 0);
+
+    if (participantsCount > 0 && decisionsCount >= participantsCount) {
+      console.log(`All svara participants have made a decision for room ${roomId}. Resolving svara immediately.`);
+      // Немедленно разрешаем свару, так как все приняли решение
+      await this.resolveSvara(roomId);
     }
   }
 

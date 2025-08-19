@@ -64,6 +64,7 @@ export interface GameState {
   isSvara: boolean; // объявлена ли "свара"
   svaraParticipants?: string[]; // Игроки, участвующие в сваре (включая тех, кто докупил)
   svaraConfirmed?: string[]; // Игроки, подтвердившие участие в сваре
+  svaraDeclined?: string[]; // Игроки, отказавшиеся от свары
   round: number; // номер раунда
   timer?: number; // таймер для хода
   log: GameAction[]; // лог действий

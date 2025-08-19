@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 // Import sound files
 import foldSoundSrc from '@/assets/game/fold.mp3';
@@ -13,13 +13,18 @@ export const useSound = () => {
     return storedEnabled !== 'false'; // По умолчанию включено
   });
 
+  const isSoundEnabledRef = useRef(isSoundEnabled);
+
+  useEffect(() => {
+    isSoundEnabledRef.current = isSoundEnabled;
+  }, [isSoundEnabled]);
+
   // Слушаем изменения в localStorage для синхронизации между экземплярами
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'soundEnabled') {
         const newValue = e.newValue !== 'false';
         setIsSoundEnabled(newValue);
-        console.log('Sound setting synced from storage:', newValue);
       }
     };
 
@@ -28,7 +33,6 @@ export const useSound = () => {
       const storedEnabled = localStorage.getItem('soundEnabled');
       const newValue = storedEnabled !== 'false';
       setIsSoundEnabled(newValue);
-      console.log('Sound setting synced from custom event:', newValue);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -48,14 +52,10 @@ export const useSound = () => {
 
   useEffect(() => {
     localStorage.setItem('soundEnabled', String(isSoundEnabled));
-    console.log('Sound enabled changed to:', isSoundEnabled);
   }, [isSoundEnabled]);
 
   const playSound = useCallback((type: SoundType) => {
-    console.log(`playSound called for: ${type}, soundEnabled: ${isSoundEnabled}`);
-    
-    if (!isSoundEnabled) {
-      console.log(`Sound disabled, not playing: ${type}`);
+    if (!isSoundEnabledRef.current) {
       return;
     }
     
@@ -64,13 +64,12 @@ export const useSound = () => {
       if (sound) {
         sound.volume = 0.5; // Фиксированная громкость 50%
         sound.currentTime = 0;
-        console.log(`Playing sound: ${type}`);
         sound.play().catch(error => console.error(`Error playing sound: ${type}`, error));
       }
     } catch (error) {
       console.error(`Error accessing sound: ${type}`, error);
     }
-  }, [sounds, isSoundEnabled]);
+  }, [sounds]);
 
   const toggleSound = useCallback(() => {
     setIsSoundEnabled(prev => {

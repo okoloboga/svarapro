@@ -75,12 +75,8 @@ export class BettingService {
           ? gameState.lastBlindBettorIndex
           : gameState.dealerIndex;
 
-    // и все сделали одинаковые ставки, круг завершен
-    return (
-      gameState.currentPlayerIndex ===
-        (startIndex + 1) % gameState.players.length ||
-      gameState.currentPlayerIndex === startIndex
-    );
+    // Круг завершен, если текущий игрок - это и есть "якорный" игрок.
+    return gameState.currentPlayerIndex === startIndex;
   }
 
   // Обработка выигрыша

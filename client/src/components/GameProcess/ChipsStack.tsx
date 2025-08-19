@@ -32,17 +32,17 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips, gameStatus, pot }) 
       
       // Позиции столбиков (относительно центра стола)
       let baseX = -12;
-      let baseY = 2;
+      let baseY = 0;
       
       if (stackIndex === 0) {
         baseX = -12;
-        baseY = 2;
+        baseY = 0;
       } else if (stackIndex === 1) {
         baseX = 1;
-        baseY = -3;
+        baseY = -5;
       } else if (stackIndex === 2) {
         baseX = 0;
-        baseY = 9;
+        baseY = 7;
       }
       
       // Позиция фишки в столбике (слой за слоем)

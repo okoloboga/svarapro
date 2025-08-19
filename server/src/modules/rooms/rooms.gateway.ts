@@ -25,7 +25,6 @@ export class RoomsGateway
   afterInit() {
     console.log('Subscribing to room updates');
     void this.redisService.subscribeToRoomUpdates(() => {
-      console.log('Received room update notification, broadcasting new list');
       void this.broadcastRoomsUpdate();
     });
   }
