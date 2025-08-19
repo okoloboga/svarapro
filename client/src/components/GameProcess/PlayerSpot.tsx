@@ -420,11 +420,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             borderRadius: '50%',
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
-              bottom: `${-25 * scale}px`,
+              bottom: `${-20 * scale}px`,
               transform: 'translateX(-50%)',
             }),
             ...(openCardsPosition === 'top' && {
-              left: `${-50 * scale}px`,
+              left: `${-45 * scale}px`,
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
