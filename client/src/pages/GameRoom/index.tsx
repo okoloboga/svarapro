@@ -81,7 +81,6 @@ const useTablePositioning = () => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
-  const backButton = useAppBackButton();
   const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -90,16 +89,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const { triggerImpact } = useHapticFeedback();
 
-  useEffect(() => {
-    backButton.show();
-    const onBackClick = () => handleLeaveRoom();
-    backButton.onClick(onBackClick);
+  const handleLeaveRoom = useCallback(() => {
+    setShowMenuModal(false);
+    setShowBetSlider(false);
+    if (actions) {
+      actions.leaveRoom();
+    }
+    setCurrentPage('dashboard');
+  }, [actions, setCurrentPage]);
 
-    return () => {
-      backButton.offClick(onBackClick);
-      backButton.hide();
-    };
-  }, [backButton, handleLeaveRoom]);
+  useAppBackButton(true, handleLeaveRoom);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
@@ -311,18 +310,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     actions.sitDown(position, userData);
   };
-  const handleLeaveRoom = () => {
-    setShowMenuModal(false);
-    setShowBetSlider(false);
-    actions.leaveRoom();
-    setCurrentPage('dashboard');
-  };
 
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
-      {/* Затемняющий оверлей для фазы вскрытия карт */}
-      {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
-
       {gameState.status === 'svara_pending' && (
         <SvaraJoinPopup 
           gameState={gameState}
@@ -343,6 +333,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <div className="flex-grow relative p-4 z-10">
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
+            {/* Затемняющий оверлей для фазы вскрытия карт */}
+            {showCards && <div className="absolute inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
+
             <div className="flex-shrink-0 relative z-10">
               <GameTable 
                 gameState={gameState} 
