@@ -17,6 +17,7 @@ import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';
+import { SoundProvider } from './context/SoundContext';
 
 interface LaunchParams {
   initData?: string;
@@ -217,42 +218,44 @@ function App() {
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
-      {isLoading ? (
-        <LoadingPage isLoading={isLoading} />
-      ) : error ? (
-        <ErrorAlert code={undefined} customMessage={error} />
-      ) : currentPage === 'more' ? (
-        <More userData={userData} setCurrentPage={handleSetCurrentPage} />
-      ) : currentPage === 'deposit' ? (
-        <Deposit setCurrentPage={handleSetCurrentPage} />
-      ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.trackerId ? (
-        <ConfirmDeposit address={pageData.address} currency={pageData.currency ?? 'USDTTON'} trackerId={pageData.trackerId}/>
-      ) : currentPage === 'withdraw' ? (
-        <Withdraw
-          balance={balance}
-          setCurrentPage={handleSetCurrentPage}
-          setWithdrawAmount={setWithdrawAmount}
-        />
-      ) : currentPage === 'confirmWithdraw' ? (
-        <ConfirmWithdraw withdrawAmount={withdrawAmount} />
-      ) : currentPage === 'addWallet' ? (
-        <AddWallet />
-      ) : currentPage === 'depositHistory' ? (
-        <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
-      ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
-        <GameRoom roomId={pageData.roomId} balance={balance} socket={socket} setCurrentPage={handleSetCurrentPage} userData={userData} pageData={pageData} />
-      ) : (
-        <Dashboard
-          onMoreClick={() => handleSetCurrentPage('more')}
-          setCurrentPage={handleSetCurrentPage}
-          balance={balance}
-          walletAddress={walletAddress}
-          socket={socket}
-        />
-      )}
-      {successMessage && (
-        <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />
-      )}
+      <SoundProvider>
+        {isLoading ? (
+          <LoadingPage isLoading={isLoading} />
+        ) : error ? (
+          <ErrorAlert code={undefined} customMessage={error} />
+        ) : currentPage === 'more' ? (
+          <More userData={userData} setCurrentPage={handleSetCurrentPage} />
+        ) : currentPage === 'deposit' ? (
+          <Deposit setCurrentPage={handleSetCurrentPage} />
+        ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.trackerId ? (
+          <ConfirmDeposit address={pageData.address} currency={pageData.currency ?? 'USDTTON'} trackerId={pageData.trackerId}/>
+        ) : currentPage === 'withdraw' ? (
+          <Withdraw
+            balance={balance}
+            setCurrentPage={handleSetCurrentPage}
+            setWithdrawAmount={setWithdrawAmount}
+          />
+        ) : currentPage === 'confirmWithdraw' ? (
+          <ConfirmWithdraw withdrawAmount={withdrawAmount} />
+        ) : currentPage === 'addWallet' ? (
+          <AddWallet />
+        ) : currentPage === 'depositHistory' ? (
+          <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
+        ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
+          <GameRoom roomId={pageData.roomId} balance={balance} socket={socket} setCurrentPage={handleSetCurrentPage} userData={userData} pageData={pageData} />
+        ) : (
+          <Dashboard
+            onMoreClick={() => handleSetCurrentPage('more')}
+            setCurrentPage={handleSetCurrentPage}
+            balance={balance}
+            walletAddress={walletAddress}
+            socket={socket}
+          />
+        )}
+        {successMessage && (
+          <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />
+        )}
+      </SoundProvider>
     </AppRoot>
   );
 }

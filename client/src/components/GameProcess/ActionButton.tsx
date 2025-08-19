@@ -45,14 +45,29 @@ export function ActionButtons({
     <div className="flex flex-col items-center justify-center">
       <div className="relative flex items-center justify-center space-x-2 p-2">
         {canFold && (
-          <button
-            onClick={onFold}
-            className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
-            style={{ backgroundColor: '#FF443A' }}
-          >
-            <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
-            <span className="-mt-1">Пас</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={onFold}
+              className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+              style={{ backgroundColor: '#FF443A' }}
+            >
+              <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
+              <span className="-mt-1">Пас</span>
+            </button>
+            <div 
+              className="absolute text-white w-full text-center"
+              style={{
+                fontWeight: 500,
+                fontSize: '12px',
+                lineHeight: '100%',
+                bottom: '-15px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              ({turnTimer}) сек
+            </div>
+          </div>
         )}
         
         {canCall && (
@@ -110,22 +125,7 @@ export function ActionButtons({
             <span className="-mt-1">Вслепую</span>
           </button>
         )}
-        {canFold && (
-          <div 
-            className="absolute text-white"
-            style={{
-              fontWeight: 500,
-              fontSize: '12px',
-              lineHeight: '100%',
-              left: '8px',
-              width: '95px',
-              textAlign: 'center',
-              bottom: '-15px',
-            }}
-          >
-            ({turnTimer}) сек
-          </div>
-        )}
+        
       </div>
     </div>
   );

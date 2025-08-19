@@ -6,12 +6,12 @@ import { StyledContainer } from '../StyledContainer';
 import { GameMenuProps } from '@/types/components';
 import { ExitMenu } from './ExitMenu';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useSound } from '@/hooks/useSound';
+import { useSoundContext } from '@/context/SoundContext';
 
 export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
   const [showExitMenu, setShowExitMenu] = useState(false);
   const { isHapticEnabled, toggleHaptic } = useHapticFeedback();
-  const { isSoundEnabled, toggleSound } = useSound();
+  const { isSoundEnabled, toggleSound } = useSoundContext();
 
   if (!isOpen) return null;
 

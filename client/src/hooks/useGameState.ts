@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Socket } from 'socket.io-client';
 import { GameState } from '@/types/game';
 import { UserData } from '@/types/entities';
-import { useSound, SoundType } from './useSound';
+import { useSoundContext } from '@/context/SoundContext';
+import { SoundType } from './useSound';
 
 export const useGameState = (roomId: string, socket: Socket | null) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSeated, setIsSeated] = useState(false);
-  const { playSound } = useSound();
+  const { playSound } = useSoundContext();
 
   useEffect(() => {
     if (!socket) {
