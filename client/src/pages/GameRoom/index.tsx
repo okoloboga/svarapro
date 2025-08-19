@@ -225,9 +225,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     return ((absolutePosition + offset - 1 + 6) % 6) + 1;
   };
   
-  const callAmount = gameState.status === 'betting' 
-    ? (gameState.lastActionAmount > 0 ? gameState.lastActionAmount : gameState.currentBet - (currentPlayer?.currentBet || 0))
-    : gameState.currentBet - (currentPlayer?.currentBet || 0);
+  const callAmount = gameState.currentBet - (currentPlayer?.currentBet || 0);
     
   const minRaiseAmount = gameState.currentBet * 2;
   const maxRaise = currentPlayer?.balance || 0;
