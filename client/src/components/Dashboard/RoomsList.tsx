@@ -14,37 +14,19 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
 
   useEffect(() => {
     if (socket) {
-      const handleInitialRooms = (data: { action: string; rooms?: Room[] }) => {
-        if (data.action === 'initial' && data.rooms) {
-          setRooms(data.rooms);
+      const handleRoomsUpdate = (data: { action: string; rooms?: Room[] }) => {
+        if (data.action === 'initial' || data.action === 'update') {
+          if (data.rooms) {
+            setRooms(data.rooms);
+          }
         }
       };
 
-      const handleRoomUpdate = (data: { action?: string; roomId?: string; room?: Room }) => {
-        setRooms((prevRooms) => {
-          // Обрабатываем удаление комнаты
-          if (data.action === 'delete' && data.roomId) {
-            console.log(`Room ${data.roomId} has been deleted`);
-            return prevRooms.filter((r) => r.roomId !== data.roomId);
-          }
-          
-          // Обрабатываем обновление комнаты
-          if (data.action === 'update' && data.room) {
-            const updatedRooms = prevRooms.filter((r) => r.roomId !== data.room!.roomId);
-            return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
-          }
-          
-          return prevRooms;
-        });
-      };
-
-      socket.on('rooms', handleInitialRooms);
-      socket.on('room_update', handleRoomUpdate);
+      socket.on('rooms', handleRoomsUpdate);
       socket.emit('request_rooms');
 
       return () => {
-        socket.off('rooms', handleInitialRooms);
-        socket.off('room_update', handleRoomUpdate);
+        socket.off('rooms', handleRoomsUpdate);
       };
     }
   }, [socket]);
