@@ -51,6 +51,18 @@ export class GameService {
     if (!room) return;
 
     room.players = room.players.filter((playerId) => playerId !== telegramId);
+    
+    // Проверяем, если комната стала пустой - удаляем её сразу
+    if (room.players.length === 0) {
+      console.log(`Room ${roomId} is now empty, removing it`);
+      await this.redisService.removeRoom(roomId);
+      await this.redisService.clearGameData(roomId);
+      await this.redisService.removePlayerFromRoom(roomId, telegramId);
+      // Отправляем уведомление об удалении комнаты
+      await this.redisService.publishRoomUpdate(roomId, null);
+      return;
+    }
+
     await this.redisService.setRoom(roomId, room);
     await this.redisService.publishRoomUpdate(roomId, room);
 
@@ -102,10 +114,6 @@ export class GameService {
           await this.endGameWithWinner(roomId, remainingPlayer.id);
           return;
         }
-      }
-      if (gameState.players.length === 0) {
-        await this.redisService.removeRoom(roomId);
-        await this.redisService.clearGameData(roomId);
       }
     }
     await this.redisService.removePlayerFromRoom(roomId, telegramId);

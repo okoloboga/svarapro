@@ -16,7 +16,7 @@ import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
-import { SvaraJoinPopup } from '../../components/SvaraJoinPopup';
+import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 

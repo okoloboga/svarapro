@@ -20,9 +20,17 @@ export function RoomsList({ searchId, isAvailableFilter, stakeRange, socket, set
         }
       };
 
-      const handleRoomUpdate = (data: { roomId: string; room: Room }) => {
+      const handleRoomUpdate = (data: { roomId: string; room: Room | null }) => {
         setRooms((prevRooms) => {
           const updatedRooms = prevRooms.filter((r) => r.roomId !== data.roomId);
+          
+          // Если room === null, это означает удаление комнаты
+          if (data.room === null) {
+            console.log(`Room ${data.roomId} has been deleted`);
+            return updatedRooms; // Возвращаем массив без удаленной комнаты
+          }
+          
+          // Иначе добавляем/обновляем комнату
           return [...updatedRooms, data.room].sort((a, b) => a.roomId.localeCompare(b.roomId));
         });
       };
