@@ -618,8 +618,6 @@ export class GameService {
         gameState = phaseResult.updatedGameState;
         gameState.log.push(...phaseResult.actions);
 
-        // Устанавливаем текущую ставку для фазы betting
-        gameState.currentBet = mandatoryBet;
         // Устанавливаем сумму последнего действия для корректного расчета call
         gameState.lastActionAmount = mandatoryBet;
         // Устанавливаем последнего повысившего как текущего игрока
@@ -683,62 +681,51 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        // Если текущий игрок - последний, кто делал рейз, и он делает колл,
-        // это означает, что круг торгов завершен.
         if (playerIndex === gameState.lastRaiseIndex) {
           await this.endBettingRound(roomId, gameState);
           return { success: true, gameState };
         }
 
-        // Используем lastActionAmount для корректного расчета call
-        const callAmount = Number(
-          (gameState.lastActionAmount - player.currentBet).toFixed(2),
-        );
+        const callAmount = gameState.lastActionAmount;
         if (callAmount <= 0) {
           return {
             success: false,
-            error: 'Сумма уравнивания должна быть больше 0',
+            error: 'Нечего уравнивать',
           };
         }
         if (player.balance < callAmount) {
           return { success: false, error: 'Недостаточно средств' };
         }
+
         const { updatedPlayer, action: callAction } =
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+        gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         break;
       }
       case 'raise': {
-        if (!amount || amount < gameState.currentBet * 2) {
+        const raiseAmount = amount || 0;
+        if (raiseAmount < gameState.lastActionAmount * 2) {
           return {
             success: false,
-            error: `Повышение должно быть минимум в 2 раза больше текущей ставки ${gameState.currentBet}`,
-          };
-        }
-        const raiseAmount = Number((amount - player.currentBet).toFixed(2));
-        if (raiseAmount <= 0) {
-          return {
-            success: false,
-            error: 'Сумма повышения должна быть больше 0',
+            error: `Повышение должно быть минимум в 2 раза больше последней ставки (${gameState.lastActionAmount})`,
           };
         }
         if (player.balance < raiseAmount) {
           return { success: false, error: 'Недостаточно средств' };
         }
+
         const { updatedPlayer, action: raiseAction } =
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
         
-        // Исправляем сообщение в логе для raise - должна быть итоговая ставка
-        raiseAction.amount = Number(amount.toFixed(2));
-        raiseAction.message = `Игрок ${player.username} повысил до ${amount}`;
+        raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
         
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-        gameState.currentBet = Number(amount.toFixed(2));
         gameState.lastRaiseIndex = playerIndex;
-        gameState.lastActionAmount = amount; // Сохраняем сумму последнего действия
+        gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
         break;
       }

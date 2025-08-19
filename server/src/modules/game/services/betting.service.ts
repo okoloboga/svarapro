@@ -35,7 +35,6 @@ export class BettingService {
           const roundedMinBet = Number(minBet.toFixed(2));
           player.balance -= roundedMinBet;
           player.tableBalance += roundedMinBet;
-          player.currentBet += roundedMinBet; // FIX: Update currentBet for the round
           player.totalBet += roundedMinBet;
           updatedGameState.pot = Number(
             (updatedGameState.pot + roundedMinBet).toFixed(2),
@@ -76,22 +75,11 @@ export class BettingService {
           ? gameState.lastBlindBettorIndex
           : gameState.dealerIndex;
 
-    // Проверяем, что все активные игроки сделали ставки
-    let allBet = true;
-    for (const player of activePlayers) {
-      if (player.currentBet !== gameState.currentBet) {
-        allBet = false;
-        break;
-      }
-    }
-
-    // Если текущий игрок - это игрок после последнего повысившего (или дилера)
     // и все сделали одинаковые ставки, круг завершен
     return (
-      allBet &&
-      (gameState.currentPlayerIndex ===
+      gameState.currentPlayerIndex ===
         (startIndex + 1) % gameState.players.length ||
-        gameState.currentPlayerIndex === startIndex)
+      gameState.currentPlayerIndex === startIndex
     );
   }
 
@@ -201,12 +189,12 @@ export class BettingService {
           gameState.lastRaiseIndex !== undefined &&
           gameState.players[gameState.lastRaiseIndex]?.id === player.id;
 
-        if (player.currentBet >= gameState.currentBet && !isLastRaiser) {
-          return {
-            canPerform: false,
-            error: 'Вы уже сделали максимальную ставку',
-          };
+        if (isLastRaiser) {
+          return { canPerform: true }; // Allow last raiser to "call" to end the round
         }
+
+        // Under the new rules, you can always call the last bet.
+        // The check for whether a bet exists is handled by game.service.
         return { canPerform: true };
       }
 

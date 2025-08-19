@@ -23,7 +23,6 @@ export class PlayerService {
       isDealer: false,
       hasFolded: false,
       hasLooked: false,
-      currentBet: 0,
       totalBet: 0,
       position,
     };
@@ -54,7 +53,6 @@ export class PlayerService {
       isActive,
       hasFolded: !isActive,
       hasLooked: false,
-      currentBet: 0,
       totalBet: 0,
       score: undefined,
       lastAction: undefined,
@@ -84,7 +82,6 @@ export class PlayerService {
     const updatedPlayer = { ...player };
     updatedPlayer.balance -= roundedAmount;
     updatedPlayer.tableBalance += roundedAmount;
-    updatedPlayer.currentBet += roundedAmount;
     updatedPlayer.totalBet += roundedAmount;
     updatedPlayer.lastAction = action as
       | 'fold'

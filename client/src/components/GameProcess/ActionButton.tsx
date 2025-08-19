@@ -64,8 +64,8 @@ export function ActionButtons({
             style={{ backgroundColor: '#0E5C89' }}
             disabled={isCallDisabled}
           >
-            {callAmount > 0 && <span>${Number(callAmount).toFixed(2)}</span>}
-            <span className={callAmount > 0 ? '-mt-1' : ''}>Заплатить</span>
+            <span>${Number(callAmount).toFixed(2)}</span>
+            <span className="-mt-1">Заплатить</span>
           </button>
         )}
 

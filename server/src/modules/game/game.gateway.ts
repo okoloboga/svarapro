@@ -207,25 +207,27 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
 
   async handleDisconnect(client: Socket): Promise<void> {
     const telegramId = this.getTelegramId(client);
-    console.log('Client disconnected:', { telegramId });
 
-    if (telegramId) {
-      try {
-        const rooms = await this.redisService.getPlayerRooms(telegramId);
-        console.log(`Player ${telegramId} was in rooms:`, rooms);
+    if (!telegramId) {
+      console.log(`[GEMINI] Unauthenticated client disconnected: ${client.id}`);
+      return;
+    }
 
-        for (const roomId of rooms) {
-          console.log(
-            `Player ${telegramId} is leaving room ${roomId} due to disconnect`,
-          );
+    console.log(`[GEMINI] Client disconnected: ${client.id}, User: ${telegramId}`);
+    try {
+      const roomIds = await this.redisService.getPlayerRooms(telegramId);
+      if (roomIds && roomIds.length > 0) {
+        console.log(`[GEMINI] User ${telegramId} was in rooms: ${roomIds.join(', ')}. Cleaning up...`);
+        for (const roomId of roomIds) {
+          console.log(`[GEMINI] Auto-leaving room ${roomId} for user ${telegramId}`);
           await this.gameService.leaveRoom(roomId, telegramId);
         }
-      } catch (error) {
-        console.error(
-          `Error handling disconnect for player ${telegramId}:`,
-          error,
-        );
+        console.log(`[GEMINI] Cleanup complete for user ${telegramId}`);
+      } else {
+        console.log(`[GEMINI] User ${telegramId} was not in any rooms. No cleanup needed.`);
       }
+    } catch (error) {
+      console.error(`[GEMINI] Error during disconnect cleanup for ${telegramId}:`, error);
     }
   }
 }

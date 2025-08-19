@@ -31,7 +31,6 @@ export interface Player {
   isDealer: boolean; // является ли дилером
   hasFolded: boolean; // сбросил ли карты
   hasLooked: boolean; // посмотрел ли карты (для ставок вслепую)
-  currentBet: number; // текущая ставка в раунде
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
