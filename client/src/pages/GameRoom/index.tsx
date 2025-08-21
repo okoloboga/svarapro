@@ -393,7 +393,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 };
                 
                 const openCardsPosition = getOpenCardsPosition(screenPosition);
-                const isTurn = isCurrentUserTurn && !!player && gameState.players[gameState.currentPlayerIndex]?.id === player.id;
+                const isTurn = !!(gameState && player && gameState.players[gameState.currentPlayerIndex]?.id === player.id);
 
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>

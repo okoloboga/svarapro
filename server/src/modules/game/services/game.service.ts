@@ -648,6 +648,8 @@ export class GameService {
         break;
       }
       case 'look': {
+        const calculatedScore = this.cardService.calculateScore(player.cards);
+
         // Игрок просто смотрит свои карты. Это бесплатно и не передает ход.
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
@@ -657,12 +659,13 @@ export class GameService {
             hasLookedAndMustAct: true, // Устанавливаем флаг, что игрок должен действовать
           },
         );
+        gameState.players[playerIndex].score = calculatedScore;
 
         const lookAction: GameAction = {
           type: 'look',
           telegramId: player.id,
           timestamp: Date.now(),
-          message: `Игрок ${player.username} посмотрел карты`,
+          message: `Игрок ${player.username} посмотрел карты и имеет ${calculatedScore} очков`,
         };
         gameState.log.push(lookAction);
 
