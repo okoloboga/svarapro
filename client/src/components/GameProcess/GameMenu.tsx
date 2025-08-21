@@ -44,27 +44,27 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
           contentClassName="flex flex-col items-center justify-center p-4 space-y-2"
         >
           {/* Vibration Toggle - temporarily hidden */}
-          {false && (
-            <div
-              className="w-[225px] h-8 rounded-lg flex items-center justify-between px-3 transition-all duration-200 ease-in-out"
-              style={{ backgroundColor: 'rgba(19, 18, 23, 0.7)' }}
-            >
-              <div className="flex items-center space-x-2">
-                <img src={vibroIcon} alt="Вибрация" className="w-4 h-4" />
-                <span className="text-white" style={{ fontWeight: 500, fontSize: '12px' }}>Вибрация</span>
-              </div>
-              <div
-                className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer transition-colors duration-300"
-                style={{ background: isHapticEnabled ? '#31EA3D' : '#2F2E35' }}
-                onClick={toggleHaptic}
-              >
-                <div
-                  className="w-[16px] h-[16px] bg-white rounded-full transition-all duration-300"
-                  style={{ transform: isHapticEnabled ? 'translateX(20px)' : 'translateX(0)' }}
-                ></div>
-              </div>
+          {/*
+          <div
+            className="w-[225px] h-8 rounded-lg flex items-center justify-between px-3 transition-all duration-200 ease-in-out"
+            style={{ backgroundColor: 'rgba(19, 18, 23, 0.7)' }}
+          >
+            <div className="flex items-center space-x-2">
+              <img src={vibroIcon} alt="Вибрация" className="w-4 h-4" />
+              <span className="text-white" style={{ fontWeight: 500, fontSize: '12px' }}>Вибрация</span>
             </div>
-          )}
+            <div
+              className="relative w-[40px] h-[20px] rounded-full flex items-center p-0.5 cursor-pointer transition-colors duration-300"
+              style={{ background: isHapticEnabled ? '#31EA3D' : '#2F2E35' }}
+              onClick={toggleHaptic}
+            >
+              <div
+                className="w-[16px] h-[16px] bg-white rounded-full transition-all duration-300"
+                style={{ transform: isHapticEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+              ></div>
+            </div>
+          </div>
+          */}
 
           {/* Sound Toggle */}
           <div

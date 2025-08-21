@@ -44,10 +44,11 @@ export function ActionButtons({
   postLookActions,
 }: ActionButtonsProps) {
   if (postLookActions) {
-    // Если игрок посмотрел карты, показываем только Fold и Raise
+    // Если игрок посмотрел карты, показываем Fold, Call и Raise
     return (
       <div className="flex flex-col items-center justify-center">
         <div className="relative flex items-center justify-center space-x-2 p-2">
+          {/* Fold Button */}
           <div className="relative">
             <button
               onClick={onFold}
@@ -71,6 +72,19 @@ export function ActionButtons({
               ({turnTimer}) сек
             </div>
           </div>
+          {/* Call Button */}
+          <button
+            onClick={onCall}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#0E5C89' }}
+            disabled={isCallDisabled}
+          >
+            <span>${Number(callAmount).toFixed(2)}</span>
+            <span className="-mt-1">Ответить</span>
+          </button>
+          {/* Raise Button */}
           <button
             onClick={onRaise}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${

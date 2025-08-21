@@ -173,6 +173,27 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     }
   }
 
+  @SubscribeMessage('chat_message')
+  handleChatMessage(
+    client: Socket,
+    payload: { roomId: string; phrase: string },
+  ): void {
+    const telegramId = this.getTelegramId(client);
+    if (!telegramId) {
+      client.emit('error', { message: 'Требуется авторизация (telegramId)' });
+      return;
+    }
+
+    const { roomId, phrase } = payload;
+    console.log(`Broadcasting chat message in room ${roomId} from ${telegramId}: ${phrase}`);
+    
+    // Broadcast to all clients in the room, including the sender
+    this.server.to(roomId).emit('new_chat_message', { 
+      playerId: telegramId, 
+      phrase 
+    });
+  }
+
   @SubscribeMessage('sit_down')
   async handleSitDown(
     client: Socket,

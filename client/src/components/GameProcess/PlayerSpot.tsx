@@ -4,6 +4,7 @@ import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
 import defaultAvatar from '@/assets/main_logo.png';
 import cardBack from '@/assets/game/back.png';
+import chatButtonBg from '@/assets/game/chat.png';
 import { TURN_DURATION_SECONDS } from '@/constants';
 
 interface PlayerSpotProps {
@@ -18,6 +19,7 @@ interface PlayerSpotProps {
   isWinner?: boolean;
   winAmount?: number;
   gameStatus?: string;
+  chatPhrase?: string;
   onPlayerBet?: (playerId: string) => void;
   gameState?: { 
     log: Array<{ 
@@ -33,12 +35,21 @@ interface PlayerSpotProps {
   }; // Добавляем gameState для доступа к логу действий
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, onPlayerBet, gameState }: PlayerSpotProps) {
+export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, chatPhrase, onPlayerBet, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null>(null);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [showCardsPhase, setShowCardsPhase] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
+
+  const buttonTextStyle: React.CSSProperties = {
+    fontWeight: 700,
+    fontSize: '9px',
+    lineHeight: '100%',
+    textAlign: 'center',
+    color: 'white',
+    textShadow: '0px 1px 1px rgba(0, 0, 0, 0.5)',
+  };
 
   // Функция для вычисления суммы последнего действия игрока
   const getLastActionAmount = () => {
@@ -266,6 +277,21 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   return (
     <div className={spotClasses} style={containerStyle}>
+      {chatPhrase && (
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-50 flex items-center justify-center p-1"
+          style={{
+            width: '75px',
+            height: '38px',
+            backgroundImage: `url(${chatButtonBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            ...buttonTextStyle
+          }}
+        >
+          {chatPhrase}
+        </div>
+      )}
       <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
       <div className="relative">
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
@@ -356,9 +382,9 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         </div>
         {(
-          (isWinner && winAmount > 0 && gameStatus === 'finished') ? 
+          !hasFolded && ((isWinner && winAmount > 0 && gameStatus === 'finished') ? 
             showCardsPhase : // Для победителей используем только нашу логику
-            (showCards || (isCurrentUser && hasLooked)) // Для остальных - обычная логика
+            (showCards || (isCurrentUser && hasLooked))) // Для остальных - обычная логика
         ) && (
           <div className="absolute z-50" style={{ 
             width: `${cardWidth}px`, 
@@ -417,7 +443,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
             </div>
           ) : null;
         })()}
-        {score !== undefined && (showCards || (isCurrentUser && hasLooked)) && (
+        {score !== undefined && !hasFolded && (showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 
             width: `${22 * scale}px`, 
             height: `${22 * scale}px`, 

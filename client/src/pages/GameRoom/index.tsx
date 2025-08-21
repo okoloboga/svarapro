@@ -16,6 +16,7 @@ import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
+import { ChatMenu } from '../../components/GameProcess/ChatMenu';
 import { SvaraAnimation } from '../../components/GameProcess/SvaraAnimation';
 import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
@@ -45,8 +46,15 @@ const useWindowSize = () => {
       setSize([window.innerWidth, window.innerHeight]);
     }
     window.addEventListener('resize', updateSize);
-    updateSize();
-    return () => window.removeEventListener('resize', updateSize);
+    updateSize(); // Initial size
+
+    // Force a second update after a short delay to handle viewport transitions
+    const timer = setTimeout(() => updateSize(), 100);
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      clearTimeout(timer);
+    };
   }, []);
   return size;
 };
@@ -57,8 +65,9 @@ const useTablePositioning = () => {
 
   const scale = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
 
-  const getPositionClasses = (position: number): string => {
-    const baseClasses = "absolute z-30 transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center";
+  const getPositionClasses = (position: number, isShowdown: boolean): string => {
+    const zIndex = isShowdown ? 'z-40' : 'z-30';
+    const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
       1: "-top-10 left-1/2",
       2: "top-1/4 -right-5",
@@ -85,6 +94,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { gameState, loading, error, isSeated, isProcessing, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [activeChats, setActiveChats] = useState<Record<string, { phrase: string }>>({});
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
@@ -121,6 +132,51 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
 
+  // Chat message handling
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewChatMessage = ({ playerId, phrase }: { playerId: string; phrase: string }) => {
+      setActiveChats(prev => {
+        // Clear previous timer for this player if it exists
+        if (prev[playerId]) {
+          clearTimeout(prev[playerId].timerId);
+        }
+        // Set new message and timer
+        const timerId = setTimeout(() => {
+          setActiveChats(currentChats => {
+            const newChats = { ...currentChats };
+            delete newChats[playerId];
+            return newChats;
+          });
+        }, 2000);
+
+        return {
+          ...prev,
+          [playerId]: { phrase, timerId },
+        };
+      });
+    };
+
+    socket.on('new_chat_message', handleNewChatMessage);
+
+    return () => {
+      socket.off('new_chat_message', handleNewChatMessage);
+      // Clear all timers on cleanup
+      setActiveChats(prev => {
+        Object.values(prev).forEach(chat => clearTimeout(chat.timerId));
+        return {};
+      });
+    };
+  }, [socket]);
+
+  const handleSelectPhrase = (phrase: string) => {
+    if (socket) {
+      socket.emit('chat_message', { roomId, phrase });
+      setShowChatMenu(false); // Close chat menu after sending
+    }
+  };
+
   const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
   const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
@@ -146,7 +202,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     } else {
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState?.currentPlayerIndex, gameState?.status, isCurrentUserTurn, actions]);
+  }, [gameState, activeGamePhases, isCurrentUserTurn, actions]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
@@ -169,7 +225,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     } else {
       console.log('❌ No fold action or wrong type. Expected "fold", got:', lastAction?.type);
     }
-  }, [gameState?.log?.length, actions]); // Зависимость только от длины лога
+  }, [gameState?.log, actions]); // Зависимость только от длины лога
 
   // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
@@ -261,6 +317,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const callAmount = gameState.lastActionAmount;
   const isAnimating = !!(gameState.isAnimating);
   const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
+  const postLookCallAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
     
   const minRaiseAmount = (() => {
     if (postLookActions) {
@@ -278,7 +335,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating && !postLookActions);
 
   const canFold = canPerformBettingActions || postLookActions;
-  const canCall = canPerformBettingActions;
+  const canCall = canPerformBettingActions || postLookActions;
   const canRaise = canPerformBettingActions || postLookActions;
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
@@ -340,6 +397,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     actions.sitDown(position, userData);
   };
 
+  // DEBUGGING LOG
+  if (isCurrentUserTurn) {
+    console.log('[DEBUG] Rendering Action Buttons:', {
+      isCurrentUserTurn,
+      currentPlayerId: currentPlayer?.id,
+      hasLookedAndMustAct: currentPlayer?.hasLookedAndMustAct,
+      postLookActions,
+      gameStatus: gameState.status,
+      currentPlayerIndex: gameState.currentPlayerIndex,
+    });
+  }
+
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
       {/* Затемняющий оверлей для фазы вскрытия карт */}
@@ -374,6 +443,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 showCards={showCards} 
                 onSitDown={handleSitDown} 
                 onInvite={actions.invitePlayer} 
+                onChatOpen={() => setShowChatMenu(true)}
                 maxPlayers={6} 
                 scale={scale}
                 onChipsToWinner={handleChipsToWinner}
@@ -388,7 +458,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 const screenPosition = getScreenPosition(absolutePosition);
                 const player = gameState.players.find(p => p.position === absolutePosition);
                 const positionStyle = getPositionStyle(screenPosition);
-                const positionClasses = getPositionClasses(screenPosition);
+                const positionClasses = getPositionClasses(screenPosition, showCards);
 
                 const cardSide = (screenPosition === 2 || screenPosition === 3) ? 'left' : 'right';
                 
@@ -406,6 +476,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 
                 const openCardsPosition = getOpenCardsPosition(screenPosition);
                 const isTurn = !!(gameState && player && gameState.players[gameState.currentPlayerIndex]?.id === player.id);
+                const chatPhrase = activeChats[player.id]?.phrase;
 
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>
@@ -431,6 +502,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             isWinner={isWinner}
                             winAmount={winAmount}
                             gameStatus={gameState.status}
+                            chatPhrase={chatPhrase}
                             onPlayerBet={handlePlayerBet}
                             gameState={gameState}
                           />;
@@ -447,6 +519,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           isWinner={isWinner}
                           winAmount={winAmount}
                           gameStatus={gameState.status}
+                          chatPhrase={chatPhrase}
                           onPlayerBet={handlePlayerBet}
                           gameState={gameState}
                         />;
@@ -482,7 +555,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   canRaise={canRaise}
                   canLook={canLook}
                   canBlindBet={canBlindBet}
-                  callAmount={callAmount}
+                  callAmount={postLookActions ? postLookCallAmount : callAmount}
                   turnTimer={turnTimer}
                   onFold={actions.fold}
                   onCall={actions.call}
@@ -508,6 +581,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <BetSlider isOpen={showBetSlider} onClose={() => setShowBetSlider(false)} minBet={minRaiseAmount} maxBet={maxRaise} initialBet={minRaiseAmount} onConfirm={handleBetConfirm} isTurn={isCurrentUserTurn} turnTimer={turnTimer} isProcessing={isProcessing} />
       
       <GameMenu isOpen={showMenuModal} onClose={() => setShowMenuModal(false)} onExit={handleLeaveRoom} />
+
+      <ChatMenu isOpen={showChatMenu} onClose={() => setShowChatMenu(false)} onSelectPhrase={handleSelectPhrase} />
 
       {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       

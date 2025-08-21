@@ -482,12 +482,12 @@ export class GameService {
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     const player = gameState.players[playerIndex];
 
-    // Если игрок посмотрел карты, он может только сбросить или повысить
-    if (player.hasLookedAndMustAct && !['fold', 'raise'].includes(action)) {
+    // Если игрок посмотрел карты, он может только сбросить, ответить или повысить
+    if (player.hasLookedAndMustAct && !['fold', 'raise', 'call'].includes(action)) {
       return {
         success: false,
         error:
-          'После просмотра карт вы можете только повысить или сбросить карты',
+          'После просмотра карт вы можете только повысить, ответить или сбросить карты',
       };
     }
 
@@ -692,7 +692,54 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        // Если игрок, который коллирует, является последним, кто повышал, раунд ставок завершается.
+        // Если игрок коллирует после просмотра карт, это действие инициирует фазу торгов.
+        if (player.hasLookedAndMustAct) {
+          const callAmount =
+            gameState.lastBlindBet > 0
+              ? gameState.lastBlindBet * 2
+              : gameState.minBet;
+
+          if (player.balance < callAmount) {
+            return { success: false, error: 'Недостаточно средств' };
+          }
+
+          const { updatedPlayer, action: callAction } =
+            this.playerService.processPlayerBet(player, callAmount, 'call');
+          
+          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+            updatedPlayer,
+            { hasLookedAndMustAct: false }, // Сбрасываем флаг
+          );
+          gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+          gameState.lastActionAmount = callAmount;
+          gameState.lastRaiseIndex = playerIndex; // Этот call действует как первый raise
+          gameState.log.push(callAction);
+
+          // Переводим игру в фазу betting и открываем карты остальным
+          const phaseResult = this.gameStateService.moveToNextPhase(
+            gameState,
+            'betting',
+          );
+          gameState = phaseResult.updatedGameState;
+          gameState.log.push(...phaseResult.actions);
+
+          for (let i = 0; i < gameState.players.length; i++) {
+            if (i !== playerIndex && gameState.players[i].isActive && !gameState.players[i].hasFolded) {
+              gameState.players[i] = this.playerService.updatePlayerStatus(
+                gameState.players[i],
+                { hasLooked: true },
+              );
+            }
+          }
+
+          const scoreResult =
+            this.gameStateService.calculateScoresForPlayers(gameState);
+          gameState = scoreResult.updatedGameState;
+          gameState.log.push(...scoreResult.actions);
+          break;
+        }
+
+        // Обычный call в фазе betting
         if (playerIndex === gameState.lastRaiseIndex) {
           await this.endBettingRound(roomId, gameState);
           return { success: true };
