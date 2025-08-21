@@ -255,7 +255,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const callAmount = gameState.lastActionAmount;
     
-  const minRaiseAmount = gameState.lastActionAmount * 2;
+  const minRaiseAmount = (() => {
+    if (postLookActions) {
+      return gameState.lastBlindBet > 0
+        ? gameState.lastBlindBet * 2
+        : gameState.minBet;
+    }
+    return gameState.lastActionAmount * 2;
+  })();
+
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 

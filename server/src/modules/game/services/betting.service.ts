@@ -200,11 +200,15 @@ export class BettingService {
         return { canPerform: true };
       }
 
-      case 'raise':
-        if (gameState.status !== 'betting') {
-          return { canPerform: false, error: 'Сейчас нельзя повышать' };
+      case 'raise': {
+        if (gameState.status === 'betting') {
+          return { canPerform: true };
         }
-        return { canPerform: true };
+        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
+          return { canPerform: true };
+        }
+        return { canPerform: false, error: 'Сейчас нельзя повышать' };
+      }
 
       case 'fold':
         return { canPerform: true };
