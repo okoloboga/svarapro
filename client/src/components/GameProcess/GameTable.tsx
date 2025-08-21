@@ -1,7 +1,6 @@
 import React from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
-import chatButton from '../../assets/game/chatButton.png'; // Import the chat button icon
 import ChipsStack from './ChipsStack';
 import FlyingChip from './FlyingChip';
 
@@ -11,7 +10,6 @@ interface GameTableProps {
   showCards: boolean;
   onSitDown: (position: number) => void;
   onInvite: () => void;
-  onChatOpen: () => void; // Add prop for opening chat
   maxPlayers: number;
   scale?: number;
   onChipsToWinner?: (winnerX: number, winnerY: number) => void;
@@ -30,8 +28,7 @@ const GameTable: React.FC<GameTableProps> = ({
   gameState, 
   scale = 1, 
   chipAnimations = [], 
-  onChipAnimationComplete, 
-  onChatOpen
+  onChipAnimationComplete 
 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
@@ -204,20 +201,6 @@ const GameTable: React.FC<GameTableProps> = ({
           onComplete={() => handleChipAnimationComplete(chip.id)}
         />
       ))}
-
-      {/* Chat Button */}
-      <button 
-        onClick={onChatOpen}
-        className="absolute bottom-0 left-0 z-10"
-        style={{
-          width: `${35 * scale}px`,
-          height: `${35 * scale}px`,
-          bottom: `${20 * scale}px`,
-          left: `${20 * scale}px`,
-        }}
-      >
-        <img src={chatButton} alt="Chat" className="w-full h-full" />
-      </button>
     </div>
   );
 };

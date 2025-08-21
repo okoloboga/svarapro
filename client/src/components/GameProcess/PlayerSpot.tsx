@@ -47,6 +47,15 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     fontSize: '9px',
     lineHeight: '100%',
     textAlign: 'center',
+    color: 'black',
+    textShadow: '0px 0.5px 1px rgba(255, 255, 255, 0.5)',
+  };
+
+  const buttonTextStyle: React.CSSProperties = {
+    fontWeight: 700,
+    fontSize: '9px',
+    lineHeight: '100%',
+    textAlign: 'center',
     color: 'white',
     textShadow: '0px 1px 1px rgba(0, 0, 0, 0.5)',
   };
@@ -279,10 +288,12 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     <div className={spotClasses} style={containerStyle}>
       {chatPhrase && (
         <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-50 flex items-center justify-center p-1"
+          className="absolute left-1/2 -translate-x-1/2 z-50 flex items-center justify-center p-1"
           style={{
             width: '75px',
             height: '38px',
+            bottom: '105%', // Positioned above the avatar
+            marginBottom: '5px', // 5px margin from the avatar
             backgroundImage: `url(${chatButtonBg})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',

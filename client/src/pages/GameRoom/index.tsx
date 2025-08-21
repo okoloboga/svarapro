@@ -15,6 +15,7 @@ import FlyingChip from '../../components/GameProcess/FlyingChip';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
+import chatButton from '../../assets/game/chatButton.png';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { ChatMenu } from '../../components/GameProcess/ChatMenu';
 import { SvaraAnimation } from '../../components/GameProcess/SvaraAnimation';
@@ -583,6 +584,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <GameMenu isOpen={showMenuModal} onClose={() => setShowMenuModal(false)} onExit={handleLeaveRoom} />
 
       <ChatMenu isOpen={showChatMenu} onClose={() => setShowChatMenu(false)} onSelectPhrase={handleSelectPhrase} />
+
+      {isSeated && (
+        <button 
+          onClick={() => setShowChatMenu(true)}
+          className="fixed bottom-4 left-4 z-40"
+          style={{ width: '35px', height: '35px' }}
+        >
+          <img src={chatButton} alt="Chat" className="w-full h-full" />
+        </button>
+      )}
 
       {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       

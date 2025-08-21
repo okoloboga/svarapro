@@ -26,8 +26,8 @@ export function ChatMenu({ isOpen, onClose, onSelectPhrase }: ChatMenuProps) {
     fontSize: '9px',
     lineHeight: '100%',
     textAlign: 'center',
-    color: 'white',
-    textShadow: '0px 1px 1px rgba(0, 0, 0, 0.5)', // Added for better readability
+    color: 'black',
+    textShadow: '0px 0.5px 1px rgba(255, 255, 255, 0.5)', // Lighter shadow for dark text
   };
 
   return (

@@ -19,6 +19,7 @@ export const SoundProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSoundContext = () => {
   const context = useContext(SoundContext);
   if (context === undefined) {
@@ -26,5 +27,3 @@ export const useSoundContext = () => {
   }
   return context;
 };
-
-// eslint-disable-next-line react-refresh/only-export-components
