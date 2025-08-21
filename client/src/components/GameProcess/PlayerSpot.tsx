@@ -48,16 +48,6 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     lineHeight: '100%',
     textAlign: 'center',
     color: 'black',
-    textShadow: '0px 0.5px 1px rgba(255, 255, 255, 0.5)',
-  };
-
-  const buttonTextStyle: React.CSSProperties = {
-    fontWeight: 700,
-    fontSize: '9px',
-    lineHeight: '100%',
-    textAlign: 'center',
-    color: 'white',
-    textShadow: '0px 1px 1px rgba(0, 0, 0, 0.5)',
   };
 
   // Функция для вычисления суммы последнего действия игрока
