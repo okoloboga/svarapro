@@ -125,13 +125,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
   useEffect(() => {
-    if (isCurrentUserTurn) {
-      setTurnTimer(TURN_DURATION_SECONDS);
+    const activeTurn = gameState && activeGamePhases.includes(gameState.status) && !gameState.isAnimating;
+
+    if (activeTurn) {
+      setTurnTimer(TURN_DURATION_SECONDS); // Reset timer at the start of each turn
       const interval = setInterval(() => {
         setTurnTimer((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            actions.fold();
+            // Only auto-fold if it's the current user's turn
+            if (isCurrentUserTurn) {
+                actions.fold();
+            }
             return 0;
           }
           return prev - 1;
@@ -141,7 +146,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     } else {
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [isCurrentUserTurn, actions]);
+  }, [gameState?.currentPlayerIndex, gameState?.status, isCurrentUserTurn, actions]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {

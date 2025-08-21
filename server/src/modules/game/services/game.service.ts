@@ -692,6 +692,12 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
+        // Если игрок, который коллирует, является последним, кто повышал, раунд ставок завершается.
+        if (playerIndex === gameState.lastRaiseIndex) {
+          await this.endBettingRound(roomId, gameState);
+          return { success: true };
+        }
+
         const callAmount = gameState.lastActionAmount;
         if (callAmount <= 0) {
           return {
