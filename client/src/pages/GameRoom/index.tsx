@@ -204,9 +204,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState, activeGamePhases, isCurrentUserTurn, actions]);
 
-  }
-  }, [gameState, isCurrentUserTurn, actions, activeGamePhases]);
-
   useEffect(() => {
     if (isCurrentUserTurn) {
       triggerImpact('medium');
