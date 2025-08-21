@@ -90,6 +90,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const [svaraStep, setSvaraStep] = useState<'none' | 'animating' | 'joining'>('none');
   const { triggerImpact } = useHapticFeedback();
+  const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
   useEffect(() => {
     if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
@@ -111,16 +112,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useAppBackButton(true, handleLeaveRoom);
 
   useEffect(() => {
-    if (gameState.status === 'svara_pending' && (gameState.svaraParticipants?.includes(currentUserId) ?? false)) {
+    if (gameState && gameState.status === 'svara_pending' && (gameState.svaraParticipants?.includes(currentUserId) ?? false)) {
       // Если я победитель - я не могу отказаться от свары, участвую автоматически
       actions.joinSvara();
     }
-  }, [gameState.status, gameState.svaraParticipants, currentUserId, actions]);
+  }, [gameState, currentUserId, actions]);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
-
-  const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
   const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
   const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);

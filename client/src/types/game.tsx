@@ -35,7 +35,8 @@ export interface Player {
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
-  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind'; // последнее действие
+  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
+  hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
 }
 
 export interface GameState {
