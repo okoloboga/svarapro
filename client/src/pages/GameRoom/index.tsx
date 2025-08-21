@@ -254,6 +254,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
   
   const callAmount = gameState.lastActionAmount;
+  const isAnimating = !!(gameState.isAnimating);
+  const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
     
   const minRaiseAmount = (() => {
     if (postLookActions) {
@@ -266,9 +268,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
-
-  const isAnimating = !!(gameState.isAnimating);
-  const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
   
   const canPerformBettingActions = !!(isCurrentUserTurn && gameState.status === 'betting' && !isAnimating && !postLookActions);
   const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating && !postLookActions);
