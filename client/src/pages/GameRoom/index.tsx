@@ -95,7 +95,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
-  const [activeChats, setActiveChats] = useState<Record<string, { phrase: string }>>({});
+  const [activeChats, setActiveChats] = useState<Record<string, { phrase: string; timerId: NodeJS.Timeout }>>({});
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
@@ -203,6 +203,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       setTurnTimer(TURN_DURATION_SECONDS);
     }
   }, [gameState, activeGamePhases, isCurrentUserTurn, actions]);
+
+  }
+  }, [gameState, isCurrentUserTurn, actions, activeGamePhases]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
@@ -476,7 +479,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 
                 const openCardsPosition = getOpenCardsPosition(screenPosition);
                 const isTurn = !!(gameState && player && gameState.players[gameState.currentPlayerIndex]?.id === player.id);
-                const chatPhrase = activeChats[player.id]?.phrase;
+                const chatPhrase = player ? activeChats[player.id]?.phrase : undefined;
 
                 return (
                   <div key={absolutePosition} style={positionStyle} className={positionClasses}>

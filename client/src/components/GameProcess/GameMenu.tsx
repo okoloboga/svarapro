@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import exitIcon from '../../assets/game/exit.svg';
-import vibroIcon from '../../assets/game/vibro.svg';
-import volumeIcon from '../../assets/game/volume.svg';
+import exitIcon from '@/assets/game/exit.svg';
+import volumeIcon from '@/assets/game/volume.svg';
 import { StyledContainer } from '../StyledContainer';
 import { GameMenuProps } from '@/types/components';
 import { ExitMenu } from './ExitMenu';
-import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundContext } from '@/context/SoundContext';
 
 export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
   const [showExitMenu, setShowExitMenu] = useState(false);
-  const { isHapticEnabled, toggleHaptic } = useHapticFeedback();
   const { isSoundEnabled, toggleSound } = useSoundContext();
 
   if (!isOpen) return null;
