@@ -577,6 +577,10 @@ export class GameService {
     );
 
     if (activePlayers.length === 1) {
+      // Немедленно сохраняем состояние, где игрок сбросил карты
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+      // Затем запускаем процесс завершения игры
       await this.endGameWithWinner(roomId, activePlayers[0].id);
       return { success: true };
     } else {
