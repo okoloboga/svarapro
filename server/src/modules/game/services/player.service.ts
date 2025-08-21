@@ -37,6 +37,7 @@ export class PlayerService {
       hasLooked?: boolean;
       isDealer?: boolean;
       lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look';
+      hasLookedAndMustAct?: boolean;
     },
   ): Player {
     return {

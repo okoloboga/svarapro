@@ -212,21 +212,32 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       return;
     }
 
-    console.log(`[GEMINI] Client disconnected: ${client.id}, User: ${telegramId}`);
+    console.log(
+      `[GEMINI] Client disconnected: ${client.id}, User: ${telegramId}`,
+    );
     try {
       const roomIds = await this.redisService.getPlayerRooms(telegramId);
       if (roomIds && roomIds.length > 0) {
-        console.log(`[GEMINI] User ${telegramId} was in rooms: ${roomIds.join(', ')}. Cleaning up...`);
+        console.log(
+          `[GEMINI] User ${telegramId} was in rooms: ${roomIds.join(', ')}. Cleaning up...`,
+        );
         for (const roomId of roomIds) {
-          console.log(`[GEMINI] Auto-leaving room ${roomId} for user ${telegramId}`);
+          console.log(
+            `[GEMINI] Auto-leaving room ${roomId} for user ${telegramId}`,
+          );
           await this.gameService.leaveRoom(roomId, telegramId);
         }
         console.log(`[GEMINI] Cleanup complete for user ${telegramId}`);
       } else {
-        console.log(`[GEMINI] User ${telegramId} was not in any rooms. No cleanup needed.`);
+        console.log(
+          `[GEMINI] User ${telegramId} was not in any rooms. No cleanup needed.`,
+        );
       }
     } catch (error) {
-      console.error(`[GEMINI] Error during disconnect cleanup for ${telegramId}:`, error);
+      console.error(
+        `[GEMINI] Error during disconnect cleanup for ${telegramId}:`,
+        error,
+      );
     }
   }
 }

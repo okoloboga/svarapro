@@ -51,7 +51,7 @@ export class GameService {
     if (!room) return;
 
     room.players = room.players.filter((playerId) => playerId !== telegramId);
-    
+
     // Проверяем, если комната стала пустой - удаляем её сразу
     if (room.players.length === 0) {
       console.log(`Room ${roomId} is now empty, removing it`);
@@ -105,19 +105,26 @@ export class GameService {
         gameState.log.push(action);
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
-        
+
         // Проверяем, остался ли один игрок во время активной игры
         const activeStatuses = ['ante', 'blind_betting', 'betting', 'showdown'];
-        if (gameState.players.length === 1 && activeStatuses.includes(gameState.status)) {
+        if (
+          gameState.players.length === 1 &&
+          activeStatuses.includes(gameState.status)
+        ) {
           const remainingPlayer = gameState.players[0];
-          console.log(`Only one player remaining during active game. Auto-win for player: ${remainingPlayer.id}`);
+          console.log(
+            `Only one player remaining during active game. Auto-win for player: ${remainingPlayer.id}`,
+          );
           await this.endGameWithWinner(roomId, remainingPlayer.id);
           return;
         }
 
         // Если игрок выходит после завершения раунда, пытаемся запустить новую игру
         if (gameState.status === 'finished') {
-          console.log(`Player left during 'finished' state. Attempting to start a new game for room ${roomId}.`);
+          console.log(
+            `Player left during 'finished' state. Attempting to start a new game for room ${roomId}.`,
+          );
           await this.startGame(roomId);
           return; // Выходим, чтобы не выполнять лишний код ниже
         }
@@ -323,8 +330,13 @@ export class GameService {
     }
 
     // Проверяем, не принимал ли игрок уже решение
-    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
-      console.log(`Player ${telegramId} has already made a decision for svara.`);
+    if (
+      gameState.svaraConfirmed?.includes(telegramId) ||
+      gameState.svaraDeclined?.includes(telegramId)
+    ) {
+      console.log(
+        `Player ${telegramId} has already made a decision for svara.`,
+      );
       return { success: true, gameState }; // Просто возвращаем успех
     }
 
@@ -334,13 +346,14 @@ export class GameService {
     }
 
     // Проверяем, является ли игрок изначальным участником свары (победителем)
-    const isOriginalWinner = gameState.svaraParticipants && 
-                             gameState.svaraParticipants.includes(telegramId);
+    const isOriginalWinner =
+      gameState.svaraParticipants &&
+      gameState.svaraParticipants.includes(telegramId);
 
     if (isOriginalWinner) {
       // Изначальные победители участвуют бесплатно
       console.log(`Player ${telegramId} joins Svara as original winner (free)`);
-      
+
       // Помечаем игрока как подтвердившего участие
       if (!gameState.svaraConfirmed) {
         gameState.svaraConfirmed = [];
@@ -361,15 +374,17 @@ export class GameService {
       // Списываем деньги и добавляем в банк
       player.balance -= svaraBuyInAmount;
       gameState.pot += svaraBuyInAmount;
-      
-      console.log(`Player ${telegramId} joins Svara with buy-in: ${svaraBuyInAmount}`);
+
+      console.log(
+        `Player ${telegramId} joins Svara with buy-in: ${svaraBuyInAmount}`,
+      );
 
       // Добавляем игрока в список участников свары
       if (!gameState.svaraParticipants) {
         gameState.svaraParticipants = [];
       }
       gameState.svaraParticipants.push(telegramId);
-      
+
       // Помечаем как подтвердившего участие
       if (!gameState.svaraConfirmed) {
         gameState.svaraConfirmed = [];
@@ -381,7 +396,7 @@ export class GameService {
       type: 'join',
       telegramId,
       timestamp: Date.now(),
-      message: isOriginalWinner 
+      message: isOriginalWinner
         ? `Игрок ${player.username} участвует в сваре как победитель`
         : `Игрок ${player.username} присоединился к сваре, добавив в банк ${gameState.pot}`,
     };
@@ -406,8 +421,13 @@ export class GameService {
     }
 
     // Проверяем, не принимал ли игрок уже решение
-    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
-      console.log(`Player ${telegramId} has already made a decision for svara.`);
+    if (
+      gameState.svaraConfirmed?.includes(telegramId) ||
+      gameState.svaraDeclined?.includes(telegramId)
+    ) {
+      console.log(
+        `Player ${telegramId} has already made a decision for svara.`,
+      );
       return { success: true, gameState }; // Просто возвращаем успех
     }
 
@@ -466,7 +486,8 @@ export class GameService {
     if (player.hasLookedAndMustAct && !['fold', 'raise'].includes(action)) {
       return {
         success: false,
-        error: 'После просмотра карт вы можете только повысить или сбросить карты',
+        error:
+          'После просмотра карт вы можете только повысить или сбросить карты',
       };
     }
 
@@ -519,7 +540,12 @@ export class GameService {
     const player = gameState.players[playerIndex];
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       player,
-      { hasFolded: true, isActive: false, lastAction: 'fold', hasLookedAndMustAct: false },
+      {
+        hasFolded: true,
+        isActive: false,
+        lastAction: 'fold',
+        hasLookedAndMustAct: false,
+      },
     );
 
     const foldAction: GameAction = {
@@ -625,8 +651,8 @@ export class GameService {
         // Игрок просто смотрит свои карты. Это бесплатно и не передает ход.
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
-          { 
-            hasLooked: true, 
+          {
+            hasLooked: true,
             lastAction: 'look',
             hasLookedAndMustAct: true, // Устанавливаем флаг, что игрок должен действовать
           },
@@ -683,9 +709,10 @@ export class GameService {
         const isPostLookRaise = player.hasLookedAndMustAct;
 
         // Определяем минимальную ставку для повышения
-        const minRaiseAmount = gameState.lastBlindBet > 0 
-          ? gameState.lastBlindBet * 2 
-          : gameState.minBet;
+        const minRaiseAmount =
+          gameState.lastBlindBet > 0
+            ? gameState.lastBlindBet * 2
+            : gameState.minBet;
 
         if (raiseAmount < minRaiseAmount) {
           return {
@@ -700,9 +727,9 @@ export class GameService {
 
         const { updatedPlayer, action: raiseAction } =
           this.playerService.processPlayerBet(player, raiseAmount, 'raise');
-        
+
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
-        
+
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           updatedPlayer,
           { hasLookedAndMustAct: false }, // Сбрасываем флаг после действия
@@ -723,7 +750,11 @@ export class GameService {
 
           // Все остальные игроки смотрят карты
           for (let i = 0; i < gameState.players.length; i++) {
-            if (i !== playerIndex && gameState.players[i].isActive && !gameState.players[i].hasFolded) {
+            if (
+              i !== playerIndex &&
+              gameState.players[i].isActive &&
+              !gameState.players[i].hasFolded
+            ) {
               gameState.players[i] = this.playerService.updatePlayerStatus(
                 gameState.players[i],
                 { hasLooked: true },
@@ -854,8 +885,15 @@ export class GameService {
     });
 
     if (winners.length > 1) {
-      console.log('🔥 SVARA DETECTED! Starting Svara with winners:', winners.map(w => ({ id: w.id, username: w.username, score: w.score })));
-      
+      console.log(
+        '🔥 SVARA DETECTED! Starting Svara with winners:',
+        winners.map((w) => ({
+          id: w.id,
+          username: w.username,
+          score: w.score,
+        })),
+      );
+
       // Новая логика для обработки свары
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
@@ -897,12 +935,19 @@ export class GameService {
     }
   }
 
-  private async _checkSvaraCompletion(roomId: string, gameState: GameState): Promise<void> {
+  private async _checkSvaraCompletion(
+    roomId: string,
+    gameState: GameState,
+  ): Promise<void> {
     const participantsCount = gameState.svaraParticipants?.length || 0;
-    const decisionsCount = (gameState.svaraConfirmed?.length || 0) + (gameState.svaraDeclined?.length || 0);
+    const decisionsCount =
+      (gameState.svaraConfirmed?.length || 0) +
+      (gameState.svaraDeclined?.length || 0);
 
     if (participantsCount > 0 && decisionsCount >= participantsCount) {
-      console.log(`All svara participants have made a decision for room ${roomId}. Resolving svara immediately.`);
+      console.log(
+        `All svara participants have made a decision for room ${roomId}. Resolving svara immediately.`,
+      );
       // Немедленно разрешаем свару, так как все приняли решение
       await this.resolveSvara(roomId);
     }

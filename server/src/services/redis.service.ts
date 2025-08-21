@@ -41,7 +41,10 @@ export class RedisService {
   async publishRoomUpdate(roomId: string, room: Room | null): Promise<void> {
     if (room === null) {
       // Уведомляем об удалении комнаты
-      await this.client.publish(`room:${roomId}`, JSON.stringify({ deleted: true }));
+      await this.client.publish(
+        `room:${roomId}`,
+        JSON.stringify({ deleted: true }),
+      );
       await this.client.publish(
         'rooms',
         JSON.stringify({ action: 'delete', roomId }),
@@ -63,16 +66,20 @@ export class RedisService {
   }
 
   async subscribeToRoomUpdates(
-    callback: () => void,
+    callback: (data: { action: string; roomId?: string; room?: Room }) => void,
   ): Promise<void> {
     const subClient = this.client.duplicate();
     await subClient.subscribe('rooms');
 
     subClient.on('message', (channel, message) => {
       if (channel === 'rooms') {
-        const data = JSON.parse(message);
+        const data = JSON.parse(message) as {
+          action: string;
+          roomId?: string;
+          room?: Room;
+        };
         if (data && data.action) {
-          callback();
+          callback(data);
         }
       }
     });
