@@ -187,9 +187,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   useEffect(() => {
     const activeTurn = gameState && activeGamePhases.includes(gameState.status) && !gameState.isAnimating;
+    const currentPlayerId = gameState?.players[gameState?.currentPlayerIndex]?.id;
 
     if (activeTurn) {
-      setTurnTimer(TURN_DURATION_SECONDS); // Reset timer at the start of each turn
+      // Сбрасываем таймер только если это новый ход (новый игрок или новый раунд)
+      setTurnTimer((prev) => {
+        // Если таймер уже идет и это тот же игрок, не сбрасываем
+        if (prev > 0 && currentPlayerId === currentUserId && isCurrentUserTurn) {
+          return prev;
+        }
+        return TURN_DURATION_SECONDS;
+      });
+      
       const interval = setInterval(() => {
         setTurnTimer((prev) => {
           if (prev <= 1) {
@@ -203,7 +212,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     } else {
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn, currentUserId]);
 
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {
@@ -595,8 +604,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       {isSeated && (
         <button 
           onClick={() => setShowChatMenu(true)}
-          className="fixed bottom-4 left-4 z-40"
-          style={{ width: '35px', height: '35px' }}
+          className="fixed z-40"
+          style={{ 
+            width: '35px', 
+            height: '35px',
+            bottom: '25%',
+            left: '18px'
+          }}
         >
           <img src={chatButton} alt="Chat" className="w-full h-full" />
         </button>

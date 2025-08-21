@@ -88,7 +88,7 @@ export function ChatMenu({ isOpen, onClose, onSelectPhrase }: ChatMenuProps) {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     ...buttonTextStyle,
-                    paddingBottom: '15px' // Поднимаем текст на 5px выше
+                    paddingBottom: '13px' // Поднимаем текст на 5px выше
                   }}
                 >
                   {phrase}
