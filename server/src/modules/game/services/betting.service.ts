@@ -182,22 +182,29 @@ export class BettingService {
         return { canPerform: true };
 
       case 'call': {
-        if (gameState.status !== 'betting') {
-          return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
-        }
-        // Разрешаем колл, если игрок является последним, кто повышал ставку.
-        // Это действие завершит раунд торгов.
-        const isLastRaiser =
-          gameState.lastRaiseIndex !== undefined &&
-          gameState.players[gameState.lastRaiseIndex]?.id === player.id;
+        // Разрешаем call в фазе betting
+        if (gameState.status === 'betting') {
+          // Разрешаем колл, если игрок является последним, кто повышал ставку.
+          // Это действие завершит раунд торгов.
+          const isLastRaiser =
+            gameState.lastRaiseIndex !== undefined &&
+            gameState.players[gameState.lastRaiseIndex]?.id === player.id;
 
-        if (isLastRaiser) {
-          return { canPerform: true }; // Allow last raiser to "call" to end the round
-        }
+          if (isLastRaiser) {
+            return { canPerform: true }; // Allow last raiser to "call" to end the round
+          }
 
-        // Under the new rules, you can always call the last bet.
-        // The check for whether a bet exists is handled by game.service.
-        return { canPerform: true };
+          // Under the new rules, you can always call the last bet.
+          // The check for whether a bet exists is handled by game.service.
+          return { canPerform: true };
+        }
+        
+        // Разрешаем call в фазе blind_betting если игрок посмотрел карты
+        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
+          return { canPerform: true };
+        }
+        
+        return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
       }
 
       case 'raise': {

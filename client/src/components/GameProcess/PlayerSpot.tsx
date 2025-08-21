@@ -282,8 +282,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           style={{
             width: '75px',
             height: '38px',
-            bottom: '105%', // Positioned above the avatar
-            marginBottom: '5px', // 5px margin from the avatar
+            bottom: '80%', // Positioned above the avatar
             backgroundImage: `url(${chatButtonBg})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
