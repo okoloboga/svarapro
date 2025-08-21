@@ -10,6 +10,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSeated, setIsSeated] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { playSound } = useSoundContext();
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       console.log('Received game_state:', state);
       setGameState(state);
       setLoading(false);
+      setIsProcessing(false);
       
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
       setIsSeated(state.players.some(p => p.id === userId));
@@ -35,6 +37,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       console.log('Received game_update:', state);
       setGameState(state);
       setLoading(false);
+      setIsProcessing(false);
       
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
       setIsSeated(state.players.some(p => p.id === userId));
@@ -48,6 +51,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       console.error('Socket error:', data.message);
       setError(data.message);
       setLoading(false);
+      setIsProcessing(false);
     });
 
     // Emit join_room after listeners are set up
@@ -64,6 +68,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
 
   const performAction = useCallback((action: string, amount?: number) => {
     if (socket) {
+      setIsProcessing(true);
       console.log('Emitting game_action:', { roomId, action, amount });
       socket.emit('game_action', { roomId, action, amount });
     } else {
@@ -73,6 +78,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
 
   const sitDown = useCallback((position: number, userData: UserData) => {
     if (socket) {
+      setIsProcessing(true);
       const payload = { roomId, position, userData };
       console.log('Emitting sit_down with payload:', payload);
       socket.emit('sit_down', payload);
@@ -127,6 +133,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     loading,
     error,
     isSeated,
+    isProcessing,
     actions,
   };
 };

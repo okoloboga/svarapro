@@ -25,3 +25,16 @@ body {
   transform: translateY(-100%);
   transition: opacity 300ms, transform 300ms;
 }
+
+@keyframes pulse-svara {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  16.5% { transform: scale(1.15); opacity: 1; }
+  33% { transform: scale(1); opacity: 0.8; }
+  49.5% { transform: scale(1.15); opacity: 1; }
+  66% { transform: scale(1); opacity: 0.8; }
+  82.5% { transform: scale(1.15); opacity: 1; }
+}
+
+.animate-pulse-svara {
+  animation: pulse-svara 2s ease-in-out;
+}

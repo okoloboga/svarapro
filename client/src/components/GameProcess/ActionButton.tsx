@@ -20,6 +20,7 @@ interface ActionButtonsProps {
   isCallDisabled?: boolean;
   isRaiseDisabled?: boolean;
   isBlindBetDisabled?: boolean;
+  postLookActions?: boolean; // Новый флаг для отображения кнопок после просмотра
 }
 
 export function ActionButtons({
@@ -40,7 +41,52 @@ export function ActionButtons({
   isCallDisabled,
   isRaiseDisabled,
   isBlindBetDisabled,
+  postLookActions,
 }: ActionButtonsProps) {
+  if (postLookActions) {
+    // Если игрок посмотрел карты, показываем только Fold и Raise
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center space-x-2 p-2">
+          <div className="relative">
+            <button
+              onClick={onFold}
+              className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+              style={{ backgroundColor: '#FF443A' }}
+            >
+              <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
+              <span className="-mt-1">Пас</span>
+            </button>
+            <div 
+              className="absolute text-white w-full text-center"
+              style={{
+                fontWeight: 500,
+                fontSize: '12px',
+                lineHeight: '100%',
+                bottom: '-15px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              ({turnTimer}) сек
+            </div>
+          </div>
+          <button
+            onClick={onRaise}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+              isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            style={{ backgroundColor: '#56BF00' }}
+            disabled={isRaiseDisabled}
+          >
+            <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
+            <span className="-mt-1">Повысить</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="relative flex items-center justify-center space-x-2 p-2">

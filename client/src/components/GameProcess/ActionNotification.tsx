@@ -1,5 +1,5 @@
 interface ActionNotificationProps {
-  action?: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null;
+  action?: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
   visible: boolean;
 }
 
@@ -10,6 +10,7 @@ const actionConfig = {
   pass: { text: 'ПАС', color: '#FF3131' },
   rais: { text: 'ПОВЫСИЛ', color: '#56BF00' },
   win: { text: 'ВЫИГРАЛ', color: '#56BF00' },
+  look: { text: 'ПОСМОТРЕЛ', color: '#0E5C89' },
 };
 
 export function ActionNotification({ action, visible }: ActionNotificationProps) {

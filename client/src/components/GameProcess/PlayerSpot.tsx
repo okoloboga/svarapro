@@ -35,7 +35,7 @@ interface PlayerSpotProps {
 
 export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, onPlayerBet, gameState }: PlayerSpotProps) {
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
-  const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | null>(null);
+  const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null>(null);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [showCardsPhase, setShowCardsPhase] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
@@ -73,12 +73,13 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   // Set notification type based on last action
   useEffect(() => {
     if (lastAction && !isCurrentUser) {
-      let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | null = null;
+      let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
       switch (lastAction) {
         case 'blind': actionType = 'blind'; break;
         case 'call': actionType = 'paid'; break;
         case 'fold': actionType = 'pass'; break;
         case 'raise': actionType = 'rais'; break;
+        case 'look': actionType = 'look'; break;
         default: actionType = null;
       }
       setNotificationType(actionType);
@@ -307,7 +308,11 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                 width: `${avatarSize}px`, 
                 height: `${avatarSize}px`, 
                 backgroundColor: '#555456',
-                boxShadow: showWinAnimation ? '0px 0px 4px 2px #EC8800' : 'none'
+                boxShadow: showWinAnimation 
+                  ? '0px 0px 4px 2px #EC8800' 
+                  : isTurn 
+                    ? '0px 0px 8px 4px #56BF00' 
+                    : 'none'
               }}
             ></div>
             <div className="absolute rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ width: `${avatarSize - (6 * scale)}px`, height: `${avatarSize - (6 * scale)}px`, backgroundColor: '#ECEBF5' }}></div>
@@ -342,7 +347,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                   </div>
                 )}
               </div>
-              {isTurn && isCurrentUser && (
+              {isTurn && (
                 <div className="absolute" style={{ bottom: '-10px', left: '50%', transform: 'translateX(-50%)', width: '68px', height: '5px', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{ width: `${progress}%`, height: '100%', backgroundColor: progressBarColor, borderRadius: '3px', transition: 'width 0.1s linear, background-color 0.1s linear' }} />
                 </div>

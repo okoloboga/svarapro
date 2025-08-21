@@ -43,6 +43,9 @@ export class GameStateService {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
+    // Сортируем игроков по их позиции за столом для корректного порядка ходов
+    updatedGameState.players.sort((a, b) => a.position - b.position);
+
     // Сбрасываем состояние игры
     updatedGameState.status = 'ante';
     updatedGameState.round += 1;

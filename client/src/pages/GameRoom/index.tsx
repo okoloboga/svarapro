@@ -16,6 +16,7 @@ import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
 import { GameMenu } from '../../components/GameProcess/GameMenu';
+import { SvaraAnimation } from '../../components/GameProcess/SvaraAnimation';
 import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -81,13 +82,22 @@ const useTablePositioning = () => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
-  const { gameState, loading, error, isSeated, actions } = useGameState(roomId, socket);
+  const { gameState, loading, error, isSeated, isProcessing, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
+  const [svaraStep, setSvaraStep] = useState<'none' | 'animating' | 'joining'>('none');
   const { triggerImpact } = useHapticFeedback();
+
+  useEffect(() => {
+    if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
+      setSvaraStep('animating');
+    } else if (gameState?.status !== 'svara_pending') {
+      setSvaraStep('none');
+    }
+  }, [gameState?.status, svaraStep]);
 
   const handleLeaveRoom = useCallback(() => {
     setShowMenuModal(false);
@@ -100,13 +110,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   useAppBackButton(true, handleLeaveRoom);
 
+  useEffect(() => {
+    if (gameState.status === 'svara_pending' && (gameState.svaraParticipants?.includes(currentUserId) ?? false)) {
+      // Если я победитель - я не могу отказаться от свары, участвую автоматически
+      actions.joinSvara();
+    }
+  }, [gameState.status, gameState.svaraParticipants, currentUserId, actions]);
+
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
 
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
 
   const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
-  const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating);
+  const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
@@ -244,13 +261,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
 
   const isAnimating = !!(gameState.isAnimating);
+  const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
   
-  const canPerformBettingActions = !!(isCurrentUserTurn && gameState.status === 'betting' && !isAnimating);
-  const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating);
+  const canPerformBettingActions = !!(isCurrentUserTurn && gameState.status === 'betting' && !isAnimating && !postLookActions);
+  const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating && !postLookActions);
 
-  const canFold = canPerformBettingActions;
+  const canFold = canPerformBettingActions || postLookActions;
   const canCall = canPerformBettingActions;
-  const canRaise = canPerformBettingActions;
+  const canRaise = canPerformBettingActions || postLookActions;
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
@@ -316,7 +334,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       {/* Затемняющий оверлей для фазы вскрытия карт */}
       {showCards && <div className="fixed inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
 
-      {gameState.status === 'svara_pending' && (
+      {svaraStep === 'animating' && <SvaraAnimation onAnimationComplete={() => setSvaraStep('joining')} />}
+      
+      {svaraStep === 'joining' && !(gameState.svaraParticipants?.includes(currentUserId) ?? false) && (
         <SvaraJoinPopup 
           gameState={gameState}
           userData={userData}
@@ -445,6 +465,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 </div>
               ) : isCurrentUserTurn ? (
                 <ActionButtons 
+                  postLookActions={postLookActions}
                   canFold={canFold}
                   canCall={canCall}
                   canRaise={canRaise}
@@ -457,10 +478,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
-                  blindButtonsDisabled={blindButtonsDisabled}
-                  isCallDisabled={isCallDisabled}
-                  isRaiseDisabled={isRaiseDisabled}
-                  isBlindBetDisabled={isBlindBetDisabled}
+                  blindButtonsDisabled={blindButtonsDisabled || isProcessing}
+                  isCallDisabled={isCallDisabled || isProcessing}
+                  isRaiseDisabled={isRaiseDisabled || isProcessing}
+                  isBlindBetDisabled={isBlindBetDisabled || isProcessing}
                   minBet={gameState.status === 'blind_betting' ? blindBetAmount : minRaiseAmount}
                 />
               ) : (
@@ -473,7 +494,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         </div>
       )}
       
-      <BetSlider isOpen={showBetSlider} onClose={() => setShowBetSlider(false)} minBet={minRaiseAmount} maxBet={maxRaise} initialBet={minRaiseAmount} onConfirm={handleBetConfirm} />
+      <BetSlider isOpen={showBetSlider} onClose={() => setShowBetSlider(false)} minBet={minRaiseAmount} maxBet={maxRaise} initialBet={minRaiseAmount} onConfirm={handleBetConfirm} isTurn={isCurrentUserTurn} turnTimer={turnTimer} isProcessing={isProcessing} />
       
       <GameMenu isOpen={showMenuModal} onClose={() => setShowMenuModal(false)} onExit={handleLeaveRoom} />
 

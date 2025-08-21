@@ -35,7 +35,6 @@ export class BettingService {
           const roundedMinBet = Number(minBet.toFixed(2));
           player.balance -= roundedMinBet;
           player.tableBalance += roundedMinBet;
-          player.totalBet += roundedMinBet;
           updatedGameState.pot = Number(
             (updatedGameState.pot + roundedMinBet).toFixed(2),
           );
@@ -58,25 +57,32 @@ export class BettingService {
 
   // Проверка, завершился ли круг ставок
   isBettingRoundComplete(gameState: GameState): boolean {
-    // Если есть только один активный игрок, круг завершен
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
+
     if (activePlayers.length <= 1) {
       return true;
     }
 
-    // Определяем "якорного" игрока для завершения круга торгов.
-    // Приоритет: последний повысивший -> последний ставивший вслепую -> дилер.
-    const startIndex =
-      gameState.lastRaiseIndex !== undefined
-        ? gameState.lastRaiseIndex
-        : gameState.lastBlindBettorIndex !== undefined
-          ? gameState.lastBlindBettorIndex
-          : gameState.dealerIndex;
+    // Раунд ставок не может завершиться, если еще не было повышения (raise).
+    if (gameState.lastRaiseIndex === undefined) {
+      return false;
+    }
 
-    // Круг завершен, если текущий игрок - это и есть "якорный" игрок.
-    return gameState.currentPlayerIndex === startIndex;
+    const raiser = gameState.players[gameState.lastRaiseIndex];
+    if (!raiser) {
+      return false; // Failsafe
+    }
+    const requiredBet = raiser.totalBet;
+
+    // Проверяем, что все активные игроки сделали ставку, равную ставке последнего, кто повышал.
+    const allPlayersCalled = activePlayers.every(
+      (p) => p.totalBet === requiredBet,
+    );
+
+    // Круг завершен, если все ставки уравнены.
+    return allPlayersCalled;
   }
 
   // Обработка выигрыша

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import closeIcon from '../../assets/close.png';
 import { StyledContainer } from '../StyledContainer';
+import { TURN_DURATION_SECONDS } from '@/constants';
 
 interface BetSliderProps {
   minBet: number;
@@ -10,6 +11,9 @@ interface BetSliderProps {
   onConfirm: (value: number) => void;
   isOpen: boolean;
   onClose: () => void;
+  isTurn?: boolean;
+  turnTimer?: number;
+  isProcessing?: boolean;
 }
 
 export function BetSlider({ 
@@ -19,7 +23,10 @@ export function BetSlider({
   onChange, 
   onConfirm,
   isOpen,
-  onClose
+  onClose,
+  isTurn = false,
+  turnTimer = TURN_DURATION_SECONDS,
+  isProcessing = false,
 }: BetSliderProps) {
   const [value, setValue] = useState(initialBet || minBet);
   const [percentage, setPercentage] = useState(0);
@@ -130,13 +137,21 @@ export function BetSlider({
           <div className="relative z-10 p-4 h-full flex flex-col justify-around">
             {/* Верхняя часть с индикатором и кнопкой */}
             <div className="flex items-center justify-between mb-4 w-[85%] mx-auto">
-              {/* Индикатор Ставки */}
-              <div className="w-[96px] bg-[#807C7C] h-[5px] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-green-400" 
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
+              {/* Таймер Хода */}
+              {isTurn ? (
+                <div className="w-[96px] h-[5px] bg-gray-600 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full"
+                    style={{ 
+                      width: `${(turnTimer / TURN_DURATION_SECONDS) * 100}%`, 
+                      backgroundColor: `hsl(${(turnTimer / TURN_DURATION_SECONDS) * 120}, 100%, 50%)`,
+                      transition: 'width 0.1s linear, background-color 0.1s linear'
+                    }} 
+                  />
+                </div>
+              ) : (
+                <div className="w-[96px] h-[5px] rounded-full" />
+              )}
               {/* Дисплей суммы */}
               <div 
                 className="flex items-center justify-center text-white font-bold text-[18px] leading-none"
@@ -153,10 +168,10 @@ export function BetSlider({
               <button
                 onClick={() => onConfirm(value)}
                 className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs ${
-                  value > maxBet ? 'opacity-50 cursor-not-allowed' : ''
+                  value > maxBet || isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                style={{ backgroundColor: value > maxBet ? '#666' : '#56BF00' }}
-                disabled={value > maxBet}
+                style={{ backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00' }}
+                disabled={value > maxBet || isProcessing}
               >
                 Повысить
               </button>
@@ -167,7 +182,7 @@ export function BetSlider({
               {multipliers.map((mult, index) => {
                 // Проверяем, не превышает ли множитель баланс
                 const multiplierValue = mult.value === 'max' ? maxBet : minBet * (mult.value as number);
-                const isDisabled = multiplierValue > maxBet;
+                const isDisabled = multiplierValue > maxBet || isProcessing;
                 
                 return (
                   <button

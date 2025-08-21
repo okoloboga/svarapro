@@ -223,8 +223,16 @@ export class GameService {
       room.status = 'waiting';
       await this.redisService.setRoom(roomId, room);
       if (gameState) {
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
+        const newGameState = this.gameStateService.createInitialGameState(
+          roomId,
+          room.minBet,
+        );
+        // Переносим оставшихся игроков в новое состояние
+        newGameState.players = gameState.players.map((p) =>
+          this.playerService.resetPlayerForNewGame(p, false),
+        );
+        await this.redisService.setGameState(roomId, newGameState);
+        await this.redisService.publishGameUpdate(roomId, newGameState);
       }
       await this.redisService.publishRoomUpdate(roomId, room);
       return;
@@ -452,8 +460,14 @@ export class GameService {
     }
 
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
-    if (playerIndex === -1) {
-      return { success: false, error: 'Игрок не найден' };
+    const player = gameState.players[playerIndex];
+
+    // Если игрок посмотрел карты, он может только сбросить или повысить
+    if (player.hasLookedAndMustAct && !['fold', 'raise'].includes(action)) {
+      return {
+        success: false,
+        error: 'После просмотра карт вы можете только повысить или сбросить карты',
+      };
     }
 
     if (gameState.currentPlayerIndex !== playerIndex) {
@@ -505,7 +519,7 @@ export class GameService {
     const player = gameState.players[playerIndex];
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       player,
-      { hasFolded: true, isActive: false, lastAction: 'fold' },
+      { hasFolded: true, isActive: false, lastAction: 'fold', hasLookedAndMustAct: false },
     );
 
     const foldAction: GameAction = {
@@ -608,30 +622,16 @@ export class GameService {
         break;
       }
       case 'look': {
-        // Вычисляем обязательную ставку при просмотре карт
-        const mandatoryBet =
-          gameState.lastBlindBet > 0
-            ? gameState.lastBlindBet * 2
-            : gameState.minBet;
-
-        // Проверяем, достаточно ли средств для обязательной ставки
-        if (player.balance < mandatoryBet) {
-          // Если недостаточно средств, игрок автоматически выбывает
-          return this.handleFold(roomId, gameState, playerIndex);
-        }
-
-        // Списываем обязательную ставку с баланса игрока
-        const { updatedPlayer, action: betAction } =
-          this.playerService.processPlayerBet(player, mandatoryBet, 'call');
-        gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot = Number((gameState.pot + mandatoryBet).toFixed(2));
-        gameState.log.push(betAction);
-
-        // Отмечаем, что игрок посмотрел карты
+        // Игрок просто смотрит свои карты. Это бесплатно и не передает ход.
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-          gameState.players[playerIndex],
-          { hasLooked: true, lastAction: 'look' },
+          player,
+          { 
+            hasLooked: true, 
+            lastAction: 'look',
+            hasLookedAndMustAct: true, // Устанавливаем флаг, что игрок должен действовать
+          },
         );
+
         const lookAction: GameAction = {
           type: 'look',
           telegramId: player.id,
@@ -640,59 +640,7 @@ export class GameService {
         };
         gameState.log.push(lookAction);
 
-        // Переходим в фазу betting
-        const phaseResult = this.gameStateService.moveToNextPhase(
-          gameState,
-          'betting',
-        );
-        gameState = phaseResult.updatedGameState;
-        gameState.log.push(...phaseResult.actions);
-
-        // Устанавливаем сумму последнего действия для корректного расчета call
-        gameState.lastActionAmount = mandatoryBet;
-        // Устанавливаем последнего повысившего как текущего игрока
-        gameState.lastRaiseIndex = playerIndex;
-
-        // Все игроки автоматически смотрят карты при переходе в betting
-        for (let i = 0; i < gameState.players.length; i++) {
-          if (
-            gameState.players[i].isActive &&
-            !gameState.players[i].hasFolded
-          ) {
-            gameState.players[i] = this.playerService.updatePlayerStatus(
-              gameState.players[i],
-              { hasLooked: true },
-            );
-          }
-        }
-
-        // Вычисляем очки для всех игроков
-        const scoreResult =
-          this.gameStateService.calculateScoresForPlayers(gameState);
-        gameState = scoreResult.updatedGameState;
-        gameState.log.push(...scoreResult.actions);
-
-        // Устанавливаем состояние анимации
-        gameState.isAnimating = true;
-        gameState.animationType = 'chip_fly';
-
-        // Сохраняем состояние с анимацией
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-
-        // Ждем 1 секунду для анимации
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Снимаем состояние анимации
-        gameState.isAnimating = false;
-        gameState.animationType = undefined;
-
-        // Переходим к следующему игроку (важно: ход переходит к следующему!)
-        gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
-          gameState.players,
-          playerIndex,
-        );
-
+        // Ход не передается, игрок должен выбрать следующее действие (fold или raise)
         break;
       }
     }
@@ -711,11 +659,6 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        if (playerIndex === gameState.lastRaiseIndex) {
-          await this.endBettingRound(roomId, gameState);
-          return { success: true, gameState };
-        }
-
         const callAmount = gameState.lastActionAmount;
         if (callAmount <= 0) {
           return {
@@ -737,12 +680,20 @@ export class GameService {
       }
       case 'raise': {
         const raiseAmount = amount || 0;
-        if (raiseAmount < gameState.lastActionAmount * 2) {
+        const isPostLookRaise = player.hasLookedAndMustAct;
+
+        // Определяем минимальную ставку для повышения
+        const minRaiseAmount = gameState.lastBlindBet > 0 
+          ? gameState.lastBlindBet * 2 
+          : gameState.minBet;
+
+        if (raiseAmount < minRaiseAmount) {
           return {
             success: false,
-            error: `Повышение должно быть минимум в 2 раза больше последней ставки (${gameState.lastActionAmount})`,
+            error: `Минимальное повышение: ${minRaiseAmount}`,
           };
         }
+
         if (player.balance < raiseAmount) {
           return { success: false, error: 'Недостаточно средств' };
         }
@@ -752,11 +703,40 @@ export class GameService {
         
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
         
-        gameState.players[playerIndex] = updatedPlayer;
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+          updatedPlayer,
+          { hasLookedAndMustAct: false }, // Сбрасываем флаг после действия
+        );
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.lastRaiseIndex = playerIndex;
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
+
+        // Если это повышение после просмотра карт, переводим игру в фазу betting
+        if (isPostLookRaise) {
+          const phaseResult = this.gameStateService.moveToNextPhase(
+            gameState,
+            'betting',
+          );
+          gameState = phaseResult.updatedGameState;
+          gameState.log.push(...phaseResult.actions);
+
+          // Все остальные игроки смотрят карты
+          for (let i = 0; i < gameState.players.length; i++) {
+            if (i !== playerIndex && gameState.players[i].isActive && !gameState.players[i].hasFolded) {
+              gameState.players[i] = this.playerService.updatePlayerStatus(
+                gameState.players[i],
+                { hasLooked: true },
+              );
+            }
+          }
+
+          // Вычисляем очки для всех игроков
+          const scoreResult =
+            this.gameStateService.calculateScoresForPlayers(gameState);
+          gameState = scoreResult.updatedGameState;
+          gameState.log.push(...scoreResult.actions);
+        }
         break;
       }
     }
