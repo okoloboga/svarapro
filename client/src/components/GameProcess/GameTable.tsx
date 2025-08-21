@@ -10,6 +10,7 @@ interface GameTableProps {
   showCards: boolean;
   onSitDown: (position: number) => void;
   onInvite: () => void;
+  onChatOpen: () => void;
   maxPlayers: number;
   scale?: number;
   onChipsToWinner?: (winnerX: number, winnerY: number) => void;
@@ -28,7 +29,8 @@ const GameTable: React.FC<GameTableProps> = ({
   gameState, 
   scale = 1, 
   chipAnimations = [], 
-  onChipAnimationComplete 
+  onChipAnimationComplete,
+  onChatOpen: _onChatOpen
 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
