@@ -412,7 +412,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           const shouldShow = lastActionAmount > 0 && !hasFolded && !isCurrentUser;
           
           return shouldShow ? (
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
               ${Number(lastActionAmount).toFixed(2)}
             </div>
           ) : null;
