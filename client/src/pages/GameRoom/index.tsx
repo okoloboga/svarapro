@@ -138,6 +138,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (!socket) return;
 
     const handleNewChatMessage = ({ playerId, phrase }: { playerId: string; phrase: string }) => {
+      console.log('🗨️ Received new_chat_message:', { playerId, phrase, currentUserId });
       setActiveChats(prev => {
         // Clear previous timer for this player if it exists
         if (prev[playerId]) {
@@ -152,10 +153,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           });
         }, 2000);
 
-        return {
+        const newState = {
           ...prev,
           [playerId]: { phrase, timerId },
         };
+        console.log('🗨️ Updated activeChats:', newState);
+        return newState;
       });
     };
 
@@ -173,6 +176,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const handleSelectPhrase = (phrase: string) => {
     if (socket) {
+      console.log('🗨️ Sending chat_message:', { roomId, phrase, currentUserId });
       socket.emit('chat_message', { roomId, phrase });
       setShowChatMenu(false); // Close chat menu after sending
     }
@@ -190,10 +194,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setTurnTimer((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            // Only auto-fold if it's the current user's turn
-            if (isCurrentUserTurn) {
-                actions.fold();
-            }
             return 0;
           }
           return prev - 1;
@@ -203,7 +203,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     } else {
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState, activeGamePhases, isCurrentUserTurn, actions]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn]);
+
+  // Separate effect for auto-fold when timer reaches 0
+  useEffect(() => {
+    if (turnTimer === 0 && isCurrentUserTurn) {
+      actions.fold();
+    }
+  }, [turnTimer, isCurrentUserTurn, actions]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
@@ -341,7 +348,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  const isCallDisabled = !!(gameState.status === 'betting' 
+  const isCallDisabled = !!(gameState.status === 'betting' || gameState.status === 'blind_betting'
     ? false
     : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet);
   const isRaiseDisabled = !!((currentPlayer?.balance || 0) < minRaiseAmount);

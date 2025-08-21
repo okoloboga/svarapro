@@ -87,7 +87,8 @@ export function ChatMenu({ isOpen, onClose, onSelectPhrase }: ChatMenuProps) {
                     backgroundImage: `url(${chatButtonBg})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    ...buttonTextStyle
+                    ...buttonTextStyle,
+                    paddingBottom: '5px' // Поднимаем текст на 5px выше
                   }}
                 >
                   {phrase}
