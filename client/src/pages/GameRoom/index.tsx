@@ -446,31 +446,34 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const centerY = window.innerHeight / 2;
     
     // Вычисляем позицию игрока на основе CSS классов из getPositionClasses
-    // Используем более точные координаты, соответствующие реальным позициям PlayerSpot
+    // Используем точные координаты, соответствующие реальным позициям PlayerSpot
+    const tableWidth = 315 * scale; // Ширина стола
+    const tableHeight = 493 * scale; // Высота стола
+    
     switch (relativePosition) {
       case 1: // -top-10 left-1/2 (верхний центр)
         playerX = centerX;
-        playerY = centerY - 80; // Увеличиваем отступ для лучшей видимости
+        playerY = centerY - tableHeight * 0.4; // -top-10 = примерно 40% от высоты стола
         break;
       case 2: // top-1/4 -right-5 (правый верхний)
-        playerX = centerX + 100; // Увеличиваем отступ
-        playerY = centerY - centerY * 0.25;
+        playerX = centerX + tableWidth * 0.4; // -right-5 = примерно 40% от ширины стола
+        playerY = centerY - tableHeight * 0.25; // top-1/4
         break;
       case 3: // bottom-1/4 -right-5 (правый нижний)
-        playerX = centerX + 100; // Увеличиваем отступ
-        playerY = centerY + centerY * 0.25;
+        playerX = centerX + tableWidth * 0.4; // -right-5 = примерно 40% от ширины стола
+        playerY = centerY + tableHeight * 0.25; // bottom-1/4
         break;
       case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
         playerX = centerX;
-        playerY = centerY + 80; // Увеличиваем отступ для лучшей видимости
+        playerY = centerY + tableHeight * 0.4; // -bottom-10 = примерно 40% от высоты стола
         break;
       case 5: // bottom-1/4 -left-5 (левый нижний)
-        playerX = centerX - 100; // Увеличиваем отступ
-        playerY = centerY + centerY * 0.25;
+        playerX = centerX - tableWidth * 0.4; // -left-5 = примерно 40% от ширины стола
+        playerY = centerY + tableHeight * 0.25; // bottom-1/4
         break;
       case 6: // top-1/4 -left-5 (левый верхний)
-        playerX = centerX - 100; // Увеличиваем отступ
-        playerY = centerY - centerY * 0.25;
+        playerX = centerX - tableWidth * 0.4; // -left-5 = примерно 40% от ширины стола
+        playerY = centerY - tableHeight * 0.25; // top-1/4
         break;
     }
     
