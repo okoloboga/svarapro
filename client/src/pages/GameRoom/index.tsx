@@ -459,7 +459,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         break;
       case 2: // top-1/4 -right-5 (правый верхний)
         playerX = centerX + tableWidth * 0.4;
-        playerY = centerY - tableHeight * 0.25 - verticalOffset; // Поднимаем выше
+        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
         break;
       case 3: // bottom-1/4 -right-5 (правый нижний)
         playerX = centerX + tableWidth * 0.4;
@@ -475,7 +475,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         break;
       case 6: // top-1/4 -left-5 (левый верхний)
         playerX = centerX - tableWidth * 0.4;
-        playerY = centerY - tableHeight * 0.25 - verticalOffset; // Поднимаем выше
+        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
         break;
     }
     
