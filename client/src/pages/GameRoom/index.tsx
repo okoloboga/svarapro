@@ -242,7 +242,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [isCurrentUserTurn, triggerImpact, actions]);
 
-  // Track actions for all players and play sounds/animations
+  // Track fold actions for all players and play fold sound
   useEffect(() => {
     if (!gameState?.log) return;
     
@@ -250,21 +250,33 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const lastAction = gameState.log[gameState.log.length - 1];
     console.log('🔍 Last action in log:', lastAction);
     
-    if (lastAction) {
-      // Запускаем анимацию для действий других игроков
-      if (lastAction.telegramId !== currentUserId && 
+    if (lastAction && lastAction.type === 'fold') {
+      console.log('🎵 Fold action detected, playing sound:', lastAction);
+      actions.playSound('fold');
+    }
+  }, [gameState?.log, actions]);
+
+  // Track other player actions for animations (only when log length changes)
+  const prevLogLengthRef = useRef(0);
+  useEffect(() => {
+    if (!gameState?.log) return;
+    
+    const currentLogLength = gameState.log.length;
+    if (currentLogLength > prevLogLengthRef.current) {
+      // Новое действие добавлено в лог
+      const lastAction = gameState.log[currentLogLength - 1];
+      console.log('🎯 New action detected in log:', lastAction);
+      
+      if (lastAction && 
+          lastAction.telegramId !== currentUserId && 
           ['blind_bet', 'call', 'raise'].includes(lastAction.type)) {
         console.log('🎯 Creating animation for other player action:', lastAction);
-        handlePlayerBet(lastAction.telegramId);
-      }
-      
-      // Воспроизводим звуки
-      if (lastAction.type === 'fold') {
-        console.log('🎵 Fold action detected, playing sound:', lastAction);
-        actions.playSound('fold');
+        handleOtherPlayerAction(lastAction.telegramId);
       }
     }
-  }, [gameState?.log, actions, currentUserId]); // Добавляем currentUserId в зависимости
+    
+    prevLogLengthRef.current = currentLogLength;
+  }, [gameState?.log?.length, currentUserId]); // Зависимость только от длины лога
 
   // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
@@ -394,6 +406,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const showCards = !!(gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation);
 
+  // Обработчик для анимации действий других игроков
+  const handleOtherPlayerAction = (playerId: string) => {
+    console.log('🎯 Other player action detected for:', playerId);
+    handlePlayerBet(playerId);
+  };
+
   const handlePlayerBet = (playerId: string) => {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player || !player.isActive) {
@@ -455,11 +473,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       centerY
     });
     
-    // Более строгая проверка на дублирующие анимации
-    const existingAnimation = chipAnimations.find(chip => 
-      chip.id.includes(playerId) || 
-      (Math.abs(chip.fromX - playerX) < 10 && Math.abs(chip.fromY - playerY) < 10)
-    );
+    // Строгая проверка на дублирующие анимации - одна анимация на игрока
+    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     
     if (!existingAnimation) {
       console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
