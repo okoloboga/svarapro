@@ -477,9 +477,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const newAnimations = prev.filter(chip => chip.id !== chipId);
       console.log('🎯 Remaining chip animations:', newAnimations.length);
       
-      // Если все анимации фишек завершены, скрываем ChipStack
-      if (newAnimations.length === 0) {
-        console.log('🎯 All chip animations completed - hiding ChipStack');
+      // Скрываем ChipStack только если завершились анимации фишек к победителю
+      const remainingWinnerChips = newAnimations.filter(chip => chip.id.startsWith('winner-chip-'));
+      if (remainingWinnerChips.length === 0 && newAnimations.length === 0) {
+        console.log('🎯 All winner chip animations completed - hiding ChipStack');
         setTimeout(() => {
           setShowChipStack(false);
         }, 500); // Небольшая задержка перед скрытием
