@@ -49,16 +49,8 @@ const GameTable: React.FC<GameTableProps> = ({
     }
   };
   
-  const currentRoundActions = getCurrentRoundActions();
-  const calculatedChips = currentRoundActions.filter((action: { type?: string }) => 
-    action.type === 'ante' || 
-    action.type === 'blind_bet' || 
-    action.type === 'call' || 
-    action.type === 'raise'
-  ).length;
-  
-  // Используем сохраненное количество фишек если игра закончена, иначе считаем из логов
-  const totalChips = gameState.status === 'finished' ? savedChipCount : calculatedChips;
+  // Используем сохраненное количество фишек если игра закончена, иначе используем pot
+  const totalChips = gameState.status === 'finished' ? savedChipCount : (gameState.pot || 0);
   
   
 
@@ -193,7 +185,7 @@ const GameTable: React.FC<GameTableProps> = ({
           fontSize: '10px',
           zIndex: 1000
         }}>
-          showChipStack: {showChipStack.toString()}, totalChips: {totalChips}, savedChipCount: {savedChipCount}, calculatedChips: {calculatedChips}
+          showChipStack: {showChipStack.toString()}, totalChips: {totalChips}, savedChipCount: {savedChipCount}, pot: {gameState.pot}
         </div>
       )}
       

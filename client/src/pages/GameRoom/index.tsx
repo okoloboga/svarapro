@@ -575,13 +575,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
             // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
       if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
-        // Сохраняем количество фишек до того, как они исчезнут
-        const chipCount = gameState?.log?.filter(action => 
-      action.type === 'ante' || 
-      action.type === 'blind_bet' || 
-      action.type === 'call' || 
-      action.type === 'raise'
-    ).length || 0;
+        // Сохраняем количество фишек из текущего банка
+        const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
         console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack);
         // Оставляем ChipStack видимым для анимации фишек к победителю
@@ -594,13 +589,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
-        // Сохраняем количество фишек до того, как они исчезнут
-        const chipCount = gameState?.log?.filter(action => 
-          action.type === 'ante' || 
-          action.type === 'blind_bet' || 
-          action.type === 'call' || 
-          action.type === 'raise'
-        ).length || 0;
+        // Сохраняем количество фишек из текущего банка
+        const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
         console.log('🎯 FINISHED (fold blocked): Saved chip count:', chipCount, 'showChipStack:', showChipStack);
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
@@ -610,7 +600,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сбрасываем состояния при переходе к waiting (новая игра)
         if (currentGameState.status === 'waiting') {
           console.log('🔄 Game reset to waiting - resetting all flags');
-          setShowChipStack(true);
+          setShowChipStack(true); // Показываем ChipStack для новой игры
           setIsDealingCards(false);
           setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
           setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
