@@ -435,7 +435,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     const absolutePosition = player.position;
     const isCurrentPlayer = player.id === currentUserId;
-    const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
+    // Текущий игрок ВСЕГДА в позиции 4 (снизу по центру), другие игроки преобразуются через getScreenPosition
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(absolutePosition);
     
     // Получаем координаты на основе CSS классов позиций PlayerSpot
     let playerX = 0;
