@@ -388,6 +388,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return;
     }
     
+    console.log('🎯 Single winner found:', gameState.winners[0]);
+    
     const winner = gameState.winners[0];
     const winnerPlayer = gameState.players.find(p => p.id === winner.id);
     
@@ -426,10 +428,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     ).length;
     
     console.log('🎯 Creating', chipCount, 'chip animations to winner at position:', relativePosition);
+    console.log('🎯 Winner coordinates:', winnerX, winnerY);
     
     // Создаем анимацию для каждой фишки
     for (let i = 0; i < chipCount; i++) {
       const chipId = `winner-chip-${Date.now()}-${i}`;
+      console.log('🎯 Adding winner chip animation:', chipId);
       setChipAnimations(prev => [...prev, {
         id: chipId,
         fromX: centerX,
@@ -439,11 +443,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         delay: i * 50 // Небольшая задержка между фишками
       }]);
     }
-    
-    // Скрываем ChipStack после завершения анимации фишек
-    setTimeout(() => {
-      setShowChipStack(false);
-    }, (chipCount * 50) + 1500); // Время анимации + 1.5 секунды для завершения
   };
 
   // Play win sound for current user if they won (after finished state is shown)
@@ -477,6 +476,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     setChipAnimations(prev => {
       const newAnimations = prev.filter(chip => chip.id !== chipId);
       console.log('🎯 Remaining chip animations:', newAnimations.length);
+      
+      // Если все анимации фишек завершены, скрываем ChipStack
+      if (newAnimations.length === 0) {
+        console.log('🎯 All chip animations completed - hiding ChipStack');
+        setTimeout(() => {
+          setShowChipStack(false);
+        }, 500); // Небольшая задержка перед скрытием
+      }
+      
       return newAnimations;
     });
   }, []);
@@ -553,10 +561,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           setShowFinished(true);
           // Запускаем анимацию фишек к победителю после показа finished
           setTimeout(() => {
+            console.log('🎯 Starting chips to winner animation');
             handleChipsToWinner();
           }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
+        console.log('🎯 Game finished but fold animation is active - waiting');
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
       } else {
