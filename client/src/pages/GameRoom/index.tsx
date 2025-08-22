@@ -151,7 +151,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [actualGameState, setActualGameState] = useState<GameState | null>(null);
   
   // Эффективное состояние игры с учетом блокировки ante анимаций
-  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : gameState?.status;
+  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : (gameState?.status || 'waiting');
 
   // Chat message handling
   useEffect(() => {
