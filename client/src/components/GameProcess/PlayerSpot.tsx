@@ -429,7 +429,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && TotalBetComponent}
-            {!(isCurrentUser && hasLooked) && gameStatus !== 'finished' && CardDeckComponent}
+            {!(isCurrentUser && hasLooked) && gameStatus !== 'finished' && gameStatus !== 'waiting' && gameStatus !== 'ante' && CardDeckComponent}
             {cardSide === 'right' && TotalBetComponent}
           </div>
         )}

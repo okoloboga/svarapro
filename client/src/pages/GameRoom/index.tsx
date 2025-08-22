@@ -295,7 +295,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Анимация сброса карт при fold
       if (lastAction && lastAction.type === 'fold') {
         console.log('🃏 Creating fold card animation for player:', lastAction.telegramId);
-        handleFoldCards(lastAction.telegramId);
+        // Добавляем небольшую задержку для анимации сброса карт
+        setTimeout(() => {
+          handleFoldCards(lastAction.telegramId);
+        }, 100);
       }
     }
     
@@ -410,11 +413,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const prevGameStatusRef = useRef<string>('');
   useEffect(() => {
     if (gameState?.status && prevGameStatusRef.current !== gameState.status) {
+      console.log('🃏 Game status changed:', prevGameStatusRef.current, '->', gameState.status);
+      
       // Если переход от ante к blind_betting - запускаем раздачу карт
       if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
         console.log('🃏 Game phase changed from ante to blind_betting - starting card deal');
         handleDealCards();
       }
+      // Если переход от waiting к blind_betting (пропущен ante) - тоже запускаем раздачу карт
+      else if (prevGameStatusRef.current === 'waiting' && gameState.status === 'blind_betting') {
+        console.log('🃏 Game phase changed from waiting to blind_betting (skipped ante) - starting card deal');
+        handleDealCards();
+      }
+      
       prevGameStatusRef.current = gameState.status;
     }
   }, [gameState?.status]);
