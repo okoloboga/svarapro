@@ -60,7 +60,7 @@ interface UserProfile {
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
 
 function App() {
-  console.log('Launch App');
+  
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,7 +95,7 @@ function App() {
   }, []);
 
   const handleSetCurrentPage = (page: Page, data: PageData | null = null) => {
-    console.log('Setting page:', page, 'with data:', data);
+
     setCurrentPage(page);
     setPageData(data);
   };
@@ -170,7 +170,7 @@ function App() {
 
               // Обработчик обновления баланса после игры
               socketInstance.on('balanceUpdated', (data: { balance: string }) => {
-                console.log('Balance updated after game:', data);
+            
                 setBalance(data.balance);
               });
 
@@ -214,7 +214,7 @@ function App() {
     };
   }, [socket]);
 
-  console.log('Rendering with isLoading:', isLoading, 'error:', error, 'currentPage:', currentPage, 'pageData:', pageData);
+  
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">

@@ -14,7 +14,7 @@ import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
 import { DashboardProps, NotificationType } from '@/types/components';
 
 export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
-  console.log('Dashboard rendering, socket status:', socket ? 'connected' : 'disconnected');
+
   const userData: User | undefined = useMemo(() => {
     const params = retrieveLaunchParams();
     return (params.tgWebAppData as { user?: User })?.user;

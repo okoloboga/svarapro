@@ -147,6 +147,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [isDealingCards, setIsDealingCards] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
+  const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
+  const [actualGameState, setActualGameState] = useState<GameState | null>(null);
+  
+  // Эффективное состояние игры с учетом блокировки ante анимаций
+  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : gameState?.status;
 
   // Chat message handling
   useEffect(() => {
@@ -198,24 +203,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
 
   const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
-  const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(gameState.status) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
+  const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(effectiveGameStatus) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
   useEffect(() => {
-    const activeTurn = gameState && activeGamePhases.includes(gameState.status) && !gameState.isAnimating;
+    const activeTurn = gameState && activeGamePhases.includes(effectiveGameStatus) && !gameState.isAnimating;
     const currentPlayerId = gameState?.players[gameState?.currentPlayerIndex]?.id;
     const turnKey = `${gameState?.status}-${currentPlayerId}-${gameState?.currentPlayerIndex}`;
 
-    console.log('⏰ Timer effect triggered:', {
-      activeTurn,
-      currentPlayerId,
-      currentUserId,
-      isCurrentUserTurn,
-      gameStateStatus: gameState?.status,
-      currentPlayerIndex: gameState?.currentPlayerIndex,
-      isAnimating: gameState?.isAnimating,
-      turnKey,
-      currentTurnRef: currentTurnRef.current
-    });
+
 
     if (activeTurn) {
       // Сбрасываем таймер только если это новый ход
@@ -262,7 +257,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     // Простая проверка: смотрим на последнее действие
     const lastAction = gameState.log[gameState.log.length - 1];
-    console.log('🔍 Last action in log:', lastAction);
+
     
     if (lastAction && lastAction.type === 'fold') {
       console.log('🎵 Fold action detected, playing sound:', lastAction);
@@ -465,14 +460,52 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     setCardAnimations(prev => prev.filter(card => card.id !== cardId));
   }, []);
 
+  // Логика блокировки ante анимаций
+  useEffect(() => {
+    if (!gameState) return;
+    
+    // Сохраняем актуальное состояние от сервера
+    setActualGameState(gameState);
+    
+    // Если сервер переключился на blind_betting из ante, но у нас идут ante анимации
+    if (gameState.status === 'blind_betting' && 
+        prevGameStatusRef.current === 'ante' && 
+        !isDealingCards) {
+      // Блокируем переход и остаемся в ante для завершения анимаций
+      setIsAnteAnimationBlocked(true);
+      
+      // Запускаем razdachu карт и ждем 3 секунды для завершения всех ante анимаций
+      setIsDealingCards(true);
+      setTimeout(() => {
+        handleDealCards();
+      }, 1500); // Сначала ante chip анимации
+      
+      setTimeout(() => {
+        // Через 3 секунды разблокируем и переходим к blind_betting
+        setIsAnteAnimationBlocked(false);
+      }, 3000); // 3 секунды для полного завершения ante анимаций
+      
+      return;
+    }
+    
+    // Если блокировка не активна, обновляем статус
+    if (!isAnteAnimationBlocked) {
+      prevGameStatusRef.current = gameState.status;
+    }
+  }, [gameState?.status, isDealingCards, isAnteAnimationBlocked]);
+
   // Раздача карт в конце фазы ante и управление показом finished
   const prevGameStatusRef = useRef<string>('');
   
   useEffect(() => {
-    if (gameState?.status && prevGameStatusRef.current !== gameState.status) {
+    // Используем актуальное состояние только если нет блокировки ante
+    const currentGameState = isAnteAnimationBlocked ? 
+      { ...actualGameState!, status: 'ante' as const } : gameState;
+    
+    if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
       
       // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
-      if (gameState.status === 'finished') {
+      if (currentGameState.status === 'finished') {
         setTimeout(() => {
           setShowFinished(true);
           // Запускаем анимацию фишек к победителю после показа finished
@@ -483,31 +516,32 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       } else {
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)
-        if (gameState.status === 'waiting') {
+        if (currentGameState.status === 'waiting') {
           setShowChipStack(true);
           setIsDealingCards(false);
         }
       }
       
       // Если переход от waiting к ante - готовимся к раздаче карт
-      if (prevGameStatusRef.current === 'waiting' && gameState.status === 'ante') {
+      if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'ante') {
         setShowChipStack(true); // Показываем ChipStack в новой игре
         setIsDealingCards(false); // Сбрасываем флаг раздачи карт
+        setIsAnteAnimationBlocked(false); // Сбрасываем блокировку
       }
-      // Если переход от ante к blind_betting - запускаем раздачу карт если еще не запущена
-      else if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
+      // Если переход от ante к blind_betting и нет блокировки - запускаем раздачу карт если еще не запущена
+      else if (prevGameStatusRef.current === 'ante' && currentGameState.status === 'blind_betting' && !isAnteAnimationBlocked) {
         if (!isDealingCards) {
           setIsDealingCards(true);
           handleDealCards();
         }
       }
       // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
-      else if (prevGameStatusRef.current === 'waiting' && gameState.status === 'blind_betting') {
+      else if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'blind_betting') {
         setIsDealingCards(true);
         handleDealCards();
       }
       
-      prevGameStatusRef.current = gameState.status;
+      prevGameStatusRef.current = currentGameState.status;
     }
   }, [gameState?.status]);
 
@@ -570,8 +604,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const maxRaise = currentPlayer?.balance || 0;
   const blindBetAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
   
-  const canPerformBettingActions = !!(isCurrentUserTurn && gameState.status === 'betting' && !isAnimating && !postLookActions);
-  const canPerformBlindActions = !!(isCurrentUserTurn && gameState.status === 'blind_betting' && !isAnimating && !postLookActions);
+  const canPerformBettingActions = !!(isCurrentUserTurn && effectiveGameStatus === 'betting' && !isAnimating && !postLookActions);
+  const canPerformBlindActions = !!(isCurrentUserTurn && effectiveGameStatus === 'blind_betting' && !isAnimating && !postLookActions);
 
   const canFold = canPerformBettingActions || postLookActions;
   const canCall = canPerformBettingActions || postLookActions;
@@ -579,15 +613,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  const isCallDisabled = !!(gameState.status === 'betting' || gameState.status === 'blind_betting'
+  const isCallDisabled = !!(effectiveGameStatus === 'betting' || effectiveGameStatus === 'blind_betting'
     ? false
     : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet);
   const isRaiseDisabled = !!((currentPlayer?.balance || 0) < minRaiseAmount);
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
   
-  const blindButtonsDisabled = !!(gameState.status !== 'blind_betting');
+  const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
   
-  const showCards = !!(gameState.status === 'showdown' || (gameState.status === 'finished' && showFinished) || gameState.showWinnerAnimation);
+  const showCards = !!(effectiveGameStatus === 'showdown' || (effectiveGameStatus === 'finished' && showFinished) || gameState.showWinnerAnimation);
 
   // Обработчик для анимации действий других игроков
   const handleOtherPlayerAction = (playerId: string) => {
@@ -856,7 +890,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             turnTimer={turnTimer}
                             isWinner={isWinner}
                             winAmount={winAmount}
-                            gameStatus={gameState.status}
+                            gameStatus={effectiveGameStatus}
                             chatPhrase={chatPhrase}
                             onPlayerBet={undefined}
                             gameState={gameState}
@@ -873,7 +907,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           turnTimer={turnTimer}
                           isWinner={isWinner}
                           winAmount={winAmount}
-                          gameStatus={gameState.status}
+                          gameStatus={effectiveGameStatus}
                           chatPhrase={chatPhrase}
                           onPlayerBet={undefined}
                           gameState={gameState}
@@ -894,11 +928,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         <div className="p-4">
           <div className="flex flex-col items-center space-y-4">
             <div>
-              {gameState.status === 'waiting' ? (
+              {effectiveGameStatus === 'waiting' ? (
                 <div className="p-4 flex items-center justify-center h-full">
                   <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">Ждем игроков</p>
                 </div>
-              ) : gameState.status === 'ante' ? (
+              ) : effectiveGameStatus === 'ante' ? (
                 <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
                   <p className="text-xl">Внесение начальных ставок...</p>
                 </div>
@@ -921,7 +955,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   isCallDisabled={isCallDisabled || isProcessing}
                   isRaiseDisabled={isRaiseDisabled || isProcessing}
                   isBlindBetDisabled={isBlindBetDisabled || isProcessing}
-                  minBet={gameState.status === 'blind_betting' ? blindBetAmount : minRaiseAmount}
+                  minBet={effectiveGameStatus === 'blind_betting' ? blindBetAmount : minRaiseAmount}
                 />
               ) : (
                 <div className="p-4 flex items-center justify-center h-full">
