@@ -341,8 +341,18 @@ export class GameService {
     telegramId: string,
   ): Promise<GameActionResult> {
     const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState || gameState.status !== 'svara_pending') {
-      return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
+    if (!gameState) {
+      return { success: false, error: 'Игра не найдена' };
+    }
+
+    // Гибкая обработка: если фаза свары уже прошла, но игрок подтвердил участие,
+    // просто возвращаем успех и актуальное состояние игры. Это предотвратит ошибки на клиенте.
+    if (gameState.status !== 'svara_pending') {
+      if (gameState.svaraConfirmed?.includes(telegramId)) {
+        return { success: true, gameState };
+      } else {
+        return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
+      }
     }
 
     // Проверяем, не принимал ли игрок уже решение
@@ -350,9 +360,6 @@ export class GameService {
       gameState.svaraConfirmed?.includes(telegramId) ||
       gameState.svaraDeclined?.includes(telegramId)
     ) {
-      console.log(
-        `Player ${telegramId} has already made a decision for svara.`,
-      );
       return { success: true, gameState }; // Просто возвращаем успех
     }
 
@@ -366,14 +373,13 @@ export class GameService {
       gameState.svaraParticipants &&
       gameState.svaraParticipants.includes(telegramId);
 
+    if (!gameState.svaraConfirmed) {
+      gameState.svaraConfirmed = [];
+    }
+
     if (isOriginalWinner) {
       // Изначальные победители участвуют бесплатно
       console.log(`Player ${telegramId} joins Svara as original winner (free)`);
-
-      // Помечаем игрока как подтвердившего участие
-      if (!gameState.svaraConfirmed) {
-        gameState.svaraConfirmed = [];
-      }
       if (!gameState.svaraConfirmed.includes(telegramId)) {
         gameState.svaraConfirmed.push(telegramId);
       }
@@ -395,17 +401,10 @@ export class GameService {
         `Player ${telegramId} joins Svara with buy-in: ${svaraBuyInAmount}`,
       );
 
-      // Добавляем игрока в список участников свары
-      if (!gameState.svaraParticipants) {
-        gameState.svaraParticipants = [];
+      // Исправлено: добавляем игрока только в список подтвердивших
+      if (!gameState.svaraConfirmed.includes(telegramId)) {
+        gameState.svaraConfirmed.push(telegramId);
       }
-      gameState.svaraParticipants.push(telegramId);
-
-      // Помечаем как подтвердившего участие
-      if (!gameState.svaraConfirmed) {
-        gameState.svaraConfirmed = [];
-      }
-      gameState.svaraConfirmed.push(telegramId);
     }
 
     const action: GameAction = {
