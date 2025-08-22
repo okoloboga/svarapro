@@ -467,18 +467,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Сохраняем актуальное состояние от сервера
     setActualGameState(gameState);
     
-    // Если сервер переключился на blind_betting из ante, но у нас идут ante анимации
+    // Если сервер переключился на blind_betting из ante, блокируем для ante анимаций
     if (gameState.status === 'blind_betting' && 
-        prevGameStatusRef.current === 'ante' && 
-        !isDealingCards) {
+        (prevGameStatusRef.current === 'ante' || prevGameStatusRef.current === 'waiting') && 
+        !isAnteAnimationBlocked) {
       // Блокируем переход и остаемся в ante для завершения анимаций
       setIsAnteAnimationBlocked(true);
       
-      // Запускаем razdachu карт и ждем 3 секунды для завершения всех ante анимаций
-      setIsDealingCards(true);
-      setTimeout(() => {
-        handleDealCards();
-      }, 1500); // Сначала ante chip анимации
+      // Запускаем раздачу карт после ante chip анимаций
+      if (!isDealingCards) {
+        setIsDealingCards(true);
+        setTimeout(() => {
+          handleDealCards();
+        }, 1500); // Сначала ante chip анимации
+      }
       
       setTimeout(() => {
         // Через 3 секунды разблокируем и переходим к blind_betting
@@ -519,6 +521,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         if (currentGameState.status === 'waiting') {
           setShowChipStack(true);
           setIsDealingCards(false);
+          setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
         }
       }
       
@@ -528,17 +531,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setIsDealingCards(false); // Сбрасываем флаг раздачи карт
         setIsAnteAnimationBlocked(false); // Сбрасываем блокировку
       }
-      // Если переход от ante к blind_betting и нет блокировки - запускаем раздачу карт если еще не запущена
+      // Если переход от ante к blind_betting и нет блокировки - НЕ запускаем раздачу здесь (она уже запущена в блокировке)
       else if (prevGameStatusRef.current === 'ante' && currentGameState.status === 'blind_betting' && !isAnteAnimationBlocked) {
+        // Ничего не делаем - раздача уже произошла через блокировку
+      }
+      // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
+      else if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'blind_betting') {
         if (!isDealingCards) {
           setIsDealingCards(true);
           handleDealCards();
         }
-      }
-      // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
-      else if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'blind_betting') {
-        setIsDealingCards(true);
-        handleDealCards();
       }
       
       prevGameStatusRef.current = currentGameState.status;
