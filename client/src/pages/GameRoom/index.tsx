@@ -300,7 +300,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, [gameState?.log]);
 
   const handleChipAnimationComplete = (chipId: string) => {
-    setChipAnimations(prev => prev.filter(chip => chip.id !== chipId));
+    console.log('🎯 Chip animation completed:', chipId);
+    setChipAnimations(prev => {
+      const newAnimations = prev.filter(chip => chip.id !== chipId);
+      console.log('🎯 Remaining animations:', newAnimations.length);
+      return newAnimations;
+    });
   };
 
   useEffect(() => {
@@ -389,39 +394,39 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const isCurrentPlayer = player.id === currentUserId;
     const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
     
-    // Простые координаты относительно центра экрана
+    // Получаем координаты на основе CSS классов позиций PlayerSpot
     let playerX = 0;
     let playerY = 0;
     
-    // Центр экрана
+    // Центр экрана (где находится банк)
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
-    // Вычисляем позицию игрока относительно центра
+    // Вычисляем позицию игрока на основе CSS классов из getPositionClasses
     switch (relativePosition) {
-      case 1: // Нижний игрок
+      case 1: // -top-10 left-1/2 (верхний центр)
         playerX = centerX;
-        playerY = centerY + 200;
+        playerY = centerY - 40; // -top-10 = -40px
         break;
-      case 2: // Правый нижний
-        playerX = centerX + 200;
-        playerY = centerY + 100;
+      case 2: // top-1/4 -right-5 (правый верхний)
+        playerX = centerX + 20; // -right-5 = +20px
+        playerY = centerY - centerY * 0.25; // top-1/4
         break;
-      case 3: // Правый верхний
-        playerX = centerX + 200;
-        playerY = centerY - 100;
+      case 3: // bottom-1/4 -right-5 (правый нижний)
+        playerX = centerX + 20; // -right-5 = +20px
+        playerY = centerY + centerY * 0.25; // bottom-1/4
         break;
-      case 4: // Верхний игрок
+      case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
         playerX = centerX;
-        playerY = centerY - 200;
+        playerY = centerY + 40; // -bottom-10 = +40px
         break;
-      case 5: // Левый верхний
-        playerX = centerX - 200;
-        playerY = centerY - 100;
+      case 5: // bottom-1/4 -left-5 (левый нижний)
+        playerX = centerX - 20; // -left-5 = -20px
+        playerY = centerY + centerY * 0.25; // bottom-1/4
         break;
-      case 6: // Левый нижний
-        playerX = centerX - 200;
-        playerY = centerY + 100;
+      case 6: // top-1/4 -left-5 (левый верхний)
+        playerX = centerX - 20; // -left-5 = -20px
+        playerY = centerY - centerY * 0.25; // top-1/4
         break;
     }
     
@@ -436,6 +441,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       centerY
     });
     
+    // Проверяем, нет ли уже анимации для этого игрока
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (!existingAnimation) {
       setChipAnimations(prev => [...prev, { 
@@ -686,7 +692,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
       {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ zIndex: 1000 }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
         {chipAnimations.map(chip => (
           <FlyingChip
             key={chip.id}
