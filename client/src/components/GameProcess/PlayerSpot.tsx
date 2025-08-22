@@ -144,9 +144,10 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
-    if (player.totalBet > lastTotalBet && onPlayerBet) {
-      onPlayerBet(player.id);
-    }
+    // Временно отключена автоматическая анимация - она запускается только через обработчики действий
+    // if (player.totalBet > lastTotalBet && onPlayerBet) {
+    //   onPlayerBet(player.id);
+    // }
     setLastTotalBet(player.totalBet);
   }, [player.totalBet, lastTotalBet, player.id, onPlayerBet]);
 

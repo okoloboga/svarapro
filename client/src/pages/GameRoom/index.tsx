@@ -388,7 +388,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const handlePlayerBet = (playerId: string) => {
     const player = gameState.players.find(p => p.id === playerId);
-    if (!player) return;
+    if (!player || !player.isActive) {
+      console.log('❌ Cannot create chip animation: player not found or not active:', playerId);
+      return;
+    }
     
     const absolutePosition = player.position;
     const isCurrentPlayer = player.id === currentUserId;
@@ -444,6 +447,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Проверяем, нет ли уже анимации для этого игрока
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (!existingAnimation) {
+      console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
       setChipAnimations(prev => [...prev, { 
         id: chipId, 
         fromX: playerX, 
@@ -452,31 +456,45 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         toY: centerY, 
         delay: 0 
       }]);
+    } else {
+      console.log('🎯 Skipping chip animation - already exists for player:', playerId);
     }
   };
 
   const handleRaiseClick = () => setShowBetSlider(true);
   const handleBlindBetClick = () => {
-    // Запускаем анимацию фишки для текущего игрока
-    if (currentPlayer) {
-      handlePlayerBet(currentPlayer.id);
+    // Проверяем, что игрок активен и это его ход
+    if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
+      console.log('❌ Cannot perform blind bet: player not active or not turn');
+      return;
     }
+    
+    // Запускаем анимацию фишки для текущего игрока
+    handlePlayerBet(currentPlayer.id);
     actions.blindBet(blindBetAmount);
   };
   const handleBetConfirm = (amount: number) => {
-    // Запускаем анимацию фишки для текущего игрока
-    if (currentPlayer) {
-      handlePlayerBet(currentPlayer.id);
+    // Проверяем, что игрок активен и это его ход
+    if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
+      console.log('❌ Cannot perform raise: player not active or not turn');
+      return;
     }
+    
+    // Запускаем анимацию фишки для текущего игрока
+    handlePlayerBet(currentPlayer.id);
     actions.raise(amount);
     setShowBetSlider(false);
   };
 
   const handleCallClick = () => {
-    // Запускаем анимацию фишки для текущего игрока
-    if (currentPlayer) {
-      handlePlayerBet(currentPlayer.id);
+    // Проверяем, что игрок активен и это его ход
+    if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
+      console.log('❌ Cannot perform call: player not active or not turn');
+      return;
     }
+    
+    // Запускаем анимацию фишки для текущего игрока
+    handlePlayerBet(currentPlayer.id);
     actions.call();
   };
   const handleSitDown = (position: number) => {
