@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import coinImage from '../../assets/game/coin.png';
+import cardBackImage from '../../assets/game/back.png';
 
-interface FlyingChipProps {
+interface FlyingCardProps {
   fromX: number;
   fromY: number;
   toX: number;
   toY: number;
-  onComplete: (chipId: string) => void;
-  chipId: string;
+  onComplete: (cardId: string) => void;
+  cardId: string;
   delay?: number;
 }
 
-const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onComplete, chipId, delay = 0 }) => {
+const FlyingCard: React.FC<FlyingCardProps> = ({ fromX, fromY, toX, toY, onComplete, cardId, delay = 0 }) => {
   const [position, setPosition] = useState({ x: fromX, y: fromY });
   const [isAnimating, setIsAnimating] = useState(false);
   const animationRef = useRef<number | undefined>(undefined);
@@ -40,7 +40,7 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
-          onComplete(chipId);
+          onComplete(cardId);
         }
       };
       
@@ -53,7 +53,7 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [delay, onComplete, chipId, fromX, fromY, toX, toY]);
+  }, [delay, onComplete, cardId, fromX, fromY, toX, toY]);
 
   if (!isAnimating) return null;
 
@@ -63,18 +63,18 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        width: '15px',
-        height: '13px',
+        width: '32px',
+        height: '44px',
         zIndex: 1000,
       }}
     >
       <img 
-        src={coinImage} 
-        alt="flying chip" 
+        src={cardBackImage} 
+        alt="flying card" 
         className="w-full h-full object-contain"
       />
     </div>
   );
 };
 
-export default FlyingChip; 
+export default FlyingCard; 

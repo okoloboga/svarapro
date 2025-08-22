@@ -12,6 +12,7 @@ import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 import { UserData, PageData } from '@/types/entities';
 import FlyingChip from '../../components/GameProcess/FlyingChip';
+import FlyingCard from '../../components/GameProcess/FlyingCard';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
@@ -25,6 +26,15 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useAppBackButton } from '@/hooks/useAppBackButton';
 
 interface ChipAnimation {
+  id: string;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  delay: number;
+}
+
+interface CardAnimation {
   id: string;
   fromX: number;
   fromY: number;
@@ -132,6 +142,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, [gameState, currentUserId, actions]);
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
+  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
 
   // Chat message handling
@@ -280,10 +291,61 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         lastProcessedActionRef.current = actionKey;
         handleOtherPlayerAction(lastAction.telegramId);
       }
+      
+      // Анимация сброса карт при fold
+      if (lastAction && lastAction.type === 'fold') {
+        console.log('🃏 Creating fold card animation for player:', lastAction.telegramId);
+        handleFoldCards(lastAction.telegramId);
+      }
     }
     
     prevLogLengthRef.current = currentLogLength;
   }, [gameState?.log?.length, currentUserId]); // Зависимость только от длины лога
+
+  // Функция для сброса карт при fold
+  const handleFoldCards = (playerId: string) => {
+    console.log('🃏 Starting fold card animation for player:', playerId);
+    
+    if (!gameState) return;
+    
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player || !player.isActive) return;
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    const isCurrentPlayer = player.id === currentUserId;
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+    
+    // Вычисляем позицию игрока
+    let playerX = 0;
+    let playerY = 0;
+    
+    switch (relativePosition) {
+      case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+      case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+      case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+      case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+    }
+    
+    // Создаем 3 карты для сброса
+    for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+      const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
+      setCardAnimations(prev => [...prev, {
+        id: cardId,
+        fromX: playerX,
+        fromY: playerY,
+        toX: centerX,
+        toY: centerY,
+        delay: cardIndex * 100 // Небольшая задержка между картами
+      }]);
+    }
+  };
 
   // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
@@ -334,6 +396,28 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return newAnimations;
     });
   }, []);
+
+  const handleCardAnimationComplete = useCallback((cardId: string) => {
+    console.log('🃏 Card animation completed:', cardId);
+    setCardAnimations(prev => {
+      const newAnimations = prev.filter(card => card.id !== cardId);
+      console.log('🃏 Remaining card animations:', newAnimations.length);
+      return newAnimations;
+    });
+  }, []);
+
+  // Раздача карт после фазы ante
+  const prevGameStatusRef = useRef<string>('');
+  useEffect(() => {
+    if (gameState?.status && prevGameStatusRef.current !== gameState.status) {
+      // Если переход от ante к blind_betting - запускаем раздачу карт
+      if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
+        console.log('🃏 Game phase changed from ante to blind_betting - starting card deal');
+        handleDealCards();
+      }
+      prevGameStatusRef.current = gameState.status;
+    }
+  }, [gameState?.status]);
 
   useEffect(() => {
     if (pageData?.autoSit && !isSeated && gameState) {
@@ -417,6 +501,51 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handleOtherPlayerAction = (playerId: string) => {
     console.log('🎯 Other player action detected for:', playerId);
     handlePlayerBet(playerId);
+  };
+
+  // Функция для раздачи карт от центра стола к игрокам
+  const handleDealCards = () => {
+    console.log('🃏 Starting card deal animation');
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    // Раздаем по 3 карты каждому активному игроку
+    gameState.players.forEach((player, playerIndex) => {
+      if (!player.isActive) return;
+      
+      const isCurrentPlayer = player.id === currentUserId;
+      const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+      
+      // Вычисляем позицию игрока
+      let playerX = 0;
+      let playerY = 0;
+      
+      switch (relativePosition) {
+        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+        case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+        case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+        case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+      }
+      
+      // Создаем 3 карты для каждого игрока
+      for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+        const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
+        setCardAnimations(prev => [...prev, {
+          id: cardId,
+          fromX: centerX,
+          fromY: centerY,
+          toX: playerX,
+          toY: playerY,
+          delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
+        }]);
+      }
+    });
   };
 
   const handlePlayerBet = (playerId: string) => {
@@ -748,6 +877,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             toY={chip.toY}
             delay={chip.delay}
             onComplete={handleChipAnimationComplete}
+          />
+        ))}
+        {cardAnimations.map(card => (
+          <FlyingCard
+            key={card.id}
+            cardId={card.id}
+            fromX={card.fromX}
+            fromY={card.fromY}
+            toX={card.toX}
+            toY={card.toY}
+            delay={card.delay}
+            onComplete={handleCardAnimationComplete}
           />
         ))}
       </div>
