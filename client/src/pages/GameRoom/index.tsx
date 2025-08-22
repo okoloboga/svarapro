@@ -556,17 +556,25 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentGameState = isAnteAnimationBlocked ? 
       { ...actualGameState!, status: 'ante' as const } : gameState;
     
+    console.log('🔄 useEffect triggered:', {
+      currentGameState: currentGameState?.status,
+      prevStatus: prevGameStatusRef.current,
+      isAnteAnimationBlocked,
+      isFoldAnimationBlocked,
+      gameStateStatus: gameState?.status
+    });
+    
     if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
       
             // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
       if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
         // Сохраняем количество фишек до того, как они исчезнут
         const chipCount = gameState?.log?.filter(action => 
-          action.type === 'ante' || 
-          action.type === 'blind_bet' || 
-          action.type === 'call' || 
-          action.type === 'raise'
-        ).length || 0;
+      action.type === 'ante' || 
+      action.type === 'blind_bet' || 
+      action.type === 'call' || 
+      action.type === 'raise'
+    ).length || 0;
         setSavedChipCount(chipCount);
         console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack);
         // Оставляем ChipStack видимым для анимации фишек к победителю
@@ -1019,11 +1027,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 <div className="p-4 flex items-center justify-center h-full">
                   <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">Ждем игроков</p>
                 </div>
-              ) : effectiveGameStatus === 'ante' ? (
-                <div className="bg-gray-800 text-white p-4 rounded-lg flex items-center justify-center h-full">
-                  <p className="text-xl">Внесение начальных ставок...</p>
-                </div>
-              ) : isCurrentUserTurn ? (
+                              ) : isCurrentUserTurn ? (
                 <ActionButtons 
                   postLookActions={postLookActions}
                   canFold={canFold}
