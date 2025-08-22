@@ -380,7 +380,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для анимации фишек к победителю
   const handleChipsToWinner = () => {
-    console.log('🎯 WINNER: handleChipsToWinner called, savedChipCount:', savedChipCount);
+    console.log('🎯 WINNER: handleChipsToWinner called, savedChipCount:', savedChipCount, 'gameState.pot:', gameState?.pot);
     if (!gameState?.winners || gameState.winners.length === 0) {
       console.log('🎯 WINNER: No winners found');
       return;
@@ -578,7 +578,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сохраняем количество фишек из текущего банка
         const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack);
+        console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack, 'pot:', gameState?.pot);
         // Оставляем ChipStack видимым для анимации фишек к победителю
         setShowChipStack(true);
         setTimeout(() => {
@@ -592,7 +592,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сохраняем количество фишек из текущего банка
         const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 FINISHED (fold blocked): Saved chip count:', chipCount, 'showChipStack:', showChipStack);
+        console.log('🎯 FINISHED (fold blocked): Saved chip count:', chipCount, 'showChipStack:', showChipStack, 'pot:', gameState?.pot);
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
       } else {
