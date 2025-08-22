@@ -144,6 +144,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
+  const [isDealingCards, setIsDealingCards] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
+  const [showChipStack, setShowChipStack] = useState(true);
 
   // Chat message handling
   useEffect(() => {
@@ -285,7 +288,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       if (lastAction && 
           lastAction.telegramId !== currentUserId && 
-          ['blind_bet', 'call', 'raise'].includes(lastAction.type) &&
+          ['blind_bet', 'call', 'raise', 'ante'].includes(lastAction.type) &&
           actionKey !== lastProcessedActionRef.current) {
         console.log('🎯 Creating animation for other player action:', lastAction);
         lastProcessedActionRef.current = actionKey;
@@ -295,15 +298,34 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Анимация сброса карт при fold
       if (lastAction && lastAction.type === 'fold') {
         console.log('🃏 Creating fold card animation for player:', lastAction.telegramId);
-        // Добавляем небольшую задержку для анимации сброса карт
-        setTimeout(() => {
-          handleFoldCards(lastAction.telegramId);
-        }, 100);
+        // Запускаем анимацию сброса карт сразу
+        handleFoldCards(lastAction.telegramId);
+      }
+      
+      // Анимация фишек для ante действий
+      if (lastAction && lastAction.type === 'ante') {
+        console.log('🎯 Creating ante chip animation for player:', lastAction.telegramId);
+        handlePlayerBet(lastAction.telegramId);
+      }
+      
+      // Раздача карт в конце фазы ante (когда все игроки сделали ante)
+      if (gameState.status === 'ante' && !isDealingCards) {
+        const anteActions = gameState.log.filter(action => action.type === 'ante');
+        const activePlayers = gameState.players.filter(player => player.isActive);
+        
+        if (anteActions.length >= activePlayers.length) {
+          console.log('🃏 All players made ante - starting card deal');
+          setIsDealingCards(true);
+          // Добавляем задержку для завершения ante анимаций перед раздачей карт
+          setTimeout(() => {
+            handleDealCards();
+          }, 1500); // 1.5 секунды для завершения всех ante анимаций
+        }
       }
     }
     
     prevLogLengthRef.current = currentLogLength;
-  }, [gameState?.log?.length, currentUserId]); // Зависимость только от длины лога
+  }, [gameState?.log?.length, currentUserId, gameState?.status, isDealingCards]); // Добавляем зависимости
 
   // Функция для сброса карт при fold
   const handleFoldCards = (playerId: string) => {
@@ -350,11 +372,85 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   };
 
-  // Play win sound for current user if they won (after 3 seconds delay)
+  // Функция для анимации фишек к победителю
+  const handleChipsToWinner = () => {
+    console.log('🎯 Starting chips to winner animation');
+    
+    if (!gameState?.winners || gameState.winners.length === 0) {
+      console.log('🎯 No winners found, skipping chips animation');
+      return;
+    }
+    
+    // Если ничья - не запускаем анимацию (фишки остаются в банке)
+    if (gameState.winners.length > 1) {
+      console.log('🎯 Multiple winners (tie), chips stay in pot');
+      return;
+    }
+    
+    const winner = gameState.winners[0];
+    const winnerPlayer = gameState.players.find(p => p.id === winner.id);
+    
+    if (!winnerPlayer) {
+      console.log('🎯 Winner player not found');
+      return;
+    }
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    const isCurrentPlayer = winnerPlayer.id === currentUserId;
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(winnerPlayer.position);
+    
+    // Вычисляем позицию победителя
+    let winnerX = 0;
+    let winnerY = 0;
+    
+    switch (relativePosition) {
+      case 1: winnerX = centerX; winnerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+      case 2: winnerX = centerX + tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
+      case 3: winnerX = centerX + tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 4: winnerX = centerX; winnerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+      case 5: winnerX = centerX - tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 6: winnerX = centerX - tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
+    }
+    
+    // Подсчитываем количество фишек в банке
+    const chipCount = gameState.log.filter(action => 
+      action.type === 'ante' || 
+      action.type === 'blind_bet' || 
+      action.type === 'call' || 
+      action.type === 'raise'
+    ).length;
+    
+    console.log('🎯 Creating', chipCount, 'chips animation to winner at position:', relativePosition);
+    
+    // Создаем анимацию для каждой фишки
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      setChipAnimations(prev => [...prev, {
+        id: chipId,
+        fromX: centerX,
+        fromY: centerY,
+        toX: winnerX,
+        toY: winnerY,
+        delay: i * 50 // Небольшая задержка между фишками
+      }]);
+    }
+    
+    // Скрываем ChipStack после анимации фишек
+    setTimeout(() => {
+      setShowChipStack(false);
+    }, (chipCount * 50) + 1000); // Время анимации + 1 секунда
+  };
+
+  // Play win sound for current user if they won (after finished state is shown)
   useEffect(() => {
-    if (!gameState?.winners || gameState.status !== 'finished') {
-      // Reset flags when game is not finished
-      if (gameState?.status !== 'finished') {
+    if (!gameState?.winners || !showFinished) {
+      // Reset flags when game is not finished or not showing finished
+      if (!showFinished) {
         setWinSoundPlayed(false);
       }
 
@@ -363,33 +459,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     const currentUserWon = gameState.winners.some(winner => winner.id === currentUserId);
     if (currentUserWon && !winSoundPlayed) {
-      // Wait 3 seconds (cards phase) then play win sound during animation phase
+      // Play win sound immediately when finished state is shown
       const winSoundTimer = setTimeout(() => {
         actions.playSound('win');
         setWinSoundPlayed(true);
-      }, 3000);
+      }, 100);
       
       return () => clearTimeout(winSoundTimer);
     }
-  }, [gameState?.winners, gameState?.status, currentUserId, actions, winSoundPlayed]);
+  }, [gameState?.winners, showFinished, currentUserId, actions, winSoundPlayed]);
 
 
-  const handleChipsToWinner = useCallback((winnerX: number, winnerY: number) => {
-    const chipCount = gameState?.log.filter(action => 
-      action.type === 'ante' || 
-      action.type === 'blind_bet' || 
-      action.type === 'call' || 
-      action.type === 'raise'
-    ).length || 0;
-    
-    const chips: Array<ChipAnimation> = [];
-    for (let i = 0; i < chipCount; i++) {
-      const chipId = `winner-chip-${Date.now()}-${i}`;
-      chips.push({ id: chipId, fromX: 0, fromY: 30, toX: winnerX, toY: winnerY, delay: i * 100 });
-    }
-    
-    setChipAnimations(prev => [...prev, ...chips]);
-  }, [gameState?.log]);
+
 
   const handleChipAnimationComplete = useCallback((chipId: string) => {
     console.log('🎯 Chip animation completed:', chipId);
@@ -409,20 +490,39 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     });
   }, []);
 
-  // Раздача карт после фазы ante
+  // Раздача карт в конце фазы ante и управление показом finished
   const prevGameStatusRef = useRef<string>('');
+  
   useEffect(() => {
     if (gameState?.status && prevGameStatusRef.current !== gameState.status) {
       console.log('🃏 Game status changed:', prevGameStatusRef.current, '->', gameState.status);
       
-      // Если переход от ante к blind_betting - запускаем раздачу карт
-      if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
-        console.log('🃏 Game phase changed from ante to blind_betting - starting card deal');
-        handleDealCards();
+      // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
+      if (gameState.status === 'finished') {
+        console.log('🃏 Game finished, allowing time for fold animations to complete');
+        setTimeout(() => {
+          setShowFinished(true);
+          // Запускаем анимацию фишек к победителю после показа finished
+          setTimeout(() => {
+            handleChipsToWinner();
+          }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
+        }, 1500); // 1.5 секунды для завершения анимаций сброса карт
+      } else {
+        setShowFinished(false);
       }
-      // Если переход от waiting к blind_betting (пропущен ante) - тоже запускаем раздачу карт
+      
+      // Если переход от waiting к ante - готовимся к раздаче карт
+      if (prevGameStatusRef.current === 'waiting' && gameState.status === 'ante') {
+        console.log('🃏 Game phase changed from waiting to ante - preparing for card deal');
+      }
+      // Если переход от ante к blind_betting - карты уже разданы
+      else if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
+        console.log('🃏 Game phase changed from ante to blind_betting - cards already dealt');
+      }
+      // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
       else if (prevGameStatusRef.current === 'waiting' && gameState.status === 'blind_betting') {
         console.log('🃏 Game phase changed from waiting to blind_betting (skipped ante) - starting card deal');
+        setIsDealingCards(true);
         handleDealCards();
       }
       
@@ -506,7 +606,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const blindButtonsDisabled = !!(gameState.status !== 'blind_betting');
   
-  const showCards = !!(gameState.status === 'showdown' || gameState.status === 'finished' || gameState.showWinnerAnimation);
+  const showCards = !!(gameState.status === 'showdown' || (gameState.status === 'finished' && showFinished) || gameState.showWinnerAnimation);
 
   // Обработчик для анимации действий других игроков
   const handleOtherPlayerAction = (playerId: string) => {
@@ -715,7 +815,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
             <div className="flex-shrink-0 relative z-10">
-              <GameTable 
+                            <GameTable 
                 gameState={gameState} 
                 currentUserId={currentUserId} 
                 showCards={showCards} 
@@ -724,7 +824,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 onChatOpen={() => setShowChatMenu(true)}
                 maxPlayers={6} 
                 scale={scale}
-                onChipsToWinner={handleChipsToWinner}
+                showChipStack={showChipStack}
               />
             </div>
             

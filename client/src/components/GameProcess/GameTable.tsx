@@ -12,13 +12,14 @@ interface GameTableProps {
   onChatOpen: () => void;
   maxPlayers: number;
   scale?: number;
-  onChipsToWinner?: (winnerX: number, winnerY: number) => void;
+  showChipStack?: boolean;
 }
 
 const GameTable: React.FC<GameTableProps> = ({ 
   gameState, 
   scale = 1, 
-  onChatOpen: _onChatOpen
+  onChatOpen: _onChatOpen,
+  showChipStack = true
 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
@@ -168,11 +169,13 @@ const GameTable: React.FC<GameTableProps> = ({
       </div>
       
       {/* Стопки фишек */}
-      <ChipsStack 
-        totalChips={totalChips} 
-        gameStatus={gameState.status}
-        pot={gameState.pot}
-      />
+      {showChipStack && (
+        <ChipsStack 
+          totalChips={totalChips} 
+          gameStatus={gameState.status}
+          pot={gameState.pot}
+        />
+      )}
       
 
     </div>
