@@ -195,12 +195,13 @@ const GameTable: React.FC<GameTableProps> = ({
       {chipAnimations.map(chip => (
         <FlyingChip
           key={chip.id}
+          chipId={chip.id}
           fromX={chip.fromX}
           fromY={chip.fromY}
           toX={chip.toX}
           toY={chip.toY}
           delay={chip.delay}
-          onComplete={() => handleChipAnimationComplete(chip.id)}
+          onComplete={handleChipAnimationComplete}
         />
       ))}
     </div>
