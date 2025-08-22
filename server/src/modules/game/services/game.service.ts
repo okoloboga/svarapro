@@ -54,6 +54,22 @@ export class GameService {
 
     // Проверяем, если комната стала пустой - удаляем её сразу
     if (room.players.length === 0) {
+      // ПРОВЕРКА БЕЗОПАСНОСТИ: перед удалением комнаты убедимся, что и в игровом состоянии нет игроков.
+      // Это предотвращает гонку состояний, когда отключение игрока приводит к удалению активной игры.
+      const finalGameState = await this.redisService.getGameState(roomId);
+      if (
+        finalGameState &&
+        finalGameState.players.filter((p) => p.id !== telegramId).length > 0
+      ) {
+        console.warn(
+          `[GEMINI] Aborting room deletion for ${roomId}. Room object is empty, but gameState still has players.`,
+        );
+        // Попытка самовосстановления списка игроков в комнате
+        room.players = finalGameState.players.map((p) => p.id);
+        await this.redisService.setRoom(roomId, room);
+        return; // Прерываем удаление
+      }
+
       console.log(`Room ${roomId} is now empty, removing it`);
       await this.redisService.removeRoom(roomId);
       await this.redisService.clearGameData(roomId);

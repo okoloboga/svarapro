@@ -2,13 +2,20 @@ import { io, Socket } from 'socket.io-client';
 import { UserData } from '@/types/entities';
 
 export const initSocket = (telegramId?: string, userData?: UserData): Socket => {
-  const defaultTelegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  const defaultTelegramId =
+    window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
   const defaultUserData = {
-    username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Unknown',
+    username:
+      window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Unknown',
     avatar: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
   };
 
-  console.log('Initializing WebSocket with telegramId:', telegramId || defaultTelegramId, 'userData:', userData || defaultUserData);
+  console.log(
+    'Initializing WebSocket with telegramId:',
+    telegramId || defaultTelegramId,
+    'userData:',
+    userData || defaultUserData,
+  );
 
   const socket = io('https://svarapro.com', {
     withCredentials: true,
@@ -17,6 +24,9 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
       telegramId: telegramId || defaultTelegramId,
       userData: userData || defaultUserData,
     },
+    reconnection: true, // Явно включаем реконнект
+    reconnectionAttempts: 10, // Увеличиваем количество попыток
+    reconnectionDelay: 2000, // Задержка между попытками
   });
 
   socket.on('connect', () => {
@@ -28,13 +38,27 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
     console.error('WebSocket connection error:', error.message);
   });
 
-  socket.on('disconnect', () => {
-    console.log('WebSocket disconnected');
+  socket.on('disconnect', (reason) => {
+    console.log('WebSocket disconnected:', reason);
   });
 
   socket.on('error', (error) => {
     console.error('WebSocket error:', error);
   });
+
+  // --- Логика восстановления соединения при возвращении в приложение ---
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && !socket.connected) {
+      console.log(
+        'App is visible and socket is disconnected. Forcing connect...',
+      );
+      socket.connect();
+    }
+  };
+
+  // Убираем старый обработчик, если он был, и добавляем новый
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   return socket;
 };
