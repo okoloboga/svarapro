@@ -552,6 +552,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       if (prevGameStatusRef.current === 'finished' && !isFoldAnimationBlocked) {
         console.log('🔄 Resetting prevStatus from finished to empty for re-trigger');
         prevGameStatusRef.current = '';
+        
+        // Принудительно запускаем логику сохранения фишек после fold анимации
+        const chipCount = gameState?.pot || 0;
+        setSavedChipCount(chipCount);
+        console.log('🎯 FORCED: Saved chip count after fold:', chipCount, 'pot:', gameState?.pot);
+        setShowChipStack(true);
+        
+        setTimeout(() => {
+          setShowFinished(true);
+          setTimeout(() => {
+            handleChipsToWinner();
+          }, 2000);
+        }, 1500);
       }
     }, [gameState?.status, isDealingCards, isAnteAnimationBlocked, isFoldAnimationBlocked]);
 
@@ -563,12 +576,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentGameState = isAnteAnimationBlocked ? 
       { ...actualGameState!, status: 'ante' as const } : gameState;
     
+    // Принудительно показываем ChipStack если есть фишки в банке
+    if (gameState?.pot && gameState.pot > 0 && !showChipStack && gameState?.status !== 'finished') {
+      console.log('🔄 Forcing ChipStack visibility - pot:', gameState.pot);
+      setShowChipStack(true);
+    }
+    
     console.log('🔄 useEffect triggered:', {
       currentGameState: currentGameState?.status,
       prevStatus: prevGameStatusRef.current,
       isAnteAnimationBlocked,
       isFoldAnimationBlocked,
-      gameStateStatus: gameState?.status
+      gameStateStatus: gameState?.status,
+      pot: gameState?.pot,
+      showChipStack
     });
     
     if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
