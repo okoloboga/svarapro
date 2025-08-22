@@ -177,6 +177,20 @@ const GameTable: React.FC<GameTableProps> = ({
         />
       )}
       
+      {/* Отладочный лог для ChipStack */}
+      {gameState.status === 'finished' && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          color: 'white',
+          fontSize: '10px',
+          zIndex: 1000
+        }}>
+          showChipStack: {showChipStack.toString()}, totalChips: {totalChips}
+        </div>
+      )}
+      
 
     </div>
   );

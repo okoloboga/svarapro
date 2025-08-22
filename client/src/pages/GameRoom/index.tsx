@@ -156,6 +156,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                              isFoldAnimationBlocked ? 'betting' : 
                              (gameState?.status || 'waiting');
   
+  // Отладочный лог для ChipStack
+  if (gameState?.status === 'finished') {
+    console.log('🎯 Game status: finished, showChipStack:', showChipStack, 'isFoldAnimationBlocked:', isFoldAnimationBlocked);
+  }
+  
 
 
   // Chat message handling
@@ -560,8 +565,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         console.log('🎯 Game finished - showing results');
         // Оставляем ChipStack видимым для анимации фишек к победителю
         setShowChipStack(true);
+        console.log('🎯 ChipStack set to visible for winner animation');
         setTimeout(() => {
           setShowFinished(true);
+          console.log('🎯 ShowFinished set to true');
           // Запускаем анимацию фишек к победителю после показа finished
           setTimeout(() => {
             console.log('🎯 Starting chips to winner animation');
@@ -572,6 +579,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         console.log('🎯 Game finished but fold animation is active - waiting');
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
+        console.log('🎯 ChipStack set to visible (fold blocked)');
       } else {
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)
