@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { GameRoomProps, GameState } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
@@ -103,6 +103,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [svaraStep, setSvaraStep] = useState<'none' | 'animating' | 'joining'>('none');
   const { triggerImpact } = useHapticFeedback();
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  const currentTurnRef = useRef<string>(''); // Отслеживаем текущий ход
 
   useEffect(() => {
     if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
@@ -188,16 +189,29 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     const activeTurn = gameState && activeGamePhases.includes(gameState.status) && !gameState.isAnimating;
     const currentPlayerId = gameState?.players[gameState?.currentPlayerIndex]?.id;
+    const turnKey = `${gameState?.status}-${currentPlayerId}-${gameState?.currentPlayerIndex}`;
+
+    console.log('⏰ Timer effect triggered:', {
+      activeTurn,
+      currentPlayerId,
+      currentUserId,
+      isCurrentUserTurn,
+      gameStateStatus: gameState?.status,
+      currentPlayerIndex: gameState?.currentPlayerIndex,
+      isAnimating: gameState?.isAnimating,
+      turnKey,
+      currentTurnRef: currentTurnRef.current
+    });
 
     if (activeTurn) {
-      // Сбрасываем таймер только если это новый ход (новый игрок или новый раунд)
-      setTurnTimer((prev) => {
-        // Если таймер уже идет и это тот же игрок, не сбрасываем
-        if (prev > 0 && currentPlayerId === currentUserId && isCurrentUserTurn) {
-          return prev;
-        }
-        return TURN_DURATION_SECONDS;
-      });
+      // Сбрасываем таймер только если это новый ход
+      if (turnKey !== currentTurnRef.current) {
+        console.log('⏰ New turn detected, resetting timer to:', TURN_DURATION_SECONDS, 'seconds');
+        currentTurnRef.current = turnKey;
+        setTurnTimer(TURN_DURATION_SECONDS);
+      } else {
+        console.log('⏰ Same turn, keeping timer at:', turnTimer, 'seconds');
+      }
       
       const interval = setInterval(() => {
         setTurnTimer((prev) => {
@@ -401,10 +415,28 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
 
   const handleRaiseClick = () => setShowBetSlider(true);
-  const handleBlindBetClick = () => actions.blindBet(blindBetAmount);
+  const handleBlindBetClick = () => {
+    // Запускаем анимацию фишки для текущего игрока
+    if (currentPlayer) {
+      handlePlayerBet(currentPlayer.id);
+    }
+    actions.blindBet(blindBetAmount);
+  };
   const handleBetConfirm = (amount: number) => {
+    // Запускаем анимацию фишки для текущего игрока
+    if (currentPlayer) {
+      handlePlayerBet(currentPlayer.id);
+    }
     actions.raise(amount);
     setShowBetSlider(false);
+  };
+
+  const handleCallClick = () => {
+    // Запускаем анимацию фишки для текущего игрока
+    if (currentPlayer) {
+      handlePlayerBet(currentPlayer.id);
+    }
+    actions.call();
   };
   const handleSitDown = (position: number) => {
     if (parseFloat(balance) < gameState.minBet * 10) {
@@ -423,6 +455,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       postLookActions,
       gameStatus: gameState.status,
       currentPlayerIndex: gameState.currentPlayerIndex,
+      turnTimer,
     });
   }
 
@@ -575,7 +608,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   callAmount={postLookActions ? postLookCallAmount : callAmount}
                   turnTimer={turnTimer}
                   onFold={actions.fold}
-                  onCall={actions.call}
+                  onCall={handleCallClick}
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
