@@ -313,6 +313,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         const anteActions = gameState.log.filter(action => action.type === 'ante');
         const activePlayers = gameState.players.filter(player => player.isActive);
         
+        console.log('🃏 Checking ante completion:', {
+          anteActions: anteActions.length,
+          activePlayers: activePlayers.length,
+          isDealingCards
+        });
+        
         if (anteActions.length >= activePlayers.length) {
           console.log('🃏 All players made ante - starting card deal');
           setIsDealingCards(true);
@@ -440,10 +446,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       }]);
     }
     
-    // Скрываем ChipStack после анимации фишек
+    // Скрываем ChipStack после завершения анимации фишек
     setTimeout(() => {
       setShowChipStack(false);
-    }, (chipCount * 50) + 1000); // Время анимации + 1 секунда
+    }, (chipCount * 50) + 1500); // Время анимации + 1.5 секунды для завершения
   };
 
   // Play win sound for current user if they won (after finished state is shown)
@@ -509,11 +515,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else {
         setShowFinished(false);
+        // Сбрасываем состояния при переходе к waiting (новая игра)
+        if (gameState.status === 'waiting') {
+          setShowChipStack(true);
+          setIsDealingCards(false);
+        }
       }
       
       // Если переход от waiting к ante - готовимся к раздаче карт
       if (prevGameStatusRef.current === 'waiting' && gameState.status === 'ante') {
         console.log('🃏 Game phase changed from waiting to ante - preparing for card deal');
+        setShowChipStack(true); // Показываем ChipStack в новой игре
+        setIsDealingCards(false); // Сбрасываем флаг раздачи карт
       }
       // Если переход от ante к blind_betting - карты уже разданы
       else if (prevGameStatusRef.current === 'ante' && gameState.status === 'blind_betting') {
