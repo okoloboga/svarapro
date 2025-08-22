@@ -450,31 +450,32 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Используем точные координаты, соответствующие реальным позициям PlayerSpot
     const tableWidth = 315 * scale; // Ширина стола
     const tableHeight = 493 * scale; // Высота стола
+    const verticalOffset = 100; // Смещение вверх для всех позиций
     
     switch (relativePosition) {
       case 1: // -top-10 left-1/2 (верхний центр)
         playerX = centerX;
-        playerY = centerY - tableHeight * 0.4; // -top-10 = примерно 40% от высоты стола
+        playerY = centerY - tableHeight * 0.4 - verticalOffset; // Поднимаем выше
         break;
       case 2: // top-1/4 -right-5 (правый верхний)
-        playerX = centerX + tableWidth * 0.4; // -right-5 = примерно 40% от ширины стола
-        playerY = centerY - tableHeight * 0.25; // top-1/4
+        playerX = centerX + tableWidth * 0.4;
+        playerY = centerY - tableHeight * 0.25 - verticalOffset; // Поднимаем выше
         break;
       case 3: // bottom-1/4 -right-5 (правый нижний)
-        playerX = centerX + tableWidth * 0.4; // -right-5 = примерно 40% от ширины стола
-        playerY = centerY + tableHeight * 0.25; // bottom-1/4
+        playerX = centerX + tableWidth * 0.4;
+        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
         break;
       case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
         playerX = centerX;
-        playerY = centerY + tableHeight * 0.4; // -bottom-10 = примерно 40% от высоты стола
+        playerY = centerY + tableHeight * 0.4 - verticalOffset; // Поднимаем выше
         break;
       case 5: // bottom-1/4 -left-5 (левый нижний)
-        playerX = centerX - tableWidth * 0.4; // -left-5 = примерно 40% от ширины стола
-        playerY = centerY + tableHeight * 0.25; // bottom-1/4
+        playerX = centerX - tableWidth * 0.4;
+        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
         break;
       case 6: // top-1/4 -left-5 (левый верхний)
-        playerX = centerX - tableWidth * 0.4; // -left-5 = примерно 40% от ширины стола
-        playerY = centerY - tableHeight * 0.25; // top-1/4
+        playerX = centerX - tableWidth * 0.4;
+        playerY = centerY - tableHeight * 0.25 - verticalOffset; // Поднимаем выше
         break;
     }
     
