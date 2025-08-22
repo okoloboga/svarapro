@@ -157,10 +157,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                              isFoldAnimationBlocked ? 'betting' : 
                              (gameState?.status || 'waiting');
   
-  // Отладочный лог для ChipStack
-  if (gameState?.status === 'finished') {
-    console.log('🎯 Game status: finished, showChipStack:', showChipStack, 'isFoldAnimationBlocked:', isFoldAnimationBlocked);
-  }
+
   
 
 
@@ -382,19 +379,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для анимации фишек к победителю
   const handleChipsToWinner = () => {
-    console.log('🎯 handleChipsToWinner called');
+    console.log('🎯 WINNER: handleChipsToWinner called, savedChipCount:', savedChipCount);
     if (!gameState?.winners || gameState.winners.length === 0) {
-      console.log('🎯 No winners found');
+      console.log('🎯 WINNER: No winners found');
       return;
     }
     
     // Если ничья - не запускаем анимацию (фишки остаются в банке)
     if (gameState.winners.length > 1) {
-      console.log('🎯 Multiple winners (tie) - chips stay in pot');
+      console.log('🎯 WINNER: Multiple winners (tie) - chips stay in pot');
       return;
     }
     
-    console.log('🎯 Single winner found:', gameState.winners[0]);
+    console.log('🎯 WINNER: Single winner found:', gameState.winners[0]);
     
     const winner = gameState.winners[0];
     const winnerPlayer = gameState.players.find(p => p.id === winner.id);
@@ -561,9 +558,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
       
-      // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
+            // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
       if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
-        console.log('🎯 Game finished - showing results');
         // Сохраняем количество фишек до того, как они исчезнут
         const chipCount = gameState?.log?.filter(action => 
           action.type === 'ante' || 
@@ -572,21 +568,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           action.type === 'raise'
         ).length || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 Saved chip count:', chipCount);
+        console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack);
         // Оставляем ChipStack видимым для анимации фишек к победителю
         setShowChipStack(true);
-        console.log('🎯 ChipStack set to visible for winner animation');
         setTimeout(() => {
           setShowFinished(true);
-          console.log('🎯 ShowFinished set to true');
           // Запускаем анимацию фишек к победителю после показа finished
           setTimeout(() => {
-            console.log('🎯 Starting chips to winner animation');
             handleChipsToWinner();
           }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
-        console.log('🎯 Game finished but fold animation is active - waiting');
         // Сохраняем количество фишек до того, как они исчезнут
         const chipCount = gameState?.log?.filter(action => 
           action.type === 'ante' || 
@@ -595,10 +587,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           action.type === 'raise'
         ).length || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 Saved chip count (fold blocked):', chipCount);
+        console.log('🎯 FINISHED (fold blocked): Saved chip count:', chipCount, 'showChipStack:', showChipStack);
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
-        console.log('🎯 ChipStack set to visible (fold blocked)');
       } else {
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)

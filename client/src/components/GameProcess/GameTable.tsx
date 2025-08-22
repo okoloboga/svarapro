@@ -193,7 +193,7 @@ const GameTable: React.FC<GameTableProps> = ({
           fontSize: '10px',
           zIndex: 1000
         }}>
-          showChipStack: {showChipStack.toString()}, totalChips: {totalChips}
+          showChipStack: {showChipStack.toString()}, totalChips: {totalChips}, savedChipCount: {savedChipCount}, calculatedChips: {calculatedChips}
         </div>
       )}
       
