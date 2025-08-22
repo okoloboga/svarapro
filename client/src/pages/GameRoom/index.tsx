@@ -148,10 +148,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showFinished, setShowFinished] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
+  const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
   const [actualGameState, setActualGameState] = useState<GameState | null>(null);
   
-  // Эффективное состояние игры с учетом блокировки ante анимаций
-  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : (gameState?.status || 'waiting');
+  // Эффективное состояние игры с учетом блокировки анимаций
+  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : 
+                             isFoldAnimationBlocked ? 'betting' : 
+                             (gameState?.status || 'waiting');
 
   // Chat message handling
   useEffect(() => {
@@ -290,7 +293,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       // Анимация сброса карт при fold
       if (lastAction && lastAction.type === 'fold') {
+        console.log('🃏 Fold action detected - starting card discard animation');
+        setIsFoldAnimationBlocked(true); // Блокируем переход к finished
         handleFoldCards(lastAction.telegramId);
+        
+        // Разблокируем через 2 секунды (время анимации сброса карт)
+        setTimeout(() => {
+          console.log('🃏 Fold animation completed - unblocking');
+          setIsFoldAnimationBlocked(false);
+        }, 2000);
       }
       
       // Анимация фишек для ante действий
@@ -515,7 +526,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
       
       // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
-      if (currentGameState.status === 'finished') {
+      if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
+        console.log('🎯 Game finished - showing results');
         setTimeout(() => {
           setShowFinished(true);
           // Запускаем анимацию фишек к победителю после показа finished
@@ -523,6 +535,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             handleChipsToWinner();
           }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
+      } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
+        console.log('🎯 Game finished but fold animation is active - waiting');
+        // Не показываем finished пока идет fold анимация
       } else {
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)
@@ -531,6 +546,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           setShowChipStack(true);
           setIsDealingCards(false);
           setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
+          setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
         }
       }
       
@@ -540,6 +556,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setShowChipStack(true); // Показываем ChipStack в новой игре
         setIsDealingCards(false); // Сбрасываем флаг раздачи карт
         setIsAnteAnimationBlocked(false); // Сбрасываем блокировку
+        setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
       }
       // Если переход от ante к blind_betting и нет блокировки - НЕ запускаем раздачу здесь (она уже запущена в блокировке)
       else if (prevGameStatusRef.current === 'ante' && currentGameState.status === 'blind_betting' && !isAnteAnimationBlocked) {
@@ -547,9 +564,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       }
       // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
       else if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'blind_betting') {
-        if (!isDealingCards) {
+        if (!isDealingCards && !isAnteAnimationBlocked) {
+          console.log('🎯 Direct waiting -> blind_betting transition - starting card deal');
           setIsDealingCards(true);
           handleDealCards();
+        } else {
+          console.log('🎯 Skipping direct card deal - already handled by ante block');
         }
       }
       
