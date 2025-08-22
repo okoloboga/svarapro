@@ -2,7 +2,6 @@ import React from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
 import ChipsStack from './ChipsStack';
-import FlyingChip from './FlyingChip';
 
 interface GameTableProps {
   gameState: GameState;
@@ -14,22 +13,11 @@ interface GameTableProps {
   maxPlayers: number;
   scale?: number;
   onChipsToWinner?: (winnerX: number, winnerY: number) => void;
-  chipAnimations?: Array<{
-    id: string;
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
-    delay: number;
-  }>;
-  onChipAnimationComplete?: (chipId: string) => void;
 }
 
 const GameTable: React.FC<GameTableProps> = ({ 
   gameState, 
   scale = 1, 
-  chipAnimations = [], 
-  onChipAnimationComplete,
   onChatOpen: _onChatOpen
 }) => {
   const baseWidth = 315;
@@ -139,12 +127,7 @@ const GameTable: React.FC<GameTableProps> = ({
     zIndex: 2,
   };
 
-  // Обработчик завершения анимации фишки
-  const handleChipAnimationComplete = (chipId: string) => {
-    if (onChipAnimationComplete) {
-      onChipAnimationComplete(chipId);
-    }
-  };
+
 
   // Стили для надписи "налог 5%"
   const taxStyle: React.CSSProperties = {
@@ -191,19 +174,7 @@ const GameTable: React.FC<GameTableProps> = ({
         pot={gameState.pot}
       />
       
-      {/* Летящие фишки */}
-      {chipAnimations.map(chip => (
-        <FlyingChip
-          key={chip.id}
-          chipId={chip.id}
-          fromX={chip.fromX}
-          fromY={chip.fromY}
-          toX={chip.toX}
-          toY={chip.toY}
-          delay={chip.delay}
-          onComplete={handleChipAnimationComplete}
-        />
-      ))}
+
     </div>
   );
 };

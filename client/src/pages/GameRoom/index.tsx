@@ -580,8 +580,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 maxPlayers={6} 
                 scale={scale}
                 onChipsToWinner={handleChipsToWinner}
-                chipAnimations={chipAnimations}
-                onChipAnimationComplete={handleChipAnimationComplete}
               />
             </div>
             
