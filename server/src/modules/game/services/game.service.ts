@@ -48,70 +48,50 @@ export class GameService {
 
   async leaveRoom(roomId: string, telegramId: string): Promise<void> {
     const room = await this.redisService.getRoom(roomId);
-    if (!room) return;
+    const gameState = await this.redisService.getGameState(roomId);
 
-    room.players = room.players.filter((playerId) => playerId !== telegramId);
-
-    // Проверяем, если комната стала пустой - удаляем её сразу
-    if (room.players.length === 0) {
-      // ПРОВЕРКА БЕЗОПАСНОСТИ: перед удалением комнаты убедимся, что и в игровом состоянии нет игроков.
-      // Это предотвращает гонку состояний, когда отключение игрока приводит к удалению активной игры.
-      const finalGameState = await this.redisService.getGameState(roomId);
-      if (
-        finalGameState &&
-        finalGameState.players.filter((p) => p.id !== telegramId).length > 0
-      ) {
-        console.warn(
-          `[GEMINI] Aborting room deletion for ${roomId}. Room object is empty, but gameState still has players.`,
-        );
-        // Попытка самовосстановления списка игроков в комнате
-        room.players = finalGameState.players.map((p) => p.id);
+    // 1. Обновляем объект комнаты
+    if (room) {
+      room.players = room.players.filter((pId) => pId !== telegramId);
+      if (room.players.length === 0) {
+        // Если комната стала пустой, удаляем всё
+        console.log(`Room ${roomId} is now empty, removing it.`);
+        await this.redisService.removeRoom(roomId);
+        await this.redisService.clearGameData(roomId);
+        await this.redisService.publishRoomUpdate(roomId, null);
+      } else {
+        // Иначе просто сохраняем обновленный список игроков в комнате
         await this.redisService.setRoom(roomId, room);
-        return; // Прерываем удаление
+        await this.redisService.publishRoomUpdate(roomId, room);
       }
-
-      console.log(`Room ${roomId} is now empty, removing it`);
-      await this.redisService.removeRoom(roomId);
-      await this.redisService.clearGameData(roomId);
-      await this.redisService.removePlayerFromRoom(roomId, telegramId);
-      // Отправляем уведомление об удалении комнаты
-      await this.redisService.publishRoomUpdate(roomId, null);
-      return;
     }
 
-    await this.redisService.setRoom(roomId, room);
-    await this.redisService.publishRoomUpdate(roomId, room);
-
-    const gameState = await this.redisService.getGameState(roomId);
+    // 2. Обновляем игровое состояние
     if (gameState) {
-      const playerIndex = gameState.players.findIndex(
-        (p) => p.id === telegramId,
-      );
-      if (playerIndex > -1) {
-        const removedPlayer = gameState.players.splice(playerIndex, 1)[0];
+      const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
 
-        // Сохраняем баланс игрока в БД при выходе из комнаты
+      if (playerIndex > -1) {
+        const removedPlayer = gameState.players[playerIndex];
+        gameState.players.splice(playerIndex, 1);
+
+        // Сохраняем баланс вышедшего игрока
         try {
           await this.usersService.updatePlayerBalance(
             telegramId,
             removedPlayer.balance,
           );
-          console.log(
-            `Player ${telegramId} left room - balance saved to DB: ${removedPlayer.balance}`,
-          );
-
-          // Отправляем обновление баланса игроку
           await this.redisService.publishBalanceUpdate(
             telegramId,
             removedPlayer.balance,
           );
         } catch (error) {
           console.error(
-            `Failed to save balance to DB for leaving player ${telegramId}:`,
+            `Failed to save balance for leaving player ${telegramId}:`,
             error,
           );
         }
 
+        // Добавляем запись в лог
         const action: GameAction = {
           type: 'leave',
           telegramId,
@@ -119,33 +99,31 @@ export class GameService {
           message: `Игрок ${removedPlayer.username} покинул стол`,
         };
         gameState.log.push(action);
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
 
-        // Проверяем, остался ли один игрок во время активной игры
+        // Проверяем, не должен ли раунд закончиться
+        const activePlayers = gameState.players.filter(
+          (p) => p.isActive && !p.hasFolded,
+        );
         const activeStatuses = ['ante', 'blind_betting', 'betting', 'showdown'];
+
         if (
-          gameState.players.length === 1 &&
+          activePlayers.length === 1 &&
           activeStatuses.includes(gameState.status)
         ) {
-          const remainingPlayer = gameState.players[0];
-          console.log(
-            `Only one player remaining during active game. Auto-win for player: ${remainingPlayer.id}`,
-          );
-          await this.endGameWithWinner(roomId, remainingPlayer.id);
-          return;
+          // Если остался один активный игрок, он выигрывает
+          await this.redisService.setGameState(roomId, gameState);
+          await this.redisService.publishGameUpdate(roomId, gameState);
+          await this.endGameWithWinner(roomId, activePlayers[0].id);
+          return; // Выходим, чтобы не сохранять состояние еще раз
         }
 
-        // Если игрок выходит после завершения раунда, пытаемся запустить новую игру
-        if (gameState.status === 'finished') {
-          console.log(
-            `Player left during 'finished' state. Attempting to start a new game for room ${roomId}.`,
-          );
-          await this.startGame(roomId);
-          return; // Выходим, чтобы не выполнять лишний код ниже
-        }
+        // Просто сохраняем обновленное состояние. Не вызываем startGame отсюда.
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
       }
     }
+
+    // 3. Финальная очистка
     await this.redisService.removePlayerFromRoom(roomId, telegramId);
   }
 
