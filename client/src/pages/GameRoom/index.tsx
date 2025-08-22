@@ -304,6 +304,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         
         // Разблокируем через 2 секунды (время анимации сброса карт)
         setTimeout(() => {
+          console.log('🔄 Fold animation completed - unblocking finished state');
           setIsFoldAnimationBlocked(false);
         }, 2000);
       }
@@ -547,12 +548,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         prevGameStatusRef.current = gameState.status;
       }
       
-      // Сбрасываем prevStatus когда fold анимация завершается, чтобы useEffect сработал снова
+            // Сбрасываем prevStatus когда fold анимация завершается, чтобы useEffect сработал снова
       if (prevGameStatusRef.current === 'finished' && !isFoldAnimationBlocked) {
         console.log('🔄 Resetting prevStatus from finished to empty for re-trigger');
         prevGameStatusRef.current = '';
       }
-  }, [gameState?.status, isDealingCards, isAnteAnimationBlocked]);
+    }, [gameState?.status, isDealingCards, isAnteAnimationBlocked, isFoldAnimationBlocked]);
 
   // Раздача карт в конце фазы ante и управление показом finished
   const prevGameStatusRef = useRef<string>('');
