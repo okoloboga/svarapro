@@ -1046,7 +1046,7 @@ export class GameService {
       return; // Игра уже не в состоянии ожидания свары
     }
 
-    const participants = gameState.svaraParticipants;
+    const participants = gameState.svaraConfirmed || [];
 
     if (participants && participants.length >= 2) {
       // Если есть как минимум 2 участника, начинаем свару
