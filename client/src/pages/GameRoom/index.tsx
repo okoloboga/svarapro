@@ -155,6 +155,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : 
                              isFoldAnimationBlocked ? 'betting' : 
                              (gameState?.status || 'waiting');
+  
+  // Отладочный лог для эффективного состояния
+  if (gameState?.status === 'finished' && isFoldAnimationBlocked) {
+    console.log('🎯 Effective status:', effectiveGameStatus, 'vs actual status:', gameState.status);
+  }
 
   // Chat message handling
   useEffect(() => {
@@ -329,6 +334,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для сброса карт при fold
   const handleFoldCards = (playerId: string) => {
+    console.log('🃏 handleFoldCards called for player:', playerId);
     if (!gameState) return;
     
     const player = gameState.players.find(p => p.id === playerId);
@@ -357,16 +363,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     
     // Создаем 3 карты для сброса
+    console.log('🃏 Creating fold card animations from', playerX, playerY, 'to', centerX, centerY);
     for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
       const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
-      setCardAnimations(prev => [...prev, {
-        id: cardId,
-        fromX: playerX,
-        fromY: playerY,
-        toX: centerX,
-        toY: centerY,
-        delay: cardIndex * 100 // Небольшая задержка между картами
-      }]);
+      setCardAnimations(prev => {
+        console.log('🃏 Adding fold card animation:', cardId);
+        return [...prev, {
+          id: cardId,
+          fromX: playerX,
+          fromY: playerY,
+          toX: centerX,
+          toY: centerY,
+          delay: cardIndex * 100 // Небольшая задержка между картами
+        }];
+      });
     }
   };
 
@@ -468,7 +478,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, []);
 
   const handleCardAnimationComplete = useCallback((cardId: string) => {
-    setCardAnimations(prev => prev.filter(card => card.id !== cardId));
+    console.log('🃏 Card animation completed:', cardId);
+    setCardAnimations(prev => {
+      const newAnimations = prev.filter(card => card.id !== cardId);
+      console.log('🃏 Remaining card animations:', newAnimations.length);
+      return newAnimations;
+    });
   }, []);
 
   // Логика блокировки ante анимаций
@@ -536,7 +551,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
-        console.log('🎯 Game finished but fold animation is active - waiting');
+        console.log('🎯 Game finished but fold animation is active - waiting (isFoldAnimationBlocked:', isFoldAnimationBlocked, ')');
         // Не показываем finished пока идет fold анимация
       } else {
         setShowFinished(false);
