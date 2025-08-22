@@ -82,7 +82,7 @@ export function ActionButtons({
             disabled={isCallDisabled}
           >
             <span>${Number(callAmount).toFixed(2)}</span>
-            <span className="-mt-1">Ответить</span>
+            <span className="-mt-1">Заплатить</span>
           </button>
           {/* Raise Button */}
           <button

@@ -498,8 +498,20 @@ export class GameService {
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     const player = gameState.players[playerIndex];
 
+    if (!player) {
+      return { success: false, error: 'Игрок не найден в этой игре' };
+    }
+
+    // Обрабатываем fold до всех проверок, чтобы таймаут всегда срабатывал корректно
+    if (action === 'fold') {
+      if (gameState.currentPlayerIndex !== playerIndex) {
+        return { success: false, error: 'Сейчас не ваш ход' };
+      }
+      return this.handleFold(roomId, gameState, playerIndex);
+    }
+
     // Если игрок посмотрел карты, он может только сбросить, ответить или повысить
-    if (player.hasLookedAndMustAct && !['fold', 'raise', 'call'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'call'].includes(action)) {
       return {
         success: false,
         error:
@@ -512,7 +524,7 @@ export class GameService {
     }
 
     const { canPerform, error } = this.bettingService.canPerformAction(
-      gameState.players[playerIndex],
+      player,
       action,
       gameState,
     );
@@ -521,8 +533,7 @@ export class GameService {
     }
 
     switch (action) {
-      case 'fold':
-        return this.handleFold(roomId, gameState, playerIndex);
+      // case 'fold': // Уже обработан выше
       case 'blind_bet':
       case 'look':
         return this.processBlindBettingAction(

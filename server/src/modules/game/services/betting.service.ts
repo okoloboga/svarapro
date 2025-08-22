@@ -65,24 +65,26 @@ export class BettingService {
       return true;
     }
 
-    // Раунд ставок не может завершиться, если еще не было повышения (raise).
+    // Если повышения не было, раунд не может быть завершен.
     if (gameState.lastRaiseIndex === undefined) {
       return false;
     }
 
-    const raiser = gameState.players[gameState.lastRaiseIndex];
-    if (!raiser) {
-      return false; // Failsafe
+    // Раунд завершен, если ход вернулся к игроку, который последним повысил ставку.
+    // Это означает, что все остальные активные игроки сделали свой ход (call или fold).
+    if (gameState.currentPlayerIndex === gameState.lastRaiseIndex) {
+      const raiser = gameState.players[gameState.lastRaiseIndex];
+      if (!raiser) return false; // На всякий случай
+
+      const requiredBet = raiser.totalBet;
+      // Дополнительно убедимся, что все ставки действительно равны.
+      const allBetsEqual = activePlayers.every(
+        (p) => p.totalBet === requiredBet,
+      );
+      return allBetsEqual;
     }
-    const requiredBet = raiser.totalBet;
 
-    // Проверяем, что все активные игроки сделали ставку, равную ставке последнего, кто повышал.
-    const allPlayersCalled = activePlayers.every(
-      (p) => p.totalBet === requiredBet,
-    );
-
-    // Круг завершен, если все ставки уравнены.
-    return allPlayersCalled;
+    return false;
   }
 
   // Обработка выигрыша

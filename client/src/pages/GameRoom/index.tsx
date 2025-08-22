@@ -157,10 +157,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                              isFoldAnimationBlocked ? 'betting' : 
                              (gameState?.status || 'waiting');
   
-
-  
-
-
   // Chat message handling
   useEffect(() => {
     if (!socket) return;
