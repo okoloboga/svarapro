@@ -420,12 +420,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     
     // Подсчитываем количество фишек в банке
-    const chipCount = gameState.log.filter(action => 
-      action.type === 'ante' || 
-      action.type === 'blind_bet' || 
-      action.type === 'call' || 
-      action.type === 'raise'
-    ).length;
+    const chipCount = 10;
     
     console.log('🎯 Creating', chipCount, 'chip animations to winner at position:', relativePosition);
     console.log('🎯 Winner coordinates:', winnerX, winnerY);

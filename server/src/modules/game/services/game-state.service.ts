@@ -193,7 +193,6 @@ export class GameStateService {
     return { updatedGameState, actions };
   }
 
-  // Раздача карт игрокам
   dealCardsToPlayers(gameState: GameState): {
     updatedGameState: GameState;
     actions: GameAction[];
@@ -209,6 +208,28 @@ export class GameStateService {
       status: updatedGameState.status,
     });
 
+    // [GEMINI_SVARA_TEST] --- START ---
+    // Временно раздаем всем одинаковые карты для тестирования Свары.
+    // Чтобы вернуть обычную логику, удалите этот блок и раскомментируйте оригинальный.
+    const testCards = [
+      { suit: 'hearts', rank: '8', isJoker: false, value: 8 },
+      { suit: 'hearts', rank: '9', isJoker: false, value: 9 },
+      { suit: 'hearts', rank: 'K', isJoker: false, value: 10 },
+    ]; // Score: 27
+
+    for (let i = 0; i < updatedGameState.players.length; i++) {
+      const player = updatedGameState.players[i];
+      if (player.isActive) {
+        updatedGameState.players[i] = this.playerService.addCardsToPlayer(
+          player,
+          testCards,
+        );
+      }
+    }
+    // [GEMINI_SVARA_TEST] --- END ---
+
+    /*
+    // [GEMINI_SVARA_TEST] --- ORIGINAL LOGIC TO RESTORE ---
     // Раздаем по 3 карты каждому активному игроку
     for (let i = 0; i < updatedGameState.players.length; i++) {
       const player = updatedGameState.players[i];
@@ -246,6 +267,7 @@ export class GameStateService {
         });
       }
     }
+    */
 
     // Добавляем действие в лог
     const action: GameAction = {

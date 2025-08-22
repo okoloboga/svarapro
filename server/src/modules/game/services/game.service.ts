@@ -1074,10 +1074,10 @@ export class GameService {
 
     const participants = gameState.svaraConfirmed || [];
 
-    if (participants && participants.length >= 2) {
+    if (participants.length >= 2) {
       // Если есть как минимум 2 участника, начинаем свару
       await this.startSvaraGame(roomId, participants);
-    } else if (participants && participants.length === 1) {
+    } else if (participants.length === 1) {
       // Если только один участник (остальные не присоединились), он забирает банк
       await this.endGameWithWinner(roomId, participants[0]);
     } else {
