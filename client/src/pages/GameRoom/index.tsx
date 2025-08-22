@@ -326,14 +326,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     setChipAnimations(prev => [...prev, ...chips]);
   }, [gameState?.log]);
 
-  const handleChipAnimationComplete = (chipId: string) => {
+  const handleChipAnimationComplete = useCallback((chipId: string) => {
     console.log('🎯 Chip animation completed:', chipId);
     setChipAnimations(prev => {
       const newAnimations = prev.filter(chip => chip.id !== chipId);
       console.log('🎯 Remaining animations:', newAnimations.length);
       return newAnimations;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (pageData?.autoSit && !isSeated && gameState) {
@@ -738,12 +738,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         {chipAnimations.map(chip => (
           <FlyingChip
             key={chip.id}
+            chipId={chip.id}
             fromX={chip.fromX}
             fromY={chip.fromY}
             toX={chip.toX}
             toY={chip.toY}
             delay={chip.delay}
-            onComplete={() => handleChipAnimationComplete(chip.id)}
+            onComplete={handleChipAnimationComplete}
           />
         ))}
       </div>

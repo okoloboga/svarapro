@@ -6,11 +6,12 @@ interface FlyingChipProps {
   fromY: number;
   toX: number;
   toY: number;
-  onComplete: () => void;
+  onComplete: (chipId: string) => void;
+  chipId: string;
   delay?: number;
 }
 
-const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onComplete, delay = 0 }) => {
+const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onComplete, chipId, delay = 0 }) => {
   const [position, setPosition] = useState({ x: fromX, y: fromY });
   const [isAnimating, setIsAnimating] = useState(false);
   const animationRef = useRef<number | undefined>(undefined);
@@ -39,7 +40,7 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
-          onComplete();
+          onComplete(chipId);
         }
       };
       
@@ -52,7 +53,7 @@ const FlyingChip: React.FC<FlyingChipProps> = ({ fromX, fromY, toX, toY, onCompl
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [delay, onComplete, fromX, fromY, toX, toY]);
+  }, [delay, onComplete, chipId, fromX, fromY, toX, toY]);
 
   if (!isAnimating) return null;
 
