@@ -89,8 +89,8 @@ const ChipsStack: React.FC<ChipsStackProps> = ({ totalChips, gameStatus, pot }) 
             top: `${position.y}px`,
             opacity: position.opacity,
             zIndex: position.zIndex,
-            width: '13px',
-            height: '11px',
+            width: '15px',
+            height: '13px',
           }}
         >
           <img 
