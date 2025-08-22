@@ -389,28 +389,63 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const isCurrentPlayer = player.id === currentUserId;
     const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
     
+    // Простые координаты относительно центра экрана
     let playerX = 0;
     let playerY = 0;
     
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
+    // Центр экрана
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
     
+    // Вычисляем позицию игрока относительно центра
     switch (relativePosition) {
-      case 1: playerX = tableWidth / 2; playerY = -50; break;
-      case 2: playerX = tableWidth + 50; playerY = tableHeight / 4; break;
-      case 3: playerX = tableWidth + 50; playerY = tableHeight * 3 / 4; break;
-      case 4: playerX = tableWidth / 2; playerY = tableHeight + 50; break;
-      case 5: playerX = -50; playerY = tableHeight * 3 / 4; break;
-      case 6: playerX = -50; playerY = tableHeight / 4; break;
+      case 1: // Нижний игрок
+        playerX = centerX;
+        playerY = centerY + 200;
+        break;
+      case 2: // Правый нижний
+        playerX = centerX + 200;
+        playerY = centerY + 100;
+        break;
+      case 3: // Правый верхний
+        playerX = centerX + 200;
+        playerY = centerY - 100;
+        break;
+      case 4: // Верхний игрок
+        playerX = centerX;
+        playerY = centerY - 200;
+        break;
+      case 5: // Левый верхний
+        playerX = centerX - 200;
+        playerY = centerY - 100;
+        break;
+      case 6: // Левый нижний
+        playerX = centerX - 200;
+        playerY = centerY + 100;
+        break;
     }
     
     const chipId = `chip-${Date.now()}-${Math.random()}`;
-    const toX = (315 * scale) / 2;
-    const toY = (493 * scale) / 2 + 30;
+    
+    console.log('🎯 Chip animation coordinates:', {
+      playerId,
+      relativePosition,
+      playerX,
+      playerY,
+      centerX,
+      centerY
+    });
     
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (!existingAnimation) {
-      setChipAnimations(prev => [...prev, { id: chipId, fromX: playerX, fromY: playerY, toX, toY, delay: 0 }]);
+      setChipAnimations(prev => [...prev, { 
+        id: chipId, 
+        fromX: playerX, 
+        fromY: playerY, 
+        toX: centerX, 
+        toY: centerY, 
+        delay: 0 
+      }]);
     }
   };
 
