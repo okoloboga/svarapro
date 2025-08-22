@@ -491,6 +491,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Через 3 секунды разблокируем и переходим к blind_betting
         console.log('🎯 Unblocking ante animation');
         setIsAnteAnimationBlocked(false);
+        // Сбрасываем флаг раздачи карт для следующей игры
+        setIsDealingCards(false);
       }, 3000); // 3 секунды для полного завершения ante анимаций
       
       return;
@@ -525,6 +527,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)
         if (currentGameState.status === 'waiting') {
+          console.log('🔄 Game reset to waiting - resetting all flags');
           setShowChipStack(true);
           setIsDealingCards(false);
           setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
@@ -533,6 +536,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       // Если переход от waiting к ante - готовимся к раздаче карт
       if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'ante') {
+        console.log('🔄 New game started - resetting flags');
         setShowChipStack(true); // Показываем ChipStack в новой игре
         setIsDealingCards(false); // Сбрасываем флаг раздачи карт
         setIsAnteAnimationBlocked(false); // Сбрасываем блокировку
