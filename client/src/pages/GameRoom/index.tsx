@@ -542,10 +542,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return;
     }
     
-    // Если блокировка не активна, обновляем статус
-    if (!isAnteAnimationBlocked) {
-      prevGameStatusRef.current = gameState.status;
-    }
+          // Если блокировка не активна, обновляем статус
+      if (!isAnteAnimationBlocked) {
+        prevGameStatusRef.current = gameState.status;
+      }
+      
+      // Сбрасываем prevStatus когда fold анимация завершается, чтобы useEffect сработал снова
+      if (prevGameStatusRef.current === 'finished' && !isFoldAnimationBlocked) {
+        console.log('🔄 Resetting prevStatus from finished to empty for re-trigger');
+        prevGameStatusRef.current = '';
+      }
   }, [gameState?.status, isDealingCards, isAnteAnimationBlocked]);
 
   // Раздача карт в конце фазы ante и управление показом finished
