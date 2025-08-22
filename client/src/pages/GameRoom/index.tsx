@@ -150,6 +150,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
   const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
   const [actualGameState, setActualGameState] = useState<GameState | null>(null);
+  const [savedChipCount, setSavedChipCount] = useState(0);
   
   // Эффективное состояние игры с учетом блокировки анимаций
   const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : 
@@ -563,6 +564,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
       if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
         console.log('🎯 Game finished - showing results');
+        // Сохраняем количество фишек до того, как они исчезнут
+        const chipCount = gameState?.log?.filter(action => 
+          action.type === 'ante' || 
+          action.type === 'blind_bet' || 
+          action.type === 'call' || 
+          action.type === 'raise'
+        ).length || 0;
+        setSavedChipCount(chipCount);
+        console.log('🎯 Saved chip count:', chipCount);
         // Оставляем ChipStack видимым для анимации фишек к победителю
         setShowChipStack(true);
         console.log('🎯 ChipStack set to visible for winner animation');
@@ -577,6 +587,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }, 1500); // 1.5 секунды для завершения анимаций сброса карт
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
         console.log('🎯 Game finished but fold animation is active - waiting');
+        // Сохраняем количество фишек до того, как они исчезнут
+        const chipCount = gameState?.log?.filter(action => 
+          action.type === 'ante' || 
+          action.type === 'blind_bet' || 
+          action.type === 'call' || 
+          action.type === 'raise'
+        ).length || 0;
+        setSavedChipCount(chipCount);
+        console.log('🎯 Saved chip count (fold blocked):', chipCount);
         // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
         console.log('🎯 ChipStack set to visible (fold blocked)');
@@ -589,6 +608,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           setIsDealingCards(false);
           setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
           setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
+          setSavedChipCount(0); // Сбрасываем сохраненное количество фишек
         }
       }
       
@@ -913,6 +933,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 maxPlayers={6} 
                 scale={scale}
                 showChipStack={showChipStack}
+                savedChipCount={savedChipCount}
               />
             </div>
             

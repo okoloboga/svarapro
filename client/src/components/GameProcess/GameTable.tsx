@@ -13,13 +13,15 @@ interface GameTableProps {
   maxPlayers: number;
   scale?: number;
   showChipStack?: boolean;
+  savedChipCount?: number;
 }
 
 const GameTable: React.FC<GameTableProps> = ({ 
   gameState, 
   scale = 1, 
   onChatOpen: _onChatOpen,
-  showChipStack = true
+  showChipStack = true,
+  savedChipCount = 0
 }) => {
   const baseWidth = 315;
   const baseHeight = 493;
@@ -48,12 +50,15 @@ const GameTable: React.FC<GameTableProps> = ({
   };
   
   const currentRoundActions = getCurrentRoundActions();
-  const totalChips = currentRoundActions.filter((action: { type?: string }) => 
+  const calculatedChips = currentRoundActions.filter((action: { type?: string }) => 
     action.type === 'ante' || 
     action.type === 'blind_bet' || 
     action.type === 'call' || 
     action.type === 'raise'
   ).length;
+  
+  // Используем сохраненное количество фишек если игра закончена, иначе считаем из логов
+  const totalChips = gameState.status === 'finished' ? savedChipCount : calculatedChips;
   
   
 
@@ -168,7 +173,8 @@ const GameTable: React.FC<GameTableProps> = ({
         налог 5%
       </div>
       
-      {/* Стопки фишек */}
+      {/* Стоп
+      ки фишек */}
       {showChipStack && (
         <ChipsStack 
           totalChips={totalChips} 
