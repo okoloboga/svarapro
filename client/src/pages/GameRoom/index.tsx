@@ -284,6 +284,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (currentLogLength > prevLogLengthRef.current) {
       // Новое действие добавлено в лог
       const lastAction = gameState.log[currentLogLength - 1];
+      console.log('🃏 New action in log:', lastAction);
       
       // Создаем уникальный ключ для действия
       const actionKey = `${lastAction.telegramId}-${lastAction.type}-${Date.now()}`;
@@ -298,7 +299,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       // Анимация сброса карт при fold
       if (lastAction && lastAction.type === 'fold') {
-        console.log('🃏 Fold action detected - starting card discard animation');
+        console.log('🃏 Fold action detected - starting card discard animation for player:', lastAction.telegramId);
         setIsFoldAnimationBlocked(true); // Блокируем переход к finished
         handleFoldCards(lastAction.telegramId);
         
@@ -307,6 +308,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           console.log('🃏 Fold animation completed - unblocking');
           setIsFoldAnimationBlocked(false);
         }, 2000);
+      } else if (lastAction) {
+        console.log('🃏 Action type:', lastAction.type, 'not fold');
       }
       
       // Анимация фишек для ante действий
@@ -335,10 +338,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Функция для сброса карт при fold
   const handleFoldCards = (playerId: string) => {
     console.log('🃏 handleFoldCards called for player:', playerId);
-    if (!gameState) return;
+    if (!gameState) {
+      console.log('🃏 handleFoldCards: gameState is null');
+      return;
+    }
     
     const player = gameState.players.find(p => p.id === playerId);
-    if (!player || !player.isActive) return;
+    console.log('🃏 handleFoldCards: found player:', player);
+    if (!player || !player.isActive) {
+      console.log('🃏 handleFoldCards: player not found or not active');
+      return;
+    }
     
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
