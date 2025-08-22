@@ -242,7 +242,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [isCurrentUserTurn, triggerImpact, actions]);
 
-  // Track fold actions for all players and play fold sound
+  // Track actions for all players and play sounds/animations
   useEffect(() => {
     if (!gameState?.log) return;
     
@@ -250,13 +250,21 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const lastAction = gameState.log[gameState.log.length - 1];
     console.log('🔍 Last action in log:', lastAction);
     
-    if (lastAction && lastAction.type === 'fold') {
-      console.log('🎵 Fold action detected, playing sound:', lastAction);
-      actions.playSound('fold');
-    } else {
-      console.log('❌ No fold action or wrong type. Expected "fold", got:', lastAction?.type);
+    if (lastAction) {
+      // Запускаем анимацию для действий других игроков
+      if (lastAction.telegramId !== currentUserId && 
+          ['blind_bet', 'call', 'raise'].includes(lastAction.type)) {
+        console.log('🎯 Creating animation for other player action:', lastAction);
+        handlePlayerBet(lastAction.telegramId);
+      }
+      
+      // Воспроизводим звуки
+      if (lastAction.type === 'fold') {
+        console.log('🎵 Fold action detected, playing sound:', lastAction);
+        actions.playSound('fold');
+      }
     }
-  }, [gameState?.log, actions]); // Зависимость только от длины лога
+  }, [gameState?.log, actions, currentUserId]); // Добавляем currentUserId в зависимости
 
   // Play win sound for current user if they won (after 3 seconds delay)
   useEffect(() => {
@@ -406,30 +414,31 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const centerY = window.innerHeight / 2;
     
     // Вычисляем позицию игрока на основе CSS классов из getPositionClasses
+    // Используем более точные координаты, соответствующие реальным позициям PlayerSpot
     switch (relativePosition) {
       case 1: // -top-10 left-1/2 (верхний центр)
         playerX = centerX;
-        playerY = centerY - 40; // -top-10 = -40px
+        playerY = centerY - 80; // Увеличиваем отступ для лучшей видимости
         break;
       case 2: // top-1/4 -right-5 (правый верхний)
-        playerX = centerX + 20; // -right-5 = +20px
-        playerY = centerY - centerY * 0.25; // top-1/4
+        playerX = centerX + 100; // Увеличиваем отступ
+        playerY = centerY - centerY * 0.25;
         break;
       case 3: // bottom-1/4 -right-5 (правый нижний)
-        playerX = centerX + 20; // -right-5 = +20px
-        playerY = centerY + centerY * 0.25; // bottom-1/4
+        playerX = centerX + 100; // Увеличиваем отступ
+        playerY = centerY + centerY * 0.25;
         break;
       case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
         playerX = centerX;
-        playerY = centerY + 40; // -bottom-10 = +40px
+        playerY = centerY + 80; // Увеличиваем отступ для лучшей видимости
         break;
       case 5: // bottom-1/4 -left-5 (левый нижний)
-        playerX = centerX - 20; // -left-5 = -20px
-        playerY = centerY + centerY * 0.25; // bottom-1/4
+        playerX = centerX - 100; // Увеличиваем отступ
+        playerY = centerY + centerY * 0.25;
         break;
       case 6: // top-1/4 -left-5 (левый верхний)
-        playerX = centerX - 20; // -left-5 = -20px
-        playerY = centerY - centerY * 0.25; // top-1/4
+        playerX = centerX - 100; // Увеличиваем отступ
+        playerY = centerY - centerY * 0.25;
         break;
     }
     
@@ -438,14 +447,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     console.log('🎯 Chip animation coordinates:', {
       playerId,
       relativePosition,
+      isCurrentPlayer,
+      absolutePosition,
       playerX,
       playerY,
       centerX,
       centerY
     });
     
-    // Проверяем, нет ли уже анимации для этого игрока
-    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
+    // Более строгая проверка на дублирующие анимации
+    const existingAnimation = chipAnimations.find(chip => 
+      chip.id.includes(playerId) || 
+      (Math.abs(chip.fromX - playerX) < 10 && Math.abs(chip.fromY - playerY) < 10)
+    );
+    
     if (!existingAnimation) {
       console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
       setChipAnimations(prev => [...prev, { 
@@ -504,19 +519,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     actions.sitDown(position, userData);
   };
-
-  // DEBUGGING LOG
-  if (isCurrentUserTurn) {
-    console.log('[DEBUG] Rendering Action Buttons:', {
-      isCurrentUserTurn,
-      currentPlayerId: currentPlayer?.id,
-      hasLookedAndMustAct: currentPlayer?.hasLookedAndMustAct,
-      postLookActions,
-      gameStatus: gameState.status,
-      currentPlayerIndex: gameState.currentPlayerIndex,
-      turnTimer,
-    });
-  }
 
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
@@ -612,7 +614,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             winAmount={winAmount}
                             gameStatus={gameState.status}
                             chatPhrase={chatPhrase}
-                            onPlayerBet={handlePlayerBet}
+                            onPlayerBet={undefined}
                             gameState={gameState}
                           />;
                         }
@@ -629,7 +631,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           winAmount={winAmount}
                           gameStatus={gameState.status}
                           chatPhrase={chatPhrase}
-                          onPlayerBet={handlePlayerBet}
+                          onPlayerBet={undefined}
                           gameState={gameState}
                         />;
                       })()
