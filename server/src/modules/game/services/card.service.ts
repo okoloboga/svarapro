@@ -26,7 +26,7 @@ export class CardService {
     for (const suit of suits) {
       for (const rank of ranks) {
         const isJoker = suit === 'clubs' && rank === '7';
-        const value = this.getCardValue(rank);
+        const value = this.getCardValue(rank, suit);
         deck.push({ suit, rank, isJoker, value });
       }
     }
@@ -35,7 +35,13 @@ export class CardService {
   }
 
   // Получение числового значения карты
-  getCardValue(rank: string): number {
+  getCardValue(
+    rank: string,
+    suit: 'hearts' | 'diamonds' | 'clubs' | 'spades',
+  ): number {
+    if (rank === '7' && suit === 'clubs') {
+      return 11;
+    }
     switch (rank) {
       case 'A':
         return 11;

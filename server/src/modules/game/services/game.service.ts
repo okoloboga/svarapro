@@ -538,11 +538,49 @@ export class GameService {
     playerIndex: number,
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
+
+    // Если игрок сбрасывает карты во время ставок вслепую, последний, кто делал ставку, выигрывает банк
+    if (
+      gameState.status === 'blind_betting' &&
+      gameState.lastBlindBettorIndex !== undefined
+    ) {
+      const lastBettor = gameState.players[gameState.lastBlindBettorIndex];
+      if (lastBettor && lastBettor.id !== player.id) {
+        console.log(
+          `Player ${player.username} folded to a blind bet. Winner is ${lastBettor.username}.`,
+        );
+
+        // Помечаем текущего игрока как сбросившего карты
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+          player,
+          {
+            hasFolded: true,
+            lastAction: 'fold',
+            hasLookedAndMustAct: false,
+          },
+        );
+        const foldAction: GameAction = {
+          type: 'fold',
+          telegramId: player.id,
+          timestamp: Date.now(),
+          message: `Игрок ${player.username} сбросил карты в ответ на ставку вслепую`,
+        };
+        gameState.log.push(foldAction);
+
+        // Немедленно сохраняем состояние, чтобы показать сброс карт, затем завершаем игру
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+
+        await this.endGameWithWinner(roomId, lastBettor.id);
+        return { success: true };
+      }
+    }
+
+    // Стандартная логика сброса карт для других фаз
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       player,
       {
         hasFolded: true,
-        isActive: false,
         lastAction: 'fold',
         hasLookedAndMustAct: false,
       },
@@ -556,25 +594,7 @@ export class GameService {
     };
     gameState.log.push(foldAction);
 
-    // Сохраняем баланс игрока в БД при сбросе карт
-    try {
-      await this.usersService.updatePlayerBalance(player.id, player.balance);
-      console.log(
-        `Player ${player.id} folded - balance saved to DB: ${player.balance}`,
-      );
-
-      // Отправляем обновление баланса игроку
-      await this.redisService.publishBalanceUpdate(player.id, player.balance);
-    } catch (error) {
-      console.error(
-        `Failed to save balance to DB for folded player ${player.id}:`,
-        error,
-      );
-    }
-
-    const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded,
-    );
+    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
 
     if (activePlayers.length === 1) {
       // Немедленно сохраняем состояние, где игрок сбросил карты
@@ -999,14 +1019,15 @@ export class GameService {
     roomId: string,
     gameState: GameState,
   ): Promise<void> {
-    const participantsCount = gameState.svaraParticipants?.length || 0;
+    const totalPlayers = gameState.players.length;
     const decisionsCount =
       (gameState.svaraConfirmed?.length || 0) +
       (gameState.svaraDeclined?.length || 0);
 
-    if (participantsCount > 0 && decisionsCount >= participantsCount) {
+    // Завершаем свару досрочно, только если ВСЕ игроки за столом приняли решение
+    if (decisionsCount >= totalPlayers) {
       console.log(
-        `All svara participants have made a decision for room ${roomId}. Resolving svara immediately.`,
+        `All ${totalPlayers} players have made a decision for svara in room ${roomId}. Resolving immediately.`,
       );
       // Немедленно разрешаем свару, так как все приняли решение
       await this.resolveSvara(roomId);
