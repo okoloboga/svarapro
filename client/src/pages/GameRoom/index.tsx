@@ -471,19 +471,25 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (gameState.status === 'blind_betting' && 
         (prevGameStatusRef.current === 'ante' || prevGameStatusRef.current === 'waiting') && 
         !isAnteAnimationBlocked) {
+      console.log('🎯 Ante animation blocked - starting card deal');
       // Блокируем переход и остаемся в ante для завершения анимаций
       setIsAnteAnimationBlocked(true);
       
       // Запускаем раздачу карт после ante chip анимаций
       if (!isDealingCards) {
+        console.log('🎯 Setting isDealingCards to true');
         setIsDealingCards(true);
         setTimeout(() => {
+          console.log('🎯 Calling handleDealCards');
           handleDealCards();
         }, 1500); // Сначала ante chip анимации
+      } else {
+        console.log('🎯 Cards already being dealt, skipping');
       }
       
       setTimeout(() => {
         // Через 3 секунды разблокируем и переходим к blind_betting
+        console.log('🎯 Unblocking ante animation');
         setIsAnteAnimationBlocked(false);
       }, 3000); // 3 секунды для полного завершения ante анимаций
       
@@ -632,6 +638,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для раздачи карт от центра стола к игрокам
   const handleDealCards = () => {
+    console.log('🃏 handleDealCards called');
     
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
@@ -830,7 +837,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
             <div className="flex-shrink-0 relative z-10">
-                            <GameTable 
+              <GameTable 
                 gameState={gameState} 
                 currentUserId={currentUserId} 
                 showCards={showCards} 
