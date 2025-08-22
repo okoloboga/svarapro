@@ -345,8 +345,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     const player = gameState.players.find(p => p.id === playerId);
     console.log('🃏 handleFoldCards: found player:', player);
-    if (!player || !player.isActive) {
-      console.log('🃏 handleFoldCards: player not found or not active');
+    if (!player) {
+      console.log('🃏 handleFoldCards: player not found');
+      return;
+    }
+    
+    // Показываем анимацию сброса карт даже для неактивных игроков (которые только что сбросили)
+    console.log('🃏 handleFoldCards: player.isActive:', player.isActive, 'player.hasFolded:', player.hasFolded);
+    if (!player.isActive && !player.hasFolded) {
+      console.log('🃏 handleFoldCards: player not active and not folded');
       return;
     }
     
