@@ -479,7 +479,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       // Скрываем ChipStack только если завершились анимации фишек к победителю
       const remainingWinnerChips = newAnimations.filter(chip => chip.id.startsWith('winner-chip-'));
-      if (remainingWinnerChips.length === 0 && newAnimations.length === 0) {
+      const hasWinnerChips = prev.some(chip => chip.id.startsWith('winner-chip-'));
+      
+      if (hasWinnerChips && remainingWinnerChips.length === 0) {
         console.log('🎯 All winner chip animations completed - hiding ChipStack');
         setTimeout(() => {
           setShowChipStack(false);
