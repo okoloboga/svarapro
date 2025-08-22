@@ -258,6 +258,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Track other player actions for animations (only when log length changes)
   const prevLogLengthRef = useRef(0);
+  const lastProcessedActionRef = useRef<string>('');
+  
   useEffect(() => {
     if (!gameState?.log) return;
     
@@ -267,10 +269,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const lastAction = gameState.log[currentLogLength - 1];
       console.log('🎯 New action detected in log:', lastAction);
       
+      // Создаем уникальный ключ для действия
+      const actionKey = `${lastAction.telegramId}-${lastAction.type}-${Date.now()}`;
+      
       if (lastAction && 
           lastAction.telegramId !== currentUserId && 
-          ['blind_bet', 'call', 'raise'].includes(lastAction.type)) {
+          ['blind_bet', 'call', 'raise'].includes(lastAction.type) &&
+          actionKey !== lastProcessedActionRef.current) {
         console.log('🎯 Creating animation for other player action:', lastAction);
+        lastProcessedActionRef.current = actionKey;
         handleOtherPlayerAction(lastAction.telegramId);
       }
     }
@@ -419,6 +426,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return;
     }
     
+    // Проверяем, не создается ли уже анимация для этого игрока
+    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
+    if (existingAnimation) {
+      console.log('🎯 Skipping chip animation - already exists for player:', playerId);
+      return;
+    }
+    
     const absolutePosition = player.position;
     const isCurrentPlayer = player.id === currentUserId;
     const relativePosition = isCurrentPlayer ? absolutePosition : getScreenPosition(absolutePosition);
@@ -473,22 +487,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       centerY
     });
     
-    // Строгая проверка на дублирующие анимации - одна анимация на игрока
-    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
-    
-    if (!existingAnimation) {
-      console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
-      setChipAnimations(prev => [...prev, { 
-        id: chipId, 
-        fromX: playerX, 
-        fromY: playerY, 
-        toX: centerX, 
-        toY: centerY, 
-        delay: 0 
-      }]);
-    } else {
-      console.log('🎯 Skipping chip animation - already exists for player:', playerId);
-    }
+    console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
+    setChipAnimations(prev => [...prev, { 
+      id: chipId, 
+      fromX: playerX, 
+      fromY: playerY, 
+      toX: centerX, 
+      toY: centerY, 
+      delay: 0 
+    }]);
   };
 
   const handleRaiseClick = () => setShowBetSlider(true);
