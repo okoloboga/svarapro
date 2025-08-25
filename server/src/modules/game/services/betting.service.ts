@@ -222,6 +222,9 @@ export class BettingService {
       case 'fold':
         return { canPerform: true };
 
+      case 'all_in':
+        return { canPerform: true };
+
       default:
         return { canPerform: false, error: 'Недопустимое действие' };
     }
