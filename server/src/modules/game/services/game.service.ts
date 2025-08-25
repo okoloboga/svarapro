@@ -1149,4 +1149,22 @@ export class GameService {
 
     if (allInPlayers.length === activePlayers.length) {
       // All active players are all-in, go to showdown
+      await this.endBettingRound(roomId, gameState);
+    } else {
+      // Move to next player
+      gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+        gameState.players,
+        gameState.currentPlayerIndex,
+      );
+      if (this.bettingService.isBettingRoundComplete(gameState)) {
+        await this.endBettingRound(roomId, gameState);
+      } else {
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+      }
+    }
+
+    return { success: true, gameState };
+  }
+}
       
