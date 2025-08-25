@@ -1,4 +1,4 @@
-import { Player } from '../../types/game';
+import { Player } from '../../../types/game';
 
 export interface Pot {
   limit: number;

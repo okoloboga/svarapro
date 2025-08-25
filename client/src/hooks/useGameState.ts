@@ -119,6 +119,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     lookCards: () => performAction('look'),
     call: () => performAction('call'),
     raise: (amount: number) => performAction('raise', amount),
+    allIn: () => performAction('all_in'),
     fold: () => performAction('fold'),
     joinSvara: () => performAction('join_svara'),
     skipSvara: () => performAction('skip_svara'),

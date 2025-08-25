@@ -25,6 +25,7 @@ export class PlayerService {
       hasLooked: false,
       totalBet: 0,
       position,
+      lastAction: undefined,
     };
   }
 
@@ -38,6 +39,7 @@ export class PlayerService {
       isDealer?: boolean;
       lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look';
       hasLookedAndMustAct?: boolean;
+      isAllIn?: boolean;
     },
   ): Player {
     return {
@@ -56,7 +58,6 @@ export class PlayerService {
       hasLooked: false,
       totalBet: 0,
       score: undefined,
-      lastAction: undefined,
     };
   }
 

@@ -287,7 +287,7 @@ export class GameService {
       if (activePlayers.length === 1) {
         await this.endGameWithWinner(roomId, activePlayers[0].id);
       } else {
-        await this.endGame(roomId);
+        await this.endGame(roomId, gameState);
       }
       return;
     }
@@ -997,7 +997,7 @@ export class GameService {
       await this.endGameWithWinner(roomId, participants[0]);
     } else {
       // Если участников нет (маловероятно, но возможно), просто завершаем игру
-      await this.endGame(roomId);
+      await this.endGame(roomId, gameState);
     }
   }
 

@@ -36,6 +36,7 @@ export interface Player {
   position: number; // позиция за столом (0-5)
   isAllIn?: boolean; // игрок пошел ва-банк
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
+  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
 }
 
 export interface GameState {
