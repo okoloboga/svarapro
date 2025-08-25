@@ -736,7 +736,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return;
     }
     handlePlayerBet(currentPlayer.id);
-    actions.allIn();
+    actions.allIn(currentPlayer.balance);
   };
 
   // Обработчик для анимации действий других игроков
@@ -1059,7 +1059,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   canLook={canLook}
                   canBlindBet={canBlindBet}
                   canAllIn={canAllIn}
-                  callAmount={postLookActions ? postLookCallAmount : callAmount}
+                  callAmount={canAllIn ? currentPlayer.balance : (postLookActions ? postLookCallAmount : callAmount)}
                   turnTimer={turnTimer}
                   onFold={actions.fold}
                   onCall={handleCallClick}

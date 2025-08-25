@@ -530,7 +530,7 @@ export class GameService {
           amount,
         );
       case 'all_in':
-        return this.handleAllIn(roomId, gameState, playerIndex);
+        return this.handleAllIn(roomId, gameState, playerIndex, amount);
       default:
         return {
           success: false,
@@ -891,6 +891,10 @@ export class GameService {
     roomId: string,
     gameState: GameState,
   ): Promise<void> {
+    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    gameState = scoreResult.updatedGameState;
+    gameState.log.push(...scoreResult.actions);
+
     const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players, gameState.pot);
     gameState.potInfo = pots;
 
@@ -1164,9 +1168,14 @@ export class GameService {
     roomId: string,
     gameState: GameState,
     playerIndex: number,
+    amount?: number,
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
-    const allInAmount = player.balance;
+    const allInAmount = amount ?? player.balance;
+
+    if (allInAmount > player.balance) {
+        return { success: false, error: 'Недостаточно средств' };
+    }
 
     const { updatedPlayer, action: allInAction } = this.playerService.processPlayerBet(
       player,
