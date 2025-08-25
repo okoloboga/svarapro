@@ -725,7 +725,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
   
-  const showCards = !!(effectiveGameStatus === 'showdown' || (effectiveGameStatus === 'finished' && showFinished) || gameState.showWinnerAnimation);
+  const canAllIn = !!(isCurrentUserTurn && currentPlayer && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount) && currentPlayer.balance > 0);
+
+  const handleAllInClick = () => {
+    if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
+      console.log('❌ Cannot perform all-in: player not active or not turn');
+      return;
+    }
+    handlePlayerBet(currentPlayer.id);
+    actions.allIn();
+  };
 
   // Обработчик для анимации действий других игроков
   const handleOtherPlayerAction = (playerId: string) => {
@@ -1042,10 +1051,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 <ActionButtons 
                   postLookActions={postLookActions}
                   canFold={canFold}
-                  canCall={canCall}
-                  canRaise={canRaise}
+                  canCall={!canAllIn && canCall}
+                  canRaise={!canAllIn && canRaise}
                   canLook={canLook}
                   canBlindBet={canBlindBet}
+                  canAllIn={canAllIn}
                   callAmount={postLookActions ? postLookCallAmount : callAmount}
                   turnTimer={turnTimer}
                   onFold={actions.fold}
@@ -1053,6 +1063,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
+                  onAllIn={handleAllInClick}
                   blindButtonsDisabled={blindButtonsDisabled || isProcessing}
                   isCallDisabled={isCallDisabled || isProcessing}
                   isRaiseDisabled={isRaiseDisabled || isProcessing}

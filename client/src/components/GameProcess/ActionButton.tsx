@@ -9,6 +9,7 @@ interface ActionButtonsProps {
   canRaise: boolean;
   canLook: boolean;
   canBlindBet: boolean;
+  canAllIn: boolean;
   callAmount: number;
   minBet: number;
   turnTimer: number;
@@ -17,6 +18,7 @@ interface ActionButtonsProps {
   onRaise: () => void;
   onLook: () => void;
   onBlindBet: () => void;
+  onAllIn: () => void;
   blindButtonsDisabled?: boolean;
   isCallDisabled?: boolean;
   isRaiseDisabled?: boolean;
@@ -30,6 +32,7 @@ export function ActionButtons({
   canRaise,
   canLook,
   canBlindBet,
+  canAllIn,
   callAmount,
   minBet,
   turnTimer,
@@ -38,6 +41,7 @@ export function ActionButtons({
   onRaise,
   onLook,
   onBlindBet,
+  onAllIn,
   blindButtonsDisabled,
   isCallDisabled,
   isRaiseDisabled,
@@ -159,6 +163,17 @@ export function ActionButtons({
             <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
             <span className="-mt-1">{t('raise')}</span>
           </button>
+        )}
+
+        {canAllIn && (
+            <button
+                onClick={onAllIn}
+                className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+                style={{ backgroundColor: '#0E5C89' }}
+            >
+                <span>${Number(callAmount).toFixed(2)}</span>
+                <span className="-mt-1">{t('all_in')}</span>
+            </button>
         )}
         
         {canLook && (

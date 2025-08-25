@@ -34,7 +34,7 @@ export interface Player {
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
-  lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
+  isAllIn?: boolean; // игрок пошел ва-банк
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
 }
 
@@ -72,6 +72,7 @@ export interface GameState {
   isAnimating?: boolean; // флаг анимации (блокирует действия)
   animationType?: 'chip_fly' | 'win_animation'; // тип текущей анимации
   showWinnerAnimation?: boolean; // флаг для показа анимации победы
+  potInfo?: any;
 }
 
 export interface GameAction {
@@ -86,7 +87,9 @@ export interface GameAction {
     | 'raise'
     | 'fold'
     | 'win'
-    | 'svara';
+    | 'svara'
+    | 'all_in'
+    | 'return_bet';
   telegramId: string;
   amount?: number;
   timestamp: number;

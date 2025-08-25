@@ -230,5 +230,6 @@
   "menu": "Menu",
   "waiting_for_players": "Waiting for players",
   "waiting_for_next_round": "Waiting for the next round",
-  "sec": "sec"
+  "sec": "sec",
+  "all_in": "All-In"
 }
