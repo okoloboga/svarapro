@@ -1017,7 +1017,7 @@ export class GameService {
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) return;
 
-    const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players, gameState.pot);
+    const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players);
     gameState.potInfo = pots;
 
     if (returnedAmount > 0 && returnedTo) {
