@@ -886,6 +886,77 @@ export class GameService {
     roomId: string,
     gameState: GameState,
   ): Promise<void> {
+    const activePlayers = gameState.players.filter(p => !p.hasFolded);
+    const allInPlayers = activePlayers.filter(p => p.isAllIn);
+
+    if (allInPlayers.length === activePlayers.length) {
+        const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+        gameState = scoreResult.updatedGameState;
+        gameState.log.push(...scoreResult.actions);
+
+        const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players);
+        gameState.potInfo = pots;
+
+        if (returnedAmount > 0 && returnedTo) {
+            const player = gameState.players.find(p => p.id === returnedTo);
+            if (player) {
+                player.balance += returnedAmount;
+                const returnAction: GameAction = {
+                    type: 'return_bet',
+                    telegramId: returnedTo,
+                    amount: returnedAmount,
+                    timestamp: Date.now(),
+                    message: `Игроку ${player.username} возвращено ${returnedAmount}`
+                };
+                gameState.log.push(returnAction);
+                await this.usersService.updatePlayerBalance(player.id, player.balance);
+                await this.redisService.publishBalanceUpdate(player.id, player.balance);
+            }
+        }
+
+        for (let i = 0; i < pots.length; i++) {
+            const pot = pots[i];
+            const potContributors = gameState.players.filter(p => pot.contributors.includes(p.id));
+            const winners = this.playerService.determineWinners(potContributors);
+
+            if (winners.length > 1) {
+                // Svara
+                console.log(`Svara for pot ${i}`);
+                const winAmount = pot.amount / winners.length;
+                for (const winner of winners) {
+                    winner.balance += winAmount;
+                    const winAction: GameAction = {
+                        type: 'win',
+                        telegramId: winner.id,
+                        amount: winAmount,
+                        timestamp: Date.now(),
+                        message: `Игрок ${winner.username} выиграл ${winAmount} в сваре`
+                    };
+                    gameState.log.push(winAction);
+                }
+            } else if (winners.length === 1) {
+                const winner = winners[0];
+                winner.balance += pot.amount;
+                const winAction: GameAction = {
+                    type: 'win',
+                    telegramId: winner.id,
+                    amount: pot.amount,
+                    timestamp: Date.now(),
+                    message: `Игрок ${winner.username} выиграл банк ${pot.amount}`
+                };
+                gameState.log.push(winAction);
+            }
+
+            gameState.winners = winners;
+            await this.redisService.setGameState(roomId, gameState);
+            await this.redisService.publishGameUpdate(roomId, gameState);
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for animation
+        }
+
+        await this.endGame(roomId, gameState);
+        return;
+    }
+
     const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
