@@ -1,19 +1,22 @@
+import { useTranslation } from 'react-i18next';
+
 interface ActionNotificationProps {
   action?: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
   visible: boolean;
 }
 
-// Final configuration for styles and text.
-const actionConfig = {
-  blind: { text: 'ВСЛЕПУЮ', color: '#0E5C89' },
-  paid: { text: 'ОПЛАТИЛ', color: '#0E5C89' },
-  pass: { text: 'ПАС', color: '#FF3131' },
-  rais: { text: 'ПОВЫСИЛ', color: '#56BF00' },
-  win: { text: 'ВЫИГРАЛ', color: '#56BF00' },
-  look: { text: 'ПОСМОТРЕЛ', color: '#0E5C89' },
-};
-
 export function ActionNotification({ action, visible }: ActionNotificationProps) {
+  const { t } = useTranslation('common');
+
+  const actionConfig = {
+    blind: { text: t('blind_action'), color: '#0E5C89' },
+    paid: { text: t('paid_action'), color: '#0E5C89' },
+    pass: { text: t('pass_action'), color: '#FF3131' },
+    rais: { text: t('raise_action'), color: '#56BF00' },
+    win: { text: t('win_action'), color: '#56BF00' },
+    look: { text: t('look_action'), color: '#0E5C89' },
+  };
+
   if (!action || !visible) {
     return null;
   }

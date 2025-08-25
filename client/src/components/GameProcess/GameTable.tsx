@@ -2,6 +2,7 @@ import React from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
 import ChipsStack from './ChipsStack';
+import { useTranslation } from 'react-i18next';
 
 interface GameTableProps {
   gameState: GameState;
@@ -23,6 +24,7 @@ const GameTable: React.FC<GameTableProps> = ({
   showChipStack = true,
   savedChipCount = 0
 }) => {
+  const { t } = useTranslation('common');
   const baseWidth = 315;
   const baseHeight = 493;
   
@@ -61,7 +63,7 @@ const GameTable: React.FC<GameTableProps> = ({
     width: `${baseWidth * scale * 0.65}px`,
     height: `${baseHeight * scale * 0.65}px`,
     borderRadius: `${164 * scale}px`,
-    border: `${1 * scale}px solid rgba(158, 158, 159, 0.4)`, // #9E9E9F 40%
+    border: `${1 * scale}px solid rgba(158, 158, 159, 0.4)`,
     position: 'absolute',
     top: '50%',
     left: '50%',
@@ -100,7 +102,7 @@ const GameTable: React.FC<GameTableProps> = ({
     lineHeight: '100%',
     letterSpacing: '0%',
     textAlign: 'center',
-    pointerEvents: 'none', // Чтобы текст не мешал взаимодействию
+    pointerEvents: 'none', // Чтобы текст не мешала взаимодействию
     zIndex: 2,
   };
 
@@ -119,7 +121,7 @@ const GameTable: React.FC<GameTableProps> = ({
     lineHeight: '100%',
     letterSpacing: '0%',
     textAlign: 'center',
-    pointerEvents: 'none', // Чтобы текст не мешал взаимодействию
+    pointerEvents: 'none', // Чтобы текст не мешала взаимодействию
     zIndex: 2,
   };
 
@@ -136,12 +138,12 @@ const GameTable: React.FC<GameTableProps> = ({
       </div>
       
       <div style={potContainerStyle}>
-        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>Банк: ${Number(gameState.pot).toFixed(2)}</span>
+        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>{t('pot', { amount: Number(gameState.pot).toFixed(2) })}</span>
       </div>
       
       {/* Надпись "налог 5%" */}
       <div style={taxStyle}>
-        налог 5%
+        {t('tax_5_percent')}
       </div>
       
       {/* Стоп

@@ -1,6 +1,6 @@
-
 import sitdownImage from '@/assets/game/sitdown.png';
 import inviteImage from '@/assets/game/invite.png';
+import { useTranslation } from 'react-i18next';
 
 interface SeatButtonProps {
   type: 'sitdown' | 'invite';
@@ -12,6 +12,7 @@ interface SeatButtonProps {
 }
 
 export function SeatButton({ type, position, onSitDown, onInvite, disabled, scale = 1 }: SeatButtonProps) {
+  const { t } = useTranslation('common');
   const handleClick = () => {
     if (disabled) return;
     if (type === 'sitdown') {
@@ -42,7 +43,7 @@ export function SeatButton({ type, position, onSitDown, onInvite, disabled, scal
     >
       <img 
         src={type === 'sitdown' ? sitdownImage : inviteImage} 
-        alt={type === 'sitdown' ? 'Сесть' : 'Пригласить'} 
+        alt={type === 'sitdown' ? t('sit_down') : t('invite')} 
         style={imageStyle}
         className="object-contain"
       />

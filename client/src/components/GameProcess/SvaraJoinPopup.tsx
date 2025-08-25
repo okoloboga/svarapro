@@ -4,6 +4,7 @@ import { UserData } from '@/types/entities';
 import { StyledContainer } from '../StyledContainer';
 import starIcon from '@/assets/game/star.png';
 import defaultAvatar from '@/assets/main_logo.png';
+import { useTranslation } from 'react-i18next';
 
 interface SvaraJoinPopupProps {
   gameState: GameState;
@@ -53,6 +54,7 @@ const SvaraAvatar = ({ player }: { player: Player }) => {
 };
 
 export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupProps) {
+  const { t } = useTranslation('common');
   const [timer, setTimer] = useState(20);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +98,7 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
           <SvaraAvatar player={svaraWinners[0]} />
           <div className="flex items-center mx-4">
             <img src={starIcon} alt="*" className="w-6 h-6" />
-            <h1 className="font-semibold text-xl mx-2">Svara</h1>
+            <h1 className="font-semibold text-xl mx-2">{t('svara')}</h1>
             <img src={starIcon} alt="*" className="w-6 h-6" />
           </div>
           <SvaraAvatar player={svaraWinners[1]} />
@@ -113,7 +115,7 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
             <SvaraAvatar player={svaraWinners[0]} />
             <div className="flex items-center mx-4">
               <img src={starIcon} alt="*" className="w-6 h-6" />
-              <h1 className="font-semibold text-xl mx-2">Svara</h1>
+              <h1 className="font-semibold text-xl mx-2">{t('svara')}</h1>
               <img src={starIcon} alt="*" className="w-6 h-6" />
             </div>
             <SvaraAvatar player={svaraWinners[1]} />
@@ -135,7 +137,7 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
               {isParticipant ? (
                 <>
                   <p className="font-bold text-sm mb-3">
-                    {hasConfirmed ? 'Ждем остальных игроков...' : 'СВАРА! Будете участвовать?'}
+                    {hasConfirmed ? t('waiting_for_other_players') : t('svara_will_you_participate')}
                   </p>
                   <button 
                     onClick={hasConfirmed ? undefined : actions.joinSvara}
@@ -146,7 +148,7 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
                     }`}
                     disabled={hasConfirmed}
                   >
-                    {hasConfirmed ? '✓ Участвую' : 'Участвовать (бесплатно)'}
+                    {hasConfirmed ? t('participating') : t('participate_free')}
                   </button>
                   <button 
                     onClick={hasConfirmed ? undefined : actions.skipSvara}
@@ -157,23 +159,23 @@ export function SvaraJoinPopup({ gameState, userData, actions }: SvaraJoinPopupP
                     }`}
                     disabled={hasConfirmed}
                   >
-                    {hasConfirmed ? 'Решение принято' : `Пропустить (${timer} сек)`}
+                    {hasConfirmed ? t('decision_made') : t('skip_with_timer', { timer })}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className="font-bold text-sm mb-3">Присоединитесь или пропустите свару?</p>
+                  <p className="font-bold text-sm mb-3">{t('join_or_skip_svara')}</p>
                   <button 
                     onClick={actions.joinSvara}
                     className="w-[224px] h-[32px] rounded-lg bg-[#00AF17] text-white font-bold text-sm mb-2"
                   >
-                    Присоединиться ${gameState.pot}
+                    {t('join_svara_with_pot', { pot: gameState.pot })}
                   </button>
                   <button 
                     onClick={actions.skipSvara}
                     className="w-[224px] h-[32px] rounded-lg bg-[#FF443A] text-white font-bold text-sm"
                   >
-                    Пропустить ({timer} сек)
+                    {t('skip_with_timer', { timer })}
                   </button>
                 </>
               )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import closeIcon from '@/assets/close.png';
 import chatButtonBg from '@/assets/game/chat.png';
+import { useTranslation } from 'react-i18next';
 
 interface ChatMenuProps {
   isOpen: boolean;
@@ -8,15 +9,17 @@ interface ChatMenuProps {
   onSelectPhrase: (phrase: string) => void;
 }
 
-const chatPhrases = [
-  "Здарова Бандюганы!", "Ха-Ха-Ха!", "Спасибо!", "Давай-Давай!",
-  "Респект!", "Вау!", "Не бойся, дерзай!", "Удачи!",
-  "Ништяк!", "Вот это да!", "А мне по барабану!", "Хорошая игра",
-  "Не везет!", "Супер!", "Извини!", "Чую блеф!",
-  "Быстрее!", "Ля какой хитрый!", "Блин!", "Ва-банк!",
-];
-
 export function ChatMenu({ isOpen, onClose, onSelectPhrase }: ChatMenuProps) {
+  const { t } = useTranslation('common');
+
+  const chatPhrases = [
+    t('chat.phrase1'), t('chat.phrase2'), t('chat.phrase3'), t('chat.phrase4'),
+    t('chat.phrase5'), t('chat.phrase6'), t('chat.phrase7'), t('chat.phrase8'),
+    t('chat.phrase9'), t('chat.phrase10'), t('chat.phrase11'), t('chat.phrase12'),
+    t('chat.phrase13'), t('chat.phrase14'), t('chat.phrase15'), t('chat.phrase16'),
+    t('chat.phrase17'), t('chat.phrase18'), t('chat.phrase19'), t('chat.phrase20'),
+  ];
+
   if (!isOpen) {
     return null;
   }

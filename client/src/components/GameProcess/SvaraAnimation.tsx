@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import starIcon from '@/assets/game/star.png';
+import { useTranslation } from 'react-i18next';
 
 interface SvaraAnimationProps {
   onAnimationComplete: () => void;
 }
 
 export function SvaraAnimation({ onAnimationComplete }: SvaraAnimationProps) {
+  const { t } = useTranslation('common');
   useEffect(() => {
     const timer = setTimeout(() => {
       onAnimationComplete();
@@ -19,7 +21,7 @@ export function SvaraAnimation({ onAnimationComplete }: SvaraAnimationProps) {
       <div className="animate-pulse-svara">
         <div className="flex items-center mx-4">
           <img src={starIcon} alt="*" className="w-12 h-12" />
-          <h1 className="font-semibold text-5xl mx-4 text-white">Svara</h1>
+          <h1 className="font-semibold text-5xl mx-4 text-white">{t('svara')}</h1>
           <img src={starIcon} alt="*" className="w-12 h-12" />
         </div>
       </div>

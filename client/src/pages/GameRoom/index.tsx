@@ -24,6 +24,7 @@ import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useAppBackButton } from '@/hooks/useAppBackButton';
+import { useTranslation } from 'react-i18next';
 
 interface ChipAnimation {
   id: string;
@@ -102,6 +103,7 @@ const useTablePositioning = () => {
 };
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
+  const { t } = useTranslation('common');
   const { gameState, loading, error, isSeated, isProcessing, actions } = useGameState(roomId, socket);
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -665,7 +667,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   if (error) {
     return (
       <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
-        <div className="text-red-500 text-xl">Ошибка: {error}</div>
+        <div className="text-red-500 text-xl">{t('error_colon')} {error}</div>
       </div>
     );
   }
@@ -673,7 +675,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   if (!gameState) {
     return (
       <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
-        <div className="text-red-500 text-xl">Ошибка: Не удалось загрузить состояние игры</div>
+        <div className="text-red-500 text-xl">{t('error_loading_game_state')}</div>
       </div>
     );
   }
@@ -919,10 +921,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       )}
 
       <div className="relative z-30 text-white p-4 flex justify-between items-center">
-        <h2 className="text-xs font-semibold">Комната №{roomId.slice(0, 8)}</h2>
+        <h2 className="text-xs font-semibold">{t('room_number_colon')}{roomId.slice(0, 8)}</h2>
         <div className="flex items-center space-x-3">
           <button onClick={() => setShowMenuModal(true)} className="transition-all duration-200 ease-in-out hover:opacity-75">
-            <img src={menuIcon} alt="Меню" className="w-5 h-5" />
+            <img src={menuIcon} alt={t('menu')} className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -1034,7 +1036,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             <div>
               {effectiveGameStatus === 'waiting' ? (
                 <div className="p-4 flex items-center justify-center h-full">
-                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">Ждем игроков</p>
+                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">{t('waiting_for_players')}</p>
                 </div>
                               ) : isCurrentUserTurn ? (
                 <ActionButtons 
@@ -1059,7 +1061,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 />
               ) : (
                 <div className="p-4 flex items-center justify-center h-full">
-                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">В ожидании следующего раунда</p>
+                  <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">{t('waiting_for_next_round')}</p>
                 </div>
               )}
             </div>

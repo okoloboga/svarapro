@@ -1,6 +1,7 @@
 import lookIcon from '../../assets/game/look.svg';
 import passIcon from '../../assets/game/pass.svg';
 import raiseIcon from '../../assets/game/raise.svg';
+import { useTranslation } from 'react-i18next';
 
 interface ActionButtonsProps {
   canFold: boolean;
@@ -43,6 +44,8 @@ export function ActionButtons({
   isBlindBetDisabled,
   postLookActions,
 }: ActionButtonsProps) {
+  const { t } = useTranslation('common');
+
   if (postLookActions) {
     // Если игрок посмотрел карты, показываем Fold, Call и Raise
     return (
@@ -55,8 +58,8 @@ export function ActionButtons({
               className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
               style={{ backgroundColor: '#FF443A' }}
             >
-              <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
-              <span className="-mt-1">Пас</span>
+              <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
+              <span className="-mt-1">{t('pass')}</span>
             </button>
             <div 
               className="absolute text-white w-full text-center"
@@ -69,7 +72,7 @@ export function ActionButtons({
                 transform: 'translateX(-50%)',
               }}
             >
-              ({turnTimer}) сек
+              ({turnTimer}) {t('sec')}
             </div>
           </div>
           {/* Call Button */}
@@ -82,7 +85,7 @@ export function ActionButtons({
             disabled={isCallDisabled}
           >
             <span>${Number(callAmount).toFixed(2)}</span>
-            <span className="-mt-1">Заплатить</span>
+            <span className="-mt-1">{t('pay')}</span>
           </button>
           {/* Raise Button */}
           <button
@@ -93,8 +96,8 @@ export function ActionButtons({
             style={{ backgroundColor: '#56BF00' }}
             disabled={isRaiseDisabled}
           >
-            <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
-            <span className="-mt-1">Повысить</span>
+            <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
+            <span className="-mt-1">{t('raise')}</span>
           </button>
         </div>
       </div>
@@ -111,8 +114,8 @@ export function ActionButtons({
               className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
               style={{ backgroundColor: '#FF443A' }}
             >
-              <img src={passIcon} alt="Пас" style={{ width: '16px', height: '16px' }} />
-              <span className="-mt-1">Пас</span>
+              <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
+              <span className="-mt-1">{t('pass')}</span>
             </button>
             <div 
               className="absolute text-white w-full text-center"
@@ -125,7 +128,7 @@ export function ActionButtons({
                 transform: 'translateX(-50%)',
               }}
             >
-              ({turnTimer}) сек
+              ({turnTimer}) {t('sec')}
             </div>
           </div>
         )}
@@ -140,7 +143,7 @@ export function ActionButtons({
             disabled={isCallDisabled}
           >
             <span>${Number(callAmount).toFixed(2)}</span>
-            <span className="-mt-1">Заплатить</span>
+            <span className="-mt-1">{t('pay')}</span>
           </button>
         )}
 
@@ -153,8 +156,8 @@ export function ActionButtons({
             style={{ backgroundColor: '#56BF00' }}
             disabled={isRaiseDisabled}
           >
-            <img src={raiseIcon} alt="Повысить" style={{ width: '19px', height: '14px' }} />
-            <span className="-mt-1">Повысить</span>
+            <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
+            <span className="-mt-1">{t('raise')}</span>
           </button>
         )}
         
@@ -167,8 +170,8 @@ export function ActionButtons({
             style={{ backgroundColor: '#0E5C89' }}
             disabled={blindButtonsDisabled}
           >
-            <img src={lookIcon} alt="Открыть" style={{ width: '42px', height: '13px' }} />
-            <span className="-mt-1">Открыть</span>
+            <img src={lookIcon} alt={t('open')} style={{ width: '42px', height: '13px' }} />
+            <span className="-mt-1">{t('open')}</span>
           </button>
         )}
 
@@ -182,7 +185,7 @@ export function ActionButtons({
             disabled={blindButtonsDisabled || isBlindBetDisabled}
           >
             <span>${Number(minBet).toFixed(2)}</span>
-            <span className="-mt-1">Вслепую</span>
+            <span className="-mt-1">{t('blind')}</span>
           </button>
         )}
         

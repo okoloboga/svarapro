@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import closeIcon from '../../assets/close.png';
 import { StyledContainer } from '../StyledContainer';
 import { TURN_DURATION_SECONDS } from '@/constants';
+import { useTranslation } from 'react-i18next';
 
 interface BetSliderProps {
   minBet: number;
@@ -28,6 +29,7 @@ export function BetSlider({
   turnTimer = TURN_DURATION_SECONDS,
   isProcessing = false,
 }: BetSliderProps) {
+  const { t } = useTranslation('common');
   const [value, setValue] = useState(initialBet || minBet);
   const [percentage, setPercentage] = useState(0);
 
@@ -173,7 +175,7 @@ export function BetSlider({
                 style={{ backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00' }}
                 disabled={value > maxBet || isProcessing}
               >
-                Повысить
+                {t('raise')}
               </button>
             </div>
 
