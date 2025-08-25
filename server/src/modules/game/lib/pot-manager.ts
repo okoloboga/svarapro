@@ -1,13 +1,12 @@
 import { Player } from '../../../types/game';
 
 export interface Pot {
-  limit: number;
   amount: number;
   contributors: string[];
 }
 
 export class PotManager {
-  static calculatePots(players: Player[], totalPot: number): { pots: Pot[], returnedAmount: number, returnedTo: string | null } {
+  static calculatePots(players: Player[]): { pots: Pot[], returnedAmount: number, returnedTo: string | null } {
     const pots: Pot[] = [];
     let returnedAmount = 0;
     let returnedTo: string | null = null;
@@ -17,30 +16,33 @@ export class PotManager {
       return { pots, returnedAmount, returnedTo };
     }
 
-    const sortedBets = [...new Set(activePlayers.map(p => p.totalBet))].sort((a, b) => a - b);
+    const sortedPlayers = [...activePlayers].sort((a, b) => a.totalBet - b.totalBet);
 
-    let lastBet = 0;
-    for (const bet of sortedBets) {
-      const contributors = activePlayers.filter(p => p.totalBet >= bet);
-      if (contributors.length > 1) {
-        const potAmount = contributors.length * (bet - lastBet);
-        pots.push({
-          limit: bet,
-          amount: potAmount,
-          contributors: contributors.map(p => p.id),
-        });
-        lastBet = bet;
+    while (sortedPlayers.some(p => p.totalBet > 0)) {
+      const lowestBet = sortedPlayers[0].totalBet;
+      const contributors = activePlayers.filter(p => p.totalBet >= lowestBet);
+      const potAmount = contributors.length * lowestBet;
+
+      pots.push({
+        amount: potAmount,
+        contributors: contributors.map(p => p.id),
+      });
+
+      activePlayers.forEach(p => {
+        p.totalBet -= lowestBet;
+      });
+
+      const playerWithRemainingBet = sortedPlayers.find(p => p.totalBet > 0);
+      if (contributors.length === 1 && playerWithRemainingBet) {
+        returnedAmount = playerWithRemainingBet.totalBet;
+        returnedTo = playerWithRemainingBet.id;
+        playerWithRemainingBet.totalBet = 0;
       }
-    }
-
-    const calculatedPot = pots.reduce((sum, p) => sum + p.amount, 0);
-    if (totalPot > calculatedPot) {
-        const unassignedAmount = totalPot - calculatedPot;
-        const lastRaiser = activePlayers.sort((a,b) => b.totalBet - a.totalBet)[0];
-        if(lastRaiser) {
-            returnedAmount = unassignedAmount;
-            returnedTo = lastRaiser.id;
-        }
+      
+      sortedPlayers.sort((a, b) => a.totalBet - b.totalBet);
+      while(sortedPlayers.length > 0 && sortedPlayers[0].totalBet === 0) {
+        sortedPlayers.shift();
+      }
     }
 
     return { pots, returnedAmount, returnedTo };

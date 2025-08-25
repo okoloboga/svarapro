@@ -890,10 +890,7 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    console.log(`[endBettingRound] Calculating pots for pot: ${gameState.pot}`);
-    const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players, gameState.pot);
-    console.log(`[endBettingRound] Calculated pots: ${JSON.stringify(pots, null, 2)}`);
-    console.log(`[endBettingRound] Returned amount: ${returnedAmount} to ${returnedTo}`);
+    const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players);
     gameState.potInfo = pots;
 
     if (returnedAmount > 0 && returnedTo) {
@@ -913,8 +910,6 @@ export class GameService {
         }
     }
 
-    gameState.pot = gameState.pot - returnedAmount;
-
     for (let i = 0; i < pots.length; i++) {
         const pot = pots[i];
         const potContributors = gameState.players.filter(p => pot.contributors.includes(p.id));
@@ -923,7 +918,6 @@ export class GameService {
         if (winners.length > 1) {
             // Svara
             console.log(`Svara for pot ${i}`);
-            // For now, we just split the pot between the winners
             const winAmount = pot.amount / winners.length;
             for (const winner of winners) {
                 winner.balance += winAmount;
