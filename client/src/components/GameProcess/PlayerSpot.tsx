@@ -6,7 +6,7 @@ import defaultAvatar from '@/assets/main_logo.png';
 import cardBack from '@/assets/game/back.png';
 import chatButtonBg from '@/assets/game/chat.png';
 import { TURN_DURATION_SECONDS } from '@/constants';
-import { useTranslation } from 'react-i18next';
+
 
 interface PlayerSpotProps {
   player: Player;
@@ -37,7 +37,7 @@ interface PlayerSpotProps {
 }
 
 export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, chatPhrase, onPlayerBet, gameState }: PlayerSpotProps) {
-  const { t } = useTranslation('common');
+  
   const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
   const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null>(null);
   const [showWinAnimation, setShowWinAnimation] = useState(false);
