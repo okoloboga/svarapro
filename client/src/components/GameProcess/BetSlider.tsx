@@ -10,6 +10,7 @@ interface BetSliderProps {
   initialBet?: number;
   onChange?: (value: number) => void;
   onConfirm: (value: number) => void;
+  onAllIn: () => void;
   isOpen: boolean;
   onClose: () => void;
   isTurn?: boolean;
@@ -23,6 +24,7 @@ export function BetSlider({
   initialBet, 
   onChange, 
   onConfirm,
+  onAllIn,
   isOpen,
   onClose,
   isTurn = false,
@@ -168,14 +170,14 @@ export function BetSlider({
               </div>
               {/* Кнопка "Повысить" */}
               <button
-                onClick={() => onConfirm(value)}
+                onClick={() => value === maxBet ? onAllIn() : onConfirm(value)}
                 className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs ${
                   value > maxBet || isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 style={{ backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00' }}
                 disabled={value > maxBet || isProcessing}
               >
-                {t('raise')}
+                {value === maxBet ? t('all_in') : t('raise')}
               </button>
             </div>
 

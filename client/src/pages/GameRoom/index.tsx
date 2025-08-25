@@ -1080,7 +1080,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         </div>
       )}
       
-      <BetSlider isOpen={showBetSlider} onClose={() => setShowBetSlider(false)} minBet={minRaiseAmount} maxBet={maxRaise} initialBet={minRaiseAmount} onConfirm={handleBetConfirm} isTurn={isCurrentUserTurn} turnTimer={turnTimer} isProcessing={isProcessing} />
+      <BetSlider isOpen={showBetSlider} onClose={() => setShowBetSlider(false)} minBet={minRaiseAmount} maxBet={maxRaise} initialBet={minRaiseAmount} onConfirm={handleBetConfirm} onAllIn={handleAllInClick} isTurn={isCurrentUserTurn} turnTimer={turnTimer} isProcessing={isProcessing} />
       
       <GameMenu isOpen={showMenuModal} onClose={() => setShowMenuModal(false)} onExit={handleLeaveRoom} />
 
