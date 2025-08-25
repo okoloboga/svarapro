@@ -725,7 +725,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
   const showCards = !!(effectiveGameStatus === 'showdown' || (effectiveGameStatus === 'finished' && showFinished) || gameState.showWinnerAnimation);
-  const canAllIn = !!(isCurrentUserTurn && currentPlayer && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount) && currentPlayer.balance > 0);
+  const canAllIn = !!(isCurrentUserTurn && currentPlayer && (currentPlayer.balance < (postLookActions ? postLookCallAmount : callAmount) || currentPlayer.balance < minRaiseAmount) && currentPlayer.balance > 0);
 
   const handleAllInClick = () => {
     if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
