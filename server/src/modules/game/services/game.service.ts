@@ -895,7 +895,10 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
+    console.log(`[endBettingRound] Calculating pots for pot: ${gameState.pot}`);
     const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players, gameState.pot);
+    console.log(`[endBettingRound] Calculated pots: ${JSON.stringify(pots, null, 2)}`);
+    console.log(`[endBettingRound] Returned amount: ${returnedAmount} to ${returnedTo}`);
     gameState.potInfo = pots;
 
     if (returnedAmount > 0 && returnedTo) {
@@ -1046,6 +1049,7 @@ export class GameService {
 
     // Сохраняем значение банка для анимации
     const originalPot = gameState.pot;
+    console.log(`[endGameWithWinner] Winner: ${winnerId}, Original Pot: ${originalPot}`);
 
     const { updatedGameState, actions } = this.bettingService.processWinnings(
       gameState,
@@ -1171,6 +1175,7 @@ export class GameService {
     amount?: number,
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
+    console.log(`[All-In] Player ${player.username} is going all-in with ${player.balance}`);
     const allInAmount = amount ?? player.balance;
 
     if (allInAmount > player.balance) {

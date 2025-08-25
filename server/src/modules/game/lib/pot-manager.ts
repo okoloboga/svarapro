@@ -13,11 +13,13 @@ export class PotManager {
     let returnedTo: string | null = null;
 
     const activePlayers = players.filter(p => !p.hasFolded && p.totalBet > 0);
+    console.log(`[calculatePots] Active players: ${activePlayers.map(p => p.username).join(', ')}`);
     if (activePlayers.length === 0) {
       return { pots, returnedAmount, returnedTo };
     }
 
     const sortedBets = [...new Set(activePlayers.map(p => p.totalBet))].sort((a, b) => a - b);
+    console.log(`[calculatePots] Sorted bets: ${sortedBets}`);
 
     let lastBet = 0;
     for (const bet of sortedBets) {
@@ -30,6 +32,8 @@ export class PotManager {
       });
       lastBet = bet;
     }
+
+    console.log(`[calculatePots] Created pots: ${JSON.stringify(pots, null, 2)}`);
 
     const totalPot = pots.reduce((sum, p) => sum + p.amount, 0);
     if (pot > totalPot) {

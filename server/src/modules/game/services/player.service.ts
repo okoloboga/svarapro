@@ -81,6 +81,8 @@ export class PlayerService {
     // Округляем сумму до 2 знаков после запятой
     const roundedAmount = Number(amount.toFixed(2));
 
+    console.log(`[processPlayerBet] Processing bet for ${player.username}: action=${action}, amount=${roundedAmount}, balance_before=${player.balance}`);
+
     const updatedPlayer = { ...player };
     updatedPlayer.balance -= roundedAmount;
     updatedPlayer.tableBalance += roundedAmount;
