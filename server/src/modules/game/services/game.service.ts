@@ -268,12 +268,7 @@ export class GameService {
       return;
     }
 
-    console.log('🎯 startAntePhase started:', {
-      roomId,
-      status: gameState.status,
-      playersCount: gameState.players.length,
-      activePlayersCount: gameState.players.filter((p) => p.isActive).length,
-    });
+    
 
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,

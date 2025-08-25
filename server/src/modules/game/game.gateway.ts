@@ -138,12 +138,7 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId, action, amount } = payload;
     const telegramId = this.getTelegramId(client);
-    console.log('Handling game_action:', {
-      roomId,
-      telegramId,
-      action,
-      amount,
-    });
+    
 
     if (telegramId) {
       const result = await this.gameService.processAction(

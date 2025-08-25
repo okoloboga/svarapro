@@ -130,25 +130,7 @@ export class PlayerService {
   determineWinners(players: Player[]): Player[] {
     const activePlayers = players.filter((p) => p.isActive && !p.hasFolded);
 
-    // Отладочный лог для проверки определения победителей
-    console.log('🎯 Determine Winners Debug:', {
-      totalPlayers: players.length,
-      activePlayersCount: activePlayers.length,
-      activePlayers: activePlayers.map((p) => ({
-        id: p.id,
-        username: p.username,
-        score: p.score,
-        isActive: p.isActive,
-        hasFolded: p.hasFolded,
-      })),
-      allPlayers: players.map((p) => ({
-        id: p.id,
-        username: p.username,
-        score: p.score,
-        isActive: p.isActive,
-        hasFolded: p.hasFolded,
-      })),
-    });
+    
 
     if (activePlayers.length === 0) {
       console.log('❌ No active players found');
