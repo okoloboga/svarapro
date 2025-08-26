@@ -172,6 +172,10 @@ export class GameService {
     }
 
     const userProfile = await this.usersService.getProfile(telegramId);
+
+    if (userProfile.balance < gameState.minBet) {
+      return { success: false, error: 'Недостаточно средств для игры за этим столом' };
+    }
     const isGameInProgress = gameState.status !== 'waiting';
     const newPlayer = this.playerService.createPlayer(
       telegramId,
