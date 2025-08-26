@@ -4,7 +4,7 @@ module.exports = {
       name: 'svara-pro-server',
       script: './server/dist/main.js',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 3000
