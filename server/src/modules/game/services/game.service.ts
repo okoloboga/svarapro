@@ -983,9 +983,7 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
-    // At the end of the round, the total pot is calculated from individual player bets.
-    // The gameState.pot is not the source of truth here.
-    gameState.pot = gameState.players.reduce((sum, p) => sum + (p.totalBet || 0), 0);
+    
 
     // --- Pot Calculation and Winner Determination ---
     const potManager = new PotManager();

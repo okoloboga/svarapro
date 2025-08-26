@@ -34,6 +34,7 @@ export class BettingService {
           // Снимаем анте с баланса игрока
           const roundedMinBet = Number(minBet.toFixed(2));
           player.balance -= roundedMinBet;
+          player.totalBet = (player.totalBet || 0) + roundedMinBet; // Учитываем анте в общей ставке
           player.tableBalance += roundedMinBet;
           updatedGameState.pot = Number(
             (updatedGameState.pot + roundedMinBet).toFixed(2),
