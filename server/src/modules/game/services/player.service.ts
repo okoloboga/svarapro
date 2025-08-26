@@ -139,7 +139,6 @@ export class PlayerService {
 
     // Находим максимальный счет
     const maxScore = Math.max(...activePlayers.map((p) => p.score || 0));
-    console.log('📊 Max score:', maxScore);
 
     // Возвращаем всех игроков с максимальным счетом
     const winners = activePlayers.filter((p) => (p.score || 0) === maxScore);
