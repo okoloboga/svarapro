@@ -1026,53 +1026,72 @@ export class GameService {
         }, TURN_DURATION_SECONDS * 1000); // 20 секунд
         this.svaraTimers.set(roomId, timer);
     } else if (winners.length === 1) {
-        const { pots, returnedAmount, returnedTo } = PotManager.calculatePots(gameState.players);
-        gameState.potInfo = pots;
+        // === NEW POT LOGIC START ===
+        const potManager = new PotManager();
+        potManager.processBets(gameState.players);
 
-        if (returnedAmount > 0 && returnedTo) {
-            const player = gameState.players.find(p => p.id === returnedTo);
+        const pots = potManager.getPots();
+        const returnedBets = potManager.getReturnedBets();
+        gameState.potInfo = pots; // For client display
+
+        // Handle returned bets
+        for (const [playerId, amount] of returnedBets.entries()) {
+            const player = gameState.players.find(p => p.id === playerId);
             if (player) {
-                player.balance += returnedAmount;
+                player.balance += amount;
                 const returnAction: GameAction = {
                     type: 'return_bet',
-                    telegramId: returnedTo,
-                    amount: returnedAmount,
+                    telegramId: playerId,
+                    amount: amount,
                     timestamp: Date.now(),
-                    message: `Игроку ${player.username} возвращено ${returnedAmount}`
+                    message: `Игроку ${player.username} возвращено ${amount}`
                 };
                 gameState.log.push(returnAction);
-                await this.usersService.updatePlayerBalance(player.id, player.balance);
-                await this.redisService.publishBalanceUpdate(player.id, player.balance);
             }
         }
 
-        for (let i = 0; i < pots.length; i++) {
-            const pot = pots[i];
-            const potContributors = gameState.players.filter(p => pot.contributors.includes(p.id));
-            const potWinners = this.playerService.determineWinners(potContributors);
+        // Determine winners for each pot and distribute winnings
+        const potWinnersList = potManager.getWinners(gameState.players);
+        gameState.winners = []; // Clear previous winners
 
-            if (potWinners.length > 0) {
-                const winAmount = pot.amount / potWinners.length;
-                for (const winner of potWinners) {
-                    winner.balance += winAmount;
-                    const winAction: GameAction = {
-                        type: 'win',
-                        telegramId: winner.id,
-                        amount: winAmount,
-                        timestamp: Date.now(),
-                        message: `Игрок ${winner.username} выиграл ${winAmount}`
-                    };
-                    gameState.log.push(winAction);
+        for (const potResult of potWinnersList) {
+            const { potIndex, winners: potWinnerPlayers, amount } = potResult;
+            if (potWinnerPlayers.length > 0) {
+                const winAmount = amount / potWinnerPlayers.length;
+                for (const winner of potWinnerPlayers) {
+                    const playerInState = gameState.players.find(p => p.id === winner.id);
+                    if (playerInState) {
+                        playerInState.balance += winAmount;
+                        const winAction: GameAction = {
+                            type: 'win',
+                            telegramId: winner.id,
+                            amount: winAmount,
+                            timestamp: Date.now(),
+                            message: `Игрок ${winner.username} выиграл ${winAmount} из банка №${potIndex + 1}`
+                        };
+                        gameState.log.push(winAction);
+                    }
                 }
+                // Add winners to the main list for this round
+                gameState.winners.push(...potWinnerPlayers);
             }
-
-            gameState.winners = potWinners;
-            await this.redisService.setGameState(roomId, gameState);
-            await this.redisService.publishGameUpdate(roomId, gameState);
-            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for animation
         }
+        
+        // To avoid duplicates if a player wins multiple pots
+        gameState.winners = [...new Set(gameState.winners)];
+
+        // Update all player balances in the database
+        for (const player of gameState.players) {
+            await this.usersService.updatePlayerBalance(player.id, player.balance);
+            await this.redisService.publishBalanceUpdate(player.id, player.balance);
+        }
+
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for animation
 
         await this.endGame(roomId, gameState);
+        // === NEW POT LOGIC END ===
     } else {
         await this.endGame(roomId, gameState);
     }
