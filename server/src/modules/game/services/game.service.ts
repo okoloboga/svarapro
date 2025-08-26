@@ -114,7 +114,7 @@ export class GameService {
           // Если остался один активный игрок, он выигрывает
           await this.redisService.setGameState(roomId, gameState);
           await this.redisService.publishGameUpdate(roomId, gameState);
-          await this.endGameWithWinner(roomId, activePlayers[0].id);
+          await this.endGameWithWinner(roomId, gameState);
           return; // Выходим, чтобы не сохранять состояние еще раз
         }
 
@@ -280,7 +280,7 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => p.isActive);
     if (activePlayers.length < 2) {
       if (activePlayers.length === 1) {
-        await this.endGameWithWinner(roomId, activePlayers[0].id);
+        await this.endGameWithWinner(roomId, gameState);
       } else {
         await this.endGame(roomId, gameState);
       }
@@ -573,7 +573,7 @@ export class GameService {
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
 
-        await this.endGameWithWinner(roomId, lastBettor.id);
+        await this.endGameWithWinner(roomId, gameState);
         return { success: true };
       }
     }
@@ -603,7 +603,7 @@ export class GameService {
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
       // Затем запускаем процесс завершения игры
-      await this.endGameWithWinner(roomId, activePlayers[0].id);
+      await this.endGameWithWinner(roomId, gameState);
       return { success: true };
     } else {
       gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
@@ -934,7 +934,7 @@ export class GameService {
       await this.startSvaraGame(roomId, participants);
     } else if (participants.length === 1) {
       // Если только один участник (остальные не присоединились), он забирает банк
-      await this.endGameWithWinner(roomId, participants[0]);
+      await this.endGameWithWinner(roomId, gameState);
     } else {
       // Если участников нет (маловероятно, но возможно), просто завершаем игру
       await this.endGame(roomId, gameState);
