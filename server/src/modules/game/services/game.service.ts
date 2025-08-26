@@ -892,13 +892,8 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    const winners = this.playerService.determineWinners(gameState.players);
-    
-    if (winners.length === 1) {
-        await this.endGameWithWinner(roomId, winners[0].id);
-    } else {
-        await this.endGame(roomId, gameState);
-    }
+    // Теперь endGameWithWinner сам определит победителей и решит, что делать.
+    await this.endGameWithWinner(roomId, gameState);
   }
 
   private async _checkSvaraCompletion(
@@ -980,20 +975,48 @@ export class GameService {
 
   private async endGameWithWinner(
     roomId: string,
-    winnerId: string,
+    gameState: GameState,
   ): Promise<void> {
-    let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) return;
+
+    // At the end of the round, the total pot is calculated from individual player bets.
+    // The gameState.pot is not the source of truth here.
+    gameState.pot = gameState.players.reduce((sum, p) => sum + (p.totalBet || 0), 0);
+
+    // --- Pot Calculation and Winner Determination ---
+    const potManager = new PotManager();
+    potManager.processBets(gameState.players);
+
+    const pots = potManager.getPots();
+    const returnedBets = potManager.getReturnedBets();
+    gameState.potInfo = pots;
+
+    // Handle returned bets right away
+    for (const [playerId, amount] of returnedBets.entries()) {
+        const player = gameState.players.find(p => p.id === playerId);
+        if (player) {
+            player.balance += amount;
+            gameState.pot -= amount; // Adjust the total pot
+            const returnAction: GameAction = {
+                type: 'return_bet',
+                telegramId: playerId,
+                amount: amount,
+                timestamp: Date.now(),
+                message: `Игроку ${player.username} возвращено ${amount}`
+            };
+            gameState.log.push(returnAction);
+        }
+    }
 
     const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    const winners = this.playerService.determineWinners(gameState.players);
+    const overallWinners = this.playerService.determineWinners(gameState.players.filter(p => !p.hasFolded));
 
-    if (winners.length > 1) {
+    if (overallWinners.length > 1) {
         // Svara
-        console.log(`Svara`);
+        console.log(`Svara detected. Pot of ${gameState.pot} will be carried over.`);
         const phaseResult = this.gameStateService.moveToNextPhase(
             gameState,
             'svara_pending',
@@ -1002,8 +1025,8 @@ export class GameService {
         gameState.log.push(...phaseResult.actions);
 
         gameState.isSvara = true;
-        gameState.svaraParticipants = winners.map((w) => w.id);
-        gameState.winners = winners;
+        gameState.svaraParticipants = overallWinners.map((w) => w.id);
+        gameState.winners = overallWinners;
         gameState.svaraConfirmed = [];
         gameState.svaraDeclined = [];
 
@@ -1011,8 +1034,7 @@ export class GameService {
             type: 'svara',
             telegramId: 'system',
             timestamp: Date.now(),
-            message:
-            'Объявлена "Свара"! Игроки могут присоединиться в течение 20 секунд.',
+            message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
         };
         gameState.log.push(svaraAction);
 
@@ -1023,34 +1045,11 @@ export class GameService {
             this.resolveSvara(roomId).catch((error) => {
                 console.error(`Error resolving svara for room ${roomId}:`, error);
             });
-        }, TURN_DURATION_SECONDS * 1000); // 20 секунд
+        }, TURN_DURATION_SECONDS * 1000);
         this.svaraTimers.set(roomId, timer);
-    } else if (winners.length === 1) {
-        // === NEW POT LOGIC START ===
-        const potManager = new PotManager();
-        potManager.processBets(gameState.players);
 
-        const pots = potManager.getPots();
-        const returnedBets = potManager.getReturnedBets();
-        gameState.potInfo = pots; // For client display
-
-        // Handle returned bets
-        for (const [playerId, amount] of returnedBets.entries()) {
-            const player = gameState.players.find(p => p.id === playerId);
-            if (player) {
-                player.balance += amount;
-                const returnAction: GameAction = {
-                    type: 'return_bet',
-                    telegramId: playerId,
-                    amount: amount,
-                    timestamp: Date.now(),
-                    message: `Игроку ${player.username} возвращено ${amount}`
-                };
-                gameState.log.push(returnAction);
-            }
-        }
-
-        // Determine winners for each pot and distribute winnings
+    } else if (overallWinners.length === 1) {
+        // Single Winner or multiple pot winners
         const potWinnersList = potManager.getWinners(gameState.players);
         gameState.winners = []; // Clear previous winners
 
@@ -1072,12 +1071,10 @@ export class GameService {
                         gameState.log.push(winAction);
                     }
                 }
-                // Add winners to the main list for this round
                 gameState.winners.push(...potWinnerPlayers);
             }
         }
         
-        // To avoid duplicates if a player wins multiple pots
         gameState.winners = [...new Set(gameState.winners)];
 
         // Update all player balances in the database
@@ -1088,11 +1085,11 @@ export class GameService {
 
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for animation
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         await this.endGame(roomId, gameState);
-        // === NEW POT LOGIC END ===
     } else {
+        // No winners
         await this.endGame(roomId, gameState);
     }
   }
