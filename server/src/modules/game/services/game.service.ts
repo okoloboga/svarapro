@@ -51,23 +51,19 @@ export class GameService {
     const room = await this.redisService.getRoom(roomId);
     const gameState = await this.redisService.getGameState(roomId);
 
-    // 1. Обновляем объект комнаты
     if (room) {
       room.players = room.players.filter((pId) => pId !== telegramId);
       if (room.players.length === 0) {
-        // Если комната стала пустой, удаляем всё
         console.log(`Room ${roomId} is now empty, removing it.`);
         await this.redisService.removeRoom(roomId);
         await this.redisService.clearGameData(roomId);
         await this.redisService.publishRoomUpdate(roomId, null);
       } else {
-        // Иначе просто сохраняем обновленный список игроков в комнате
         await this.redisService.setRoom(roomId, room);
         await this.redisService.publishRoomUpdate(roomId, room);
       }
     }
 
-    // 2. Обновляем игровое состояние
     if (gameState) {
       const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
 
@@ -75,7 +71,6 @@ export class GameService {
         const removedPlayer = gameState.players[playerIndex];
         gameState.players.splice(playerIndex, 1);
 
-        // Сохраняем баланс вышедшего игрока
         try {
           await this.usersService.updatePlayerBalance(
             telegramId,
@@ -92,7 +87,6 @@ export class GameService {
           );
         }
 
-        // Добавляем запись в лог
         const action: GameAction = {
           type: 'leave',
           telegramId,
@@ -101,7 +95,6 @@ export class GameService {
         };
         gameState.log.push(action);
 
-        // Проверяем, не должен ли раунд закончиться
         const activePlayers = gameState.players.filter(
           (p) => p.isActive && !p.hasFolded,
         );
@@ -111,20 +104,17 @@ export class GameService {
           activePlayers.length === 1 &&
           activeStatuses.includes(gameState.status)
         ) {
-          // Если остался один активный игрок, он выигрывает
           await this.redisService.setGameState(roomId, gameState);
           await this.redisService.publishGameUpdate(roomId, gameState);
           await this.endGameWithWinner(roomId, gameState);
-          return; // Выходим, чтобы не сохранять состояние еще раз
+          return;
         }
 
-        // Просто сохраняем обновленное состояние. Не вызываем startGame отсюда.
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
       }
     }
 
-    // 3. Финальная очистка
     await this.redisService.removePlayerFromRoom(roomId, telegramId);
   }
 
@@ -182,7 +172,7 @@ export class GameService {
       userData,
       position,
       userProfile.balance,
-      !isGameInProgress, // isActive is false if game is in progress
+      !isGameInProgress,
     );
     gameState.players.push(newPlayer);
 
@@ -213,7 +203,6 @@ export class GameService {
 
     const gameState = await this.redisService.getGameState(roomId);
 
-    // Если игра перезапускается, отфильтровываем игроков, которые не могут позволить себе играть
     if (room.status === 'finished' && gameState) {
       const minBalance = room.minBet * 10;
       gameState.players = gameState.players.filter(
@@ -221,7 +210,6 @@ export class GameService {
       );
     }
 
-    // Если после фильтрации (или из состояния ожидания) у нас недостаточно игроков, возвращаемся в режим ожидания
     if (!gameState || gameState.players.length < 2) {
       console.log(
         `Not enough players to start/continue game in room ${roomId}. Going to waiting state.`,
@@ -233,7 +221,6 @@ export class GameService {
           roomId,
           room.minBet,
         );
-        // Переносим оставшихся игроков в новое состояние
         newGameState.players = gameState.players.map((p) =>
           this.playerService.resetPlayerForNewGame(p, false),
         );
@@ -248,7 +235,6 @@ export class GameService {
     await this.redisService.setRoom(roomId, room);
     await this.redisService.publishRoomUpdate(roomId, room);
 
-    // Теперь инициализируем новую игру. initializeNewGame будет использовать существующий (и отфильтрованный) массив игроков.
     const { updatedGameState, actions } =
       this.gameStateService.initializeNewGame(gameState, room.winner);
 
@@ -279,7 +265,6 @@ export class GameService {
     gameState = updatedGameState;
     gameState.log.push(...actions);
 
-    // Отправляем состояние сразу после анте, чтобы отобразить банк
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
@@ -313,7 +298,6 @@ export class GameService {
     await this.redisService.publishGameUpdate(roomId, gameState);
   }
 
-  // Новая логика свары
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
 
   async joinSvara(
@@ -325,8 +309,6 @@ export class GameService {
       return { success: false, error: 'Игра не найдена' };
     }
 
-    // Гибкая обработка: если фаза свары уже прошла, но игрок подтвердил участие,
-    // просто возвращаем успех и актуальное состояние игры. Это предотвратит ошибки на клиенте.
     if (gameState.status !== 'svara_pending') {
       if (gameState.svaraConfirmed?.includes(telegramId)) {
         return { success: true, gameState };
@@ -335,12 +317,11 @@ export class GameService {
       }
     }
 
-    // Проверяем, не принимал ли игрок уже решение
     if (
       gameState.svaraConfirmed?.includes(telegramId) ||
       gameState.svaraDeclined?.includes(telegramId)
     ) {
-      return { success: true, gameState }; // Просто возвращаем успех
+      return { success: true, gameState };
     }
 
     const player = gameState.players.find((p) => p.id === telegramId);
@@ -348,7 +329,6 @@ export class GameService {
       return { success: false, error: 'Игрок не найден' };
     }
 
-    // Проверяем, является ли игрок изначальным участником свары (победителем)
     const isOriginalWinner =
       gameState.svaraParticipants &&
       gameState.svaraParticipants.includes(telegramId);
@@ -358,13 +338,10 @@ export class GameService {
     }
 
     if (isOriginalWinner) {
-      // Изначальные победители участвуют бесплатно
-      console.log(`Player ${telegramId} joins Svara as original winner (free)`);
       if (!gameState.svaraConfirmed.includes(telegramId)) {
         gameState.svaraConfirmed.push(telegramId);
       }
     } else {
-      // Обычные игроки должны доплатить сумму равную банку
       const svaraBuyInAmount = gameState.pot;
       if (player.balance < svaraBuyInAmount) {
         return {
@@ -373,15 +350,9 @@ export class GameService {
         };
       }
 
-      // Списываем деньги и добавляем в банк
       player.balance -= svaraBuyInAmount;
       gameState.pot += svaraBuyInAmount;
 
-      console.log(
-        `Player ${telegramId} joins Svara with buy-in: ${svaraBuyInAmount}`,
-      );
-
-      // Исправлено: добавляем игрока только в список подтвердивших
       if (!gameState.svaraConfirmed.includes(telegramId)) {
         gameState.svaraConfirmed.push(telegramId);
       }
@@ -400,7 +371,6 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // Проверяем, не завершилась ли свара
     await this._checkSvaraCompletion(roomId, gameState);
 
     return { success: true, gameState };
@@ -415,15 +385,11 @@ export class GameService {
       return { success: false, error: 'Сейчас нельзя пропустить свару' };
     }
 
-    // Проверяем, не принимал ли игрок уже решение
     if (
       gameState.svaraConfirmed?.includes(telegramId) ||
       gameState.svaraDeclined?.includes(telegramId)
     ) {
-      console.log(
-        `Player ${telegramId} has already made a decision for svara.`,
-      );
-      return { success: true, gameState }; // Просто возвращаем успех
+      return { success: true, gameState };
     }
 
     const player = gameState.players.find((p) => p.id === telegramId);
@@ -431,7 +397,6 @@ export class GameService {
       return { success: false, error: 'Игрок не найден' };
     }
 
-    // Помечаем, что игрок отказался
     if (!gameState.svaraDeclined) {
       gameState.svaraDeclined = [];
     }
@@ -440,17 +405,15 @@ export class GameService {
     }
 
     const action: GameAction = {
-      type: 'fold', // Используем fold для простоты, можно создать и новый тип
+      type: 'fold',
       telegramId,
       timestamp: Date.now(),
       message: `Игрок ${player.username} решил пропустить свару`,
     };
     gameState.log.push(action);
 
-    // Отправляем обновление, чтобы клиент мог отреагировать (например, закрыть окно)
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // Проверяем, не завершилась ли свара
     await this._checkSvaraCompletion(roomId, gameState);
 
     return { success: true, gameState };
@@ -481,7 +444,6 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
-    // Обрабатываем fold до всех проверок, чтобы таймаут всегда срабатывал корректно
     if (action === 'fold') {
       if (gameState.currentPlayerIndex !== playerIndex) {
         return { success: false, error: 'Сейчас не ваш ход' };
@@ -489,7 +451,6 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    // Если игрок посмотрел карты, он может только сбросить, ответить или повысить
     if (player.hasLookedAndMustAct && !['raise', 'call'].includes(action)) {
       return {
         success: false,
@@ -512,7 +473,6 @@ export class GameService {
     }
 
     switch (action) {
-      // case 'fold': // Уже обработан выше
       case 'blind_bet':
       case 'look':
         return this.processBlindBettingAction(
@@ -547,18 +507,12 @@ export class GameService {
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
 
-    // Если игрок сбрасывает карты во время ставок вслепую, последний, кто делал ставку, выигрывает банк
     if (
       gameState.status === 'blind_betting' &&
       gameState.lastBlindBettorIndex !== undefined
     ) {
       const lastBettor = gameState.players[gameState.lastBlindBettorIndex];
       if (lastBettor && lastBettor.id !== player.id) {
-        console.log(
-          `Player ${player.username} folded to a blind bet. Winner is ${lastBettor.username}.`,
-        );
-
-        // Помечаем текущего игрока как сбросившего карты
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           {
@@ -575,7 +529,6 @@ export class GameService {
         };
         gameState.log.push(foldAction);
 
-        // Немедленно сохраняем состояние, чтобы показать сброс карт, затем завершаем игру
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
 
@@ -584,7 +537,6 @@ export class GameService {
       }
     }
 
-    // Стандартная логика сброса карт для других фаз
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       player,
       {
@@ -605,10 +557,8 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => !p.hasFolded);
 
     if (activePlayers.length === 1) {
-      // Немедленно сохраняем состояние, где игрок сбросил карты
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
-      // Затем запускаем процесс завершения игры
       await this.endGameWithWinner(roomId, gameState);
       return { success: true };
     } else {
@@ -649,27 +599,23 @@ export class GameService {
             blindBetAmount,
             'blind_bet',
           );
-        // Устанавливаем lastAction для отображения уведомления
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           updatedPlayer,
           { lastAction: 'blind' },
         );
         gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
+        gameState.chipCount += 1;
         gameState.lastBlindBet = blindBetAmount;
-        gameState.lastBlindBettorIndex = playerIndex; // Set the index of the blind bettor
+        gameState.lastBlindBettorIndex = playerIndex;
         gameState.log.push(blindAction);
-        // Устанавливаем состояние анимации
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
 
-        // Сохраняем состояние с анимацией
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
 
-        // Ждем 1 секунду для анимации
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Снимаем состояние анимации
         gameState.isAnimating = false;
         gameState.animationType = undefined;
 
@@ -682,13 +628,12 @@ export class GameService {
       case 'look': {
         const calculatedScore = this.cardService.calculateScore(player.cards);
 
-        // Игрок просто смотрит свои карты. Это бесплатно и не передает ход.
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           player,
           {
             hasLooked: true,
             lastAction: 'look',
-            hasLookedAndMustAct: true, // Устанавливаем флаг, что игрок должен действовать
+            hasLookedAndMustAct: true,
           },
         );
         gameState.players[playerIndex].score = calculatedScore;
@@ -700,8 +645,6 @@ export class GameService {
           message: `Игрок ${player.username} посмотрел карты и имеет ${calculatedScore} очков`,
         };
         gameState.log.push(lookAction);
-
-        // Ход не передается, игрок должен выбрать следующее действие (fold или raise)
         break;
       }
     }
@@ -720,7 +663,6 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        // Если игрок коллирует после просмотра карт, это действие инициирует фазу торгов.
         if (player.hasLookedAndMustAct) {
           const callAmount =
             gameState.lastBlindBet > 0
@@ -733,17 +675,17 @@ export class GameService {
 
           const { updatedPlayer, action: callAction } =
             this.playerService.processPlayerBet(player, callAmount, 'call');
-          
+
           gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
             updatedPlayer,
-            { hasLookedAndMustAct: false }, // Сбрасываем флаг
+            { hasLookedAndMustAct: false },
           );
           gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+          gameState.chipCount += 1;
           gameState.lastActionAmount = callAmount;
-          gameState.lastRaiseIndex = playerIndex; // Этот call действует как первый raise
+          gameState.lastRaiseIndex = playerIndex;
           gameState.log.push(callAction);
 
-          // Переводим игру в фазу betting и открываем карты остальным
           const phaseResult = this.gameStateService.moveToNextPhase(
             gameState,
             'betting',
@@ -767,7 +709,6 @@ export class GameService {
           break;
         }
 
-        // Обычный call в фазе betting
         if (playerIndex === gameState.lastRaiseIndex) {
           await this.endBettingRound(roomId, gameState);
           return { success: true };
@@ -788,6 +729,7 @@ export class GameService {
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+        gameState.chipCount += 1;
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         break;
@@ -796,7 +738,6 @@ export class GameService {
         const raiseAmount = amount || 0;
         const isPostLookRaise = player.hasLookedAndMustAct;
 
-        // Определяем минимальную ставку для повышения
         const minRaiseAmount =
           gameState.lastBlindBet > 0
             ? gameState.lastBlindBet * 2
@@ -820,14 +761,14 @@ export class GameService {
 
         gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
           updatedPlayer,
-          { hasLookedAndMustAct: false }, // Сбрасываем флаг после действия
+          { hasLookedAndMustAct: false },
         );
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
+        gameState.chipCount += 1;
         gameState.lastRaiseIndex = playerIndex;
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
 
-        // Если это повышение после просмотра карт, переводим игру в фазу betting
         if (isPostLookRaise) {
           const phaseResult = this.gameStateService.moveToNextPhase(
             gameState,
@@ -836,7 +777,6 @@ export class GameService {
           gameState = phaseResult.updatedGameState;
           gameState.log.push(...phaseResult.actions);
 
-          // Все остальные игроки смотрят карты
           for (let i = 0; i < gameState.players.length; i++) {
             if (
               i !== playerIndex &&
@@ -850,7 +790,6 @@ export class GameService {
             }
           }
 
-          // Вычисляем очки для всех игроков
           const scoreResult =
             this.gameStateService.calculateScoresForPlayers(gameState);
           gameState = scoreResult.updatedGameState;
@@ -860,18 +799,14 @@ export class GameService {
       }
     }
 
-    // Устанавливаем состояние анимации
     gameState.isAnimating = true;
     gameState.animationType = 'chip_fly';
 
-    // Сохраняем состояние с анимацией
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // Ждем 1 секунду для анимации
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Снимаем состояние анимации
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
@@ -888,8 +823,6 @@ export class GameService {
     return { success: true, gameState };
   }
 
-  
-
   private async endBettingRound(
     roomId: string,
     gameState: GameState,
@@ -898,7 +831,6 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    // Теперь endGameWithWinner сам определит победителей и решит, что делать.
     await this.endGameWithWinner(roomId, gameState);
   }
 
@@ -911,18 +843,15 @@ export class GameService {
       (gameState.svaraConfirmed?.length || 0) +
       (gameState.svaraDeclined?.length || 0);
 
-    // Завершаем свару досрочно, только если ВСЕ игроки за столом приняли решение
     if (decisionsCount >= totalPlayers) {
       console.log(
         `All ${totalPlayers} players have made a decision for svara in room ${roomId}. Resolving immediately.`,
       );
-      // Немедленно разрешаем свару, так как все приняли решение
       await this.resolveSvara(roomId);
     }
   }
 
   private async resolveSvara(roomId: string): Promise<void> {
-    // Очищаем таймер
     if (this.svaraTimers.has(roomId)) {
       clearTimeout(this.svaraTimers.get(roomId));
       this.svaraTimers.delete(roomId);
@@ -930,19 +859,16 @@ export class GameService {
 
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState || gameState.status !== 'svara_pending') {
-      return; // Игра уже не в состоянии ожидания свары
+      return;
     }
 
     const participants = gameState.svaraConfirmed || [];
 
     if (participants.length >= 2) {
-      // Если есть как минимум 2 участника, начинаем свару
       await this.startSvaraGame(roomId, participants);
     } else if (participants.length === 1) {
-      // Если только один участник (остальные не присоединились), он забирает банк
       await this.endGameWithWinner(roomId, gameState);
     } else {
-      // Если участников нет (маловероятно, но возможно), просто завершаем игру
       await this.endGame(roomId, gameState, 'no_winner');
     }
   }
@@ -985,7 +911,6 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
-    // Этап 1: Определение победителя и объявление
     console.log(`[endGameWithWinner] Starting winner determination for room ${roomId}`);
 
     const scoreResult =
@@ -996,20 +921,18 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => !p.hasFolded);
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
-    // Переводим игру в статус 'finished', чтобы клиент начал анимацию
-    const phaseResult = this.gameStateService.moveToNextPhase(
-      gameState,
-      'finished',
-    );
-    gameState = phaseResult.updatedGameState;
-    gameState.log.push(...phaseResult.actions);
-    gameState.winners = overallWinners; // Устанавливаем победителей для анимации
-
     if (overallWinners.length > 1) {
-      // --- Логика Свары ---
       console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
+      const phaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'svara_pending',
+      );
+      gameState = phaseResult.updatedGameState;
+      gameState.log.push(...phaseResult.actions);
+
       gameState.isSvara = true;
       gameState.svaraParticipants = overallWinners.map((w) => w.id);
+      gameState.winners = overallWinners;
       gameState.svaraConfirmed = [];
       gameState.svaraDeclined = [];
 
@@ -1020,14 +943,6 @@ export class GameService {
         message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
       };
       gameState.log.push(svaraAction);
-      
-      // Меняем статус на svara_pending для принятия решений игроками
-      const svaraPhaseResult = this.gameStateService.moveToNextPhase(
-        gameState,
-        'svara_pending',
-      );
-      gameState = svaraPhaseResult.updatedGameState;
-      gameState.log.push(...svaraPhaseResult.actions);
 
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
@@ -1038,20 +953,24 @@ export class GameService {
         });
       }, TURN_DURATION_SECONDS * 1000);
       this.svaraTimers.set(roomId, timer);
-
     } else {
-      // --- Логика для одного победителя или если все остальные сдались ---
-      console.log(`Winner determined in room ${roomId}. Publishing results for animation.`);
-      
+      console.log(`Winner determined in room ${roomId}. Publishing 'showdown' state.`);
+      const phaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'showdown',
+      );
+      gameState = phaseResult.updatedGameState;
+      gameState.log.push(...phaseResult.actions);
+      gameState.winners = overallWinners;
+
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
 
-      // Этап 2: Запускаем распределение выигрыша после задержки на анимацию
       setTimeout(() => {
         this.distributeWinnings(roomId).catch((error) => {
           console.error(`Failed to distribute winnings for room ${roomId}:`, error);
         });
-      }, 3000); // 3 секунды на анимацию
+      }, 3000);
     }
   }
 
@@ -1064,18 +983,16 @@ export class GameService {
 
     console.log(`[distributeWinnings] Distributing winnings for room ${roomId}`);
 
-    const activePlayers = gameState.players.filter(p => !p.hasFolded && !p.isAllIn);
     const isAllInGame = gameState.players.some((p) => p.isAllIn);
     const winners = gameState.winners || [];
 
     if (winners.length === 0) {
-        console.log('[distributeWinnings] No winners found, ending game.');
-        await this.endGame(roomId, gameState, 'no_winner');
-        return;
+      console.log('[distributeWinnings] No winners found, ending game.');
+      await this.endGame(roomId, gameState, 'no_winner');
+      return;
     }
 
     if (isAllInGame) {
-      // --- ALL-IN LOGIC ---
       console.log(`[distributeWinnings] All-in game detected in room ${roomId}.`);
       const potManager = new PotManager();
       potManager.processBets(gameState.players);
@@ -1086,18 +1003,16 @@ export class GameService {
         if (potWinnerPlayers.length > 0) {
           const winAmount = Number((amount / potWinnerPlayers.length).toFixed(2));
           for (const winner of potWinnerPlayers) {
-            const playerInState = gameState.players.find(p => p.id === winner.id);
+            const playerInState = gameState.players.find((p) => p.id === winner.id);
             if (playerInState) {
               playerInState.balance += winAmount;
             }
           }
         }
       }
-      // Обнуляем банк после распределения
       gameState.pot = 0;
-
+      gameState.chipCount = 0;
     } else if (winners.length === 1) {
-      // --- STANDARD WIN LOGIC ---
       console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
       const winnerIds = winners.map((w) => w.id);
       const { updatedGameState, actions } = this.bettingService.processWinnings(
@@ -1108,12 +1023,18 @@ export class GameService {
       gameState.log.push(...actions);
     }
 
-    // --- Сохранение балансов и завершение игры ---
     for (const player of gameState.players) {
       await this.usersService.updatePlayerBalance(player.id, player.balance);
       await this.redisService.publishBalanceUpdate(player.id, player.balance);
     }
-    
+
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'finished',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
@@ -1122,18 +1043,16 @@ export class GameService {
 
   private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
     console.log(`[endGame] Ending game for room ${roomId}, reason: ${reason}`);
-    
+
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
       room.finishedAt = new Date();
-      // В случае свары, победителя нет, банк переносится
       room.winner = reason === 'winner' && gameState.winners ? gameState.winners[0]?.id : undefined;
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    // Запускаем авто-рестарт игры
     setTimeout(() => {
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
@@ -1148,11 +1067,10 @@ export class GameService {
     amount?: number,
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
-    console.log(`[All-In] Player ${player.username} is going all-in with ${player.balance}`);
     const allInAmount = amount ?? player.balance;
 
     if (allInAmount > player.balance) {
-        return { success: false, error: 'Недостаточно средств' };
+      return { success: false, error: 'Недостаточно средств' };
     }
 
     const { updatedPlayer, action: allInAction } = this.playerService.processPlayerBet(
@@ -1163,22 +1081,21 @@ export class GameService {
 
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(updatedPlayer, {
       isAllIn: true,
-      lastAction: 'raise', // Treat all-in as a raise
+      lastAction: 'raise',
     });
 
     gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
+    gameState.chipCount += 1;
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
     gameState.log.push(allInAction);
 
-    const activePlayers = gameState.players.filter(p => !p.hasFolded);
-    const allInPlayers = activePlayers.filter(p => p.isAllIn);
+    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+    const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
     if (allInPlayers.length === activePlayers.length) {
-      // All active players are all-in, go to showdown
       await this.endBettingRound(roomId, gameState);
     } else {
-      // Move to next player
       gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
@@ -1194,4 +1111,3 @@ export class GameService {
     return { success: true, gameState };
   }
 }
-      

@@ -39,6 +39,7 @@ export class BettingService {
           updatedGameState.pot = Number(
             (updatedGameState.pot + roundedMinBet).toFixed(2),
           );
+          updatedGameState.chipCount += 1; // Увеличиваем счетчик фишек
 
           // Добавляем действие в лог
           const action: GameAction = {

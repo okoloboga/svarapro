@@ -74,6 +74,7 @@ export interface GameState {
   animationType?: 'chip_fly' | 'win_animation'; // тип текущей анимации
   showWinnerAnimation?: boolean; // флаг для показа анимации победы
   potInfo?: any;
+  chipCount: number; // Количество фишек в банке для анимации
 }
 
 export interface GameAction {

@@ -29,6 +29,7 @@ export class GameStateService {
       isSvara: false,
       round: 0,
       log: [],
+      chipCount: 0,
     };
   }
 
@@ -55,6 +56,7 @@ export class GameStateService {
     updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
+    updatedGameState.chipCount = 0;
 
     // Выбираем дилера на основе правил
     let newDealerIndex = -1;
