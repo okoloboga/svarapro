@@ -147,6 +147,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
   const [isDealingCards, setIsDealingCards] = useState(false);
+  const [isShowingDown, setIsShowingDown] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
