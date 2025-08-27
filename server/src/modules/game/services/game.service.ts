@@ -943,7 +943,7 @@ export class GameService {
       await this.endGameWithWinner(roomId, gameState);
     } else {
       // Если участников нет (маловероятно, но возможно), просто завершаем игру
-      await this.endGame(roomId, gameState);
+      await this.endGame(roomId, gameState, 'no_winner');
     }
   }
 
