@@ -30,8 +30,17 @@ const GameTable: React.FC<GameTableProps> = ({
   
 
   
-  // Используем сохраненное количество фишек если игра закончена, иначе используем pot
-  const totalChips = gameState.status === 'finished' ? savedChipCount : (gameState.pot || 0);
+  // Считаем количество фишек на основе лога действий
+  const totalChips = React.useMemo(() => {
+    if (gameState.status === 'finished') {
+      return savedChipCount;
+    }
+    if (!gameState.log) {
+      return 0;
+    }
+    const bettingActions = ['ante', 'blind_bet', 'bet', 'call', 'raise'];
+    return gameState.log.filter(action => bettingActions.includes(action.type)).length;
+  }, [gameState.status, gameState.log, savedChipCount]);
   
   
 
