@@ -982,7 +982,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                 };
                 
                 const openCardsPosition = getOpenCardsPosition(screenPosition);
-                const isTurn = !!(gameState && player && gameState.players[gameState.currentPlayerIndex]?.id === player.id) ?? false;
+                const isTurn = !!(gameState && player && gameState.players[gameState.currentPlayerIndex]?.id === player.id);
                 const chatPhrase = player ? activeChats[player.id]?.phrase : undefined;
 
                 return (
@@ -990,7 +990,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                     {player ? (
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
-                        const isWinner = gameState.winners?.some(w => w.id === player.id) ?? false;
+                        const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
                         // const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
                         // Для отображения используем банк минус 5% налог
                         const winAmount = isWinner && gameState.pot > 0 ? Number((gameState.pot * 0.95).toFixed(2)) : 0;
