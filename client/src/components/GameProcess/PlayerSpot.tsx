@@ -43,6 +43,20 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [showCardsPhase, setShowCardsPhase] = useState(false);
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
+  const [localIsWinner, setLocalIsWinner] = useState(false);
+  const [localWinAmount, setLocalWinAmount] = useState(0);
+
+  useEffect(() => {
+    if (isWinner && winAmount > 0) {
+      setLocalIsWinner(true);
+      setLocalWinAmount(winAmount);
+    }
+
+    if (gameStatus !== 'finished') {
+      setLocalIsWinner(false);
+      setLocalWinAmount(0);
+    }
+  }, [isWinner, winAmount, gameStatus]);
 
   const buttonTextStyle: React.CSSProperties = {
     fontWeight: 700,
@@ -82,42 +96,37 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     return amount;
   };
 
-  // Set notification type based on last action
+  // Set notification type based on last action and win state
   useEffect(() => {
-    if (lastAction && !isCurrentUser) {
-      let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
-      switch (lastAction) {
-        case 'blind': actionType = 'blind'; break;
-        case 'call': actionType = 'paid'; break;
-        case 'fold': actionType = 'pass'; break;
-        case 'raise': actionType = 'rais'; break;
-        case 'look': actionType = 'look'; break;
-        default: actionType = null;
-      }
-      setNotificationType(actionType);
-    } else if (!lastAction || isCurrentUser) {
+    const isWinning = isWinner && winAmount > 0 && gameStatus === 'finished';
+
+    if (!isCurrentUser) {
+      if (isWinning) {
+        setNotificationType('win');
+      } else if (lastAction) {
+        let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
+        switch (lastAction) {
+          case 'blind': actionType = 'blind'; break;
+          case 'call': actionType = 'paid'; break;
+          case 'fold': actionType = 'pass'; break;
+          case 'raise': actionType = 'rais'; break;
+          case 'look': actionType = 'look'; break;
+          default: actionType = null;
+        }
+        setNotificationType(actionType);
+      } else {
         setNotificationType(null);
+      }
+    } else {
+      setNotificationType(null);
     }
-  }, [lastAction, isCurrentUser]);
-
-  // Show WIN notification at the end of the game for winners (non-current user)
-  useEffect(() => {
-    const shouldShowWinNotification =
-      !isCurrentUser &&
-      isWinner &&
-      winAmount > 0 &&
-      (gameStatus === 'finished');
-
-    if (shouldShowWinNotification) {
-      setNotificationType('win');
-    }
-  }, [isCurrentUser, isWinner, winAmount, gameStatus]);
+  }, [lastAction, isCurrentUser, isWinner, winAmount, gameStatus]);
 
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
   // Win sequence logic: first show cards for 3 seconds, then show win animation
   useEffect(() => {
-    const shouldStartSequence = isWinner && winAmount > 0 && gameStatus === 'finished';
+    const shouldStartSequence = localIsWinner && localWinAmount > 0 && gameStatus === 'finished';
     
     if (shouldStartSequence) {
       // Phase 1: Show cards for 3 seconds
@@ -142,7 +151,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
       setShowCardsPhase(false);
       setShowWinAnimation(false);
     }
-  }, [isWinner, winAmount, gameStatus]);
+  }, [localIsWinner, localWinAmount, gameStatus]);
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
