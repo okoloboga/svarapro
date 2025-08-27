@@ -272,8 +272,6 @@ export class GameService {
       return;
     }
 
-    
-
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,
       gameState.minBet,
@@ -281,12 +279,16 @@ export class GameService {
     gameState = updatedGameState;
     gameState.log.push(...actions);
 
+    // Отправляем состояние сразу после анте, чтобы отобразить банк
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
     const activePlayers = gameState.players.filter((p) => p.isActive);
     if (activePlayers.length < 2) {
       if (activePlayers.length === 1) {
         await this.endGameWithWinner(roomId, gameState);
       } else {
-        await this.endGame(roomId, gameState);
+        await this.endGame(roomId, gameState, 'no_winner');
       }
       return;
     }
@@ -983,6 +985,9 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
+    // Этап 1: Определение победителя и объявление
+    console.log(`[endGameWithWinner] Starting winner determination for room ${roomId}`);
+
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
@@ -990,23 +995,21 @@ export class GameService {
 
     const activePlayers = gameState.players.filter((p) => !p.hasFolded);
     const overallWinners = this.playerService.determineWinners(activePlayers);
-    const isAllInGame = activePlayers.some((p) => p.isAllIn);
+
+    // Переводим игру в статус 'finished', чтобы клиент начал анимацию
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'finished',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+    gameState.winners = overallWinners; // Устанавливаем победителей для анимации
 
     if (overallWinners.length > 1) {
-      // --- SVARA LOGIC ---
-      console.log(
-        `Svara detected. Pot of ${gameState.pot} will be carried over.`,
-      );
-      const phaseResult = this.gameStateService.moveToNextPhase(
-        gameState,
-        'svara_pending',
-      );
-      gameState = phaseResult.updatedGameState;
-      gameState.log.push(...phaseResult.actions);
-
+      // --- Логика Свары ---
+      console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
       gameState.isSvara = true;
       gameState.svaraParticipants = overallWinners.map((w) => w.id);
-      gameState.winners = overallWinners;
       gameState.svaraConfirmed = [];
       gameState.svaraDeclined = [];
 
@@ -1017,6 +1020,14 @@ export class GameService {
         message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
       };
       gameState.log.push(svaraAction);
+      
+      // Меняем статус на svara_pending для принятия решений игроками
+      const svaraPhaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'svara_pending',
+      );
+      gameState = svaraPhaseResult.updatedGameState;
+      gameState.log.push(...svaraPhaseResult.actions);
 
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
@@ -1027,66 +1038,68 @@ export class GameService {
         });
       }, TURN_DURATION_SECONDS * 1000);
       this.svaraTimers.set(roomId, timer);
-    } else if (isAllInGame) {
+
+    } else {
+      // --- Логика для одного победителя или если все остальные сдались ---
+      console.log(`Winner determined in room ${roomId}. Publishing results for animation.`);
+      
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+
+      // Этап 2: Запускаем распределение выигрыша после задержки на анимацию
+      setTimeout(() => {
+        this.distributeWinnings(roomId).catch((error) => {
+          console.error(`Failed to distribute winnings for room ${roomId}:`, error);
+        });
+      }, 3000); // 3 секунды на анимацию
+    }
+  }
+
+  private async distributeWinnings(roomId: string): Promise<void> {
+    let gameState = await this.redisService.getGameState(roomId);
+    if (!gameState) {
+      console.error(`[distributeWinnings] Game state not found for room ${roomId}`);
+      return;
+    }
+
+    console.log(`[distributeWinnings] Distributing winnings for room ${roomId}`);
+
+    const activePlayers = gameState.players.filter(p => !p.hasFolded && !p.isAllIn);
+    const isAllInGame = gameState.players.some((p) => p.isAllIn);
+    const winners = gameState.winners || [];
+
+    if (winners.length === 0) {
+        console.log('[distributeWinnings] No winners found, ending game.');
+        await this.endGame(roomId, gameState, 'no_winner');
+        return;
+    }
+
+    if (isAllInGame) {
       // --- ALL-IN LOGIC ---
-      console.log('All-in detected. Using PotManager for winnings.');
+      console.log(`[distributeWinnings] All-in game detected in room ${roomId}.`);
       const potManager = new PotManager();
       potManager.processBets(gameState.players);
-
-      const pots = potManager.getPots();
-      const returnedBets = potManager.getReturnedBets();
-      gameState.potInfo = pots;
-
-      // Handle returned bets
-      for (const [playerId, amount] of returnedBets.entries()) {
-        const player = gameState.players.find((p) => p.id === playerId);
-        if (player) {
-          player.balance += amount;
-          gameState.pot -= amount;
-          const returnAction: GameAction = {
-            type: 'return_bet',
-            telegramId: playerId,
-            amount: amount,
-            timestamp: Date.now(),
-            message: `Игроку ${player.username} возвращено ${amount}`,
-          };
-          gameState.log.push(returnAction);
-        }
-      }
-
       const potWinnersList = potManager.getWinners(gameState.players);
-      gameState.winners = [];
 
       for (const potResult of potWinnersList) {
-        const { potIndex, winners: potWinnerPlayers, amount } = potResult;
+        const { winners: potWinnerPlayers, amount } = potResult;
         if (potWinnerPlayers.length > 0) {
-          const winAmount = amount / potWinnerPlayers.length;
+          const winAmount = Number((amount / potWinnerPlayers.length).toFixed(2));
           for (const winner of potWinnerPlayers) {
-            const playerInState = gameState.players.find(
-              (p) => p.id === winner.id,
-            );
+            const playerInState = gameState.players.find(p => p.id === winner.id);
             if (playerInState) {
               playerInState.balance += winAmount;
-              const winAction: GameAction = {
-                type: 'win',
-                telegramId: winner.id,
-                amount: winAmount,
-                timestamp: Date.now(),
-                message: `Игрок ${winner.username} выиграл ${winAmount} из банка №${
-                  potIndex + 1
-                }`,
-              };
-              gameState.log.push(winAction);
             }
           }
-          gameState.winners.push(...potWinnerPlayers);
         }
       }
-      gameState.winners = [...new Set(gameState.winners)];
-    } else if (overallWinners.length === 1) {
+      // Обнуляем банк после распределения
+      gameState.pot = 0;
+
+    } else if (winners.length === 1) {
       // --- STANDARD WIN LOGIC ---
-      console.log('Standard win detected. Processing single pot.');
-      const winnerIds = overallWinners.map((w) => w.id);
+      console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
+      const winnerIds = winners.map((w) => w.id);
       const { updatedGameState, actions } = this.bettingService.processWinnings(
         gameState,
         winnerIds,
@@ -1095,61 +1108,32 @@ export class GameService {
       gameState.log.push(...actions);
     }
 
-    // --- Common Post-Win Logic for All Scenarios (except Svara) ---
-    if (overallWinners.length <= 1) {
-      // Update all player balances in the database
-      for (const player of gameState.players) {
-        await this.usersService.updatePlayerBalance(
-          player.id,
-          player.balance,
-        );
-        await this.redisService.publishBalanceUpdate(
-          player.id,
-          player.balance,
-        );
-      }
-
-      await this.redisService.setGameState(roomId, gameState);
-      await this.redisService.publishGameUpdate(roomId, gameState);
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for animations
-
-      await this.endGame(roomId, gameState);
-    } else {
-      // This case is for when there are no winners (e.g. everyone folds but the last player leaves)
-      // This can happen if the last active player leaves the room
-      await this.endGame(roomId, gameState);
+    // --- Сохранение балансов и завершение игры ---
+    for (const player of gameState.players) {
+      await this.usersService.updatePlayerBalance(player.id, player.balance);
+      await this.redisService.publishBalanceUpdate(player.id, player.balance);
     }
-  }
-
-  private async endGame(roomId: string, gameState: GameState): Promise<void> {
-
-    const phaseResult = this.gameStateService.moveToNextPhase(
-      gameState,
-      'finished',
-    );
-    gameState = phaseResult.updatedGameState;
-    gameState.log.push(...phaseResult.actions);
-
-    const action: GameAction = {
-      type: 'join',
-      telegramId: 'system',
-      timestamp: Date.now(),
-      message: 'Игра завершена без победителя',
-    };
-    gameState.log.push(action);
-
+    
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
+    await this.endGame(roomId, gameState, 'winner');
+  }
+
+  private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
+    console.log(`[endGame] Ending game for room ${roomId}, reason: ${reason}`);
+    
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
       room.finishedAt = new Date();
+      // В случае свары, победителя нет, банк переносится
+      room.winner = reason === 'winner' && gameState.winners ? gameState.winners[0]?.id : undefined;
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    // Auto-restart game after 5 seconds
+    // Запускаем авто-рестарт игры
     setTimeout(() => {
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
