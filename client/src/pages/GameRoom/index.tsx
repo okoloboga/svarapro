@@ -150,10 +150,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showChipStack, setShowChipStack] = useState(true);
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
   const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
-  const [actualGameState, setActualGameState] = useState<GameState | null>(null);
+  
   const [savedChipCount, setSavedChipCount] = useState(0);
   
-  const prevGameStatusRef = useRef<string>();
+  const prevGameStatusRef = useRef<string | undefined>();
 
   useEffect(() => {
     if (!gameState) return;
@@ -461,28 +461,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   };
 
-  // Play win sound for current user if they won (after finished state is shown)
+  // Play win sound for current user if they won
   useEffect(() => {
-    if (!gameState?.winners || !showFinished) {
-      // Reset flags when game is not finished or not showing finished
-      if (!showFinished) {
-        setWinSoundPlayed(false);
-      }
-
-      return;
-    }
-    
-    const currentUserWon = gameState.winners.some(winner => winner.id === currentUserId);
-    if (currentUserWon && !winSoundPlayed) {
-      // Play win sound immediately when finished state is shown
-      const winSoundTimer = setTimeout(() => {
+    if (winSequenceStep === 'winner') {
+      const currentUserWon = gameState?.winners?.some(winner => winner.id === currentUserId);
+      if (currentUserWon && !winSoundPlayed) {
         actions.playSound('win');
         setWinSoundPlayed(true);
-      }, 100);
-      
-      return () => clearTimeout(winSoundTimer);
+      }
+    } else if (winSequenceStep === 'none') {
+      setWinSoundPlayed(false); // Reset for next round
     }
-  }, [gameState?.winners, showFinished, currentUserId, actions, winSoundPlayed]);
+  }, [winSequenceStep, gameState?.winners, currentUserId, actions, winSoundPlayed]);
 
 
 
@@ -521,8 +511,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     if (!gameState) return;
     
-    // Сохраняем актуальное состояние от сервера
-    setActualGameState(gameState);
+    
     
     // Если сервер переключился на blind_betting из ante, блокируем для ante анимаций
     if (gameState.status === 'blind_betting' && 
