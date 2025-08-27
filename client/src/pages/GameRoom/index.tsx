@@ -149,9 +149,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [isDealingCards, setIsDealingCards] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
   
-  const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
   
-  const [savedChipCount, setSavedChipCount] = useState(0);
+  
+  const [savedChipCount] = useState(0);
   
   const prevGameStatusRef = useRef<string | undefined>(undefined);
 
@@ -316,14 +316,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       
       // Анимация сброса карт при fold
       if (lastAction && lastAction.type === 'fold') {
-        setIsFoldAnimationBlocked(true); // Блокируем переход к finished
         handleFoldCards(lastAction.telegramId);
-        
-        // Разблокируем через 2 секунды (время анимации сброса карт)
-        setTimeout(() => {
-          console.log('🔄 Fold animation completed - unblocking finished state');
-          setIsFoldAnimationBlocked(false);
-        }, 2000);
       }
       
       // Анимация фишек для ante действий
