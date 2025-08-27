@@ -180,6 +180,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         };
       } else if (currentStatus === 'waiting') {
         setWinSequenceStep('none');
+      } else if (currentStatus === 'ante' && previousStatus === 'finished') {
+        // Сбрасываем winSequenceStep когда начинается новая игра
+        setWinSequenceStep('none');
       }
     }
 
@@ -473,10 +476,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
 
   const handleChipAnimationComplete = useCallback((chipId: string) => {
-    console.log('🎯 Chip animation completed:', chipId);
     setChipAnimations(prev => {
       const newAnimations = prev.filter(chip => chip.id !== chipId);
-      console.log('🎯 Remaining chip animations:', newAnimations.length);
       
       // Скрываем ChipStack только если завершились анимации фишек к победителю
       const remainingWinnerChips = newAnimations.filter(chip => chip.id.startsWith('winner-chip-'));
@@ -494,10 +495,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, []);
 
   const handleCardAnimationComplete = useCallback((cardId: string) => {
-    console.log('🃏 Card animation completed:', cardId);
     setCardAnimations(prev => {
       const newAnimations = prev.filter(card => card.id !== cardId);
-      console.log('🃏 Remaining card animations:', newAnimations.length);
       return newAnimations;
     });
   }, []);
@@ -656,7 +655,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Проверяем, не создается ли уже анимация для этого игрока
     const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
     if (existingAnimation) {
-      console.log('🎯 Skipping chip animation - already exists for player:', playerId);
       return;
     }
     
@@ -705,29 +703,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         playerY = centerY - tableHeight * 0.25; // Поднимаем выше
         break;
     }
-    
-    const chipId = `chip-${Date.now()}-${Math.random()}`;
-    
-    console.log('🎯 Chip animation coordinates:', {
-      playerId,
-      relativePosition,
-      isCurrentPlayer,
-      absolutePosition,
-      playerX,
-      playerY,
-      centerX,
-      centerY
-    });
-    
-    console.log('🎯 Creating chip animation for player:', playerId, 'at position:', relativePosition);
-    setChipAnimations(prev => [...prev, { 
-      id: chipId, 
-      fromX: playerX, 
-      fromY: playerY, 
-      toX: centerX, 
-      toY: centerY, 
-      delay: 0 
-    }]);
   };
 
   const handleRaiseClick = () => setShowBetSlider(true);

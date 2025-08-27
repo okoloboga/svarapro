@@ -68,8 +68,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     const telegramId = this.getTelegramId(client);
     const userData = this.getUserData(client);
 
-    console.log('Handling join_room:', { roomId, telegramId, userData });
-
     if (!telegramId) {
       console.error('No telegramId provided for join_room');
       client.emit('error', { message: 'Требуется авторизация (telegramId)' });
@@ -77,15 +75,10 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     }
 
     void client.join(roomId);
-    console.log(`Client ${telegramId} joined room ${roomId}`);
 
     const result = await this.gameService.joinRoom(roomId, telegramId);
-    console.log('join_room result:', result);
 
     if (result.success) {
-      console.log(
-        `Emitting game_state to client ${telegramId} for room ${roomId}`,
-      );
       client.emit('game_state', result.gameState);
     } else {
       console.error(`Error in join_room for ${telegramId}:`, result.error);
@@ -96,7 +89,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   @SubscribeMessage('subscribe_balance')
   handleSubscribeBalance(client: Socket): void {
     const telegramId = this.getTelegramId(client);
-    console.log('Handling subscribe_balance:', { telegramId });
 
     if (telegramId) {
       void client.join(telegramId);
@@ -113,12 +105,10 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     payload: { roomId: string },
   ): Promise<void> {
     const telegramId = this.getTelegramId(client);
-    console.log('Handling leave_room:', { roomId: payload.roomId, telegramId });
 
     if (telegramId) {
       await this.gameService.leaveRoom(payload.roomId, telegramId);
       void client.leave(payload.roomId);
-      console.log(`Client ${telegramId} left room ${payload.roomId}`);
       const rooms = await this.gameService.getRooms();
       this.server.emit('rooms_updated', rooms);
     } else {
@@ -196,12 +186,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId, position, userData } = payload;
     const telegramId = this.getTelegramId(client);
-    console.log('Handling sit_down:', {
-      roomId,
-      telegramId,
-      position,
-      userData,
-    });
 
     if (telegramId) {
       const result = await this.gameService.sitDown(
