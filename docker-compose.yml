@@ -9,9 +9,11 @@ services:
         - VITE_APP_URL=${VITE_APP_URL}
         - VITE_WS_URL=${VITE_WS_URL}
         - VITE_API_URL=${VITE_API_URL}
+        - NODE_IMAGE=${NODE_IMAGE}
+        - NGINX_IMAGE=${NGINX_IMAGE}
       cache_from:
-        - nginx:1.27-alpine
-        - node:20.17.0-alpine
+        - ${NGINX_IMAGE}
+        - ${NODE_IMAGE}
     ports:
       - "80:80"
       - "443:443"
@@ -27,8 +29,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NODE_IMAGE=${NODE_IMAGE}
       cache_from:
-        - node:20.17.0-alpine
+        - ${NODE_IMAGE}
     env_file:
       - ./server/.env
       - ./bot/.env
@@ -53,7 +57,7 @@ services:
       retries: 3
 
   postgres:
-    image: postgres:15-alpine
+    image: ${POSTGRES_IMAGE}
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -72,7 +76,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: ${REDIS_IMAGE}
     ports:
       - "6379:6379"
     volumes:

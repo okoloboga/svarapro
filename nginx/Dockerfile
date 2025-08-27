@@ -1,5 +1,8 @@
+ARG NODE_IMAGE=node:20.17.0-alpine
+ARG NGINX_IMAGE=nginx:1.27-alpine
+
 # Base stage
-FROM node:20.17.0-alpine AS base
+FROM ${NODE_IMAGE} AS base
 WORKDIR /app
 RUN npm install -g pnpm
 RUN apk add --no-cache libc6-compat
@@ -30,7 +33,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm --filter svara-pro-client build
 
 # Production stage
-FROM nginx:1.27-alpine
+FROM ${NGINX_IMAGE}
 # Copy built client
 COPY --from=builder /app/client/dist /usr/share/nginx/html
 # Copy nginx configuration

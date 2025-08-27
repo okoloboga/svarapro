@@ -1,5 +1,7 @@
+ARG NODE_IMAGE=node:20.17.0-alpine
+
 # Base stage with pnpm
-FROM node:20.17.0-alpine AS base
+FROM ${NODE_IMAGE} AS base
 WORKDIR /app
 RUN npm install -g pnpm
 RUN apk add --no-cache libc6-compat
@@ -35,7 +37,7 @@ RUN pnpm --filter svara-pro-server build
 RUN pnpm --filter svara-pro-bot build
 
 # Runtime stage
-FROM node:20.17.0-alpine AS runner
+FROM ${NODE_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
