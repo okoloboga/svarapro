@@ -116,6 +116,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const { triggerImpact } = useHapticFeedback();
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
   const currentTurnRef = useRef<string>(''); // Отслеживаем текущий ход
+  const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
 
   useEffect(() => {
     if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
@@ -138,7 +139,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   useEffect(() => {
     if (gameState && gameState.status === 'svara_pending' && (gameState.svaraParticipants?.includes(currentUserId) ?? false)) {
-      // Если я победитель - я не могу отказаться от свары, участвую автоматически
       actions.joinSvara();
     }
   }, [gameState, currentUserId, actions]);
@@ -147,32 +147,55 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
   const [isDealingCards, setIsDealingCards] = useState(false);
-  const [showFinished, setShowFinished] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
   const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
-  const [isFinishAnimationBlocked, setIsFinishAnimationBlocked] = useState(false);
   const [actualGameState, setActualGameState] = useState<GameState | null>(null);
   const [savedChipCount, setSavedChipCount] = useState(0);
   
-  // Эффективное состояние игры с учетом блокировки анимаций
-  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' :
-                             isFoldAnimationBlocked ? 'betting' :
-                             isFinishAnimationBlocked ? 'finished' :
-                             (gameState?.status || 'waiting');
+  const prevGameStatusRef = useRef<string>();
+
+  useEffect(() => {
+    if (!gameState) return;
+
+    const previousStatus = prevGameStatusRef.current;
+    const currentStatus = gameState.status;
+
+    if (previousStatus !== currentStatus) {
+      if (currentStatus === 'finished') {
+        setWinSequenceStep('showdown');
+        const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
+        const t2 = setTimeout(() => {
+          setWinSequenceStep('chips');
+          handleChipsToWinner();
+        }, 5000);
+        const t3 = setTimeout(() => setWinSequenceStep('none'), 7000);
+
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+        };
+      } else if (currentStatus === 'waiting') {
+        setWinSequenceStep('none');
+      }
+    }
+
+    prevGameStatusRef.current = currentStatus;
+  }, [gameState?.status]);
+
+  // Эффективное состояние игры, управляемое новой машиной состояний
+  const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
   
   // Chat message handling
   useEffect(() => {
     if (!socket) return;
 
     const handleNewChatMessage = ({ playerId, phrase }: { playerId: string; phrase: string }) => {
-      console.log('🗨️ Received new_chat_message:', { playerId, phrase, currentUserId });
       setActiveChats(prev => {
-        // Clear previous timer for this player if it exists
         if (prev[playerId]) {
           clearTimeout(prev[playerId].timerId);
         }
-        // Set new message and timer
         const timerId = setTimeout(() => {
           setActiveChats(currentChats => {
             const newChats = { ...currentChats };
@@ -181,12 +204,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           });
         }, 2000);
 
-        const newState = {
-          ...prev,
-          [playerId]: { phrase, timerId },
-        };
-        console.log('🗨️ Updated activeChats:', newState);
-        return newState;
+        return { ...prev, [playerId]: { phrase, timerId } };
       });
     };
 
@@ -194,7 +212,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     return () => {
       socket.off('new_chat_message', handleNewChatMessage);
-      // Clear all timers on cleanup
       setActiveChats(prev => {
         Object.values(prev).forEach(chat => clearTimeout(chat.timerId));
         return {};
@@ -722,7 +739,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
   
   const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
-  const showCards = !!(effectiveGameStatus === 'showdown' || effectiveGameStatus === 'finished');
+  const showCards = winSequenceStep === 'showdown' || winSequenceStep === 'winner' || (gameState?.status === 'showdown');
   const canAllIn = !!(isCurrentUserTurn && currentPlayer && 
     ((effectiveGameStatus === 'betting' && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount)) || 
     (effectiveGameStatus === 'blind_betting' && (currentPlayer.balance < blindBetAmount || (postLookActions && (currentPlayer.balance < postLookCallAmount || currentPlayer.balance < minRaiseAmount))))) 
@@ -918,7 +935,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   return (
     <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
       {/* Затемняющий оверлей для фазы вскрытия карт */}
-      {showCards && <div className="fixed inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
+      {winSequenceStep === 'showdown' && <div className="fixed inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
 
       {svaraStep === 'animating' && <SvaraAnimation onAnimationComplete={() => setSvaraStep('joining')} />}
       
@@ -989,9 +1006,23 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
-                        // const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
-                        // Для отображения используем банк минус 5% налог
                         const winAmount = isWinner && gameState.pot > 0 ? Number((gameState.pot * 0.95).toFixed(2)) : 0;
+                        const showWinIndicator = winSequenceStep === 'winner' && isWinner;
+
+                        let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
+                        if (!isCurrentUser) {
+                          if (showWinIndicator) {
+                            notificationType = 'win';
+                          } else if (player.lastAction) {
+                            switch (player.lastAction) {
+                              case 'blind': notificationType = 'blind'; break;
+                              case 'call': notificationType = 'paid'; break;
+                              case 'fold': notificationType = 'pass'; break;
+                              case 'raise': notificationType = 'rais'; break;
+                              case 'look': notificationType = 'look'; break;
+                            }
+                          }
+                        }
                         
                         if (isCurrentUser) {
                           const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
@@ -1004,12 +1035,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             openCardsPosition={openCardsPosition}
                             isTurn={isTurn} 
                             turnTimer={turnTimer}
-                            isWinner={isWinner}
                             winAmount={winAmount}
-                            gameStatus={effectiveGameStatus}
                             chatPhrase={chatPhrase}
                             onPlayerBet={undefined}
                             gameState={gameState}
+                            notificationType={notificationType}
+                            showWinIndicator={showWinIndicator}
                           />;
                         }
                         return <PlayerSpot 
@@ -1021,12 +1052,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           openCardsPosition={openCardsPosition}
                           isTurn={isTurn}
                           turnTimer={turnTimer}
-                          isWinner={isWinner}
                           winAmount={winAmount}
-                          gameStatus={effectiveGameStatus}
                           chatPhrase={chatPhrase}
                           onPlayerBet={undefined}
                           gameState={gameState}
+                          notificationType={notificationType}
+                          showWinIndicator={showWinIndicator}
                         />;
                       })()
                     ) : (

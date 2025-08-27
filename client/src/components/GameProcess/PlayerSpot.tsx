@@ -17,9 +17,7 @@ interface PlayerSpotProps {
   openCardsPosition?: 'top' | 'bottom' | 'left' | 'right';
   isTurn?: boolean;
   turnTimer?: number;
-  isWinner?: boolean;
   winAmount?: number;
-  gameStatus?: string;
   chatPhrase?: string;
   onPlayerBet?: (playerId: string) => void;
   gameState?: { 
@@ -29,34 +27,34 @@ interface PlayerSpotProps {
       timestamp: number;
       type?: string;
     }>;
-    winners?: Array<{ id: string; username?: string; position?: number }>; // Типизируем winners
-    status?: string; // Добавляем status для определения фазы игры
-    lastActionAmount?: number; // Добавляем lastActionAmount для корректного расчета call
-    currentBet?: number; // Добавляем currentBet для расчета разности ставок
-  }; // Добавляем gameState для доступа к логу действий
+    winners?: Array<{ id: string; username?: string; position?: number }>;
+    status?: string;
+    lastActionAmount?: number;
+    currentBet?: number;
+  };
+  notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
+  showWinIndicator: boolean;
 }
 
-export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSide = 'right', openCardsPosition = 'top', isTurn = false, turnTimer = TURN_DURATION_SECONDS, isWinner = false, winAmount = 0, gameStatus, chatPhrase, onPlayerBet, gameState }: PlayerSpotProps) {
+export function PlayerSpot({ 
+  player, 
+  isCurrentUser, 
+  showCards, 
+  scale = 1, 
+  cardSide = 'right', 
+  openCardsPosition = 'top', 
+  isTurn = false, 
+  turnTimer = TURN_DURATION_SECONDS, 
+  winAmount = 0, 
+  chatPhrase, 
+  onPlayerBet, 
+  gameState,
+  notificationType,
+  showWinIndicator
+}: PlayerSpotProps) {
   
-  const { username, avatar, balance, cards, hasFolded, hasLooked, lastAction, score } = player;
-  const [notificationType, setNotificationType] = useState<'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null>(null);
-  const [showWinAnimation, setShowWinAnimation] = useState(false);
-  const [showCardsPhase, setShowCardsPhase] = useState(false);
+  const { username, avatar, balance, cards, hasFolded, hasLooked, score } = player;
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
-  const [localIsWinner, setLocalIsWinner] = useState(false);
-  const [localWinAmount, setLocalWinAmount] = useState(0);
-
-  useEffect(() => {
-    if (isWinner && winAmount > 0) {
-      setLocalIsWinner(true);
-      setLocalWinAmount(winAmount);
-    }
-
-    if (gameStatus !== 'finished') {
-      setLocalIsWinner(false);
-      setLocalWinAmount(0);
-    }
-  }, [isWinner, winAmount, gameStatus]);
 
   const buttonTextStyle: React.CSSProperties = {
     fontWeight: 700,
@@ -70,20 +68,16 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
   const getLastActionAmount = () => {
     if (!gameState?.log) return 0;
     
-    // В фазе betting используем ту же логику, что и в GameRoom
     if (gameState.status === 'betting') {
-      // Используем lastActionAmount из gameState, если он есть
       if (gameState.lastActionAmount && gameState.lastActionAmount > 0) {
         return gameState.lastActionAmount;
       }
       
-      // Иначе вычисляем как разность между currentBet и currentBet игрока
       const currentPlayerBet = player.currentBet || 0;
       const gameStateCurrentBet = gameState.currentBet || 0;
       return Math.max(0, gameStateCurrentBet - currentPlayerBet);
     }
     
-    // Для других фаз показываем последнее действие этого игрока
     const playerActions = gameState.log
       .filter((action) => action.telegramId === player.id)
       .sort((a, b) => b.timestamp - a.timestamp);
@@ -96,62 +90,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
     return amount;
   };
 
-  // Set notification type based on last action and win state
-  useEffect(() => {
-    const isWinning = isWinner && winAmount > 0 && gameStatus === 'finished';
-
-    if (!isCurrentUser) {
-      if (isWinning) {
-        setNotificationType('win');
-      } else if (lastAction) {
-        let actionType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
-        switch (lastAction) {
-          case 'blind': actionType = 'blind'; break;
-          case 'call': actionType = 'paid'; break;
-          case 'fold': actionType = 'pass'; break;
-          case 'raise': actionType = 'rais'; break;
-          case 'look': actionType = 'look'; break;
-          default: actionType = null;
-        }
-        setNotificationType(actionType);
-      } else {
-        setNotificationType(null);
-      }
-    } else {
-      setNotificationType(null);
-    }
-  }, [lastAction, isCurrentUser, isWinner, winAmount, gameStatus]);
-
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
-
-  // Win sequence logic: first show cards for 3 seconds, then show win animation
-  useEffect(() => {
-    const shouldStartSequence = localIsWinner && localWinAmount > 0 && gameStatus === 'finished';
-    
-    if (shouldStartSequence) {
-      // Phase 1: Show cards for 3 seconds
-      setShowCardsPhase(true);
-      setShowWinAnimation(false);
-      
-      const cardsTimer = setTimeout(() => {
-        // Phase 2: Hide cards and show win animation
-        setShowCardsPhase(false);
-        setShowWinAnimation(true);
-        
-        // Hide win animation after 2 seconds
-        const winTimer = setTimeout(() => {
-          setShowWinAnimation(false);
-        }, 2000);
-        
-        return () => clearTimeout(winTimer);
-      }, 3000);
-      
-      return () => clearTimeout(cardsTimer);
-    } else {
-      setShowCardsPhase(false);
-      setShowWinAnimation(false);
-    }
-  }, [localIsWinner, localWinAmount, gameStatus]);
 
   // Отслеживание изменений ставок для анимации фишек
   useEffect(() => {
@@ -310,7 +249,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
             
             {/* Win amount container */}
-            {showWinAnimation && (
+            {showWinIndicator && (
               <div 
                 className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
                 style={{ 
@@ -346,7 +285,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
                 width: `${avatarSize}px`, 
                 height: `${avatarSize}px`, 
                 backgroundColor: '#555456',
-                boxShadow: showWinAnimation 
+                boxShadow: showWinIndicator 
                   ? '0px 0px 4px 2px #EC8800' 
                   : isTurn 
                     ? '0px 0px 8px 4px #56BF00' 
@@ -394,9 +333,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
           </div>
         </div>
         {(
-          !hasFolded && ((isWinner && winAmount > 0 && gameStatus === 'finished') ? 
-            showCardsPhase : // Для победителей используем только нашу логику
-            (showCards || (isCurrentUser && hasLooked))) // Для остальных - обычная логика
+          !hasFolded && (showCards || (isCurrentUser && hasLooked))
         ) && (
           <div className="absolute z-50" style={{ 
             width: `${cardWidth}px`, 
@@ -440,7 +377,7 @@ export function PlayerSpot({ player, isCurrentUser, showCards, scale = 1, cardSi
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && TotalBetComponent}
-            {!(isCurrentUser && hasLooked) && gameStatus !== 'finished' && gameStatus !== 'waiting' && gameStatus !== 'ante' && CardDeckComponent}
+            {!(isCurrentUser && hasLooked) && gameState?.status !== 'finished' && gameState?.status !== 'waiting' && gameState?.status !== 'ante' && CardDeckComponent}
             {cardSide === 'right' && TotalBetComponent}
           </div>
         )}
