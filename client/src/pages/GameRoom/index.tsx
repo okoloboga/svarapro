@@ -724,7 +724,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
   
   const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
-  const showCards = !!(effectiveGameStatus === 'showdown' || (effectiveGameStatus === 'finished' && showFinished) || gameState.showWinnerAnimation);
+  const showCards = !!(effectiveGameStatus === 'showdown' || effectiveGameStatus === 'finished');
   const canAllIn = !!(isCurrentUserTurn && currentPlayer && 
     ((effectiveGameStatus === 'betting' && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount)) || 
     (effectiveGameStatus === 'blind_betting' && (currentPlayer.balance < blindBetAmount || (postLookActions && (currentPlayer.balance < postLookCallAmount || currentPlayer.balance < minRaiseAmount))))) 
@@ -990,7 +990,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                     {player ? (
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
-                        const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
+                        const isWinner = gameState.winners?.some(w => w.id === player.id) ?? false;
                         // const winAction = gameState.log.find(action => action.type === 'win' && action.telegramId === player.id);
                         // Для отображения используем банк минус 5% налог
                         const winAmount = isWinner && gameState.pot > 0 ? Number((gameState.pot * 0.95).toFixed(2)) : 0;
