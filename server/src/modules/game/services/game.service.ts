@@ -983,116 +983,141 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
-    
-
-    // --- Pot Calculation and Winner Determination ---
-    const potManager = new PotManager();
-    potManager.processBets(gameState.players);
-
-    const pots = potManager.getPots();
-    const returnedBets = potManager.getReturnedBets();
-    gameState.potInfo = pots;
-
-    // Handle returned bets right away
-    for (const [playerId, amount] of returnedBets.entries()) {
-        const player = gameState.players.find(p => p.id === playerId);
-        if (player) {
-            player.balance += amount;
-            gameState.pot -= amount; // Adjust the total pot
-            const returnAction: GameAction = {
-                type: 'return_bet',
-                telegramId: playerId,
-                amount: amount,
-                timestamp: Date.now(),
-                message: `Игроку ${player.username} возвращено ${amount}`
-            };
-            gameState.log.push(returnAction);
-        }
-    }
-
-    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    const scoreResult =
+      this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    const overallWinners = this.playerService.determineWinners(gameState.players.filter(p => !p.hasFolded));
+    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+    const overallWinners = this.playerService.determineWinners(activePlayers);
+    const isAllInGame = activePlayers.some((p) => p.isAllIn);
 
     if (overallWinners.length > 1) {
-        // Svara
-        console.log(`Svara detected. Pot of ${gameState.pot} will be carried over.`);
-        const phaseResult = this.gameStateService.moveToNextPhase(
-            gameState,
-            'svara_pending',
-        );
-        gameState = phaseResult.updatedGameState;
-        gameState.log.push(...phaseResult.actions);
+      // --- SVARA LOGIC ---
+      console.log(
+        `Svara detected. Pot of ${gameState.pot} will be carried over.`,
+      );
+      const phaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'svara_pending',
+      );
+      gameState = phaseResult.updatedGameState;
+      gameState.log.push(...phaseResult.actions);
 
-        gameState.isSvara = true;
-        gameState.svaraParticipants = overallWinners.map((w) => w.id);
-        gameState.winners = overallWinners;
-        gameState.svaraConfirmed = [];
-        gameState.svaraDeclined = [];
+      gameState.isSvara = true;
+      gameState.svaraParticipants = overallWinners.map((w) => w.id);
+      gameState.winners = overallWinners;
+      gameState.svaraConfirmed = [];
+      gameState.svaraDeclined = [];
 
-        const svaraAction: GameAction = {
-            type: 'svara',
-            telegramId: 'system',
+      const svaraAction: GameAction = {
+        type: 'svara',
+        telegramId: 'system',
+        timestamp: Date.now(),
+        message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
+      };
+      gameState.log.push(svaraAction);
+
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+
+      const timer = setTimeout(() => {
+        this.resolveSvara(roomId).catch((error) => {
+          console.error(`Error resolving svara for room ${roomId}:`, error);
+        });
+      }, TURN_DURATION_SECONDS * 1000);
+      this.svaraTimers.set(roomId, timer);
+    } else if (isAllInGame) {
+      // --- ALL-IN LOGIC ---
+      console.log('All-in detected. Using PotManager for winnings.');
+      const potManager = new PotManager();
+      potManager.processBets(gameState.players);
+
+      const pots = potManager.getPots();
+      const returnedBets = potManager.getReturnedBets();
+      gameState.potInfo = pots;
+
+      // Handle returned bets
+      for (const [playerId, amount] of returnedBets.entries()) {
+        const player = gameState.players.find((p) => p.id === playerId);
+        if (player) {
+          player.balance += amount;
+          gameState.pot -= amount;
+          const returnAction: GameAction = {
+            type: 'return_bet',
+            telegramId: playerId,
+            amount: amount,
             timestamp: Date.now(),
-            message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
-        };
-        gameState.log.push(svaraAction);
+            message: `Игроку ${player.username} возвращено ${amount}`,
+          };
+          gameState.log.push(returnAction);
+        }
+      }
 
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
+      const potWinnersList = potManager.getWinners(gameState.players);
+      gameState.winners = [];
 
-        const timer = setTimeout(() => {
-            this.resolveSvara(roomId).catch((error) => {
-                console.error(`Error resolving svara for room ${roomId}:`, error);
-            });
-        }, TURN_DURATION_SECONDS * 1000);
-        this.svaraTimers.set(roomId, timer);
-
-    } else if (overallWinners.length === 1) {
-        // Single Winner or multiple pot winners
-        const potWinnersList = potManager.getWinners(gameState.players);
-        gameState.winners = []; // Clear previous winners
-
-        for (const potResult of potWinnersList) {
-            const { potIndex, winners: potWinnerPlayers, amount } = potResult;
-            if (potWinnerPlayers.length > 0) {
-                const winAmount = amount / potWinnerPlayers.length;
-                for (const winner of potWinnerPlayers) {
-                    const playerInState = gameState.players.find(p => p.id === winner.id);
-                    if (playerInState) {
-                        playerInState.balance += winAmount;
-                        const winAction: GameAction = {
-                            type: 'win',
-                            telegramId: winner.id,
-                            amount: winAmount,
-                            timestamp: Date.now(),
-                            message: `Игрок ${winner.username} выиграл ${winAmount} из банка №${potIndex + 1}`
-                        };
-                        gameState.log.push(winAction);
-                    }
-                }
-                gameState.winners.push(...potWinnerPlayers);
+      for (const potResult of potWinnersList) {
+        const { potIndex, winners: potWinnerPlayers, amount } = potResult;
+        if (potWinnerPlayers.length > 0) {
+          const winAmount = amount / potWinnerPlayers.length;
+          for (const winner of potWinnerPlayers) {
+            const playerInState = gameState.players.find(
+              (p) => p.id === winner.id,
+            );
+            if (playerInState) {
+              playerInState.balance += winAmount;
+              const winAction: GameAction = {
+                type: 'win',
+                telegramId: winner.id,
+                amount: winAmount,
+                timestamp: Date.now(),
+                message: `Игрок ${winner.username} выиграл ${winAmount} из банка №${
+                  potIndex + 1
+                }`,
+              };
+              gameState.log.push(winAction);
             }
+          }
+          gameState.winners.push(...potWinnerPlayers);
         }
-        
-        gameState.winners = [...new Set(gameState.winners)];
+      }
+      gameState.winners = [...new Set(gameState.winners)];
+    } else if (overallWinners.length === 1) {
+      // --- STANDARD WIN LOGIC ---
+      console.log('Standard win detected. Processing single pot.');
+      const winnerIds = overallWinners.map((w) => w.id);
+      const { updatedGameState, actions } = this.bettingService.processWinnings(
+        gameState,
+        winnerIds,
+      );
+      gameState = updatedGameState;
+      gameState.log.push(...actions);
+    }
 
-        // Update all player balances in the database
-        for (const player of gameState.players) {
-            await this.usersService.updatePlayerBalance(player.id, player.balance);
-            await this.redisService.publishBalanceUpdate(player.id, player.balance);
-        }
+    // --- Common Post-Win Logic for All Scenarios (except Svara) ---
+    if (overallWinners.length <= 1) {
+      // Update all player balances in the database
+      for (const player of gameState.players) {
+        await this.usersService.updatePlayerBalance(
+          player.id,
+          player.balance,
+        );
+        await this.redisService.publishBalanceUpdate(
+          player.id,
+          player.balance,
+        );
+      }
 
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for animations
 
-        await this.endGame(roomId, gameState);
+      await this.endGame(roomId, gameState);
     } else {
-        // No winners
-        await this.endGame(roomId, gameState);
+      // This case is for when there are no winners (e.g. everyone folds but the last player leaves)
+      // This can happen if the last active player leaves the room
+      await this.endGame(roomId, gameState);
     }
   }
 

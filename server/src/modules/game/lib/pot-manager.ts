@@ -32,104 +32,81 @@ export class PotManager {
   }
 
   private calculatePots() {
-    console.log(`[calculatePots] Starting pot calculation. Player bets: ${JSON.stringify([...this.playerBets])}`);
-    
-    const tempPlayerBets = new Map(this.playerBets);
+    console.log(
+      `[calculatePots] Starting pot calculation. Player bets: ${JSON.stringify(
+        [...this.playerBets],
+      )}`,
+    );
 
-    while (true) {
-        const activeBetPlayers = [...tempPlayerBets.entries()].filter(([, bet]) => bet > 0);
-        if (activeBetPlayers.length === 0) {
-            console.log('[calculatePots] All bets distributed.');
-            break;
-        }
-
-        // Handle uncalled bets
-        if (activeBetPlayers.length === 1) {
-            const [lastPlayerId, remainingBet] = activeBetPlayers[0];
-            console.log(`[calculatePots] Only one player ${lastPlayerId} has a remaining bet of ${remainingBet}. Returning it.`);
-            this.returnedBets.set(lastPlayerId, (this.returnedBets.get(lastPlayerId) || 0) + remainingBet);
-            tempPlayerBets.delete(lastPlayerId);
-            continue;
-        }
-
-        const smallestBet = Math.min(...activeBetPlayers.map(([, bet]) => bet));
-        console.log(`[calculatePots] New pot round. Smallest bet level: ${smallestBet}.`);
-
-        const newPot = new Pot();
-        newPot.amount = 0;
-        
-        const contributors = activeBetPlayers.map(([id]) => id);
-        console.log(`[calculatePots] Contributors to this pot: ${contributors}`);
-
-        for (const [playerId, playerBet] of this.playerBets.entries()) {
-            if (playerBet > 0) { // Only consider players with bets
-                const contribution = Math.min(playerBet, smallestBet);
-                 if (contributors.includes(playerId)) {
-                    newPot.amount += contribution;
-                    newPot.eligiblePlayers.add(playerId);
-                 }
-            }
-        }
-        
-        // This logic is still tricky. Let's try the iterative subtraction method.
-        // Reset and try again with the user's logic.
-        
-        tempPlayerBets.clear();
-        this.playerBets.forEach((value, key) => tempPlayerBets.set(key, value));
-        this.pots = [];
-        this.returnedBets.clear();
-        break; // exit to re-run loop with new logic
-    }
-
-    // --- Corrected Iterative Logic ---
     const tempBets = new Map(this.playerBets);
     let lastPotLevel = 0;
 
-    const sortedUniqueBets = [...new Set([...tempBets.values()])].sort((a, b) => a - b);
+    const sortedUniqueBets = [...new Set([...tempBets.values()])].sort(
+      (a, b) => a - b,
+    );
 
     for (const betLevel of sortedUniqueBets) {
-        if (betLevel <= lastPotLevel) continue;
+      if (betLevel <= lastPotLevel) continue;
 
-        const pot = new Pot();
-        const contribution = betLevel - lastPotLevel;
+      const pot = new Pot();
+      const contribution = betLevel - lastPotLevel;
 
-        for (const [playerId, totalBet] of this.playerBets.entries()) {
-            if (totalBet >= betLevel) {
-                pot.amount += contribution;
-                pot.eligiblePlayers.add(playerId);
-            }
+      for (const [playerId, totalBet] of this.playerBets.entries()) {
+        if (totalBet >= betLevel) {
+          pot.amount += contribution;
+          pot.eligiblePlayers.add(playerId);
         }
-        
-        if (pot.amount > 0) {
-            this.pots.push(pot);
-            console.log(`[calculatePots] Created Pot #${this.pots.length - 1}: Amount: ${pot.amount}, Eligible: ${[...pot.eligiblePlayers]}`);
-        }
-        lastPotLevel = betLevel;
+      }
+
+      if (pot.amount > 0) {
+        this.pots.push(pot);
+        console.log(
+          `[calculatePots] Created Pot #${this.pots.length - 1}: Amount: ${
+            pot.amount
+          }, Eligible: ${[...pot.eligiblePlayers]}`,
+        );
+      }
+      lastPotLevel = betLevel;
     }
 
-    // Handle returns
-    const highestBet = Math.max(...this.playerBets.values());
-    const playersWithHighestBet = [...this.playerBets.entries()].filter(([,bet]) => bet === highestBet);
-    
+    // Handle uncalled bet returns
+    const allBets = [...this.playerBets.values()];
+    const highestBet = Math.max(...allBets, 0);
+    const playersWithHighestBet = [...this.playerBets.entries()].filter(
+      ([, bet]) => bet === highestBet,
+    );
+
     if (playersWithHighestBet.length === 1) {
-        const secondHighestBet = Math.max(...[...this.playerBets.values()].filter(bet => bet < highestBet), 0);
-        const amountToReturn = highestBet - secondHighestBet;
-        if (amountToReturn > 0) {
-            const highestBettorId = playersWithHighestBet[0][0];
-            this.returnedBets.set(highestBettorId, amountToReturn);
-            console.log(`[calculatePots] Returning uncalled bet of ${amountToReturn} to ${highestBettorId}`);
-            
-            // Adjust the last pot
-            const lastPot = this.pots[this.pots.length - 1];
-            if (lastPot) {
-                lastPot.amount -= amountToReturn;
-            }
+      const secondHighestBet = Math.max(
+        ...allBets.filter((bet) => bet < highestBet),
+        0,
+      );
+      const amountToReturn = highestBet - secondHighestBet;
+
+      if (amountToReturn > 0) {
+        const highestBettorId = playersWithHighestBet[0][0];
+        this.returnedBets.set(highestBettorId, amountToReturn);
+        console.log(
+          `[calculatePots] Returning uncalled bet of ${amountToReturn} to ${highestBettorId}`,
+        );
+
+        // Adjust the last pot amount
+        const lastPot = this.pots[this.pots.length - 1];
+        if (lastPot) {
+          lastPot.amount -= amountToReturn;
         }
+      }
     }
 
-
-    console.log(`[calculatePots] Final pots: ${JSON.stringify(this.pots, (key, value) => value instanceof Set ? [...value] : value)}`);
-    console.log(`[calculatePots] Returned bets: ${JSON.stringify([...this.returnedBets])}`);
+    console.log(
+      `[calculatePots] Final pots: ${JSON.stringify(
+        this.pots,
+        (key, value) => (value instanceof Set ? [...value] : value),
+      )}`,
+    );
+    console.log(
+      `[calculatePots] Returned bets: ${JSON.stringify([...this.returnedBets])}`,
+    );
   }
 
   public getPots(): Pot[] {
