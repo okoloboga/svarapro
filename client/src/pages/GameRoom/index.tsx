@@ -151,12 +151,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showChipStack, setShowChipStack] = useState(true);
   const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
   const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
+  const [isFinishAnimationBlocked, setIsFinishAnimationBlocked] = useState(false);
   const [actualGameState, setActualGameState] = useState<GameState | null>(null);
   const [savedChipCount, setSavedChipCount] = useState(0);
   
   // Эффективное состояние игры с учетом блокировки анимаций
-  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' : 
-                             isFoldAnimationBlocked ? 'betting' : 
+  const effectiveGameStatus = isAnteAnimationBlocked ? 'ante' :
+                             isFoldAnimationBlocked ? 'betting' :
+                             isFinishAnimationBlocked ? 'finished' :
                              (gameState?.status || 'waiting');
   
   // Chat message handling
@@ -575,66 +577,62 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       setShowChipStack(true);
     }
     
-    console.log('🔄 useEffect triggered:', {
-      currentGameState: currentGameState?.status,
-      prevStatus: prevGameStatusRef.current,
-      isAnteAnimationBlocked,
-      isFoldAnimationBlocked,
-      gameStateStatus: gameState?.status,
-      pot: gameState?.pot,
-      showChipStack
-    });
-    
     if (currentGameState?.status && prevGameStatusRef.current !== currentGameState.status) {
       
-            // Если переход к finished - добавляем задержку для завершения анимаций сброса карт
+      // Если переход к finished - добавляем задержку для завершения анимаций
       if (currentGameState.status === 'finished' && !isFoldAnimationBlocked) {
-        // Сохраняем количество фишек из текущего банка
         const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 FINISHED: Saved chip count:', chipCount, 'showChipStack:', showChipStack, 'pot:', gameState?.pot);
-        // Оставляем ChipStack видимым для анимации фишек к победителю
         setShowChipStack(true);
+        
+        // Блокируем статус, чтобы анимации успели завершиться
+        setIsFinishAnimationBlocked(true);
+        
+        // Запускаем последовательность анимаций
         setTimeout(() => {
-          setShowFinished(true);
-          // Запускаем анимацию фишек к победителю после показа finished
+          setShowFinished(true); // Показываем оверлей и карты
           setTimeout(() => {
-            handleChipsToWinner();
-          }, 2000); // 2 секунды после показа finished для анимации фишек к победителю
-        }, 1500); // 1.5 секунды для завершения анимаций сброса карт
+            handleChipsToWinner(); // Анимация фишек к победителю
+            
+            // Снимаем блокировку через 5 секунд, чтобы дать время всем анимациям
+            setTimeout(() => {
+              setIsFinishAnimationBlocked(false);
+            }, 5000); // Общее время для анимации в PlayerSpot (3s + 2s)
+            
+          }, 2000); // Задержка после показа карт
+        }, 1500); // Задержка для анимации сброса карт
+        
       } else if (currentGameState.status === 'finished' && isFoldAnimationBlocked) {
-        // Сохраняем количество фишек из текущего банка
         const chipCount = gameState?.pot || 0;
         setSavedChipCount(chipCount);
-        console.log('🎯 FINISHED (fold blocked): Saved chip count:', chipCount, 'showChipStack:', showChipStack, 'pot:', gameState?.pot);
-        // Не показываем finished пока идет fold анимация, но оставляем ChipStack
         setShowChipStack(true);
       } else {
         setShowFinished(false);
         // Сбрасываем состояния при переходе к waiting (новая игра)
         if (currentGameState.status === 'waiting') {
           console.log('🔄 Game reset to waiting - resetting all flags');
-          setShowChipStack(true); // Показываем ChipStack для новой игры
+          setShowChipStack(true);
           setIsDealingCards(false);
-          setIsAnteAnimationBlocked(false); // Важно: сбрасываем блокировку ante
-          setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
-          setSavedChipCount(0); // Сбрасываем сохраненное количество фишек
+          setIsAnteAnimationBlocked(false);
+          setIsFoldAnimationBlocked(false);
+          setIsFinishAnimationBlocked(false); // Сбрасываем блокировку finished
+          setSavedChipCount(0);
         }
       }
       
       // Если переход от waiting к ante - готовимся к раздаче карт
       if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'ante') {
         console.log('🔄 New game started - resetting flags');
-        setShowChipStack(true); // Показываем ChipStack в новой игре
-        setIsDealingCards(false); // Сбрасываем флаг раздачи карт
-        setIsAnteAnimationBlocked(false); // Сбрасываем блокировку
-        setIsFoldAnimationBlocked(false); // Сбрасываем блокировку fold
+        setShowChipStack(true);
+        setIsDealingCards(false);
+        setIsAnteAnimationBlocked(false);
+        setIsFoldAnimationBlocked(false);
+        setIsFinishAnimationBlocked(false); // Сбрасываем блокировку finished
       }
-      // Если переход от ante к blind_betting и нет блокировки - НЕ запускаем раздачу здесь (она уже запущена в блокировке)
+      // ... (остальная логика без изменений)
       else if (prevGameStatusRef.current === 'ante' && currentGameState.status === 'blind_betting' && !isAnteAnimationBlocked) {
         // Ничего не делаем - раздача уже произошла через блокировку
       }
-      // Если переход от waiting к blind_betting (пропущен ante) - запускаем раздачу карт
       else if (prevGameStatusRef.current === 'waiting' && currentGameState.status === 'blind_betting') {
         if (!isDealingCards && !isAnteAnimationBlocked) {
           console.log('🎯 Direct waiting -> blind_betting transition - starting card deal');
