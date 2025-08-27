@@ -148,12 +148,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
   const [isDealingCards, setIsDealingCards] = useState(false);
   const [showChipStack, setShowChipStack] = useState(true);
-  const [isAnteAnimationBlocked, setIsAnteAnimationBlocked] = useState(false);
+  
   const [isFoldAnimationBlocked, setIsFoldAnimationBlocked] = useState(false);
   
   const [savedChipCount, setSavedChipCount] = useState(0);
   
-  const prevGameStatusRef = useRef<string | undefined>();
+  const prevGameStatusRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!gameState) return;
@@ -507,67 +507,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     });
   }, []);
 
-  // Логика блокировки ante анимаций
-  useEffect(() => {
-    if (!gameState) return;
-    
-    
-    
-    // Если сервер переключился на blind_betting из ante, блокируем для ante анимаций
-    if (gameState.status === 'blind_betting' && 
-        (prevGameStatusRef.current === 'ante' || prevGameStatusRef.current === 'waiting') && 
-        !isAnteAnimationBlocked) {
-      console.log('🎯 Ante animation blocked - starting card deal');
-      // Блокируем переход и остаемся в ante для завершения анимаций
-      setIsAnteAnimationBlocked(true);
-      
-      // Запускаем раздачу карт после ante chip анимаций
-      if (!isDealingCards) {
-        console.log('🎯 Setting isDealingCards to true');
-        setIsDealingCards(true);
-        setTimeout(() => {
-          console.log('🎯 Calling handleDealCards');
-          handleDealCards();
-        }, 1500); // Сначала ante chip анимации
-      } else {
-        console.log('🎯 Cards already being dealt, skipping');
-      }
-      
-      setTimeout(() => {
-        // Через 3 секунды разблокируем и переходим к blind_betting
-        console.log('🎯 Unblocking ante animation');
-        setIsAnteAnimationBlocked(false);
-        // Сбрасываем флаг раздачи карт для следующей игры
-        setIsDealingCards(false);
-      }, 3000); // 3 секунды для полного завершения ante анимаций
-      
-      return;
-    }
-    
-          // Если блокировка не активна, обновляем статус
-      if (!isAnteAnimationBlocked) {
-        prevGameStatusRef.current = gameState.status;
-      }
-      
-            // Сбрасываем prevStatus когда fold анимация завершается, чтобы useEffect сработал снова
-      if (prevGameStatusRef.current === 'finished' && !isFoldAnimationBlocked) {
-        console.log('🔄 Resetting prevStatus from finished to empty for re-trigger');
-        prevGameStatusRef.current = '';
-        
-        // Принудительно запускаем логику сохранения фишек после fold анимации
-        const chipCount = gameState?.pot || 0;
-        setSavedChipCount(chipCount);
-        console.log('🎯 FORCED: Saved chip count after fold:', chipCount, 'pot:', gameState?.pot);
-        setShowChipStack(true);
-        
-        setTimeout(() => {
-          setShowFinished(true);
-          setTimeout(() => {
-            handleChipsToWinner();
-          }, 2000);
-        }, 1500);
-      }
-    }, [gameState?.status, isDealingCards, isAnteAnimationBlocked, isFoldAnimationBlocked]);
+  
 
   
 
