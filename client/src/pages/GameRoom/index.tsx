@@ -118,6 +118,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentTurnRef = useRef<string>(''); // Отслеживаем текущий ход
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
 
+  // TODO: fix svara animation
+
   useEffect(() => {
     if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
       setSvaraStep('animating');
