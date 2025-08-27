@@ -42,7 +42,6 @@ export class RoomsGateway
   async handleRequestRooms(client: Socket) {
     console.log('Received request_rooms from client');
     const rooms = await this.roomsService.getRooms();
-    console.log('Sending initial rooms to client:', rooms);
     client.emit('rooms', { action: 'initial', rooms });
   }
 

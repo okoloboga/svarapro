@@ -178,8 +178,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           clearTimeout(t2);
           clearTimeout(t3);
         };
-      } else if (currentStatus === 'waiting') {
-        setWinSequenceStep('none');
       } else if (currentStatus === 'ante' && previousStatus === 'finished') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
@@ -703,6 +701,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         playerY = centerY - tableHeight * 0.25; // Поднимаем выше
         break;
     }
+
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    
+    setChipAnimations(prev => [...prev, { 
+      id: chipId, 
+      fromX: playerX, 
+      fromY: playerY, 
+      toX: centerX, 
+      toY: centerY, 
+      delay: 0 
+    }]);
   };
 
   const handleRaiseClick = () => setShowBetSlider(true);
