@@ -196,8 +196,14 @@ export class GameService {
   }
 
   async startGame(roomId: string): Promise<void> {
+    console.log(`[startGame] Starting game for room ${roomId}`);
     const room = await this.redisService.getRoom(roomId);
     if (!room || (room.status !== 'waiting' && room.status !== 'finished')) {
+      console.log(`[startGame] Cannot start game for room ${roomId}:`, {
+        hasRoom: !!room,
+        roomStatus: room?.status,
+        allowedStatuses: ['waiting', 'finished']
+      });
       return;
     }
 
@@ -244,6 +250,7 @@ export class GameService {
     await this.redisService.setGameState(roomId, finalGameState);
     await this.redisService.publishGameUpdate(roomId, finalGameState);
 
+    console.log(`[startGame] Game successfully started for room ${roomId}, starting ante phase`);
     await this.startAntePhase(roomId);
   }
 
@@ -296,6 +303,8 @@ export class GameService {
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
+    
+    console.log(`[startAntePhase] Ante phase completed for room ${roomId}, moved to blind_betting`);
   }
 
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
@@ -1053,7 +1062,9 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
+    console.log(`[endGame] Scheduling auto-restart for room ${roomId} in 5 seconds`);
     setTimeout(() => {
+      console.log(`[endGame] Auto-restarting game for room ${roomId}`);
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
       );

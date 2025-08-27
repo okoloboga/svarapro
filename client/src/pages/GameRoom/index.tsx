@@ -178,8 +178,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           clearTimeout(t2);
           clearTimeout(t3);
         };
-      } else if (currentStatus === 'ante' && previousStatus === 'finished') {
+      } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
+        console.log('🔄 Resetting winSequenceStep to none for new game (ante phase)');
         setWinSequenceStep('none');
       }
     }
@@ -189,6 +190,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
+  
+  // Логируем изменения состояния для отладки
+  useEffect(() => {
+    console.log('🎮 Game state debug:', {
+      gameStateStatus: gameState?.status,
+      winSequenceStep,
+      effectiveGameStatus,
+      isSeated,
+      currentPlayerId: gameState?.players[gameState?.currentPlayerIndex]?.id,
+      currentUserId
+    });
+  }, [gameState?.status, winSequenceStep, effectiveGameStatus, isSeated, currentUserId]);
   
   // Chat message handling
   useEffect(() => {
@@ -439,13 +452,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Подсчитываем количество фишек в банке
     const chipCount = 10;
     
-    console.log('🎯 Creating', chipCount, 'chip animations to winner at position:', relativePosition);
-    console.log('🎯 Winner coordinates:', winnerX, winnerY);
-    
     // Создаем анимацию для каждой фишки
     for (let i = 0; i < chipCount; i++) {
       const chipId = `winner-chip-${Date.now()}-${i}`;
-      console.log('🎯 Adding winner chip animation:', chipId);
       setChipAnimations(prev => [...prev, {
         id: chipId,
         fromX: centerX,
