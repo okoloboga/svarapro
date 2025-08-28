@@ -4,6 +4,18 @@ import tableImage from '../../assets/game/table.jpg';
 import ChipsStack from './ChipsStack';
 import { useTranslation } from 'react-i18next';
 
+const formatAmount = (amount: number): string => {
+  const num = Number(amount);
+  const fixed = num.toFixed(2);
+  if (fixed.endsWith('.00')) {
+    return String(Math.round(num));
+  }
+  if (fixed.endsWith('0')) {
+    return fixed.slice(0, -1);
+  }
+  return fixed;
+};
+
 interface GameTableProps {
   gameState: GameState;
   currentUserId: string;
@@ -28,7 +40,7 @@ const GameTable: React.FC<GameTableProps> = ({
   const baseWidth = 315;
   const baseHeight = 493;
   
-
+  const formattedPot = formatAmount(gameState.pot);
   
   // Считаем количество фишек на основе лога действий
   const totalChips = React.useMemo(() => {
@@ -147,7 +159,7 @@ const GameTable: React.FC<GameTableProps> = ({
       </div>
       
       <div style={potContainerStyle}>
-        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>{t('pot', { amount: Number(gameState.pot).toFixed(2) })}</span>
+        <span className="text-xs" style={{ fontSize: `${12 * scale}px` }}>{t('pot', { amount: formattedPot })}</span>
       </div>
       
       {/* Надпись "налог 5%" */}
