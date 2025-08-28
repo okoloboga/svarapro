@@ -154,7 +154,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   
   const [savedChipCount] = useState(0);
-  const [finalPot, setFinalPot] = useState(0);
   const prevGameStateRef = useRef<GameState | null>(null);
   
   useEffect(() => {
@@ -165,7 +164,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     if (previousStatus !== currentStatus) {
       if (currentStatus === 'finished') {
-        setFinalPot(prevGameStateRef.current?.pot || 0);
         setWinSequenceStep('showdown');
         const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
         const t2 = setTimeout(() => {
@@ -174,7 +172,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }, 5000);
         const t3 = setTimeout(() => {
           setWinSequenceStep('none');
-          setFinalPot(0);
         }, 7000);
 
         return () => {
@@ -186,7 +183,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сбрасываем winSequenceStep когда начинается новая игра
         console.log('🔄 Resetting winSequenceStep to none for new game (ante phase)');
         setWinSequenceStep('none');
-        setFinalPot(0);
       }
     }
 
