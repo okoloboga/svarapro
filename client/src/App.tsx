@@ -146,9 +146,9 @@ function App() {
               const room = await apiService.getRoom(roomId);
               if (room) {
                 if (parseFloat(profile.balance as string) < room.minBet * 10) {
-                  setCurrentPage('deposit');
+                  handleSetCurrentPage('deposit');
                 } else {
-                  setCurrentPage('gameRoom', { roomId, autoSit: true });
+                  handleSetCurrentPage('gameRoom', { roomId, autoSit: true });
                 }
               }
             }
