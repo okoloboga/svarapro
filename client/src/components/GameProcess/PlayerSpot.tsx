@@ -169,7 +169,7 @@ export function PlayerSpot({
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
       }}
     >
-      ${formatAmount(player.totalBet)}
+      {`$${formatAmount(player.totalBet)}`}
     </div>
   );
 
@@ -223,7 +223,7 @@ export function PlayerSpot({
                       {username}
                     </div>
                     <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
-                      ${formatAmount(balance)}
+                      {`$${formatAmount(balance)}`}
                     </div>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export function PlayerSpot({
                   verticalAlign: 'middle',
                   color: '#D2A21B'
                 }}>
-                  +${formatAmount(winAmount)}
+                  {`+${formatAmount(winAmount)}`}
                 </span>
               </div>
             )}
@@ -319,7 +319,7 @@ export function PlayerSpot({
                     {username}
                   </div>
                   <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
-                    ${formatAmount(balance)}
+                    {`$${formatAmount(balance)}`}
                   </div>
                 </div>
                 
@@ -387,21 +387,30 @@ export function PlayerSpot({
         )}
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
-            {cardSide === 'left' && TotalBetComponent}
+            {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
             {!(isCurrentUser && hasLooked) && gameState?.status !== 'finished' && gameState?.status !== 'waiting' && gameState?.status !== 'ante' && CardDeckComponent}
-            {cardSide === 'right' && TotalBetComponent}
+            {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
           </div>
         )}
 
         {(() => {
-          const lastActionAmount = getLastActionAmount();
-          const shouldShow = lastActionAmount > 0 && !hasFolded && !isCurrentUser;
-          
-          return shouldShow ? (
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-              ${formatAmount(lastActionAmount)}
+          // For other players, show last action amount
+          if (!isCurrentUser) {
+            const lastActionAmount = getLastActionAmount();
+            const shouldShow = lastActionAmount > 0 && !hasFolded;
+            return shouldShow ? (
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
+                {`$${formatAmount(lastActionAmount)}`}
+              </div>
+            ) : null;
+          }
+
+          // For the current user, show their total bet in the same position
+          return (
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+              {TotalBetComponent}
             </div>
-          ) : null;
+          );
         })()}
         {score !== undefined && !hasFolded && (showCards || (isCurrentUser && hasLooked)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 

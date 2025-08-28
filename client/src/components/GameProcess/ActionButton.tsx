@@ -3,6 +3,18 @@ import passIcon from '../../assets/game/pass.svg';
 import raiseIcon from '../../assets/game/raise.svg';
 import { useTranslation } from 'react-i18next';
 
+const formatAmount = (amount: number): string => {
+  const num = Number(amount);
+  const fixed = num.toFixed(2);
+  if (fixed.endsWith('.00')) {
+    return String(Math.round(num));
+  }
+  if (fixed.endsWith('0')) {
+    return fixed.slice(0, -1);
+  }
+  return fixed;
+};
+
 interface ActionButtonsProps {
   canFold: boolean;
   canCall: boolean;
@@ -88,7 +100,7 @@ export function ActionButtons({
             style={{ backgroundColor: '#0E5C89' }}
             disabled={isCallDisabled}
           >
-            <span>${Number(callAmount).toFixed(2)}</span>
+            <span>${formatAmount(callAmount)}</span>
             <span className="-mt-1">{t('pay')}</span>
           </button>
           {/* Raise Button */}
@@ -146,7 +158,7 @@ export function ActionButtons({
             style={{ backgroundColor: '#0E5C89' }}
             disabled={isCallDisabled}
           >
-            <span>${Number(callAmount).toFixed(2)}</span>
+            <span>${formatAmount(callAmount)}</span>
             <span className="-mt-1">{t('pay')}</span>
           </button>
         )}
@@ -171,7 +183,7 @@ export function ActionButtons({
                 className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
                 style={{ backgroundColor: '#0E5C89' }}
             >
-                <span>${Number(callAmount).toFixed(2)}</span>
+                <span>${formatAmount(callAmount)}</span>
                 <span className="-mt-1">{t('all_in')}</span>
             </button>
         )}
@@ -199,7 +211,7 @@ export function ActionButtons({
             style={{ backgroundColor: '#0E5C89' }}
             disabled={blindButtonsDisabled || isBlindBetDisabled}
           >
-            <span>${Number(minBet).toFixed(2)}</span>
+            <span>${formatAmount(minBet)}</span>
             <span className="-mt-1">{t('blind')}</span>
           </button>
         )}
