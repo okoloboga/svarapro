@@ -11,7 +11,7 @@ export function SvaraAnimation({ onAnimationComplete }: SvaraAnimationProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onAnimationComplete();
-    }, 2000); // Длительность анимации
+    }, 3000); // Длительность анимации
 
     return () => clearTimeout(timer);
   }, [onAnimationComplete]);
