@@ -767,7 +767,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       console.error("Could not get referrerId");
       return;
     }
-    const inviteLink = `https://t.me/Svaraprobot/svara?startapp=ref${referrerId}-room${roomId}`;
+    // Формируем ссылку по образцу реферальной: https://t.me/Svaraprobot?start=TELEGRAM_ID
+    // Для приглашения в игру используем формат: start=join_ROOM_ID_INVITER_ID
+    const inviteLink = `https://t.me/Svaraprobot?start=join_${roomId}_${referrerId}`;
     WebApp.openTelegramLink(
       `https://t.me/share/url?url=${encodeURIComponent(
         inviteLink
