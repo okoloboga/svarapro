@@ -344,7 +344,7 @@ export function PlayerSpot({
           </div>
         </div>
         {(
-          !hasFolded && (showCards || (isCurrentUser && hasLooked))
+          !hasFolded && (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')))
         ) && (
           <div className="absolute z-50" style={{ 
             width: `${cardWidth}px`, 
