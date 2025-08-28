@@ -911,6 +911,8 @@ export class GameService {
       gameState.dealerIndex,
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
   }
