@@ -8,7 +8,7 @@ const api = axios.create({
 console.log('API baseURL is now hardcoded to https://svarapro.com/api/v1');
 
 export const apiService = {
-  async login(initData: string, startPayload?: string): Promise<{ accessToken: string }> {
+  async login(initData: string, startPayload?: string): Promise<{ accessToken: string, roomId?: string }> {
     console.log('Sending to server - initData:', initData, 'startPayload:', startPayload);
     const response = await api.post('/auth/login', { initData, startPayload });
     localStorage.setItem('token', response.data.accessToken);
@@ -108,6 +108,15 @@ export const apiService = {
 
   async getRooms(): Promise<Room[]> {
     const response = await api.get('/rooms');
+    return response.data;
+  },
+
+  async getRoom(roomId: string): Promise<Room> {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token available');
+    const response = await api.get(`/rooms/${roomId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return response.data;
   },
 

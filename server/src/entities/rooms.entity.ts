@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { User } from './user.entity';
 
 @Entity('rooms')
 export class Room {
@@ -11,8 +12,8 @@ export class Room {
   @Column()
   type: 'public' | 'private';
 
-  @Column('simple-array')
-  players: string[];
+  @OneToMany(() => User, user => user.currentRoom)
+  players: User[];
 
   @Column()
   createdAt: Date;

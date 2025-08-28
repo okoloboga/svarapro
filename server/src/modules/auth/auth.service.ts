@@ -25,7 +25,7 @@ export class AuthService {
     console.log('Skipping hash validation for debug, raw initData:', initData);
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
-    const referredBy = startPayload;
+    
     if (!userParam)
       throw new UnauthorizedException('Missing user data in initData');
 
@@ -36,14 +36,29 @@ export class AuthService {
       where: { telegramId: tgUser.id.toString() },
     });
 
+    let referrerId: string | undefined;
+    let roomId: string | undefined;
+
+    if (startPayload) {
+      const match = startPayload.match(/ref(\d+)-room(\w+)/);
+      if (match) {
+        referrerId = match[1];
+        roomId = match[2];
+      } else {
+        // Fallback for old format
+        referrerId = startPayload;
+      }
+    }
+
     if (!user) {
       let referrer: User | null = null;
-      if (referredBy) {
+      if (referrerId) {
         referrer = await this.usersRepository.findOne({
-          where: { telegramId: referredBy },
+          where: { telegramId: referrerId },
         });
         if (!referrer) {
-          throw new UnauthorizedException('Invalid referrer');
+          // In case of an invalid referrer in the link, we just ignore it
+          console.warn(`Invalid referrerId: ${referrerId}`);
         }
       }
 
@@ -68,6 +83,7 @@ export class AuthService {
         sub: user.id,
         telegramId: user.telegramId,
       }),
+      roomId: roomId, // Return roomId
     };
   }
 

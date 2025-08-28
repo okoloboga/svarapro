@@ -1,64 +1,34 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  BadRequestException,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, UseGuards, Req } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-interface AuthenticatedRequest extends Request {
-  user: {
-    telegramId: string;
-  };
-}
-
 @Controller('rooms')
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
-
-  @Post()
-  @UseGuards(JwtAuthGuard)
-  async createRoom(
-    @Body() createRoomDto: CreateRoomDto,
-    @Request() req: AuthenticatedRequest,
-  ) {
-    const telegramId = req.user.telegramId; // Предполагаем, что telegramId есть в JWT
-    if (!telegramId) {
-      throw new BadRequestException('User telegramId not found');
-    }
-    return this.roomsService.createRoom(createRoomDto, telegramId);
-  }
 
   @Get()
   async getRooms() {
     return this.roomsService.getRooms();
   }
 
-  @Post(':roomId/join')
-  @UseGuards(JwtAuthGuard)
-  async joinRoom(
-    @Param('roomId') roomId: string,
-    @Request() req: AuthenticatedRequest,
-  ) {
-    const telegramId = req.user.telegramId;
-    if (!telegramId) {
-      throw new BadRequestException('User telegramId not found in token');
+  @Get(':roomId/details')
+  async getRoomDetails(@Param('roomId') roomId: string) {
+    const details = await this.roomsService.getRoomDetails(roomId);
+    if (!details) {
+      throw new NotFoundException('Room not found');
     }
-    return this.roomsService.joinRoom(roomId, telegramId);
+    return details;
   }
 
-  @Get(':roomId')
-  async getRoom(@Param('roomId') roomId: string) {
-    const room = await this.roomsService.getRoom(roomId);
-    if (!room) {
-      throw new BadRequestException('Room not found');
-    }
-    return room;
+  @Post()
+  async createRoom(@Body() createRoomDto: CreateRoomDto) {
+    return this.roomsService.createRoom(createRoomDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/join')
+  join(@Param('id') id: string, @Req() req) {
+    return this.roomsService.joinRoom(id, req.user);
   }
 }

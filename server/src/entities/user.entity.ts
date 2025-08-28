@@ -1,3 +1,4 @@
+import { Room } from './rooms.entity';
 import {
   Entity,
   Column,
@@ -94,4 +95,7 @@ export class User {
     default: null,
   })
   walletAddress: string | null;
+
+  @ManyToOne(() => Room, room => room.players)
+  currentRoom: Room | null;
 }

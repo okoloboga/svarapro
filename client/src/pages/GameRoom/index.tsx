@@ -25,6 +25,7 @@ import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useAppBackButton } from '@/hooks/useAppBackButton';
 import { useTranslation } from 'react-i18next';
+import WebApp from '@twa-dev/sdk';
 
 interface ChipAnimation {
   id: string;
@@ -760,6 +761,20 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     handlePlayerBet(currentPlayer.id);
     actions.call();
   };
+  const handleInvite = () => {
+    const referrerId = currentUserId;
+    if (!referrerId) {
+      console.error("Could not get referrerId");
+      return;
+    }
+    const inviteLink = `https://t.me/svarka_game_bot/svara?startapp=ref${referrerId}-room${roomId}`;
+    WebApp.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(
+        inviteLink
+      )}&text=${encodeURIComponent(t("invite_friend_text"))}`
+    );
+  };
+
   const handleSitDown = (position: number) => {
     if (parseFloat(balance) < gameState.minBet * 10) {
       setNotification('insufficientBalance');
@@ -897,7 +912,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         />;
                       })()
                     ) : (
-                      <SeatButton type={isSeated ? 'invite' : 'sitdown'} position={absolutePosition} onSitDown={handleSitDown} onInvite={() => {}} scale={scale} />
+                      <SeatButton type={isSeated ? 'invite' : 'sitdown'} position={absolutePosition} onSitDown={handleSitDown} onInvite={handleInvite} scale={scale} />
                     )}
                   </div>
                 )

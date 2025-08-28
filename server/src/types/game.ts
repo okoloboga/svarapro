@@ -4,6 +4,7 @@ export interface Room {
   minBet: number;
   type: 'public' | 'private';
   players: string[];
+  spectators: string[];
   status: 'waiting' | 'playing' | 'finished';
   maxPlayers: number;
   createdAt: Date;

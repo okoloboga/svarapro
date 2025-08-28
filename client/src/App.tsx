@@ -101,7 +101,6 @@ function App() {
   };
 
   useEffect(() => {
-    console.log('Before initTelegramSdk');
     const initialize = async () => {
       try {
         await initTelegramSdk();
@@ -129,8 +128,8 @@ function App() {
         if (initData) {
           console.log('Sending login request with initData:', initData);
           try {
-            const response = await apiService.login(initData, launchParams.startPayload);
-            console.log('Login response:', response);
+            const { roomId } = await apiService.login(initData, launchParams.startPayload);
+            console.log('Login response roomId:', roomId);
             const profile = await apiService.getProfile() as UserProfile;
             console.log('Profile data:', profile);
             console.log('Creating WebSocket with telegramId:', profile.telegramId);
@@ -142,6 +141,17 @@ function App() {
                 : '0.00'
             );
             setWalletAddress(profile.walletAddress || null);
+
+            if (roomId) {
+              const room = await apiService.getRoom(roomId);
+              if (room) {
+                if (parseFloat(profile.balance as string) < room.minBet * 10) {
+                  setCurrentPage('deposit');
+                } else {
+                  setCurrentPage('gameRoom', { roomId, autoSit: true });
+                }
+              }
+            }
 
             if (!socket) {
               const socketInstance = io('https://svarapro.com', {
