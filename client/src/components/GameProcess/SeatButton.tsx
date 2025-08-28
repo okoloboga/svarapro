@@ -51,7 +51,7 @@ export function SeatButton({ type, position, onSitDown, onInvite, disabled, scal
     lineHeight: '100%',
     textAlign: 'center',
     color: 'white',
-    marginTop: `${15 * scale}px', // Position below center
+    marginTop: `${15 * scale}px`, // Position below center
   };
 
   return (
