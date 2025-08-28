@@ -5,12 +5,14 @@ import { Room } from '../../types/game';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameStateService } from '../game/services/game-state.service';
 import { Player } from '../../types/game';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class RoomsService {
   constructor(
     private readonly redisService: RedisService,
     private readonly gameStateService: GameStateService,
+    private readonly usersService: UsersService,
   ) {}
 
   async getRooms(): Promise<Room[]> {
@@ -71,11 +73,6 @@ export class RoomsService {
       throw new Error('Room not found');
     }
 
-    const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState) {
-      throw new Error('GameState not found');
-    }
-
     if (room.players.includes(user.telegramId)) {
       // User is already in the room, just return the room
       return room;
@@ -90,28 +87,9 @@ export class RoomsService {
       return room;
     }
 
-    // Add as player
+    // Add to room players list, but not to gameState players
     room.players.push(user.telegramId);
-    
-    const newPlayer: Player = {
-      id: user.telegramId,
-      username: user.username,
-      avatar: user.avatar,
-      balance: user.balance, // This should be the user's total balance
-      tableBalance: 0, // Initial table balance
-      cards: [],
-      isActive: true,
-      isDealer: false,
-      hasFolded: false,
-      hasLooked: false,
-      totalBet: 0,
-      position: -1, // Position will be assigned when the game starts
-    };
-
-    gameState.players.push(newPlayer);
-
     await this.redisService.setRoom(roomId, room);
-    await this.redisService.setGameState(roomId, gameState);
 
     return room;
   }

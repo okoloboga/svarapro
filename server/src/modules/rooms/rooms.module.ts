@@ -7,9 +7,10 @@ import { Room } from '../../entities/rooms.entity';
 import { RedisService } from '../../services/redis.service';
 import { TelegramService } from '../../services/telegram.service';
 import { GameModule } from '../game/game.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Room]), GameModule],
+  imports: [TypeOrmModule.forFeature([Room]), GameModule, UsersModule],
   controllers: [RoomsController],
   providers: [RoomsService, RoomsGateway, RedisService, TelegramService],
 })
