@@ -154,24 +154,28 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
   
   const [savedChipCount] = useState(0);
+  const [finalPot, setFinalPot] = useState(0);
+  const prevGameStateRef = useRef<GameState | null>(null);
   
-  const prevGameStatusRef = useRef<string | undefined>(undefined);
-
   useEffect(() => {
     if (!gameState) return;
 
-    const previousStatus = prevGameStatusRef.current;
+    const previousStatus = prevGameStateRef.current?.status;
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
       if (currentStatus === 'finished') {
+        setFinalPot(prevGameStateRef.current?.pot || 0);
         setWinSequenceStep('showdown');
         const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
         const t2 = setTimeout(() => {
           setWinSequenceStep('chips');
           handleChipsToWinner();
         }, 5000);
-        const t3 = setTimeout(() => setWinSequenceStep('none'), 7000);
+        const t3 = setTimeout(() => {
+          setWinSequenceStep('none');
+          setFinalPot(0);
+        }, 7000);
 
         return () => {
           clearTimeout(t1);
@@ -182,11 +186,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сбрасываем winSequenceStep когда начинается новая игра
         console.log('🔄 Resetting winSequenceStep to none for new game (ante phase)');
         setWinSequenceStep('none');
+        setFinalPot(0);
       }
     }
 
-    prevGameStatusRef.current = currentStatus;
-  }, [gameState?.status]);
+    prevGameStateRef.current = gameState;
+  }, [gameState]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
@@ -841,7 +846,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
-                        const winAmount = isWinner && gameState.pot > 0 ? Number((gameState.pot * 0.95).toFixed(2)) : 0;
+                        const winAmount = isWinner && finalPot > 0 ? Number((finalPot * 0.95).toFixed(2)) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
 
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
