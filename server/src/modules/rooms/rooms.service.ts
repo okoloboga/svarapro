@@ -46,6 +46,7 @@ export class RoomsService {
       minBet: createRoomDto.minBet,
       type: createRoomDto.type,
       players: [],
+      spectators: [],
       status: 'waiting',
       maxPlayers: 6,
       createdAt: new Date(),
@@ -53,7 +54,7 @@ export class RoomsService {
     };
 
     await this.redisService.setRoom(roomId, newRoom);
-    await this.redisService.addActiveRoom(roomId);
+    await this.redisService.addToActiveRooms(roomId);
 
     const initialGameState = this.gameStateService.createInitialGameState(
       roomId,
