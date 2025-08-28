@@ -148,11 +148,11 @@ export function PlayerSpot({
     cardDeckStyle.left = '50px';
   }
 
-  const TotalBetComponent = !isCurrentUser && player.totalBet > 0 && !showCards && (
+  const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div 
       className="text-white font-semibold text-xs leading-4 flex items-center justify-center"
       style={{
-        width: '34px',
+        width: '48px',
         height: '19px',
         borderRadius: '8px',
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
