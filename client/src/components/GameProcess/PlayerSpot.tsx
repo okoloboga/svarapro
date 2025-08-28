@@ -7,6 +7,17 @@ import cardBack from '@/assets/game/back.png';
 import chatButtonBg from '@/assets/game/chat.png';
 import { TURN_DURATION_SECONDS } from '@/constants';
 
+const formatAmount = (amount: number): string => {
+  const num = Number(amount);
+  const fixed = num.toFixed(2);
+  if (fixed.endsWith('.00')) {
+    return String(Math.round(num));
+  }
+  if (fixed.endsWith('0')) {
+    return fixed.slice(0, -1);
+  }
+  return fixed;
+};
 
 interface PlayerSpotProps {
   player: Player;
@@ -158,7 +169,7 @@ export function PlayerSpot({
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
       }}
     >
-      ${Number(player.totalBet).toFixed(2)}
+      ${formatAmount(player.totalBet)}
     </div>
   );
 
@@ -212,7 +223,7 @@ export function PlayerSpot({
                       {username}
                     </div>
                     <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
-                      ${Number(balance).toFixed(2)}
+                      ${formatAmount(balance)}
                     </div>
                   </div>
                 </div>
@@ -273,7 +284,7 @@ export function PlayerSpot({
                   verticalAlign: 'middle',
                   color: '#D2A21B'
                 }}>
-                  +${Number(winAmount).toFixed(2)}
+                  +${formatAmount(winAmount)}
                 </span>
               </div>
             )}
@@ -308,7 +319,7 @@ export function PlayerSpot({
                     {username}
                   </div>
                   <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
-                    ${Number(balance).toFixed(2)}
+                    ${formatAmount(balance)}
                   </div>
                 </div>
                 
@@ -388,7 +399,7 @@ export function PlayerSpot({
           
           return shouldShow ? (
             <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-semibold text-[10px] leading-none text-center z-40">
-              ${Number(lastActionAmount).toFixed(2)}
+              ${formatAmount(lastActionAmount)}
             </div>
           ) : null;
         })()}
