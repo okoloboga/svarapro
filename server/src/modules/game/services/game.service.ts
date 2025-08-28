@@ -361,6 +361,7 @@ export class GameService {
 
       player.balance -= svaraBuyInAmount;
       gameState.pot += svaraBuyInAmount;
+      player.totalBet = (player.totalBet || 0) + svaraBuyInAmount;
 
       if (!gameState.svaraConfirmed.includes(telegramId)) {
         gameState.svaraConfirmed.push(telegramId);
