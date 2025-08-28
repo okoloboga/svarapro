@@ -1101,7 +1101,7 @@ export class GameService {
     gameState.lastRaiseIndex = playerIndex;
     gameState.log.push(allInAction);
 
-    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+    const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
     if (allInPlayers.length === activePlayers.length) {
