@@ -123,7 +123,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   useEffect(() => {
     if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
       setSvaraStep('animating');
-    } else if (gameState?.status !== 'svara_pending') {
+    } else if (gameState?.status !== 'svara_pending' && svaraStep !== 'animating') {
       setSvaraStep('none');
     }
   }, [gameState?.status, svaraStep]);

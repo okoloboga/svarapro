@@ -284,7 +284,7 @@ export function PlayerSpot({
                   verticalAlign: 'middle',
                   color: '#D2A21B'
                 }}>
-                  {`+${formatAmount(winAmount)}`}
+                  {`+$${formatAmount(winAmount)}`}
                 </span>
               </div>
             )}
