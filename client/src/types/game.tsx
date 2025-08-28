@@ -37,6 +37,7 @@ export interface Player {
   position: number; // позиция за столом (0-5)
   lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
+  lastWinAmount?: number;
 }
 
 export interface GameState {

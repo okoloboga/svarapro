@@ -993,6 +993,11 @@ export class GameService {
 
     console.log(`[distributeWinnings] Distributing winnings for room ${roomId}`);
 
+    // Reset lastWinAmount for all players
+    for (const p of gameState.players) {
+      p.lastWinAmount = 0;
+    }
+
     const isAllInGame = gameState.players.some((p) => p.isAllIn);
     const winners = gameState.winners || [];
 
@@ -1016,6 +1021,7 @@ export class GameService {
             const playerInState = gameState.players.find((p) => p.id === winner.id);
             if (playerInState) {
               playerInState.balance += winAmount;
+              playerInState.lastWinAmount = (playerInState.lastWinAmount || 0) + winAmount;
             }
           }
         }
@@ -1024,13 +1030,22 @@ export class GameService {
       gameState.chipCount = 0;
     } else if (winners.length === 1) {
       console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
-      const winnerIds = winners.map((w) => w.id);
+      const winnerId = winners[0].id;
+      const winnerBefore = gameState.players.find(p => p.id === winnerId);
+      const balanceBefore = winnerBefore ? winnerBefore.balance : 0;
+
       const { updatedGameState, actions } = this.bettingService.processWinnings(
         gameState,
-        winnerIds,
+        [winnerId],
       );
       gameState = updatedGameState;
       gameState.log.push(...actions);
+
+      const winnerAfter = gameState.players.find(p => p.id === winnerId);
+      const balanceAfter = winnerAfter ? winnerAfter.balance : 0;
+      if (winnerAfter) {
+        winnerAfter.lastWinAmount = balanceAfter - balanceBefore;
+      }
     }
 
     for (const player of gameState.players) {

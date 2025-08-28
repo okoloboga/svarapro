@@ -846,7 +846,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                       (() => {
                         const isCurrentUser = userData && userData.id && player.id.toString() === userData.id.toString();
                         const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
-                        const winAmount = isWinner && finalPot > 0 ? Number((finalPot * 0.95).toFixed(2)) : 0;
+                        const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
 
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
