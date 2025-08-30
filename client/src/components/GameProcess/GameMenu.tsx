@@ -23,6 +23,13 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
   const { currentLanguage } = useLanguage();
   const { t } = useTranslation('common');
 
+  useEffect(() => {
+    if (!isOpen) {
+      setShowExitMenu(false);
+      setShowLanguageSelector(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleExitClick = () => {
@@ -105,8 +112,13 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
         />
       )}
       {showLanguageSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
+        <div 
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowLanguageSelector(false)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
+          </div>
         </div>
       )}
     </div>
