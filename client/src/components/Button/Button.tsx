@@ -33,7 +33,17 @@ export function Button({
     ? (iconPosition === 'left' ? '-mb-1' : 'mt-0')
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
-  const leftIconElement = icon ? <img src={icon} alt="" className={`${iconClassName} ${iconMargin}`} /> : null;
+  const iconStyles: React.CSSProperties = {
+    backgroundColor: 'currentColor',
+    maskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskSize: 'contain',
+    WebkitMaskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
+  };
+
+  const leftIconElement = icon ? <div className={`${iconClassName} ${iconMargin}`} style={{ ...iconStyles, maskImage: `url(${icon})`, WebkitMaskImage: `url(${icon})` }} /> : null;
 
   const textElement = <span className="relative z-10">{children}</span>;
 
@@ -63,7 +73,7 @@ export function Button({
           {(rightIcon || rightText) && (
             <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
               {rightText && <span>{rightText}</span>}
-              {rightIcon && <img src={rightIcon} alt="" className={`${iconClassName} ml-2`} />}
+              {rightIcon && <div className={`${iconClassName} ml-2`} style={{ ...iconStyles, maskImage: `url(${rightIcon})`, WebkitMaskImage: `url(${rightIcon})` }} />}
             </div>
           )}
         </StyledContainer>
@@ -84,7 +94,7 @@ export function Button({
       {(rightIcon || rightText) && (
         <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
           {rightText && <span>{rightText}</span>}
-          {rightIcon && <img src={rightIcon} alt="" className={`${iconClassName} ml-2`} />}
+          {rightIcon && <div className={`${iconClassName} ml-2`} style={{ ...iconStyles, maskImage: `url(${rightIcon})`, WebkitMaskImage: `url(${rightIcon})` }} />}
         </div>
       )}
     </div>
