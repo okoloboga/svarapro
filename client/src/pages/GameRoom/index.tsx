@@ -118,6 +118,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
   const currentTurnRef = useRef<string>(''); // Отслеживаем текущий ход
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
+  const [isSittingDown, setIsSittingDown] = useState(false);
 
   // TODO: fix svara animation
 
@@ -515,7 +516,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   
 
   useEffect(() => {
-    if (pageData?.autoSit && !isSeated && gameState) {
+    if (pageData?.autoSit && !isSeated && !isSittingDown && gameState) {
+      setIsSittingDown(true);
       const seatedPositions = gameState.players.map(p => p.position);
       let positionToSit = 1;
       while(seatedPositions.includes(positionToSit)) {
@@ -525,7 +527,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         actions.sitDown(positionToSit, userData);
       }
     }
-  }, [pageData, isSeated, gameState, actions, userData]);
+  }, [pageData, isSeated, gameState, actions, userData, isSittingDown]);
 
   if (loading) return <LoadingPage isLoading={loading} />;
 
