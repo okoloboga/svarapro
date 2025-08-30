@@ -45,11 +45,17 @@ bot.start(async (ctx) => {
     webAppUrl.searchParams.set('initData', initData.toString());
 
     const payload = ctx.message?.text.split(' ')[1]; // Получаем telegramId из /start
+
+    let messageText = 'Welcome!';
+    if (payload && payload.startsWith('join_')) {
+      messageText = 'Приглашение в игру от Друга!';
+    }
+
     if (payload) {
       webAppUrl.searchParams.set('startPayload', payload); // Передаём как startPayload
     }
 
-    await ctx.reply('Welcome!', {
+    await ctx.reply(messageText, {
       reply_markup: {
         inline_keyboard: [
           [
