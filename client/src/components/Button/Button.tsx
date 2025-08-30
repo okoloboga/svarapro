@@ -34,12 +34,18 @@ export function Button({
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
   const renderIcon = (src: string, className: string) => {
-    // Check if it's a themeable SVG icon by looking at the file path
-    const isRightIcon = src.includes('right.svg') || src.includes('right');
-    const isSlideDownIcon = src.includes('slide-down.svg') || src.includes('slide-down');
-    const isCopyIcon = src.includes('copy.svg') || src.includes('copy');
+    // Convert src to string and check if it's a themeable SVG icon
+    const srcString = String(src);
+    const isRightIcon = srcString.includes('right');
+    const isSlideDownIcon = srcString.includes('slide-down');
+    const isCopyIcon = srcString.includes('copy');
     
     const isThemeable = isRightIcon || isSlideDownIcon || isCopyIcon;
+
+    // Temporary debug - remove this later
+    if (srcString.includes('right') || srcString.includes('slide-down')) {
+      console.log('Found themeable icon:', srcString, 'isThemeable:', isThemeable);
+    }
 
     if (isThemeable) {
       const iconStyles: React.CSSProperties = {
