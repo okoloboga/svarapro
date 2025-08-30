@@ -70,6 +70,7 @@ export function ConfirmDeposit({ address, currency, trackerId }: ConfirmDepositP
           onClick={() => setShowQR(!showQR)}
           icon={qrIcon}
           rightIcon={slideDownIcon}
+          rightIconClassName="w-[15px] h-[7px]"
         >
           {showQR ? 'Скрыть QR' : 'Показать QR'}
         </Button>

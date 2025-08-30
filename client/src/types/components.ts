@@ -106,6 +106,7 @@ export type ButtonProps = {
   rightIcon?: string;
   rightText?: string;
   rightContentClassName?: string;
+  rightIconClassName?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export type EnterGameMenuProps = {

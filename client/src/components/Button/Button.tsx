@@ -16,6 +16,7 @@ export function Button({
   rightIcon,
   rightText,
   rightContentClassName,
+  rightIconClassName,
   ...rest
 }: ButtonProps) {
   const baseClasses = 'relative flex items-center font-semibold text-white';
@@ -67,7 +68,7 @@ export function Button({
           {(rightIcon || rightText) && (
             <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
               {rightText && <span>{rightText}</span>}
-              {rightIcon && renderIcon(rightIcon, `${iconClassName} ml-2`)}
+              {rightIcon && renderIcon(rightIcon, `${rightIconClassName || iconClassName} ml-2`)}
             </div>
           )}
         </StyledContainer>
@@ -88,7 +89,7 @@ export function Button({
       {(rightIcon || rightText) && (
         <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
           {rightText && <span>{rightText}</span>}
-          {rightIcon && renderIcon(rightIcon, `${iconClassName} ml-2`)}
+                        {rightIcon && renderIcon(rightIcon, `${rightIconClassName || iconClassName} ml-2`)}
         </div>
       )}
     </div>

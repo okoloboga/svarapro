@@ -93,6 +93,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           rightIcon={slideDownIcon}
           rightContentClassName="text-[#BBB9BD]"
           iconClassName="w-4 h-4"
+          rightIconClassName="w-[15px] h-[7px]"
           onClick={() => setShowLanguageSelector(true)}
         >
           {t('current_language')}
@@ -103,6 +104,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={depositHistoryIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => setCurrentPage('depositHistory')}
         >
           {t('deposit_history')}
@@ -113,6 +115,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={refIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => setIsReferralVisible(true)}
         >
           {t('referral_program')}
@@ -123,6 +126,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={channelIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={handleOpenNewsChannel}
         >
           {t('news_channel')}
@@ -133,6 +137,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={licenseIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => setIsEulaVisible(true)}
         >
           {t('user_agreement')}
@@ -143,6 +148,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={helpIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => setIsGamerulesVisible(true)}
         >
           {t('how_to_play')}
@@ -153,6 +159,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           icon={supportIcon}
           rightIcon={rightIcon}
           justify="start"
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={handleOpenSupportChat}
         >
           {t('support_chat')}

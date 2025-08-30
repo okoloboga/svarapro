@@ -69,7 +69,7 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-white" style={{ fontWeight: 500, fontSize: '12px' }}>{t(languageKeyMap[currentLanguage] || 'russian')}</span>
-              <img src={slideDownIcon} alt="arrow" className="w-4 h-4" />
+              <img src={slideDownIcon} alt="arrow" className="w-[15px] h-[7px]" />
             </div>
           </div>
           {/* Sound Toggle */}
