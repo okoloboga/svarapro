@@ -34,9 +34,12 @@ export function Button({
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
   const renderIcon = (src: string, className: string) => {
-    if (src.toLowerCase().endsWith('.svg')) {
+    const themeableIcons = ['copy', 'right', 'slide-down'];
+    const isThemeable = themeableIcons.some(iconName => src.includes(iconName));
+
+    if (isThemeable) {
       const iconStyles: React.CSSProperties = {
-        backgroundColor: '#BBB9BD', // Hardcoded color
+        backgroundColor: '#BBB9BD',
         maskImage: `url(${src})`,
         WebkitMaskImage: `url(${src})`,
         maskSize: 'contain',
@@ -46,7 +49,7 @@ export function Button({
         WebkitMaskRepeat: 'no-repeat',
         WebkitMaskPosition: 'center',
       };
-      return <div className={`${className}`} style={iconStyles} />;
+      return <div className={className} style={iconStyles} />;
     }
     return <img src={src} alt="" className={className} />;
   };
