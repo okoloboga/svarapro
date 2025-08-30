@@ -46,18 +46,31 @@ export function Button({
     const isThemeable = isRightIcon || isSlideDownIcon || isCopyIcon;
 
     if (isThemeable) {
-      const iconStyles: React.CSSProperties = {
-        backgroundColor: '#BBB9BD',
-        maskImage: `url(${src})`,
-        WebkitMaskImage: `url(${src})`,
-        maskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskSize: 'contain',
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-      };
-      return <div className={className} style={iconStyles} />;
+      if (isCopyIcon) {
+        // For URL-based SVG (copy.svg) - use mask
+        const iconStyles: React.CSSProperties = {
+          backgroundColor: '#BBB9BD',
+          maskImage: `url(${src})`,
+          WebkitMaskImage: `url(${src})`,
+          maskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          WebkitMaskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+        };
+        return <div className={className} style={iconStyles} />;
+      } else {
+        // For data URL SVG (right.svg, slide-down.svg) - use background-image
+        const iconStyles: React.CSSProperties = {
+          backgroundImage: `url(${src})`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          filter: 'brightness(0) saturate(100%) invert(85%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0.9) contrast(0.9)',
+        };
+        return <div className={className} style={iconStyles} />;
+      }
     }
     return <img src={src} alt="" className={className} />;
   };
