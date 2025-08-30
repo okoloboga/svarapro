@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import exitIcon from '@/assets/game/exit.svg';
 import volumeIcon from '@/assets/game/volume.svg';
 import languageIcon from '@/assets/language.png';
