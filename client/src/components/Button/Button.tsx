@@ -34,7 +34,8 @@ export function Button({
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
   const renderIcon = (src: string, className: string) => {
-    if (src.toLowerCase().endsWith('.svg')) {
+    // Use the mask technique only for specific, themeable SVGs like copy.svg
+    if (src.includes('copy.svg')) {
       const iconStyles: React.CSSProperties = {
         backgroundColor: 'currentColor',
         maskImage: `url(${src})`,
@@ -48,6 +49,7 @@ export function Button({
       };
       return <div className={className} style={iconStyles} />;
     }
+    // For all other icons (PNGs, other SVGs), use the standard img tag
     return <img src={src} alt="" className={className} />;
   };
 
