@@ -129,9 +129,19 @@ function App() {
           console.log('Sending login request with initData:', initData);
           try {
             const { roomId: loginRoomId } = await apiService.login(initData, launchParams.startPayload);
-            const roomId = launchParams.startPayload || loginRoomId;
+
+            let roomIdFromPayload: string | undefined = undefined;
+            if (launchParams.startPayload && launchParams.startPayload.startsWith('join_')) {
+              const parts = launchParams.startPayload.split('_');
+              if (parts.length > 1) {
+                roomIdFromPayload = parts[1];
+              }
+            }
+
+            const roomId = roomIdFromPayload || loginRoomId;
 
             console.log('Login response roomId:', loginRoomId);
+            console.log('Payload roomId:', roomIdFromPayload);
             console.log('Final roomId:', roomId);
             
             const profile = await apiService.getProfile() as UserProfile;
