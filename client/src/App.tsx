@@ -128,8 +128,12 @@ function App() {
         if (initData) {
           console.log('Sending login request with initData:', initData);
           try {
-            const { roomId } = await apiService.login(initData, launchParams.startPayload);
-            console.log('Login response roomId:', roomId);
+            const { roomId: loginRoomId } = await apiService.login(initData, launchParams.startPayload);
+            const roomId = launchParams.startPayload || loginRoomId;
+
+            console.log('Login response roomId:', loginRoomId);
+            console.log('Final roomId:', roomId);
+            
             const profile = await apiService.getProfile() as UserProfile;
             console.log('Profile data:', profile);
             console.log('Creating WebSocket with telegramId:', profile.telegramId);
