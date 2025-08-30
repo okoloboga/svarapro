@@ -18,6 +18,8 @@ import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';
 import { SoundProvider } from './context/SoundContext';
+import { Notification } from './components/Notification';
+import { NotificationType } from './types/components';
 
 interface LaunchParams {
   initData?: string;
@@ -72,6 +74,7 @@ function App() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [notification, setNotification] = useState<NotificationType | null>(null);
 
   const handleBack = useCallback(() => {
     console.log('Handling back from page:', currentPage);
@@ -157,12 +160,19 @@ function App() {
             setWalletAddress(profile.walletAddress || null);
 
             if (roomId) {
-              const room = await apiService.getRoom(roomId);
-              if (room) {
-                if (parseFloat(profile.balance as string) < room.minBet * 10) {
+              try {
+                await apiService.joinRoom(roomId);
+                handleSetCurrentPage('gameRoom', { roomId, autoSit: true });
+              } catch (error) {
+                const axiosError = error as any;
+                const errorMessage = axiosError.response?.data?.message || '';
+                
+                if (errorMessage.toLowerCase().includes('insufficient') || errorMessage.toLowerCase().includes('funds')) {
                   handleSetCurrentPage('deposit');
                 } else {
-                  handleSetCurrentPage('gameRoom', { roomId, autoSit: true });
+                  console.error('Failed to join room:', error);
+                  setCurrentPage('dashboard');
+                  setNotification('gameJoinError');
                 }
               }
             }
@@ -279,6 +289,7 @@ function App() {
         {successMessage && (
           <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />
         )}
+        {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       </SoundProvider>
     </AppRoot>
   );
