@@ -113,7 +113,7 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
       )}
       {showLanguageSelector && (
         <div 
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50"
           onClick={() => setShowLanguageSelector(false)}
         >
           <div onClick={(e) => e.stopPropagation()}>
