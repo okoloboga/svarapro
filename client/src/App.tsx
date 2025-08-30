@@ -10,7 +10,7 @@ import { ConfirmWithdraw } from './pages/ConfirmWithdraw';
 import { AddWallet } from './pages/AddWallet';
 import { More } from './pages/More';
 import { DepositHistory } from './pages/DepositHistory';
-import { GameRoom } from './pages/GameRoom'; // Добавляем GameRoom
+import { GameRoom } from './pages/GameRoom';
 import { PopSuccess } from './components/PopSuccess';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
@@ -39,7 +39,7 @@ type PageData = {
   address?: string;
   trackerId?: string;
   currency?: string;
-  roomId?: string; // Добавляем roomId для GameRoom
+  roomId?: string;
   [key: string]: unknown;
 };
 
@@ -62,7 +62,6 @@ interface UserProfile {
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
 
 function App() {
-  
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +76,6 @@ function App() {
   const [notification, setNotification] = useState<NotificationType | null>(null);
 
   const handleBack = useCallback(() => {
-    console.log('Handling back from page:', currentPage);
     if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory' || currentPage === 'gameRoom') {
       setCurrentPage('dashboard');
     } else if (currentPage === 'confirmDeposit') {
@@ -87,10 +85,7 @@ function App() {
     }
   }, [currentPage]);
 
-  useAppBackButton(
-    isSdkInitialized && currentPage !== 'dashboard', 
-    handleBack
-  );
+  useAppBackButton(isSdkInitialized && currentPage !== 'dashboard', handleBack);
 
   const userData = useMemo(() => {
     const params = retrieveLaunchParams() as LaunchParams;
@@ -98,7 +93,6 @@ function App() {
   }, []);
 
   const handleSetCurrentPage = (page: Page, data: PageData | null = null) => {
-
     setCurrentPage(page);
     setPageData(data);
   };
@@ -108,15 +102,12 @@ function App() {
       try {
         await initTelegramSdk();
         setIsSdkInitialized(true);
-        console.log('SDK initialization completed');
       } catch (e) {
         console.error('Failed to initialize SDK:', e);
         setError('Failed to initialize Telegram SDK');
       }
 
-      console.log('Before launch params');
       const launchParams = retrieveLaunchParams() as LaunchParams;
-      console.log('Launch params:', launchParams);
 
       let initData: string | undefined = launchParams.initData;
       if (!initData && launchParams.tgWebAppData) {
@@ -133,109 +124,85 @@ function App() {
       }
 
       const loadData = async () => {
-        if (initData) {
-          console.log('Sending login request with initData:', initData);
-          try {
-            const { roomId: loginRoomId } = await apiService.login(initData, launchParams.startPayload);
-
-            let roomIdFromPayload: string | undefined = undefined;
-            if (launchParams.startPayload && launchParams.startPayload.startsWith('join_')) {
-              const parts = launchParams.startPayload.split('_');
-              if (parts.length > 1) {
-                roomIdFromPayload = parts[1];
-              }
-            }
-
-            const roomId = roomIdFromPayload || loginRoomId;
-
-            console.log('Login response roomId:', loginRoomId);
-            console.log('Payload roomId:', roomIdFromPayload);
-            console.log('Final roomId:', roomId);
-            
-            const profile = await apiService.getProfile() as UserProfile;
-            console.log('Profile data:', profile);
-            console.log('Creating WebSocket with telegramId:', profile.telegramId);
-            setBalance(
-              profile.balance !== undefined
-                ? typeof profile.balance === 'number'
-                  ? profile.balance.toFixed(2)
-                  : parseFloat(profile.balance).toFixed(2)
-                : '0.00'
-            );
-            setWalletAddress(profile.walletAddress || null);
-
-            if (roomId) {
-              try {
-                await apiService.joinRoom(roomId);
-                handleSetCurrentPage('gameRoom', { roomId, autoSit: true });
-              } catch (error) {
-                const axiosError = error as any;
-                const errorMessage = axiosError.response?.data?.message || '';
-                
-                if (errorMessage.toLowerCase().includes('insufficient') || errorMessage.toLowerCase().includes('funds')) {
-                  handleSetCurrentPage('deposit');
-                } else {
-                  console.error('Failed to join room:', error);
-                  setCurrentPage('dashboard');
-                  setNotification('gameJoinError');
-                }
-              }
-            }
-
-            if (!socket) {
-              const socketInstance = io('https://svarapro.com', {
-                transports: ['websocket'],
-                query: { telegramId: profile.telegramId },
-              });
-              setSocket(socketInstance);
-
-              socketInstance.on('connect', () => {
-                console.log('WebSocket connected');
-                socketInstance.emit('join', profile.telegramId);
-                // Подписываемся на обновления баланса для конкретного пользователя
-                socketInstance.emit('subscribe_balance', profile.telegramId);
-              });
-
-              socketInstance.on('transactionConfirmed', (data: {
-                balance: string;
-                amount: number;
-                currency: string;
-                message: string;
-              }) => {
-                console.log('Transaction confirmed:', data);
-                setBalance(data.balance);
-                setSuccessMessage(data.message);
-              });
-
-              // Обработчик обновления баланса после игры
-              socketInstance.on('balanceUpdated', (data: { balance: string }) => {
-            
-                setBalance(data.balance);
-              });
-
-              socketInstance.on('disconnect', () => {
-                console.log('WebSocket disconnected');
-                setSocket(null);
-              });
-            }
-          } catch (error) {
-            const apiError = error as ApiError;
-            const errorMessage =
-              typeof apiError === 'string'
-                ? apiError
-                : apiError.message || 'Unknown error';
-            console.error(
-              'Login error:',
-              errorMessage,
-              typeof apiError === 'object' && apiError.response
-                ? apiError.response.data
-                : 'No response data'
-            );
-            setError('Failed to load data. Please try again later.');
-          }
-        } else {
-          console.error('No initData available');
+        if (!initData) {
           setError('Telegram initialization data not found.');
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          let roomIdFromPayload: string | undefined = undefined;
+          let referrerIdFromPayload: string | undefined = undefined;
+
+          if (launchParams.startPayload && launchParams.startPayload.startsWith('join_')) {
+            const parts = launchParams.startPayload.split('_');
+            if (parts.length > 2) { // join_roomId_referrerId
+              roomIdFromPayload = parts[1];
+              referrerIdFromPayload = parts[2];
+            }
+          } else if (launchParams.startPayload) {
+            referrerIdFromPayload = launchParams.startPayload;
+          }
+
+          await apiService.login(initData, referrerIdFromPayload);
+
+          const profile = await apiService.getProfile() as UserProfile;
+          setBalance(
+            profile.balance !== undefined
+              ? typeof profile.balance === 'number'
+                ? profile.balance.toFixed(2)
+                : parseFloat(profile.balance).toFixed(2)
+              : '0.00'
+          );
+          setWalletAddress(profile.walletAddress || null);
+
+          if (roomIdFromPayload) {
+            try {
+              await apiService.joinRoom(roomIdFromPayload);
+              handleSetCurrentPage('gameRoom', { roomId: roomIdFromPayload, autoSit: true });
+            } catch (error) {
+              const axiosError = error as any;
+              const errorMessage = axiosError.response?.data?.message || '';
+              if (errorMessage.toLowerCase().includes('insufficient') || errorMessage.toLowerCase().includes('funds')) {
+                handleSetCurrentPage('deposit');
+              } else {
+                console.error('Failed to join room:', error);
+                setCurrentPage('dashboard');
+                setNotification('gameJoinError');
+              }
+            }
+          }
+
+          if (!socket) {
+            const socketInstance = io('https://svarapro.com', {
+              transports: ['websocket'],
+              query: { telegramId: profile.telegramId },
+            });
+            setSocket(socketInstance);
+
+            socketInstance.on('connect', () => {
+              socketInstance.emit('join', profile.telegramId);
+              socketInstance.emit('subscribe_balance', profile.telegramId);
+            });
+
+            socketInstance.on('transactionConfirmed', (data: { balance: string; message: string; }) => {
+              setBalance(data.balance);
+              setSuccessMessage(data.message);
+            });
+
+            socketInstance.on('balanceUpdated', (data: { balance: string }) => {
+              setBalance(data.balance);
+            });
+
+            socketInstance.on('disconnect', () => {
+              setSocket(null);
+            });
+          }
+        } catch (error) {
+          const apiError = error as ApiError;
+          const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
+          console.error('Login error:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
+          setError('Failed to load data. Please try again later.');
         }
         setIsLoading(false);
       };
@@ -248,12 +215,9 @@ function App() {
     return () => {
       if (socket) {
         socket.disconnect();
-        console.log('WebSocket disconnected on cleanup');
       }
     };
   }, [socket]);
-
-  
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
@@ -269,11 +233,7 @@ function App() {
         ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.trackerId ? (
           <ConfirmDeposit address={pageData.address} currency={pageData.currency ?? 'USDTTON'} trackerId={pageData.trackerId}/>
         ) : currentPage === 'withdraw' ? (
-          <Withdraw
-            balance={balance}
-            setCurrentPage={handleSetCurrentPage}
-            setWithdrawAmount={setWithdrawAmount}
-          />
+          <Withdraw balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
         ) : currentPage === 'confirmWithdraw' ? (
           <ConfirmWithdraw withdrawAmount={withdrawAmount} />
         ) : currentPage === 'addWallet' ? (
@@ -283,17 +243,9 @@ function App() {
         ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
           <GameRoom roomId={pageData.roomId} balance={balance} socket={socket} setCurrentPage={handleSetCurrentPage} userData={userData} pageData={pageData} />
         ) : (
-          <Dashboard
-            onMoreClick={() => handleSetCurrentPage('more')}
-            setCurrentPage={handleSetCurrentPage}
-            balance={balance}
-            walletAddress={walletAddress}
-            socket={socket}
-          />
+          <Dashboard onMoreClick={() => handleSetCurrentPage('more')} setCurrentPage={handleSetCurrentPage} balance={balance} walletAddress={walletAddress} socket={socket} />
         )}
-        {successMessage && (
-          <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />
-        )}
+        {successMessage && <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />}
         {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
       </SoundProvider>
     </AppRoot>
