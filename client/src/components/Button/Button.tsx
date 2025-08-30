@@ -36,6 +36,7 @@ export function Button({
   const renderIcon = (src: string, className: string) => {
     if (src.toLowerCase().endsWith('.svg')) {
       const iconStyles: React.CSSProperties = {
+        backgroundColor: '#BBB9BD', // Hardcoded color
         maskImage: `url(${src})`,
         WebkitMaskImage: `url(${src})`,
         maskSize: 'contain',
@@ -45,7 +46,7 @@ export function Button({
         WebkitMaskRepeat: 'no-repeat',
         WebkitMaskPosition: 'center',
       };
-      return <div className={`${className} bg-current`} style={iconStyles} />;
+      return <div className={`${className}`} style={iconStyles} />;
     }
     return <img src={src} alt="" className={className} />;
   };
