@@ -123,7 +123,12 @@ function App() {
         initData = new URLSearchParams(
           Object.entries(launchParams.tgWebAppData)
             .filter(([key]) => key !== 'hash' && key !== 'signature')
-            .map(([key, value]) => [key, (value as string | Record<string, unknown>).toString()])
+            .map(([key, value]) => {
+              if (typeof value === 'object' && value !== null) {
+                return [key, JSON.stringify(value)];
+              }
+              return [key, value.toString()];
+            })
         ).toString();
       }
 
