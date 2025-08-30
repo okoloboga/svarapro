@@ -33,17 +33,25 @@ export function Button({
     ? (iconPosition === 'left' ? '-mb-1' : 'mt-0')
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
-  const iconStyles: React.CSSProperties = {
-    backgroundColor: 'currentColor',
-    maskSize: 'contain',
-    maskRepeat: 'no-repeat',
-    maskPosition: 'center',
-    WebkitMaskSize: 'contain',
-    WebkitMaskRepeat: 'no-repeat',
-    WebkitMaskPosition: 'center',
+  const renderIcon = (src: string, className: string) => {
+    if (src.toLowerCase().endsWith('.svg')) {
+      const iconStyles: React.CSSProperties = {
+        backgroundColor: 'currentColor',
+        maskImage: `url(${src})`,
+        WebkitMaskImage: `url(${src})`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+      };
+      return <div className={className} style={iconStyles} />;
+    }
+    return <img src={src} alt="" className={className} />;
   };
 
-  const leftIconElement = icon ? <div className={`${iconClassName} ${iconMargin}`} style={{ ...iconStyles, maskImage: `url(${icon})`, WebkitMaskImage: `url(${icon})` }} /> : null;
+  const leftIconElement = icon ? renderIcon(icon, `${iconClassName} ${iconMargin}`) : null;
 
   const textElement = <span className="relative z-10">{children}</span>;
 
@@ -73,7 +81,7 @@ export function Button({
           {(rightIcon || rightText) && (
             <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
               {rightText && <span>{rightText}</span>}
-              {rightIcon && <div className={`${iconClassName} ml-2`} style={{ ...iconStyles, maskImage: `url(${rightIcon})`, WebkitMaskImage: `url(${rightIcon})` }} />}
+              {rightIcon && renderIcon(rightIcon, `${iconClassName} ml-2`)}
             </div>
           )}
         </StyledContainer>
@@ -94,7 +102,7 @@ export function Button({
       {(rightIcon || rightText) && (
         <div className={`ml-auto flex-shrink-0 flex items-center ${rightContentClassName}`}>
           {rightText && <span>{rightText}</span>}
-          {rightIcon && <div className={`${iconClassName} ml-2`} style={{ ...iconStyles, maskImage: `url(${rightIcon})`, WebkitMaskImage: `url(${rightIcon})` }} />}
+          {rightIcon && renderIcon(rightIcon, `${iconClassName} ml-2`)}
         </div>
       )}
     </div>
