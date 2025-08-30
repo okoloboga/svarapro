@@ -34,18 +34,16 @@ export function Button({
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
   const renderIcon = (src: string, className: string) => {
-    // Log all icon sources to see what we're getting
-    console.log('Icon src:', src, 'Type:', typeof src);
-    
-    // Try different approaches to detect the icons
     const srcString = String(src);
-    const isRightIcon = srcString.includes('right') || srcString.includes('Right');
-    const isSlideDownIcon = srcString.includes('slide-down') || srcString.includes('slideDown') || srcString.includes('SlideDown');
-    const isCopyIcon = srcString.includes('copy') || srcString.includes('Copy');
+    
+    // Check for URL-based icons (like copy.svg)
+    const isCopyIcon = srcString.includes('copy');
+    
+    // Check for specific SVG content patterns
+    const isRightIcon = srcString.includes('data:image/svg+xml') && srcString.includes('width=\'6\'') && srcString.includes('height=\'17\'');
+    const isSlideDownIcon = srcString.includes('data:image/svg+xml') && srcString.includes('width=\'10\'') && srcString.includes('height=\'6\'');
     
     const isThemeable = isRightIcon || isSlideDownIcon || isCopyIcon;
-    
-    console.log('Detection results:', { isRightIcon, isSlideDownIcon, isCopyIcon, isThemeable });
 
     if (isThemeable) {
       const iconStyles: React.CSSProperties = {
