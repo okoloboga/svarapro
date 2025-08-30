@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyledContainer } from '@/components/StyledContainer';
 import { Button } from '@/components/Button/Button';
 import searchIcon from '@/assets/search.svg';
-import slideDownIcon from '@/assets/slide-down.svg';
+import slideDownIcon from '@/assets/slideDown.png';
 import { CSSTransition } from 'react-transition-group';
 import { SlidePanel } from './SlidePanel';
 import { useTranslation } from 'react-i18next';

@@ -34,44 +34,6 @@ export function Button({
     : (iconPosition === 'left' ? 'mr-2' : 'ml-2');
 
   const renderIcon = (src: string, className: string) => {
-    const srcString = String(src);
-    
-    // Check for URL-based icons (like copy.svg)
-    const isCopyIcon = srcString.includes('copy');
-    
-    // Check for specific SVG content patterns
-    const isRightIcon = srcString.includes('data:image/svg+xml') && srcString.includes('width=\'6\'') && srcString.includes('height=\'17\'');
-    const isSlideDownIcon = srcString.includes('data:image/svg+xml') && srcString.includes('width=\'10\'') && srcString.includes('height=\'6\'');
-    
-    const isThemeable = isRightIcon || isSlideDownIcon || isCopyIcon;
-
-    if (isThemeable) {
-      if (isCopyIcon) {
-        // For URL-based SVG (copy.svg) - use mask
-        const iconStyles: React.CSSProperties = {
-          backgroundColor: '#BBB9BD',
-          maskImage: `url(${src})`,
-          WebkitMaskImage: `url(${src})`,
-          maskSize: 'contain',
-          maskRepeat: 'no-repeat',
-          maskPosition: 'center',
-          WebkitMaskSize: 'contain',
-          WebkitMaskRepeat: 'no-repeat',
-          WebkitMaskPosition: 'center',
-        };
-        return <div className={className} style={iconStyles} />;
-      } else {
-        // For data URL SVG (right.svg, slide-down.svg) - use background-image
-        const iconStyles: React.CSSProperties = {
-          backgroundImage: `url(${src})`,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
-          filter: 'brightness(0) saturate(100%) invert(85%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0.9) contrast(0.9)',
-        };
-        return <div className={className} style={iconStyles} />;
-      }
-    }
     return <img src={src} alt="" className={className} />;
   };
 

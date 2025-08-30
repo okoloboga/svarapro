@@ -2,7 +2,7 @@ import { StyledContainer } from '@/components/StyledContainer';
 import { Button } from '@/components/Button/Button';
 import { Refrules } from '@/components/LongRead/refrules';
 import closeIcon from '@/assets/close.png';
-import copyIcon from '@/assets/copy.svg';
+import copyIcon from '@/assets/copy.png';
 import { useEffect, useState } from 'react';
 import { apiService } from '@/services/api/api';
 import { PopSuccess } from '@/components/PopSuccess';

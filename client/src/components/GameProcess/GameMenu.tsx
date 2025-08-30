@@ -9,7 +9,7 @@ import { useSoundContext } from '@/context/SoundContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../Language';
-import slideDownIcon from '@/assets/slide-down.svg';
+import slideDownIcon from '@/assets/slideDown.png';
 
 const languageKeyMap: { [key: string]: string } = {
   ru: 'russian',

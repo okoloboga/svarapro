@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/Button/Button';
 import tetherIcon from '@/assets/tether.png';
 import tonIcon from '@/assets/ton.png';
-import rightIcon from '@/assets/right.svg';
+import rightIcon from '@/assets/right.png';
 import { apiService } from '@/services/api/api';
 import { LoadingPage } from '@/components/LoadingPage';
 import { useTranslation } from 'react-i18next';
