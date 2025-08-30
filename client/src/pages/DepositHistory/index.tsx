@@ -70,7 +70,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
             className="text-xl font-semibold text-white flex items-center text-left leading-tight tracking-tighter"
             style={{ fontSize: '20px', fontWeight: 600, lineHeight: '100%', letterSpacing: '-1.1%' }}
           >
-            История депозитов
+            {t('deposit_history')}
           </h2>
           <button onClick={() => setCurrentPage('more')} className="z-10">
             <img src={closeIcon} alt="Close" className="w-6 h-6" />

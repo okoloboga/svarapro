@@ -9,6 +9,7 @@ import { PopSuccess } from '@/components/PopSuccess';
 import { useTranslation } from 'react-i18next';
 import { ReferralProps } from '@/types/components';
 import { ReferralData } from '@/types/entities';
+import WebApp from '@twa-dev/sdk';
 
 const truncateUsername = (username: string | null | undefined) => {
   if (!username) return 'N/A';
@@ -28,6 +29,17 @@ export function Referral({ onClose }: ReferralProps) {
       navigator.clipboard.writeText(referralData.referralLink).then(() => {
         setShowSuccess(true);
       });
+    }
+  };
+
+  const handleShare = () => {
+    if (referralData?.referralLink) {
+      const text = t('share_referral_text', 'Присоединяйся ко мне в Svara Pro! Используй мою ссылку для регистрации.');
+      WebApp.openTelegramLink(
+        `https://t.me/share/url?url=${encodeURIComponent(
+          referralData.referralLink
+        )}&text=${encodeURIComponent(text)}`
+      );
     }
   };
 
@@ -102,6 +114,7 @@ export function Referral({ onClose }: ReferralProps) {
               </Button>
               <Button 
                 variant="tertiary" 
+                onClick={handleShare}
                 className="w-[140px] h-[36px] !bg-[#2E2B33] font-medium text-sm leading-normal tracking-tighter rounded-lg"
               >
                 {t('share')}
