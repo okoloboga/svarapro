@@ -265,7 +265,7 @@ export class FinancesService {
 
     await this.transactionRepository.save(transaction);
     this.logger.log(
-      `Callback processed: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}, status: ${transactionData.status}`,
+      `Callback processed: trackerId: ${trackerId}, status: ${transactionData.status}`,
     );
   }
 
