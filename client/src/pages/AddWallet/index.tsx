@@ -23,10 +23,10 @@ export function AddWallet({ setCurrentPage, setWalletAddress }: AddWalletProps) 
       await apiService.addWalletAddress(address);
       setNotification('addressAdded');
       
-      // Обновляем состояние кошелька и возвращаемся на дашборд
+      // Обновляем состояние кошелька и переходим на страницу вывода
       setWalletAddress(address);
       setTimeout(() => {
-        setCurrentPage('dashboard');
+        setCurrentPage('withdraw');
       }, 2000); // Даем время пользователю увидеть уведомление
     } catch (error: unknown) {
       const apiError = error as ApiError;
