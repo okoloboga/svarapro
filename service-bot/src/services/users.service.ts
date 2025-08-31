@@ -1,15 +1,14 @@
 import axios from 'axios';
 
 export interface User {
-  id: number;
+  id: string;
   telegramId: string;
   username?: string;
-  firstName?: string;
-  lastName?: string;
   balance: number;
-  isActive: boolean;
-  createdAt: string;
-  lastLoginAt?: string;
+  refBalance: number;
+  refBonus: number;
+  totalDeposit: number;
+  walletAddress?: string;
 }
 
 export interface UsersResponse {

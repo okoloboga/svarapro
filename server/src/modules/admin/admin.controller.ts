@@ -28,7 +28,7 @@ export class AdminController {
     const [users, total] = await this.userRepository.findAndCount({
       skip,
       take: limit,
-      order: { createdAt: 'DESC' },
+      order: { id: 'DESC' },
     });
 
     return {
@@ -36,12 +36,11 @@ export class AdminController {
         id: user.id,
         telegramId: user.telegramId,
         username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
         balance: user.balance,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
+        refBalance: user.refBalance,
+        refBonus: user.refBonus,
+        totalDeposit: user.totalDeposit,
+        walletAddress: user.walletAddress,
       })),
       total,
       page,
@@ -59,8 +58,7 @@ export class AdminController {
       .createQueryBuilder('user')
       .where('user.telegramId LIKE :query', { query: `%${query}%` })
       .orWhere('user.username LIKE :query', { query: `%${query}%` })
-      .orWhere('user.firstName LIKE :query', { query: `%${query}%` })
-      .orWhere('user.lastName LIKE :query', { query: `%${query}%` })
+
       .take(10)
       .getMany();
 
@@ -69,12 +67,11 @@ export class AdminController {
         id: user.id,
         telegramId: user.telegramId,
         username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
         balance: user.balance,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
+        refBalance: user.refBalance,
+        refBonus: user.refBonus,
+        totalDeposit: user.totalDeposit,
+        walletAddress: user.walletAddress,
       })),
     };
   }
@@ -91,12 +88,11 @@ export class AdminController {
       id: user.id,
       telegramId: user.telegramId,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
       balance: user.balance,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
+      refBalance: user.refBalance,
+      refBonus: user.refBonus,
+      totalDeposit: user.totalDeposit,
+      walletAddress: user.walletAddress,
     };
   }
 
@@ -127,12 +123,11 @@ export class AdminController {
       id: user.id,
       telegramId: user.telegramId,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
       balance: user.balance,
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
+      refBalance: user.refBalance,
+      refBonus: user.refBonus,
+      totalDeposit: user.totalDeposit,
+      walletAddress: user.walletAddress,
     };
   }
 
@@ -169,7 +164,7 @@ export class AdminController {
       this.transactionRepository
         .createQueryBuilder('transaction')
         .where('transaction.type = :type', { type: 'deposit' })
-        .andWhere('transaction.status = :status', { status: 'confirmed' })
+        .andWhere('transaction.status = :status', { status: 'complete' })
         .andWhere('transaction.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
         .select('SUM(transaction.amount)', 'total')
         .getRawOne(),
@@ -177,7 +172,7 @@ export class AdminController {
       this.transactionRepository
         .createQueryBuilder('transaction')
         .where('transaction.type = :type', { type: 'withdraw' })
-        .andWhere('transaction.status = :status', { status: 'confirmed' })
+        .andWhere('transaction.status = :status', { status: 'complete' })
         .andWhere('transaction.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
         .select('SUM(transaction.amount)', 'total')
         .getRawOne(),

@@ -157,7 +157,7 @@ export class AdminHandlers {
       
       // Кнопки пользователей
       for (const user of users) {
-        const displayName = user.username || user.firstName || user.telegramId;
+        const displayName = user.username || user.telegramId;
         keyboard.push([{
           text: `${displayName} (${user.balance} USDT)`,
           callback_data: `admin_user_${user.telegramId}`
@@ -202,11 +202,12 @@ export class AdminHandlers {
       
       const message = `👤 **Информация о пользователе**\n\n` +
         `🆔 ID: \`${user.telegramId}\`\n` +
-        `👤 Имя: ${user.firstName || 'Не указано'}\n` +
         `📝 Username: ${user.username ? '@' + user.username : 'Не указан'}\n` +
         `💰 Баланс: ${user.balance} USDT\n` +
-        `📅 Дата регистрации: ${new Date(user.createdAt).toLocaleDateString()}\n` +
-        `🔄 Статус: ${user.isActive ? '✅ Активен' : '❌ Неактивен'}`;
+        `🎁 Реферальный баланс: ${user.refBalance} USDT\n` +
+        `📊 Реферальный бонус: ${user.refBonus}%\n` +
+        `💳 Общие депозиты: ${user.totalDeposit} USDT\n` +
+        `🔗 Кошелек: ${user.walletAddress || 'Не указан'}`;
       
       await ctx.reply(message, {
         parse_mode: 'Markdown',
