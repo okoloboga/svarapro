@@ -356,69 +356,60 @@ export class ApiService {
       throw new BadRequestException(`Invalid trackerId: ${trackerId}`);
     }
 
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const body = JSON.stringify({ tracker_id: trackerId });
-    const signature = createHmac('sha512', this.getApiSecret())
-      .update(timestamp + body)
-      .digest('hex');
-
     this.logger.debug(`Checking transaction status: trackerId=${trackerId}`);
-    this.logger.debug(
-      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
-    );
-    this.logger.debug(`Request body: ${body}`);
 
     try {
-      const response = await axios.post<ExnodeTransactionStatusResponse>(
-        `${this.baseUrl}/api/transaction/get`,
-        body,
+      const response = await axios.get(
+        `${this.baseUrl}/api/v1/integration/orders/${trackerId}`,
         {
           headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            ApiPublic: this.apiPublic!,
-            Signature: signature,
-            Timestamp: timestamp,
+            'x-api-key': this.getApiKey(),
           },
           timeout: 10000,
         },
       );
 
-      if (response.data.status !== 'ok') {
+      if (response.data.message !== 'ok') {
         this.logger.error(
-          `Failed to get transaction status: ${response.data.status}, response: ${JSON.stringify(response.data)}`,
+          `Failed to get transaction status: ${response.data.message}`,
         );
         throw new BadRequestException(
-          `Failed to get transaction status: ${response.data.status}`,
+          `Failed to get transaction status: ${response.data.message}`,
         );
       }
 
-      // Добавляем логирование clientTransactionId
-      this.logger.debug(
-        `Transaction status response: clientTransactionId=${response.data.transaction.client_transaction_id}, status=${response.data.transaction.status}`,
-      );
+      const orderData = response.data.data;
+      
+      // Маппинг статусов Alfabit на наши статусы
+      let mappedStatus = 'pending';
+      if (orderData.status === 'paid' || orderData.status === 'completed') {
+        mappedStatus = 'SUCCESS';
+      } else if (orderData.status === 'failed' || orderData.status === 'cancelled') {
+        mappedStatus = 'ERROR';
+      }
 
       this.logger.log(
-        `Transaction status retrieved: trackerId: ${trackerId}, status: ${response.data.transaction.status}`,
+        `Transaction status retrieved: trackerId: ${trackerId}, status: ${mappedStatus}`,
       );
+
       return {
-        status: response.data.transaction.status,
-        amount: response.data.transaction.amount,
-        transactionHash: response.data.transaction.hash,
-        clientTransactionId: response.data.transaction.client_transaction_id,
-        token: response.data.transaction.token,
+        status: mappedStatus,
+        amount: orderData.amountInFact ? parseFloat(orderData.amountInFact) : undefined,
+        transactionHash: orderData.txId,
+        clientTransactionId: trackerId, // В новом API используем uid как clientTransactionId
+        token: orderData.currencyInCode || orderData.currencyOutCode,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
         this.logger.error(
-          `Exnode API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+          `Alfabit API error (getTransactionStatus): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
         );
-        throw new BadRequestException(`Exnode API error: ${error.message}`);
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
       } else {
         this.logger.error(
-          `Exnode API error (getTransactionStatus): ${String(error)}`,
+          `Alfabit API error (getTransactionStatus): ${String(error)}`,
         );
-        throw new BadRequestException(`Exnode API error: ${String(error)}`);
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
       }
     }
   }
