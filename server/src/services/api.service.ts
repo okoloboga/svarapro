@@ -40,17 +40,22 @@ interface ExnodeTransactionStatusResponse {
 
 @Injectable()
 export class ApiService {
-  private readonly baseUrl = 'https://my.exnode.io';
-  private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
+  // Старый эквайринг Exnode (закомментирован для возможности восстановления)
+  // private readonly baseUrl = 'https://my.exnode.io';
+  // private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
+  
+  // Новый эквайринг Alfabit
+  private readonly baseUrl = process.env.ALFABIT_BASE_URL || 'https://pay.alfabit.org';
+  private readonly apiKey = process.env.ALFABIT_API_KEY;
   private readonly callBackUrl =
     'https://svarapro.com/api/v1/finances/callback';
   private readonly supportedTokens = ['USDTTON', 'TON'];
   private readonly logger = new Logger(ApiService.name);
 
   constructor() {
-    if (!process.env.EXNODE_API_SECRET || !this.apiPublic) {
+    if (!this.apiKey) {
       throw new BadRequestException(
-        'EXNODE_API_SECRET or EXNODE_API_PUBLIC is not defined in environment variables',
+        'ALFABIT_API_KEY is not defined in environment variables',
       );
     }
     axiosRetry(axios, {
@@ -59,12 +64,11 @@ export class ApiService {
     });
   }
 
-  private getApiSecret(): string {
-    const secret = process.env.EXNODE_API_SECRET;
-    if (!secret) {
-      throw new BadRequestException('EXNODE_API_SECRET is not defined');
+  private getApiKey(): string {
+    if (!this.apiKey) {
+      throw new BadRequestException('ALFABIT_API_KEY is not defined');
     }
-    return secret;
+    return this.apiKey;
   }
 
   async createDepositAddress(
@@ -86,6 +90,8 @@ export class ApiService {
       );
     }
 
+    // Старый эквайринг Exnode (закомментирован для возможности восстановления)
+    /*
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({
       token,
@@ -150,6 +156,69 @@ export class ApiService {
           `Exnode API error (createDepositAddress): ${String(error)}`,
         );
         throw new BadRequestException(`Exnode API error: ${String(error)}`);
+      }
+    }
+    */
+
+    // Новый эквайринг Alfabit
+    const requestBody = {
+      currencyInCode: token,
+      invoiceAssetCode: 'USDT',
+      comment: `Deposit for transaction ${clientTransactionId}`,
+      publicComment: `Deposit ${clientTransactionId}`,
+      callbackUrl: this.callBackUrl,
+      isAwaitRequisites: true,
+      expiryDurationMinutes: 60,
+    };
+
+    this.logger.debug(
+      `Creating deposit invoice: token=${token}, clientTransactionId=${clientTransactionId}`,
+    );
+    this.logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/api/v1/integration/orders/invoice`,
+        requestBody,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': this.getApiKey(),
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.message !== 'ok') {
+        this.logger.error(
+          `Failed to create deposit invoice: ${response.data.message}`,
+        );
+        throw new BadRequestException(
+          `Failed to create deposit invoice: ${response.data.message}`,
+        );
+      }
+
+      const invoiceData = response.data.data;
+      this.logger.log(
+        `Deposit invoice created: uid: ${invoiceData.uid}, requisites: ${invoiceData.requisites}`,
+      );
+
+      return {
+        address: invoiceData.requisites,
+        trackerId: invoiceData.uid,
+        destTag: invoiceData.requisitesMemoTag || null,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Alfabit API error (createDepositAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Alfabit API error (createDepositAddress): ${String(error)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
       }
     }
   }
