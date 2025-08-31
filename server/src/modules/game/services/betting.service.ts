@@ -67,22 +67,30 @@ export class BettingService {
       return true;
     }
 
-    // Если повышения не было, раунд не может быть завершен.
+    // Раунд не может быть завершен, если не было повышения ставки.
     if (gameState.lastRaiseIndex === undefined) {
       return false;
     }
 
-    // Раунд завершен, если ход вернулся к игроку, который последним повысил ставку.
-    // Это означает, что все остальные активные игроки сделали свой ход (call или fold).
-    if (gameState.currentPlayerIndex === gameState.lastRaiseIndex) {
+    // Определяем "якорного" игрока, на котором должен закончиться круг.
+    // Правило: "Круг ставок завершается на игроке, который последним
+    // сделал ставку в темную, или на дилере, если никто не ставил."
+    const anchorPlayerIndex =
+      gameState.lastBlindBettorIndex !== undefined
+        ? gameState.lastBlindBettorIndex
+        : gameState.dealerIndex;
+
+    // Круг завершен, если текущий ход должен перейти к "якорному" игроку
+    // и все активные игроки уравняли последнюю ставку.
+    if (gameState.currentPlayerIndex === anchorPlayerIndex) {
       const raiser = gameState.players[gameState.lastRaiseIndex];
-      if (!raiser) return false; // На всякий случай
+      if (!raiser) return false; // Безопасность
 
       const requiredBet = raiser.totalBet;
-      // Дополнительно убедимся, что все ставки действительно равны.
       const allBetsEqual = activePlayers.every(
         (p) => p.totalBet === requiredBet,
       );
+
       return allBetsEqual;
     }
 
