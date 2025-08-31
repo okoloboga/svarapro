@@ -55,7 +55,7 @@ export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdr
         </p>
         <div className="bg-black bg-opacity-30 rounded-lg w-full h-[53px] flex items-center justify-start px-4 mb-4">
           <p className="text-white font-semibold text-sm tracking-tighter leading-tight">
-            {withdrawAmount} USDTTON
+            {withdrawAmount} USDT
           </p>
         </div>
       </div>
