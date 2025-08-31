@@ -170,7 +170,9 @@ export class AdminHandlers {
       
       // Кнопки пользователей
       for (const user of users) {
-        const displayName = user.username ? this.escapeMarkdown(user.username) : user.telegramId;
+        let displayName = user.username || user.firstName || user.telegramId;
+        // Убираем экранирование для отображения в кнопке
+        displayName = displayName.replace(/\\/g, '');
         keyboard.push([{
           text: `${displayName} (${user.balance} USDT)`,
           callback_data: `admin_user_${user.telegramId}`
@@ -261,24 +263,16 @@ export class AdminHandlers {
       const message = `📊 **Статистика**\n\n` +
         `📅 **${getMessage(locale, 'admin.period.day')}**\n` +
         `💰 Вводы: ${stats.day.deposits} USDT\n` +
-        `💸 Выводы: ${stats.day.withdrawals} USDT\n` +
-        `📈 Прибыль: ${stats.day.profit} USDT\n` +
-        `🎮 Игр: ${stats.day.gamesCount}\n\n` +
+        `💸 Выводы: ${stats.day.withdrawals} USDT\n\n` +
         `📅 **${getMessage(locale, 'admin.period.week')}**\n` +
         `💰 Вводы: ${stats.week.deposits} USDT\n` +
-        `💸 Выводы: ${stats.week.withdrawals} USDT\n` +
-        `📈 Прибыль: ${stats.week.profit} USDT\n` +
-        `🎮 Игр: ${stats.week.gamesCount}\n\n` +
+        `💸 Выводы: ${stats.week.withdrawals} USDT\n\n` +
         `📅 **${getMessage(locale, 'admin.period.month')}**\n` +
         `💰 Вводы: ${stats.month.deposits} USDT\n` +
-        `💸 Выводы: ${stats.month.withdrawals} USDT\n` +
-        `📈 Прибыль: ${stats.month.profit} USDT\n` +
-        `🎮 Игр: ${stats.month.gamesCount}\n\n` +
+        `💸 Выводы: ${stats.month.withdrawals} USDT\n\n` +
         `📅 **${getMessage(locale, 'admin.period.total')}**\n` +
         `💰 Вводы: ${stats.total.deposits} USDT\n` +
-        `💸 Выводы: ${stats.total.withdrawals} USDT\n` +
-        `📈 Прибыль: ${stats.total.profit} USDT\n` +
-        `🎮 Игр: ${stats.total.gamesCount}`;
+        `💸 Выводы: ${stats.total.withdrawals} USDT`;
       
       await ctx.reply(message, {
         parse_mode: 'Markdown',

@@ -4,6 +4,7 @@ export interface User {
   id: string;
   telegramId: string;
   username?: string;
+  firstName?: string;
   balance: number;
   refBalance: number;
   refBonus: number;
