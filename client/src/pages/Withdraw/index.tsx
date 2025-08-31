@@ -8,7 +8,7 @@ import { WithdrawProps } from '@/types/components';
 
 export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: WithdrawProps) {
   const [amount, setAmount] = useState('');
-  const minAmount = 10;
+  const minAmount = 0.1;
   const availableAmount = parseFloat(balance);
   const { t } = useTranslation('common');
 

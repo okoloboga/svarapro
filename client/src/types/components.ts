@@ -141,6 +141,7 @@ export type ConfirmDepositProps = {
 
 export type ConfirmWithdrawProps = {
   withdrawAmount: string;
+  walletAddress: string;
 };
 
 export type DepositHistoryProps = {

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { YellowButton } from '@/components/Button/YellowButton';
 import { ConfirmWithdrawProps } from '@/types/components';
 
-export function ConfirmWithdraw({ withdrawAmount }: ConfirmWithdrawProps) {
-  const [walletAddress] = useState('TQxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); // Заглушка адреса
+export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdrawProps) {
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
