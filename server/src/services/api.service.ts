@@ -71,6 +71,19 @@ export class ApiService {
     return this.apiKey;
   }
 
+  // Старые методы для совместимости с закомментированным кодом Exnode
+  private getApiSecret(): string {
+    const secret = process.env.EXNODE_API_SECRET;
+    if (!secret) {
+      throw new BadRequestException('EXNODE_API_SECRET is not defined');
+    }
+    return secret;
+  }
+
+  private get apiPublic(): string | undefined {
+    return process.env.EXNODE_API_PUBLIC;
+  }
+
   async createDepositAddress(
     token: string,
     clientTransactionId: string,
