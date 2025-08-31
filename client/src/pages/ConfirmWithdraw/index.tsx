@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { YellowButton } from '@/components/Button/YellowButton';
 import { ConfirmWithdrawProps } from '@/types/components';
 
