@@ -158,7 +158,7 @@ export class AdminHandlers {
       
       // Кнопки пользователей
       for (const user of users) {
-        const displayName = user.username || user.telegramId;
+        const displayName = user.username ? this.escapeMarkdown(user.username) : user.telegramId;
         keyboard.push([{
           text: `${displayName} (${user.balance} USDT)`,
           callback_data: `admin_user_${user.telegramId}`
@@ -194,6 +194,11 @@ export class AdminHandlers {
     }
   }
 
+  // Функция для экранирования Markdown
+  private escapeMarkdown(text: string): string {
+    return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+  }
+
   // Показать информацию о пользователе
   async showUserInfo(ctx: ServiceBotContext, telegramId: string) {
     const locale = ctx.locale || 'ru';
@@ -203,12 +208,12 @@ export class AdminHandlers {
       
       const message = `👤 **Информация о пользователе**\n\n` +
         `🆔 ID: \`${user.telegramId}\`\n` +
-        `📝 Username: ${user.username ? '@' + user.username : 'Не указан'}\n` +
+        `📝 Username: ${user.username ? '@' + this.escapeMarkdown(user.username) : 'Не указан'}\n` +
         `💰 Баланс: ${user.balance} USDT\n` +
         `🎁 Реферальный баланс: ${user.refBalance} USDT\n` +
         `📊 Реферальный бонус: ${user.refBonus}%\n` +
         `💳 Общие депозиты: ${user.totalDeposit} USDT\n` +
-        `🔗 Кошелек: ${user.walletAddress || 'Не указан'}`;
+        `🔗 Кошелек: ${user.walletAddress ? this.escapeMarkdown(user.walletAddress) : 'Не указан'}`;
       
       await ctx.reply(message, {
         parse_mode: 'Markdown',
