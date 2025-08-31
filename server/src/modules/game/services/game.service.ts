@@ -625,6 +625,9 @@ export class GameService {
         gameState.chipCount += 1;
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex;
+        console.log(
+          `[ANCHOR_LOG] Anchor set to Player ${player.username} (Index: ${playerIndex}) due to BLIND_BET action.`,
+        );
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
@@ -1127,6 +1130,9 @@ export class GameService {
     gameState.chipCount += 1;
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
+    console.log(
+      `[ANCHOR_LOG] Anchor set to Player ${player.username} (Index: ${playerIndex}) due to ALL-IN action.`,
+    );
     gameState.log.push(allInAction);
 
     const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);

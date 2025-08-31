@@ -70,28 +70,55 @@ export class BettingService {
     // Определяем "якорного" игрока, на котором должен закончиться круг.
     // `raise` имеет приоритет над `blind`, как уточнил пользователь.
     let anchorPlayerIndex: number | undefined = undefined;
+    let anchorReason = '';
     if (gameState.lastRaiseIndex !== undefined) {
       anchorPlayerIndex = gameState.lastRaiseIndex;
+      anchorReason = 'Last Raise';
     } else if (gameState.lastBlindBettorIndex !== undefined) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
+      anchorReason = 'Last Blind Bet';
     } else {
       // Если не было ни raise, ни blind, якорь - дилер.
       anchorPlayerIndex = gameState.dealerIndex;
+      anchorReason = 'Dealer';
     }
 
     // Если якорь не определен, не можем завершить круг (не должно происходить в активной игре)
     if (anchorPlayerIndex === undefined) {
+      console.log(
+        '[ANCHOR_LOG] isBettingRoundComplete: No anchor could be determined. Returning false.',
+      );
       return false;
     }
+
+    const anchorPlayer = gameState.players[anchorPlayerIndex];
+    const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+
+    console.log(
+      `[ANCHOR_LOG] Check: Anchor is ${
+        anchorPlayer?.username
+      } (Index: ${anchorPlayerIndex}, Reason: ${anchorReason}). Next player is ${
+        nextPlayer?.username
+      } (Index: ${gameState.currentPlayerIndex}).`,
+    );
 
     // Круг завершен, если ход должен перейти к "якорному" игроку
     // и при этом все активные игроки уравняли ставки.
     if (gameState.currentPlayerIndex === anchorPlayerIndex) {
       const firstPlayerBet = activePlayers[0]?.totalBet;
-      if (firstPlayerBet === undefined) return false; // Нет активных игроков
+      if (firstPlayerBet === undefined) {
+        console.log(
+          '[ANCHOR_LOG] End Condition: Next player is anchor, but no active players with bets. Returning false.',
+        );
+        return false; // Нет активных игроков
+      }
 
       const allBetsEqual = activePlayers.every(
         (p) => p.totalBet === firstPlayerBet,
+      );
+
+      console.log(
+        `[ANCHOR_LOG] End Condition: Next player IS the anchor. Are all bets equal? ${allBetsEqual}. Round will end: ${allBetsEqual}.`,
       );
       return allBetsEqual;
     }
