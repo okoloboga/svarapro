@@ -29,7 +29,7 @@ bot.use(
   rateLimit({
     window: 3000,
     limit: 1,
-    onLimitExceeded: (ctx) => ctx.reply(getMessage('ru', 'errors.tooManyRequests')),
+    onLimitExceeded: (ctx: any) => ctx.reply(getMessage('ru', 'errors.tooManyRequests')),
   })
 );
 
@@ -72,7 +72,12 @@ bot.command('admin_menu', (ctx) => adminHandlers.handleAdminMenuCommand(ctx));
 
 // Обработка callback'ов
 bot.action(/admin_(.+)/, async (ctx) => {
-  const callbackData = ctx.match[1];
+  const callbackData = ctx.match?.[1];
+  
+  if (!callbackData) {
+    await ctx.answerCbQuery();
+    return;
+  }
   
   if (callbackData === 'menu') {
     await adminHandlers.showAdminMenu(ctx);
