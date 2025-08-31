@@ -87,7 +87,7 @@ export class ApiService {
   async createDepositAddress(
     token: string,
     clientTransactionId: string,
-  ): Promise<{ address: string; trackerId: string; destTag?: string | null }> {
+  ): Promise<{ address: string; trackerId: string; destTag?: string | null; qrCodeUrl?: string | null }> {
     if (!this.supportedTokens.includes(token)) {
       this.logger.error(`Unsupported token: ${token}`);
       throw new BadRequestException(`Unsupported token: ${token}`);
