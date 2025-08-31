@@ -77,15 +77,20 @@ export class FinancesController {
 
   @Post('callback')
   async handleCallback(
-    @Body() body: { tracker_id: string; client_transaction_id?: string },
+    @Body() body: { tracker_id?: string; uid?: string; client_transaction_id?: string },
   ) {
     this.logger.debug(`Callback received: ${JSON.stringify(body)}`);
-    if (!body.tracker_id) {
-      this.logger.error('tracker_id is required in callback');
-      throw new BadRequestException('tracker_id is required');
+    
+    // Поддержка как старого формата (tracker_id), так и нового (uid)
+    const trackerId = body.tracker_id || body.uid;
+    
+    if (!trackerId) {
+      this.logger.error('tracker_id or uid is required in callback');
+      throw new BadRequestException('tracker_id or uid is required');
     }
+    
     await this.financesService.addToCallbackQueue(
-      body.tracker_id,
+      trackerId,
       body.client_transaction_id,
     );
     return { status: 'accepted' };

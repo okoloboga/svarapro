@@ -224,6 +224,7 @@ export class ApiService {
         address: invoiceData.requisites,
         trackerId: invoiceData.uid,
         destTag: invoiceData.requisitesMemoTag || null,
+        qrCodeUrl: invoiceData.requisitesQrCode || null,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
