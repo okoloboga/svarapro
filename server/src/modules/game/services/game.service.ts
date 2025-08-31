@@ -207,6 +207,10 @@ export class GameService {
       return;
     }
 
+    if (room.status === 'waiting') {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+
     const gameState = await this.redisService.getGameState(roomId);
 
     if (room.status === 'finished' && gameState) {
@@ -572,13 +576,17 @@ export class GameService {
       await this.endGameWithWinner(roomId, gameState);
       return { success: true };
     } else {
-      gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+      const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      if (this.bettingService.isBettingRoundComplete(gameState)) {
+      const tempGameState = { ...gameState, currentPlayerIndex: aboutToActPlayerIndex };
+
+      if (this.bettingService.isBettingRoundComplete(tempGameState)) {
         await this.endBettingRound(roomId, gameState);
         return { success: true };
+      } else {
+        gameState.currentPlayerIndex = aboutToActPlayerIndex;
       }
     }
 
@@ -820,13 +828,17 @@ export class GameService {
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
-    gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+    const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
-    if (this.bettingService.isBettingRoundComplete(gameState)) {
+
+    const tempGameState = { ...gameState, currentPlayerIndex: aboutToActPlayerIndex };
+
+    if (this.bettingService.isBettingRoundComplete(tempGameState)) {
       await this.endBettingRound(roomId, gameState);
     } else {
+      gameState.currentPlayerIndex = aboutToActPlayerIndex;
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
