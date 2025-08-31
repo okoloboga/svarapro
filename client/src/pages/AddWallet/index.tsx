@@ -6,8 +6,9 @@ import warningIcon from '@/assets/warning.svg';
 import { apiService } from '@/services/api/api';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/types/entities';
+import { AddWalletProps } from '@/types/components';
 
-export function AddWallet() {
+export function AddWallet({ setCurrentPage, setWalletAddress }: AddWalletProps) {
   const [address, setAddress] = useState('');
   const [notification, setNotification] = useState<'invalidAddress' | 'addressAlreadyUsed' | 'addressAdded' | null>(null);
   const { t } = useTranslation('common');
@@ -21,6 +22,12 @@ export function AddWallet() {
     try {
       await apiService.addWalletAddress(address);
       setNotification('addressAdded');
+      
+      // Обновляем состояние кошелька и возвращаемся на дашборд
+      setWalletAddress(address);
+      setTimeout(() => {
+        setCurrentPage('dashboard');
+      }, 2000); // Даем время пользователю увидеть уведомление
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (typeof apiError === 'string') {

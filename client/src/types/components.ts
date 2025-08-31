@@ -158,6 +158,11 @@ export type WithdrawProps = {
   setWithdrawAmount: (amount: string) => void;
 };
 
+export type AddWalletProps = {
+  setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
+  setWalletAddress: (address: string) => void;
+};
+
 export type MoreProps = {
   userData?: UserData;
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;

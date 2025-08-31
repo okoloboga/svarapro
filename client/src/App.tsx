@@ -237,7 +237,7 @@ function App() {
         ) : currentPage === 'confirmWithdraw' ? (
           <ConfirmWithdraw withdrawAmount={withdrawAmount} />
         ) : currentPage === 'addWallet' ? (
-          <AddWallet />
+          <AddWallet setCurrentPage={handleSetCurrentPage} setWalletAddress={setWalletAddress} />
         ) : currentPage === 'depositHistory' ? (
           <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
         ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
