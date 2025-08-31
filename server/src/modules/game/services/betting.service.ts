@@ -72,29 +72,13 @@ export class BettingService {
       return false;
     }
 
-    // Определяем "якорного" игрока, на котором должен закончиться круг.
-    // Правило: "Круг ставок завершается на игроке, который последним
-    // сделал ставку в темную, или на дилере, если никто не ставил."
-    const anchorPlayerIndex =
-      gameState.lastBlindBettorIndex !== undefined
-        ? gameState.lastBlindBettorIndex
-        : gameState.dealerIndex;
+    // Основное правило: круг завершен, если все активные игроки уравняли ставки.
+    const firstPlayerBet = activePlayers[0].totalBet;
+    const allBetsEqual = activePlayers.every(
+      (p) => p.totalBet === firstPlayerBet,
+    );
 
-    // Круг завершен, если текущий ход должен перейти к "якорному" игроку
-    // и все активные игроки уравняли последнюю ставку.
-    if (gameState.currentPlayerIndex === anchorPlayerIndex) {
-      const raiser = gameState.players[gameState.lastRaiseIndex];
-      if (!raiser) return false; // Безопасность
-
-      const requiredBet = raiser.totalBet;
-      const allBetsEqual = activePlayers.every(
-        (p) => p.totalBet === requiredBet,
-      );
-
-      return allBetsEqual;
-    }
-
-    return false;
+    return allBetsEqual;
   }
 
   // Обработка выигрыша

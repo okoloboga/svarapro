@@ -828,17 +828,15 @@ export class GameService {
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
-    const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
-      gameState.players,
-      gameState.currentPlayerIndex,
-    );
-
-    const tempGameState = { ...gameState, currentPlayerIndex: aboutToActPlayerIndex };
-
-    if (this.bettingService.isBettingRoundComplete(tempGameState)) {
+    // After a bet, check if the betting round is complete.
+    if (this.bettingService.isBettingRoundComplete(gameState)) {
       await this.endBettingRound(roomId, gameState);
     } else {
-      gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      // If not complete, advance to the next player.
+      gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+        gameState.players,
+        gameState.currentPlayerIndex,
+      );
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
