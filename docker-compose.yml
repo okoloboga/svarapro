@@ -35,12 +35,16 @@ services:
         - ${NODE_IMAGE}
     env_file:
       - ./server/.env
-      - ./bot/.env
-      - ./service-bot/.env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_ENV=production
+      - BOT_TOKEN=${BOT_TOKEN}
+      - SERVICE_BOT_TOKEN=${SERVICE_BOT_TOKEN}
+      - APP_URL=${APP_URL}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - API_BASE_URL=${API_BASE_URL}
+      - API_SECRET=${API_SECRET}
     ports:
       - "3000:3000"
     depends_on:
