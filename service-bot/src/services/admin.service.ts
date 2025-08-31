@@ -99,4 +99,19 @@ export class AdminService {
     const session = this.getSession(telegramId);
     return session?.isAuthenticated || false;
   }
+
+  // Управление состоянием изменения баланса
+  private balanceStates = new Map<string, { action: 'add' | 'remove', telegramId: string }>();
+
+  getBalanceState(telegramId: string) {
+    return this.balanceStates.get(telegramId);
+  }
+
+  setBalanceState(telegramId: string, state: { action: 'add' | 'remove', telegramId: string }) {
+    this.balanceStates.set(telegramId, state);
+  }
+
+  clearBalanceState(telegramId: string) {
+    this.balanceStates.delete(telegramId);
+  }
 }

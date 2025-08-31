@@ -16,7 +16,7 @@ export class AdminHandlers {
     const telegramId = ctx.from?.id.toString();
     if (!telegramId) return;
 
-    const locale = ctx.locale || 'ru';
+    const locale = 'ru';
     
     // Проверяем, есть ли пользователь в списке админов
     if (!this.adminService.isInAdminList(telegramId)) {
@@ -54,14 +54,26 @@ export class AdminHandlers {
     }
   }
 
-  // Обработка ввода пароля
+  // Обработка ввода пароля или суммы
   async handlePasswordInput(ctx: ServiceBotContext) {
     const telegramId = ctx.from?.id.toString();
     if (!telegramId) return;
 
-    const locale = ctx.locale || 'ru';
-    const loginState = this.adminService.getLoginState(telegramId);
+    const locale = 'ru';
     
+    // Проверяем, ожидается ли ввод суммы для изменения баланса
+    const balanceState = this.adminService.getBalanceState(telegramId);
+    if (balanceState) {
+      if (!ctx.message || !('text' in ctx.message)) return;
+      const amount = ctx.message.text;
+      if (!amount) return;
+      
+      await this.handleBalanceAmountInput(ctx, amount);
+      return;
+    }
+    
+    // Проверяем, ожидается ли ввод пароля
+    const loginState = this.adminService.getLoginState(telegramId);
     if (!loginState) return;
 
     if (!ctx.message || !('text' in ctx.message)) return;
@@ -120,7 +132,7 @@ export class AdminHandlers {
 
   // Показать админ-меню
   async showAdminMenu(ctx: ServiceBotContext) {
-    const locale = ctx.locale || 'ru';
+    const locale = 'ru';
     
     await ctx.reply(getMessage(locale, 'admin.menu'), {
       reply_markup: {
@@ -136,7 +148,7 @@ export class AdminHandlers {
 
   // Показать список пользователей
   async showUsers(ctx: ServiceBotContext, page: number = 1) {
-    const locale = ctx.locale || 'ru';
+    const locale = 'ru';
     
     try {
       const response = await this.usersService.getUsers(page, 10);
@@ -201,7 +213,7 @@ export class AdminHandlers {
 
   // Показать информацию о пользователе
   async showUserInfo(ctx: ServiceBotContext, telegramId: string) {
-    const locale = ctx.locale || 'ru';
+    const locale = 'ru';
     
     try {
       const user = await this.usersService.getUserById(telegramId);
@@ -241,7 +253,7 @@ export class AdminHandlers {
 
   // Показать статистику
   async showStats(ctx: ServiceBotContext) {
-    const locale = ctx.locale || 'ru';
+    const locale = 'ru';
     
     try {
       const stats = await this.statsService.getStats();
@@ -291,5 +303,83 @@ export class AdminHandlers {
   // Проверка авторизации админа
   isAdminAuthenticated(telegramId: string): boolean {
     return this.adminService.isAuthenticated(telegramId);
+  }
+
+  // Обработка добавления баланса
+  async handleAddBalance(ctx: ServiceBotContext, telegramId: string) {
+    const locale = 'ru';
+    
+    // Сохраняем состояние для ожидания ввода суммы
+    this.adminService.setBalanceState(ctx.from!.id.toString(), {
+      action: 'add',
+      telegramId: telegramId
+    });
+    
+    await ctx.reply(getMessage(locale, 'admin.enterAmount'), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: getMessage(locale, 'admin.back'), callback_data: `admin_user_${telegramId}` }]
+        ]
+      }
+    });
+  }
+
+  // Обработка удаления баланса
+  async handleRemoveBalance(ctx: ServiceBotContext, telegramId: string) {
+    const locale = 'ru';
+    
+    // Сохраняем состояние для ожидания ввода суммы
+    this.adminService.setBalanceState(ctx.from!.id.toString(), {
+      action: 'remove',
+      telegramId: telegramId
+    });
+    
+    await ctx.reply(getMessage(locale, 'admin.enterAmount'), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: getMessage(locale, 'admin.back'), callback_data: `admin_user_${telegramId}` }]
+        ]
+      }
+    });
+  }
+
+  // Обработка ввода суммы для изменения баланса
+  async handleBalanceAmountInput(ctx: ServiceBotContext, amount: string) {
+    const locale = 'ru';
+    const telegramId = ctx.from!.id.toString();
+    const balanceState = this.adminService.getBalanceState(telegramId);
+    
+    if (!balanceState) {
+      await ctx.reply(getMessage(locale, 'errors.invalidCommand'));
+      return;
+    }
+
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      await ctx.reply(getMessage(locale, 'errors.invalidAmount'));
+      return;
+    }
+
+    try {
+      const finalAmount = balanceState.action === 'remove' ? -numAmount : numAmount;
+      await this.usersService.updateUserBalance(balanceState.telegramId, finalAmount);
+      
+      const user = await this.usersService.getUserById(balanceState.telegramId);
+      const actionText = balanceState.action === 'add' ? 'добавлено' : 'списано';
+      
+      await ctx.reply(`${getMessage(locale, 'admin.balanceUpdated')} ${actionText} ${numAmount} USDT\nНовый баланс: ${user.balance} USDT`, {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: getMessage(locale, 'admin.back'), callback_data: `admin_user_${balanceState.telegramId}` }]
+          ]
+        }
+      });
+      
+      // Очищаем состояние
+      this.adminService.clearBalanceState(telegramId);
+    } catch (error) {
+      console.error('Update balance error:', error);
+      await ctx.reply(getMessage(locale, 'errors.serverError'));
+    }
   }
 }

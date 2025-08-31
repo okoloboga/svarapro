@@ -37,8 +37,8 @@ bot.use(
 bot.use(async (ctx, next) => {
   const user = ctx.from;
   if (user) {
-    // Определяем язык пользователя
-    ctx.locale = (user.language_code as Locale) || 'ru';
+    // Всегда используем русский язык
+    ctx.locale = 'ru';
     
     // Проверяем авторизацию админа
     const telegramId = user.id.toString();
@@ -52,17 +52,14 @@ bot.start(async (ctx) => {
   const user = ctx.from;
   if (!user) return;
 
-  const locale = ctx.locale || 'ru';
-  const welcomeMessage = getMessage(locale, 'welcome', user.first_name, ctx.isAdmin);
+  const welcomeMessage = getMessage('ru', 'welcome', user.first_name, ctx.isAdmin);
 
   await ctx.reply(welcomeMessage);
 });
 
 bot.help(async (ctx) => {
-  const locale = ctx.locale || 'ru';
-  
-  const helpText = getMessage(locale, 'help.title') + 
-    getMessage(locale, 'help.common').join('\n');
+  const helpText = getMessage('ru', 'help.title') + 
+    getMessage('ru', 'help.common').join('\n');
   
   await ctx.reply(helpText);
 });
@@ -101,6 +98,18 @@ bot.action(/admin_(.+)/, async (ctx) => {
   } else if (callbackData === 'search') {
     // TODO: Реализовать поиск
     await ctx.reply('🔍 Функция поиска будет добавлена позже');
+  } else if (callbackData.startsWith('add_balance_')) {
+    const parts = callbackData.split('_');
+    const telegramId = parts[2];
+    if (telegramId) {
+      await adminHandlers.handleAddBalance(ctx, telegramId);
+    }
+  } else if (callbackData.startsWith('remove_balance_')) {
+    const parts = callbackData.split('_');
+    const telegramId = parts[2];
+    if (telegramId) {
+      await adminHandlers.handleRemoveBalance(ctx, telegramId);
+    }
   }
   
   await ctx.answerCbQuery();
