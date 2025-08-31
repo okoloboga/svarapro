@@ -84,11 +84,20 @@ bot.action(/admin_(.+)/, async (ctx) => {
   } else if (callbackData === 'stats') {
     await adminHandlers.showStats(ctx);
   } else if (callbackData.startsWith('users_')) {
-    const page = parseInt(callbackData.split('_')[1]);
-    await adminHandlers.showUsers(ctx, page);
+    const parts = callbackData.split('_');
+    const pageStr = parts[1];
+    if (pageStr) {
+      const page = parseInt(pageStr);
+      if (!isNaN(page)) {
+        await adminHandlers.showUsers(ctx, page);
+      }
+    }
   } else if (callbackData.startsWith('user_')) {
-    const telegramId = callbackData.split('_')[1];
-    await adminHandlers.showUserInfo(ctx, telegramId);
+    const parts = callbackData.split('_');
+    const telegramId = parts[1];
+    if (telegramId) {
+      await adminHandlers.showUserInfo(ctx, telegramId);
+    }
   } else if (callbackData === 'search') {
     // TODO: Реализовать поиск
     await ctx.reply('🔍 Функция поиска будет добавлена позже');

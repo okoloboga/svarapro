@@ -64,7 +64,8 @@ export class AdminHandlers {
     
     if (!loginState) return;
 
-    const password = 'text' in ctx.message ? ctx.message.text : undefined;
+    if (!ctx.message || !('text' in ctx.message)) return;
+    const password = ctx.message.text;
     if (!password) return;
 
     // Проверяем формат пароля
