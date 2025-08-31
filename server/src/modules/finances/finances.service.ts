@@ -141,25 +141,49 @@ export class FinancesService {
   async processCallback(
     trackerId: string,
     clientTransactionIdFromCallback?: string,
+    callbackData?: any,
   ): Promise<void> {
     this.logger.debug(
       `Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`,
     );
 
     let transactionData: TransactionStatusDto;
-    try {
-      transactionData = await this.apiService.getTransactionStatus(trackerId);
-      this.logger.debug(`Transaction data: ${JSON.stringify(transactionData)}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to get transaction status for trackerId: ${trackerId}`,
-        error instanceof Error ? error.stack : undefined,
-        { error: message },
-      );
-      throw new BadRequestException(
-        `Failed to get transaction status: ${message}`,
-      );
+    
+    // Если у нас есть данные из колбэка, используем их
+    if (callbackData && callbackData.status) {
+      // Маппинг статусов Alfabit на наши статусы
+      let mappedStatus = 'pending';
+      if (callbackData.status === 'success' || callbackData.status === 'completed') {
+        mappedStatus = 'SUCCESS';
+      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled') {
+        mappedStatus = 'ERROR';
+      }
+      
+      transactionData = {
+        status: mappedStatus,
+        amount: callbackData.amountInFact ? parseFloat(callbackData.amountInFact) : undefined,
+        transactionHash: callbackData.txId,
+        clientTransactionId: undefined,
+        token: callbackData.currencyInCode || callbackData.currencyOutCode,
+      };
+      
+      this.logger.debug(`Using callback data: ${JSON.stringify(transactionData)}`);
+    } else {
+      // Fallback: получаем статус через API
+      try {
+        transactionData = await this.apiService.getTransactionStatus(trackerId);
+        this.logger.debug(`Transaction data from API: ${JSON.stringify(transactionData)}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          `Failed to get transaction status for trackerId: ${trackerId}`,
+          error instanceof Error ? error.stack : undefined,
+          { error: message },
+        );
+        throw new BadRequestException(
+          `Failed to get transaction status: ${message}`,
+        );
+      }
     }
 
     // Для Alfabit ищем транзакцию по tracker_id, так как clientTransactionId не возвращается
@@ -279,11 +303,12 @@ export class FinancesService {
   async addToCallbackQueue(
     trackerId: string,
     clientTransactionId?: string,
+    callbackData?: any,
   ): Promise<void> {
     try {
       await this.callbackQueue.add(
         'process-callback',
-        { trackerId, clientTransactionId },
+        { trackerId, clientTransactionId, callbackData },
         { attempts: 3, backoff: 5000 },
       );
       this.logger.log(

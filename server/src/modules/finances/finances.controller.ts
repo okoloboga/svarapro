@@ -77,7 +77,7 @@ export class FinancesController {
 
   @Post('callback')
   async handleCallback(
-    @Body() body: { tracker_id?: string; uid?: string; client_transaction_id?: string },
+    @Body() body: any,
   ) {
     this.logger.debug(`Callback received: ${JSON.stringify(body)}`);
     
@@ -92,6 +92,7 @@ export class FinancesController {
     await this.financesService.addToCallbackQueue(
       trackerId,
       body.client_transaction_id,
+      body, // Передаем весь объект колбэка
     );
     return { status: 'accepted' };
   }
