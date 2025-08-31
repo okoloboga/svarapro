@@ -1,21 +1,12 @@
 // src/locales/en.ts
 export const en = {
   welcome: (name: string, isAdmin: boolean) => 
-    `Hello, ${name}! 🎮
-
-This is a service bot for balance management and admin panel.
-
-${isAdmin ? '🔧 You have administrator rights' : '💰 Here you can manage your balance'}
-
-Use /help for command list.`,
+    `Hello, ${name}!`,
 
   help: {
     title: '📋 Available commands:\n\n',
     common: [
-      '💰 /balance - Check balance',
-      '💳 /deposit - Deposit funds',
-      '💸 /withdraw - Withdraw funds',
-      '📊 /history - Transaction history'
+      'No available commands'
     ]
   },
 
