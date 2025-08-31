@@ -579,7 +579,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const canPerformBlindActions = !!(isCurrentUserTurn && effectiveGameStatus === 'blind_betting' && !isAnimating && !postLookActions);
 
   const canFold = canPerformBettingActions || postLookActions;
-  const canCall = canPerformBettingActions || postLookActions;
+  const canCall = canPerformBettingActions; // ИСПРАВЛЕНИЕ: Убираем call из postLookActions
   const canRaise = canPerformBettingActions || postLookActions;
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;

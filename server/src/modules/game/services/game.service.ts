@@ -465,11 +465,11 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'call', 'all_in'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'all_in'].includes(action)) {
       return {
         success: false,
         error:
-          'После просмотра карт вы можете только повысить, ответить или сбросить карты',
+          'После просмотра карт вы можете только повысить ставку или сбросить карты',
       };
     }
 
@@ -580,9 +580,20 @@ export class GameService {
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      const tempGameState = { ...gameState, currentPlayerIndex: aboutToActPlayerIndex };
+      
+      // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
+      // Если следующий игрок будет якорем, то круг завершается
+      let anchorPlayerIndex: number | undefined = undefined;
+      if (gameState.lastRaiseIndex !== undefined) {
+        anchorPlayerIndex = gameState.lastRaiseIndex;
+      } else if (gameState.lastBlindBettorIndex !== undefined) {
+        anchorPlayerIndex = gameState.lastBlindBettorIndex;
+      } else {
+        anchorPlayerIndex = gameState.dealerIndex;
+      }
 
-      if (this.bettingService.isBettingRoundComplete(tempGameState)) {
+      // Если следующий игрок - якорь, то круг завершается
+      if (aboutToActPlayerIndex === anchorPlayerIndex) {
         await this.endBettingRound(roomId, gameState);
         return { success: true };
       } else {
@@ -625,9 +636,6 @@ export class GameService {
         gameState.chipCount += 1;
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex;
-        console.log(
-          `[ANCHOR_LOG] Anchor set to Player ${player.username} (Index: ${playerIndex}) due to BLIND_BET action.`,
-        );
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
@@ -684,51 +692,8 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        if (player.hasLookedAndMustAct) {
-          const callAmount =
-            gameState.lastBlindBet > 0
-              ? gameState.lastBlindBet * 2
-              : gameState.minBet;
-
-          if (player.balance < callAmount) {
-            return { success: false, error: 'Недостаточно средств' };
-          }
-
-          const { updatedPlayer, action: callAction } =
-            this.playerService.processPlayerBet(player, callAmount, 'call');
-
-          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-            updatedPlayer,
-            { hasLookedAndMustAct: false },
-          );
-          gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-          gameState.chipCount += 1;
-          gameState.lastActionAmount = callAmount;
-          gameState.lastRaiseIndex = playerIndex;
-          gameState.log.push(callAction);
-
-          const phaseResult = this.gameStateService.moveToNextPhase(
-            gameState,
-            'betting',
-          );
-          gameState = phaseResult.updatedGameState;
-          gameState.log.push(...phaseResult.actions);
-
-          for (let i = 0; i < gameState.players.length; i++) {
-            if (i !== playerIndex && gameState.players[i].isActive && !gameState.players[i].hasFolded) {
-              gameState.players[i] = this.playerService.updatePlayerStatus(
-                gameState.players[i],
-                { hasLooked: true },
-              );
-            }
-          }
-
-          const scoreResult =
-            this.gameStateService.calculateScoresForPlayers(gameState);
-          gameState = scoreResult.updatedGameState;
-          gameState.log.push(...scoreResult.actions);
-          break;
-        }
+        // ИСПРАВЛЕНИЕ: Убираем обработку call для hasLookedAndMustAct
+        // В blind_betting можно только raise после look
 
         if (playerIndex === gameState.lastRaiseIndex) {
           await this.endBettingRound(roomId, gameState);
@@ -831,14 +796,25 @@ export class GameService {
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
+    // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
+    // Если следующий игрок будет якорем, то круг завершается
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
 
-    const tempGameState = { ...gameState, currentPlayerIndex: aboutToActPlayerIndex };
+    // Проверяем, будет ли следующий игрок якорем
+    let anchorPlayerIndex: number | undefined = undefined;
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    } else {
+      anchorPlayerIndex = gameState.dealerIndex;
+    }
 
-    if (this.bettingService.isBettingRoundComplete(tempGameState)) {
+    // Если следующий игрок - якорь, то круг завершается
+    if (aboutToActPlayerIndex === anchorPlayerIndex) {
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
@@ -1132,9 +1108,6 @@ export class GameService {
     gameState.chipCount += 1;
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
-    console.log(
-      `[ANCHOR_LOG] Anchor set to Player ${player.username} (Index: ${playerIndex}) due to ALL-IN action.`,
-    );
     gameState.log.push(allInAction);
 
     const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
