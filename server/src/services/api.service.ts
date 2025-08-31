@@ -175,13 +175,15 @@ export class ApiService {
 
     // Новый эквайринг Alfabit
     const requestBody = {
-      currencyInCode: token,
+      currencyInCode: token === 'USDTTON' ? 'TON' : token, // Временно маппим USDTTON на TON для тестирования
       invoiceAssetCode: 'USDT',
       comment: `Deposit for transaction ${clientTransactionId}`,
       publicComment: `Deposit ${clientTransactionId}`,
       callbackUrl: this.callBackUrl,
       isAwaitRequisites: true,
       expiryDurationMinutes: 60,
+      // Добавляем дополнительные поля для совместимости
+      isBayerPaysService: false,
     };
 
     this.logger.debug(
@@ -190,6 +192,9 @@ export class ApiService {
     this.logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
 
     try {
+      this.logger.debug(`Making request to: ${this.baseUrl}/api/v1/integration/orders/invoice`);
+      this.logger.debug(`API Key: ${this.getApiKey().substring(0, 10)}...`);
+      
       const response = await axios.post(
         `${this.baseUrl}/api/v1/integration/orders/invoice`,
         requestBody,
