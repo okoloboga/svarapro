@@ -63,7 +63,7 @@ export function ActionButtons({
   const { t } = useTranslation('common');
 
   if (postLookActions) {
-    // Если игрок посмотрел карты, показываем Fold, Call и Raise
+    // Если игрок посмотрел карты, показываем Fold и Raise (убираем Call)
     return (
       <div className="flex flex-col items-center justify-center">
         <div className="relative flex items-center justify-center space-x-2 p-2">
@@ -102,32 +102,18 @@ export function ActionButtons({
                 <span className="-mt-1">{t('all_in')}</span>
             </button>
           ) : (
-            <>
-              {/* Call Button */}
-              <button
-                onClick={onCall}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-                  isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                style={{ backgroundColor: '#0E5C89' }}
-                disabled={isCallDisabled}
-              >
-                <span>${formatAmount(callAmount)}</span>
-                <span className="-mt-1">{t('pay')}</span>
-              </button>
-              {/* Raise Button */}
-              <button
-                onClick={onRaise}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-                  isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                style={{ backgroundColor: '#56BF00' }}
-                disabled={isRaiseDisabled}
-              >
-                <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
-                <span className="-mt-1">{t('raise')}</span>
-              </button>
-            </>
+            // ИСПРАВЛЕНИЕ: Убираем Call, оставляем только Raise
+            <button
+              onClick={onRaise}
+              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+                isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              style={{ backgroundColor: '#56BF00' }}
+              disabled={isRaiseDisabled}
+            >
+              <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
+              <span className="-mt-1">{t('raise')}</span>
+            </button>
           )}
         </div>
       </div>

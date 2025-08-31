@@ -269,6 +269,58 @@ export class GameService {
       return;
     }
 
+    // ИСПРАВЛЕНИЕ: Проверяем случай свары с недостатком средств
+    if (gameState.isSvara) {
+      const svaraParticipants = gameState.players.filter(p => 
+        gameState.svaraParticipants?.includes(p.id) && p.isActive
+      );
+      
+      // Если у участников свары нет денег для анте, делим банк пополам
+      const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState.minBet);
+      if (participantsWithoutMoney.length === svaraParticipants.length && svaraParticipants.length === 2) {
+        console.log(`[startAntePhase] Svara participants have no money, splitting pot between ${svaraParticipants.length} players`);
+        
+        const winAmount = Number((gameState.pot / 2).toFixed(2));
+        const rake = Number((gameState.pot * 0.05).toFixed(2));
+        
+        for (const participant of svaraParticipants) {
+          const playerIndex = gameState.players.findIndex(p => p.id === participant.id);
+          if (playerIndex !== -1) {
+            gameState.players[playerIndex].balance += winAmount;
+            
+            const action: GameAction = {
+              type: 'win',
+              telegramId: participant.id,
+              amount: winAmount,
+              timestamp: Date.now(),
+              message: `Игрок ${participant.username} получил ${winAmount} в сваре (недостаток средств)`,
+            };
+            gameState.log.push(action);
+          }
+        }
+        
+        // Добавляем действие о комиссии
+        if (rake > 0) {
+          const action: GameAction = {
+            type: 'join',
+            telegramId: 'system',
+            timestamp: Date.now(),
+            message: `Комиссия: ${rake}`,
+          };
+          gameState.log.push(action);
+        }
+        
+        // Завершаем игру
+        gameState.pot = 0;
+        gameState.status = 'finished';
+        gameState.winners = svaraParticipants;
+        
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        return;
+      }
+    }
+
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,
       gameState.minBet,
@@ -866,6 +918,54 @@ export class GameService {
     const participants = gameState.svaraConfirmed || [];
 
     if (participants.length >= 2) {
+      // ИСПРАВЛЕНИЕ: Проверяем, могут ли участники свары внести деньги
+      const svaraPlayers = gameState.players.filter(p => participants.includes(p.id));
+      const playersWithoutMoney = svaraPlayers.filter(p => p.balance < gameState.minBet);
+      
+      // Если у всех участников свары нет денег, делим банк пополам
+      if (playersWithoutMoney.length === svaraPlayers.length && svaraPlayers.length === 2) {
+        console.log(`[resolveSvara] Svara participants have no money, splitting pot between ${svaraPlayers.length} players`);
+        
+        const winAmount = Number((gameState.pot / 2).toFixed(2));
+        const rake = Number((gameState.pot * 0.05).toFixed(2));
+        
+        for (const player of svaraPlayers) {
+          const playerIndex = gameState.players.findIndex(p => p.id === player.id);
+          if (playerIndex !== -1) {
+            gameState.players[playerIndex].balance += winAmount;
+            
+            const action: GameAction = {
+              type: 'win',
+              telegramId: player.id,
+              amount: winAmount,
+              timestamp: Date.now(),
+              message: `Игрок ${player.username} получил ${winAmount} в сваре (недостаток средств)`,
+            };
+            gameState.log.push(action);
+          }
+        }
+        
+        // Добавляем действие о комиссии
+        if (rake > 0) {
+          const action: GameAction = {
+            type: 'join',
+            telegramId: 'system',
+            timestamp: Date.now(),
+            message: `Комиссия: ${rake}`,
+          };
+          gameState.log.push(action);
+        }
+        
+        // Завершаем игру
+        gameState.pot = 0;
+        gameState.status = 'finished';
+        gameState.winners = svaraPlayers;
+        
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        return;
+      }
+      
       await this.startSvaraGame(roomId, participants);
     } else if (participants.length === 1) {
       await this.endGameWithWinner(roomId, gameState);
