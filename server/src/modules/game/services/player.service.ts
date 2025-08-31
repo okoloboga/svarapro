@@ -58,6 +58,8 @@ export class PlayerService {
       hasLooked: false,
       totalBet: 0,
       score: undefined,
+      lastAction: undefined, // ИСПРАВЛЕНИЕ: Очищаем lastAction для сброса уведомлений
+      hasLookedAndMustAct: false, // ИСПРАВЛЕНИЕ: Также очищаем флаг для свары
     };
   }
 
