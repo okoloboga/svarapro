@@ -162,24 +162,15 @@ export class FinancesService {
       );
     }
 
-    const clientTransactionId = transactionData.clientTransactionId;
-    if (!clientTransactionId) {
-      this.logger.error(
-        `No clientTransactionId in transaction data for trackerId: ${trackerId}`,
-      );
-      throw new BadRequestException(
-        'No clientTransactionId provided in transaction data',
-      );
-    }
-
+    // Для Alfabit ищем транзакцию по tracker_id, так как clientTransactionId не возвращается
     const transaction = await this.transactionRepository.findOne({
-      where: { client_transaction_id: clientTransactionId },
+      where: { tracker_id: trackerId },
       relations: ['user'],
     });
 
     if (!transaction) {
       this.logger.warn(
-        `Transaction not found for clientTransactionId: ${clientTransactionId}, trackerId: ${trackerId}`,
+        `Transaction not found for trackerId: ${trackerId}`,
       );
       return;
     }

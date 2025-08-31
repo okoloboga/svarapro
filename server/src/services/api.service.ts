@@ -396,7 +396,7 @@ export class ApiService {
         status: mappedStatus,
         amount: orderData.amountInFact ? parseFloat(orderData.amountInFact) : undefined,
         transactionHash: orderData.txId,
-        clientTransactionId: trackerId, // В новом API используем uid как clientTransactionId
+        clientTransactionId: undefined, // Alfabit не возвращает clientTransactionId, поэтому оставляем undefined
         token: orderData.currencyInCode || orderData.currencyOutCode,
       };
     } catch (error) {
