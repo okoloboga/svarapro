@@ -30,6 +30,20 @@ export class User {
 
   @Column({
     type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  firstName: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  lastName: string | null;
+
+  @Column({
+    type: 'varchar',
     length: 512,
     nullable: true,
   })

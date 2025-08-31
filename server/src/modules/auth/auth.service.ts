@@ -65,6 +65,8 @@ export class AuthService {
       user = this.usersRepository.create({
         telegramId: tgUser.id.toString(),
         username: tgUser.username,
+        firstName: tgUser.first_name || null,
+        lastName: tgUser.last_name || null,
         avatar: tgUser.photo_url ? tgUser.photo_url : null,
         refBalance: 0,
         refBonus: 0,
@@ -74,6 +76,8 @@ export class AuthService {
       await this.usersRepository.save(user);
     } else {
       user.username = tgUser.username ?? null;
+      user.firstName = tgUser.first_name || null;
+      user.lastName = tgUser.last_name || null;
       user.avatar = tgUser.photo_url ? tgUser.photo_url : null;
       await this.usersRepository.save(user);
     }
