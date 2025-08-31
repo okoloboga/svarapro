@@ -175,7 +175,7 @@ export class ApiService {
 
     // Новый эквайринг Alfabit - создание инвойса без суммы
     const requestBody = {
-      currencyInCode: token === 'USDTTON' ? 'TON' : token, // Временно маппим USDTTON на TON для тестирования
+      currencyInCode: token, // Используем оригинальный токен без маппинга
       invoiceAssetCode: 'USDT',
       comment: `Deposit for transaction ${clientTransactionId}`,
       publicComment: `Deposit ${clientTransactionId}`,
@@ -412,5 +412,69 @@ export class ApiService {
         throw new BadRequestException(`Alfabit API error: ${String(error)}`);
       }
     }
+  }
+
+  async getCurrencies(): Promise<{
+    assetCode: string;
+    usdPrice: string;
+    assetName: string;
+  }[]> {
+    this.logger.debug('Getting currencies from Alfabit API');
+
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/api/v1/integration/assets/currencies`,
+        {
+          headers: {
+            'x-api-key': this.getApiKey(),
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.message !== 'ok') {
+        this.logger.error(
+          `Failed to get currencies: ${response.data.message}`,
+        );
+        throw new BadRequestException(
+          `Failed to get currencies: ${response.data.message}`,
+        );
+      }
+
+      const currencies = response.data.data;
+      this.logger.log(`Retrieved ${currencies.length} currencies from Alfabit`);
+
+      return currencies.map((currency: any) => ({
+        assetCode: currency.assetCode,
+        usdPrice: currency.usdPrice,
+        assetName: currency.assetName,
+      }));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Alfabit API error (getCurrencies): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Alfabit API error (getCurrencies): ${String(error)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
+      }
+    }
+  }
+
+  async getCurrencyRate(assetCode: string): Promise<number> {
+    const currencies = await this.getCurrencies();
+    const currency = currencies.find(c => c.assetCode === assetCode);
+    
+    if (!currency) {
+      this.logger.warn(`Currency ${assetCode} not found, using default rate`);
+      return 1; // Fallback rate
+    }
+
+    const rate = parseFloat(currency.usdPrice);
+    this.logger.log(`Currency rate for ${assetCode}: ${rate} USD`);
+    return rate;
   }
 }

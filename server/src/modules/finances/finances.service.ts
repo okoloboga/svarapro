@@ -209,8 +209,16 @@ export class FinancesService {
       });
       if (user) {
         if (transaction.type === 'deposit') {
-          user.balance += transactionData.amount;
-          user.totalDeposit += transactionData.amount;
+          // Конвертируем валюту в USDT по курсу
+          const currencyRate = await this.apiService.getCurrencyRate(transaction.currency);
+          const convertedAmount = transactionData.amount * currencyRate;
+          
+          this.logger.log(
+            `Deposit conversion: ${transactionData.amount} ${transaction.currency} * ${currencyRate} = ${convertedAmount} USDT`,
+          );
+          
+          user.balance += convertedAmount;
+          user.totalDeposit += convertedAmount;
           await this.userRepository.save(user);
 
           try {
@@ -218,8 +226,8 @@ export class FinancesService {
             void this.transactionGateway.notifyTransactionConfirmed(
               user.telegramId,
               user.balance,
-              transactionData.amount,
-              transaction.currency,
+              convertedAmount, // Используем конвертированную сумму
+              'USDT', // Всегда показываем в USDT
             );
           } catch (error) {
             const message =
