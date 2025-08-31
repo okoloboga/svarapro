@@ -1,27 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button/Button';
 import { YellowButton } from '@/components/Button/YellowButton';
 import tetherIcon from '@/assets/tether.png';
 import warningIcon from '@/assets/warning.svg';
 import { useTranslation } from 'react-i18next';
 import { WithdrawProps } from '@/types/components';
+import { apiService } from '@/services/api/api';
 
 export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: WithdrawProps) {
   const [amount, setAmount] = useState('');
+  const [merchantBalance, setMerchantBalance] = useState<number>(0);
+  const [isLoadingMerchantBalance, setIsLoadingMerchantBalance] = useState(true);
   const minAmount = 0.1;
   const availableAmount = parseFloat(balance);
   const { t } = useTranslation('common');
 
+  useEffect(() => {
+    const fetchMerchantBalance = async () => {
+      try {
+        const merchantData = await apiService.getMerchantBalance();
+        setMerchantBalance(parseFloat(merchantData.balanceUsd));
+      } catch (error) {
+        console.error('Failed to fetch merchant balance:', error);
+        // В случае ошибки устанавливаем большое значение, чтобы не блокировать вывод
+        setMerchantBalance(999999);
+      } finally {
+        setIsLoadingMerchantBalance(false);
+      }
+    };
+
+    fetchMerchantBalance();
+  }, []);
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only positive integers
-    if (/^\d*$/.test(value)) {
+    // Allow positive numbers with decimal point
+    if (/^\d*\.?\d*$/.test(value)) {
       setAmount(value);
     }
   };
 
   const handleMaxClick = () => {
-    setAmount(Math.floor(availableAmount).toString());
+    // Максимальная сумма - минимум из баланса пользователя и баланса мерчанта
+    const maxAmount = Math.min(availableAmount, merchantBalance);
+    setAmount(maxAmount.toString());
   };
 
   const handleCheck = () => {
@@ -71,12 +93,23 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
           <span className="text-left">{t('available')}</span>
           <span className="text-right">{availableAmount} USDT</span>
         </div>
+        <div className="flex justify-between">
+          <span className="text-left">Максимум для вывода</span>
+          <span className="text-right">
+            {isLoadingMerchantBalance ? 'Загрузка...' : `${merchantBalance} USDT`}
+          </span>
+        </div>
       </div>
 
       <YellowButton
         size="lg"
         onClick={handleCheck}
-        isActive={parseFloat(amount) >= minAmount && parseFloat(amount) <= availableAmount}
+        isActive={
+          parseFloat(amount) >= minAmount && 
+          parseFloat(amount) <= availableAmount && 
+          parseFloat(amount) <= merchantBalance &&
+          !isLoadingMerchantBalance
+        }
         className="w-[93vw]"
       >
         {t('check')}

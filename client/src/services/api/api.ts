@@ -128,4 +128,17 @@ export const apiService = {
     });
     return response.data;
   },
+
+  async getMerchantBalance(): Promise<{ balanceUsd: string; equal: string }> {
+    const response = await axios.get('https://pay.alfabit.org/api/v1/integration/merchant', {
+      headers: {
+        'x-api-key': '7d7c249e4290d90ed4617c44a098c29c7d11e5820fab2ab0a755c4675c8f4779',
+        'Accept': '*/*'
+      }
+    });
+    return {
+      balanceUsd: response.data.data.balanceUsd,
+      equal: response.data.data.equal
+    };
+  },
 };
