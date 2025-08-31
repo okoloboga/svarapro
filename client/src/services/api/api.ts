@@ -55,7 +55,7 @@ export const apiService = {
     return response.data;
   },
 
-  async initiateWithdraw(currency: string, amount: number): Promise<{ address: string; trackerId: string }> {
+  async initiateWithdraw(currency: string, amount: number, walletAddress: string): Promise<{ address: string; trackerId: string }> {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('No token available');
 
@@ -64,7 +64,7 @@ export const apiService = {
 
     const response = await api.post(
       '/finances/transaction',
-      { telegramId, currency, type: 'withdraw', amount },
+      { telegramId, currency, type: 'withdraw', amount, receiver: walletAddress },
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;

@@ -87,16 +87,16 @@ export function Withdraw({ balance, setCurrentPage, setWithdrawAmount }: Withdra
       <div className="w-[93vw] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
         <div className="flex justify-between">
           <span className="text-left">{t('min_sum')}</span>
-          <span className="text-right">{minAmount} USDTTON</span>
+          <span className="text-right">{minAmount} USDT</span>
         </div>
         <div className="flex justify-between">
           <span className="text-left">{t('available')}</span>
-          <span className="text-right">{availableAmount} USDTTON</span>
+          <span className="text-right">{availableAmount} USDT</span>
         </div>
         <div className="flex justify-between">
           <span className="text-left">Максимум для вывода</span>
           <span className="text-right">
-            {isLoadingMerchantBalance ? 'Загрузка...' : `${merchantBalance} USDTTON`}
+            {isLoadingMerchantBalance ? 'Загрузка...' : `${merchantBalance} USDT`}
           </span>
         </div>
       </div>
