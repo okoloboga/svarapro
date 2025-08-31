@@ -270,23 +270,23 @@ export class GameService {
     }
 
     // ИСПРАВЛЕНИЕ: Проверяем случай свары с недостатком средств
-    if (gameState.isSvara) {
-      const svaraParticipants = gameState.players.filter(p => 
-        gameState.svaraParticipants?.includes(p.id) && p.isActive
+    if (gameState!.isSvara) {
+      const svaraParticipants = gameState!.players.filter(p => 
+        gameState!.svaraParticipants?.includes(p.id) && p.isActive
       );
       
       // Если у участников свары нет денег для анте, делим банк пополам
-      const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState.minBet);
+      const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState!.minBet);
       if (participantsWithoutMoney.length === svaraParticipants.length && svaraParticipants.length === 2) {
         console.log(`[startAntePhase] Svara participants have no money, splitting pot between ${svaraParticipants.length} players`);
         
-        const winAmount = Number((gameState.pot / 2).toFixed(2));
-        const rake = Number((gameState.pot * 0.05).toFixed(2));
+        const winAmount = Number((gameState!.pot / 2).toFixed(2));
+        const rake = Number((gameState!.pot * 0.05).toFixed(2));
         
         for (const participant of svaraParticipants) {
-          const playerIndex = gameState.players.findIndex(p => p.id === participant.id);
+          const playerIndex = gameState!.players.findIndex(p => p.id === participant.id);
           if (playerIndex !== -1) {
-            gameState.players[playerIndex].balance += winAmount;
+            gameState!.players[playerIndex].balance += winAmount;
             
             const action: GameAction = {
               type: 'win',
@@ -295,7 +295,7 @@ export class GameService {
               timestamp: Date.now(),
               message: `Игрок ${participant.username} получил ${winAmount} в сваре (недостаток средств)`,
             };
-            gameState.log.push(action);
+            gameState!.log.push(action);
           }
         }
         
@@ -307,16 +307,16 @@ export class GameService {
             timestamp: Date.now(),
             message: `Комиссия: ${rake}`,
           };
-          gameState.log.push(action);
+          gameState!.log.push(action);
         }
         
         // Завершаем игру
-        gameState.pot = 0;
-        gameState.status = 'finished';
-        gameState.winners = svaraParticipants;
+        gameState!.pot = 0;
+        gameState!.status = 'finished';
+        gameState!.winners = svaraParticipants;
         
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
+        await this.redisService.setGameState(roomId, gameState!);
+        await this.redisService.publishGameUpdate(roomId, gameState!);
         return;
       }
     }
