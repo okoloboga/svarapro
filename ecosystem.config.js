@@ -19,7 +19,9 @@ module.exports = {
       script: './bot/dist/index.js',
       instances: 1,
       env: {
-        NODE_ENV: 'production'
+        NODE_ENV: 'production',
+        BOT_TOKEN: process.env.BOT_TOKEN,
+        APP_URL: process.env.APP_URL
       },
       error_file: './logs/bot-err.log',
       out_file: './logs/bot-out.log',
@@ -31,7 +33,11 @@ module.exports = {
       script: './service-bot/dist/index.js',
       instances: 1,
       env: {
-        NODE_ENV: 'production'
+        NODE_ENV: 'production',
+        BOT_TOKEN: process.env.SERVICE_BOT_TOKEN,
+        ADMIN_IDS: process.env.ADMIN_IDS,
+        API_BASE_URL: process.env.API_BASE_URL,
+        API_SECRET: process.env.API_SECRET
       },
       error_file: './logs/service-bot-err.log',
       out_file: './logs/service-bot-out.log',
