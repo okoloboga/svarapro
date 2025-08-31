@@ -16,7 +16,7 @@ export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdr
     setIsProcessing(true);
     try {
       const amount = parseFloat(withdrawAmount);
-      const result = await apiService.initiateWithdraw('USDT', amount);
+      const result = await apiService.initiateWithdraw('USDTTON', amount);
       console.log('Withdraw initiated:', result);
       alert('Заявка на вывод создана успешно!');
       // Здесь можно добавить переход на другую страницу или обновление состояния
@@ -55,7 +55,7 @@ export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdr
         </p>
         <div className="bg-black bg-opacity-30 rounded-lg w-full h-[53px] flex items-center justify-start px-4 mb-4">
           <p className="text-white font-semibold text-sm tracking-tighter leading-tight">
-            {withdrawAmount} USDT
+            {withdrawAmount} USDTTON
           </p>
         </div>
       </div>
