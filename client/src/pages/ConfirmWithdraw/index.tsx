@@ -1,8 +1,32 @@
 
+import { useState } from 'react';
 import { YellowButton } from '@/components/Button/YellowButton';
 import { ConfirmWithdrawProps } from '@/types/components';
+import { apiService } from '@/services/api/api';
 
 export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdrawProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleConfirmWithdraw = async () => {
+    if (!walletAddress) {
+      alert('Адрес кошелька не указан');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const amount = parseFloat(withdrawAmount);
+      const result = await apiService.initiateWithdraw('USDT', amount);
+      console.log('Withdraw initiated:', result);
+      alert('Заявка на вывод создана успешно!');
+      // Здесь можно добавить переход на другую страницу или обновление состояния
+    } catch (error) {
+      console.error('Failed to initiate withdraw:', error);
+      alert('Ошибка при создании заявки на вывод. Попробуйте еще раз.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
@@ -36,10 +60,14 @@ export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdr
         </div>
       </div>
       <div className="mt-auto pb-6 w-[93vw]">
-        <YellowButton size="lg" onClick={() => console.log('Подтвердить clicked')} className="w-full">
-          Подтвердить
+        <YellowButton 
+          size="lg" 
+          onClick={handleConfirmWithdraw} 
+          className="w-full"
+          isActive={!isProcessing}
+        >
+          {isProcessing ? 'Обработка...' : 'Подтвердить'}
         </YellowButton>
-
       </div>
     </div>
   );
