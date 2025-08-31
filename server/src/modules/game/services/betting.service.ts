@@ -67,18 +67,36 @@ export class BettingService {
       return true;
     }
 
-    // Раунд не может быть завершен, если не было повышения ставки.
-    if (gameState.lastRaiseIndex === undefined) {
+    // Определяем "якорного" игрока, на котором должен закончиться круг.
+    // `raise` имеет приоритет над `blind`, как уточнил пользователь.
+    let anchorPlayerIndex: number | undefined = undefined;
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    } else {
+      // Если не было ни raise, ни blind, якорь - дилер.
+      anchorPlayerIndex = gameState.dealerIndex;
+    }
+
+    // Если якорь не определен, не можем завершить круг (не должно происходить в активной игре)
+    if (anchorPlayerIndex === undefined) {
       return false;
     }
 
-    // Основное правило: круг завершен, если все активные игроки уравняли ставки.
-    const firstPlayerBet = activePlayers[0].totalBet;
-    const allBetsEqual = activePlayers.every(
-      (p) => p.totalBet === firstPlayerBet,
-    );
+    // Круг завершен, если ход должен перейти к "якорному" игроку
+    // и при этом все активные игроки уравняли ставки.
+    if (gameState.currentPlayerIndex === anchorPlayerIndex) {
+      const firstPlayerBet = activePlayers[0]?.totalBet;
+      if (firstPlayerBet === undefined) return false; // Нет активных игроков
 
-    return allBetsEqual;
+      const allBetsEqual = activePlayers.every(
+        (p) => p.totalBet === firstPlayerBet,
+      );
+      return allBetsEqual;
+    }
+
+    return false;
   }
 
   // Обработка выигрыша
