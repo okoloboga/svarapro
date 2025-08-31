@@ -91,30 +91,44 @@ export function ActionButtons({
               ({turnTimer}) {t('sec')}
             </div>
           </div>
-          {/* Call Button */}
-          <button
-            onClick={onCall}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-              isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            style={{ backgroundColor: '#0E5C89' }}
-            disabled={isCallDisabled}
-          >
-            <span>${formatAmount(callAmount)}</span>
-            <span className="-mt-1">{t('pay')}</span>
-          </button>
-          {/* Raise Button */}
-          <button
-            onClick={onRaise}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
-              isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            style={{ backgroundColor: '#56BF00' }}
-            disabled={isRaiseDisabled}
-          >
-            <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
-            <span className="-mt-1">{t('raise')}</span>
-          </button>
+
+          {canAllIn ? (
+            <button
+                onClick={onAllIn}
+                className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+                style={{ backgroundColor: '#0E5C89' }}
+            >
+                <span>${formatAmount(callAmount)}</span>
+                <span className="-mt-1">{t('all_in')}</span>
+            </button>
+          ) : (
+            <>
+              {/* Call Button */}
+              <button
+                onClick={onCall}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+                  isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                style={{ backgroundColor: '#0E5C89' }}
+                disabled={isCallDisabled}
+              >
+                <span>${formatAmount(callAmount)}</span>
+                <span className="-mt-1">{t('pay')}</span>
+              </button>
+              {/* Raise Button */}
+              <button
+                onClick={onRaise}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+                  isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                style={{ backgroundColor: '#56BF00' }}
+                disabled={isRaiseDisabled}
+              >
+                <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
+                <span className="-mt-1">{t('raise')}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -202,7 +216,7 @@ export function ActionButtons({
           </button>
         )}
 
-        {canBlindBet && (
+        {canBlindBet && !canAllIn && (
           <button
             onClick={onBlindBet}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${

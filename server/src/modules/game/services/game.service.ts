@@ -727,10 +727,7 @@ export class GameService {
           break;
         }
 
-        if (playerIndex === gameState.lastRaiseIndex) {
-          await this.endBettingRound(roomId, gameState);
-          return { success: true };
-        }
+        
 
         const callAmount = gameState.lastActionAmount;
         if (callAmount <= 0) {
