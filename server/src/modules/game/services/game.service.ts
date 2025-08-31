@@ -461,7 +461,7 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'call'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'call', 'all_in'].includes(action)) {
       return {
         success: false,
         error:
