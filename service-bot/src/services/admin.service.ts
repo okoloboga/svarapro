@@ -114,4 +114,19 @@ export class AdminService {
   clearBalanceState(telegramId: string) {
     this.balanceStates.delete(telegramId);
   }
+
+  // Управление состоянием поиска
+  private searchStates = new Set<string>();
+
+  isInSearchState(telegramId: string): boolean {
+    return this.searchStates.has(telegramId);
+  }
+
+  setSearchState(telegramId: string): void {
+    this.searchStates.add(telegramId);
+  }
+
+  clearSearchState(telegramId: string): void {
+    this.searchStates.delete(telegramId);
+  }
 }

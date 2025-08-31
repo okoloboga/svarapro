@@ -60,7 +60,8 @@ export class AdminController {
       .createQueryBuilder('user')
       .where('user.telegramId LIKE :query', { query: `%${query}%` })
       .orWhere('user.username LIKE :query', { query: `%${query}%` })
-
+      .orWhere('user.firstName LIKE :query', { query: `%${query}%` })
+      .orWhere('user.lastName LIKE :query', { query: `%${query}%` })
       .take(10)
       .getMany();
 

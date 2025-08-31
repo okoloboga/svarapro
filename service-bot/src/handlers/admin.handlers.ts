@@ -72,6 +72,17 @@ export class AdminHandlers {
       return;
     }
     
+    // Проверяем, ожидается ли поиск
+    if (this.adminService.isInSearchState(telegramId)) {
+      if (!ctx.message || !('text' in ctx.message)) return;
+      const query = ctx.message.text;
+      if (!query) return;
+      
+      await this.showSearchResults(ctx, query);
+      this.adminService.clearSearchState(telegramId);
+      return;
+    }
+    
     // Проверяем, ожидается ли ввод пароля
     const loginState = this.adminService.getLoginState(telegramId);
     if (!loginState) return;
@@ -222,6 +233,7 @@ export class AdminHandlers {
       
       const message = `👤 **Информация о пользователе**\n\n` +
         `🆔 ID: \`${user.telegramId}\`\n` +
+        `👤 Имя: ${user.firstName || 'Не указано'}\n` +
         `📝 Username: ${user.username ? '@' + this.escapeMarkdown(user.username) : 'Не указан'}\n` +
         `💰 Баланс: ${user.balance} USDT\n` +
         `🎁 Реферальный баланс: ${user.refBalance} USDT\n` +
@@ -374,6 +386,70 @@ export class AdminHandlers {
     } catch (error) {
       console.error('Update balance error:', error);
       await ctx.reply(getMessage(locale, 'errors.serverError'));
+    }
+  }
+
+  // Показать поиск пользователей
+  async showSearchPrompt(ctx: ServiceBotContext) {
+    const locale = 'ru';
+    
+    // Устанавливаем состояние поиска
+    this.adminService.setSearchState(ctx.from!.id.toString());
+    
+    await ctx.reply('🔍 Введите username, имя или ID пользователя для поиска:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: getMessage(locale, 'admin.back'), callback_data: 'admin_users_1' }]
+        ]
+      }
+    });
+  }
+
+  // Показать результаты поиска
+  async showSearchResults(ctx: ServiceBotContext, query: string) {
+    const locale = 'ru';
+    
+    try {
+      const users = await this.usersService.searchUsers(query);
+      
+      if (users.length === 0) {
+        await ctx.reply('🔍 Пользователи не найдены', {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: getMessage(locale, 'admin.back'), callback_data: 'admin_users_1' }]
+            ]
+          }
+        });
+        return;
+      }
+
+      const keyboard = [];
+      
+      // Кнопки найденных пользователей
+      for (const user of users) {
+        let displayName = user.username || user.firstName || user.telegramId;
+        displayName = displayName.replace(/\\/g, '');
+        keyboard.push([{
+          text: `${displayName} (${user.balance} USDT)`,
+          callback_data: `admin_user_${user.telegramId}`
+        }]);
+      }
+      
+      // Кнопка назад
+      keyboard.push([{ text: getMessage(locale, 'admin.back'), callback_data: 'admin_users_1' }]);
+
+      await ctx.reply(`🔍 Найдено пользователей: ${users.length}`, {
+        reply_markup: { inline_keyboard: keyboard }
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      await ctx.reply(getMessage(locale, 'errors.serverError'), {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: getMessage(locale, 'admin.back'), callback_data: 'admin_users_1' }]
+          ]
+        }
+      });
     }
   }
 }

@@ -96,8 +96,7 @@ bot.action(/admin_(.+)/, async (ctx) => {
       await adminHandlers.showUserInfo(ctx, telegramId);
     }
   } else if (callbackData === 'search') {
-    // TODO: Реализовать поиск
-    await ctx.reply('🔍 Функция поиска будет добавлена позже');
+    await adminHandlers.showSearchPrompt(ctx);
   } else if (callbackData.startsWith('add_balance_')) {
     const parts = callbackData.split('_');
     const telegramId = parts[2];
