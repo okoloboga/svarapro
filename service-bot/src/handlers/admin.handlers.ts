@@ -361,8 +361,8 @@ export class AdminHandlers {
     }
 
     try {
-      const finalAmount = balanceState.action === 'remove' ? -numAmount : numAmount;
-      await this.usersService.updateUserBalance(balanceState.telegramId, finalAmount);
+      const operation = balanceState.action === 'remove' ? 'remove' : 'add';
+      await this.usersService.updateBalance(balanceState.telegramId, numAmount, operation);
       
       const user = await this.usersService.getUserById(balanceState.telegramId);
       const actionText = balanceState.action === 'add' ? 'добавлено' : 'списано';
