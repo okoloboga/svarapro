@@ -271,6 +271,8 @@ export class ApiService {
       throw new BadRequestException(`Invalid receiver address: ${receiver}`);
     }
 
+    // Старый эквайринг Exnode (закомментирован для возможности восстановления)
+    /*
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const body = JSON.stringify({
       token,
@@ -336,6 +338,69 @@ export class ApiService {
           `Exnode API error (createWithdrawAddress): ${String(error)}`,
         );
         throw new BadRequestException(`Exnode API error: ${String(error)}`);
+      }
+    }
+    */
+
+    // Новый эквайринг Alfabit - создание вывода
+    const requestBody = {
+      amount: amount.toString(),
+      toCurrencyCode: token, // Используем оригинальный токен
+      recipient: receiver,
+      ...(destTag && { requisitesMemoTag: destTag }),
+      callbackUrl: this.callBackUrl,
+      comment: `Withdraw for transaction ${clientTransactionId}`,
+    };
+
+    this.logger.debug(
+      `Creating withdraw transaction: token=${token}, clientTransactionId=${clientTransactionId}, amount=${amount}, receiver=${receiver}`,
+    );
+    this.logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
+
+    try {
+      this.logger.debug(`Making request to: ${this.baseUrl}/api/v1/integration/orders/withdraw`);
+      this.logger.debug(`API Key: ${this.getApiKey().substring(0, 10)}...`);
+
+      const response = await axios.post(
+        `${this.baseUrl}/api/v1/integration/orders/withdraw`,
+        requestBody,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': this.getApiKey(),
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.message !== 'ok') {
+        this.logger.error(
+          `Failed to create withdraw transaction: ${response.data.message}`,
+        );
+        throw new BadRequestException(
+          `Failed to create withdraw transaction: ${response.data.message}`,
+        );
+      }
+
+      const withdrawData = response.data.data;
+      this.logger.log(
+        `Withdraw transaction created: uid: ${withdrawData.uid}`,
+      );
+
+      return {
+        trackerId: withdrawData.uid,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Alfabit API error (createWithdrawAddress): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Alfabit API error (createWithdrawAddress): ${String(error)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
       }
     }
   }
@@ -476,5 +541,84 @@ export class ApiService {
     const rate = parseFloat(currency.usdPrice);
     this.logger.log(`Currency rate for ${assetCode}: ${rate} USD`);
     return rate;
+  }
+
+  async getWithdrawFees(): Promise<{
+    toAssetCode: string;
+    toCurrencyCode: string;
+    toCurrencyName: string;
+    fixFee: number;
+    rate: number;
+    isTurnRate: boolean;
+    minOut: number;
+    maxOut: number;
+  }[]> {
+    this.logger.debug('Getting withdraw fees from Alfabit API');
+
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/api/v1/integration/assets/withdraw-fee`,
+        {
+          headers: {
+            'x-api-key': this.getApiKey(),
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.message !== 'ok') {
+        this.logger.error(
+          `Failed to get withdraw fees: ${response.data.message}`,
+        );
+        throw new BadRequestException(
+          `Failed to get withdraw fees: ${response.data.message}`,
+        );
+      }
+
+      const fees = response.data.data;
+      this.logger.log(`Retrieved ${fees.length} withdraw fees from Alfabit`);
+
+      return fees;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Alfabit API error (getWithdrawFees): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Alfabit API error (getWithdrawFees): ${String(error)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
+      }
+    }
+  }
+
+  async getWithdrawFee(currencyCode: string): Promise<{
+    fixFee: number;
+    rate: number;
+    minOut: number;
+    maxOut: number;
+  }> {
+    const fees = await this.getWithdrawFees();
+    const fee = fees.find(f => f.toCurrencyCode === currencyCode);
+    
+    if (!fee) {
+      this.logger.warn(`Withdraw fee for ${currencyCode} not found, using default`);
+      return {
+        fixFee: 0,
+        rate: 0,
+        minOut: 0,
+        maxOut: 1000000,
+      };
+    }
+
+    this.logger.log(`Withdraw fee for ${currencyCode}: fixFee=${fee.fixFee}, rate=${fee.rate}%`);
+    return {
+      fixFee: fee.fixFee,
+      rate: fee.rate,
+      minOut: fee.minOut,
+      maxOut: fee.maxOut,
+    };
   }
 }
