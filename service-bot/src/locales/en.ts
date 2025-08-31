@@ -1,84 +1,97 @@
 // src/locales/en.ts
 export const en = {
-    welcome: (name: string, isAdmin: boolean) => 
-      `Hello, ${name}! ��
-  
-  This is a service bot for balance management and admin panel.
-  
-  ${isAdmin ? '🔧 You have administrator rights' : '💰 Here you can manage your balance'}
-  
-  Use /help for command list.`,
-  
-    help: {
-      title: '�� Available commands:\n\n',
-      common: [
-        '💰 /balance - Check balance',
-        '�� /deposit - Deposit funds',
-        '💸 /withdraw - Withdraw funds',
-        '📊 /history - Transaction history'
-      ],
-      admin: [
-        '🔧 /admin - Admin panel',
-        '📈 /stats - Statistics',
-        '👤 /user <id> - User information',
-        '🚫 /ban <id> - Ban user',
-        '✅ /unban <id> - Unban user'
-      ]
-    },
-  
-    errors: {
-      tooManyRequests: '⚠️ Too many requests. Try again later.',
-      userNotFound: '❌ User not found',
-      insufficientBalance: '❌ Insufficient balance',
-      invalidAmount: '❌ Invalid amount',
-      serverError: '❌ Server error. Try again later.',
-      accessDenied: '❌ Access denied',
-      invalidCommand: '❌ Invalid command'
-    },
-  
-    success: {
-      balanceUpdated: '✅ Balance updated',
-      userBanned: '✅ User banned',
-      userUnbanned: '✅ User unbanned',
-      transactionCreated: '✅ Transaction created'
-    },
-  
-    admin: {
-      panel: '🔧 Admin panel\n\nSelect action:',
-      stats: '📈 Statistics',
-      userInfo: '👤 User information',
-      banUser: '🚫 Ban user',
-      unbanUser: '✅ Unban user',
+  welcome: (name: string, isAdmin: boolean) => 
+    `Hello, ${name}! 🎮
 
-      loginPrompt: '🔐 Enter admin password:',
-      loginSuccess: '✅ Authentication successful! Welcome to admin panel.',
-      loginFailed: '❌ Wrong password. Try again.',
-      passwordRequired: '🔐 Password required for admin panel access.',
-      createPasswordPrompt: '🔐 Create new admin password (minimum 6 characters):',
-      passwordCreated: '✅ Password created! You can now use /admin_login to enter.',
-      passwordTooShort: '❌ Password must be at least 6 characters long.',
-      alreadyAuthenticated: '✅ You are already authenticated as admin.',
-      logoutSuccess: '✅ Logged out from admin panel.',
-      notAuthenticated: '❌ You are not authenticated as admin. Use /admin_login'
-    },
-  
-    balance: {
-      current: (amount: number) => `💰 Your current balance: ${amount} USDT`,
-      history: '📊 Transaction history:',
-      noTransactions: '📊 No transactions found'
-    },
-  
-    deposit: {
-      title: '💳 Deposit funds',
-      selectAmount: 'Select amount to deposit:',
-      processing: '⏳ Processing payment...',
-      address: (address: string) => `�� Deposit address:\n\`${address}\``
-    },
-  
-    withdraw: {
-      title: '💸 Withdraw funds',
-      enterAmount: 'Enter amount to withdraw:',
-      enterAddress: 'Enter wallet address:',
-      processing: '⏳ Processing withdrawal...'
+This is a service bot for balance management and admin panel.
+
+${isAdmin ? '🔧 You have administrator rights' : '💰 Here you can manage your balance'}
+
+Use /help for command list.`,
+
+  help: {
+    title: '📋 Available commands:\n\n',
+    common: [
+      '💰 /balance - Check balance',
+      '💳 /deposit - Deposit funds',
+      '💸 /withdraw - Withdraw funds',
+      '📊 /history - Transaction history'
+    ]
+  },
+
+  errors: {
+    tooManyRequests: '⚠️ Too many requests. Try again later.',
+    userNotFound: '❌ User not found',
+    insufficientBalance: '❌ Insufficient balance',
+    invalidAmount: '❌ Invalid amount',
+    serverError: '❌ Server error. Try again later.',
+    accessDenied: '❌ Access denied',
+    invalidCommand: '❌ Invalid command',
+    invalidPassword: '❌ Password must contain only letters and numbers (6-20 characters)'
+  },
+
+  success: {
+    balanceUpdated: '✅ Balance updated',
+    userBanned: '✅ User banned',
+    userUnbanned: '✅ User unbanned',
+    transactionCreated: '✅ Transaction created',
+    passwordCreated: '✅ Password created! Now you can use /admin to login.',
+    loginSuccess: '✅ Successful authorization! Welcome to admin panel.'
+  },
+
+  admin: {
+    panel: '🔧 Admin panel\n\nSelect action:',
+    menu: '🔧 Admin menu\n\nWelcome to admin panel!',
+    users: '👥 Users',
+    stats: '📊 Statistics',
+    userInfo: '👤 User information',
+    banUser: '🚫 Ban user',
+    unbanUser: '✅ Unban user',
+    enterPassword: '🔐 Enter admin password:',
+    createPassword: '🔐 Create new admin password (only letters and numbers, 6-20 characters):',
+    wrongPassword: '❌ Wrong password',
+    alreadyLoggedIn: '✅ You are already logged in as administrator.',
+    notInAdminList: '❌ You are not in the administrators list.',
+    firstTimeAdmin: '🔐 Welcome! This is your first login. Create admin password:',
+    back: '⬅️ Back',
+    search: '🔍 Search',
+    next: '➡️ Next',
+    prev: '⬅️ Previous',
+    balance: '💰 Balance',
+    addBalance: '➕ Add balance',
+    removeBalance: '➖ Remove balance',
+    amount: 'Amount:',
+    enterAmount: 'Enter amount:',
+    balanceUpdated: 'Balance updated:',
+    userNotFound: 'User not found',
+    noUsers: 'No users found',
+    totalUsers: 'Total users:',
+    showingUsers: 'Showing users:',
+    period: {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month', 
+      total: 'Total'
     }
-  };
+  },
+
+  balance: {
+    current: (amount: number) => `💰 Your current balance: ${amount} USDT`,
+    history: '📊 Transaction history:',
+    noTransactions: '📊 No transactions found'
+  },
+
+  deposit: {
+    title: '💳 Deposit funds',
+    selectAmount: 'Select amount to deposit:',
+    processing: '⏳ Processing payment...',
+    address: (address: string) => `💳 Deposit address:\n\`${address}\``
+  },
+
+  withdraw: {
+    title: '💸 Withdraw funds',
+    enterAmount: 'Enter amount to withdraw:',
+    enterAddress: 'Enter wallet address:',
+    processing: '⏳ Processing withdrawal...'
+  }
+};

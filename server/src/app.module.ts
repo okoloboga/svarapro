@@ -6,6 +6,8 @@ import { UsersModule } from './modules/users/users.module';
 import { FinancesModule } from './modules/finances/finances.module';
 import { GameModule } from './modules/game/game.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { AdminsModule } from './modules/admins/admins.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { BullModule } from '@nestjs/bull';
 import * as Joi from 'joi';
 
@@ -25,6 +27,7 @@ import * as Joi from 'joi';
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),
         BOT_TOKEN: Joi.string().required(),
+        API_SECRET: Joi.string().required(),
       }).unknown(true),
     }),
     TypeOrmModule.forRootAsync({
@@ -68,6 +71,8 @@ import * as Joi from 'joi';
     FinancesModule,
     RoomsModule,
     GameModule,
+    AdminsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

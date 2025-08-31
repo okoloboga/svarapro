@@ -8,14 +8,14 @@ export interface ServiceBotContext extends Context {
 export type Locale = 'ru' | 'en';
 
 export interface AdminSession {
-    telegramId: number;
-    isAuthenticated: boolean;
-    loginAttempts: number;
-    lastAttemptTime: number;
+  telegramId: string;
+  isAuthenticated: boolean;
+  loginAttempts: number;
+  lastAttemptTime: number;
 }
 
 export interface AdminLoginState {
-    telegramId: string;
-    awaitingPassword: boolean;
-    awaitingNewPassword: boolean;
+  telegramId: string;
+  awaitingPassword: boolean;
+  awaitingNewPassword: boolean;
 }

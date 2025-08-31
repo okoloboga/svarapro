@@ -25,6 +25,18 @@ module.exports = {
       out_file: './logs/bot-out.log',
       log_file: './logs/bot-combined.log',
       time: true
+    },
+    {
+      name: 'svara-pro-service-bot',
+      script: './service-bot/dist/index.js',
+      instances: 1,
+      env: {
+        NODE_ENV: 'production'
+      },
+      error_file: './logs/service-bot-err.log',
+      out_file: './logs/service-bot-out.log',
+      log_file: './logs/service-bot-combined.log',
+      time: true
     }
   ]
 };
