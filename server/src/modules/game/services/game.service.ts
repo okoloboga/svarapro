@@ -1312,6 +1312,33 @@ export class GameService {
     gameState.lastActionAmount = callAmount;
     gameState.log.push(callAction);
 
+    // Call после look переводит игру в фазу betting и открывает карты
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'betting',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+
+    // Открываем карты у всех игроков
+    for (let i = 0; i < gameState.players.length; i++) {
+      if (
+        i !== playerIndex &&
+        gameState.players[i].isActive &&
+        !gameState.players[i].hasFolded
+      ) {
+        gameState.players[i] = this.playerService.updatePlayerStatus(
+          gameState.players[i],
+          { hasLooked: true },
+        );
+      }
+    }
+
+    // Рассчитываем очки для всех игроков
+    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    gameState = scoreResult.updatedGameState;
+    gameState.log.push(...scoreResult.actions);
+
     // Переходим к следующему игроку
     const nextPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
