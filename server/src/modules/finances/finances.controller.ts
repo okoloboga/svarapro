@@ -115,4 +115,11 @@ export class FinancesController {
       createdAt: t.createdAt.toISOString(),
     }));
   }
+
+  @Get('merchant-balances')
+  async getMerchantBalances() {
+    this.logger.debug('Getting merchant balances');
+    const balances = await this.financesService.getMerchantBalances();
+    return balances;
+  }
 }

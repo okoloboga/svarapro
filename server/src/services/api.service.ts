@@ -175,7 +175,7 @@ export class ApiService {
 
     // Новый эквайринг Alfabit - создание инвойса без суммы
     const requestBody = {
-      currencyInCode: token, // Используем оригинальный токен без маппинга
+      currencyInCode: token, // Оставляем оригинальный токен: USDTTON остается USDTTON
       invoiceAssetCode: 'USDT',
       comment: `Deposit for transaction ${clientTransactionId}`,
       publicComment: `Deposit ${clientTransactionId}`,
@@ -457,12 +457,18 @@ export class ApiService {
         `Transaction status retrieved: trackerId: ${trackerId}, status: ${mappedStatus}`,
       );
 
+      // Маппинг валют: USDTTON -> TON для корректной обработки
+      let mappedToken = orderData.currencyInCode || orderData.currencyOutCode;
+      if (mappedToken === 'USDTTON') {
+        mappedToken = 'TON';
+      }
+
       return {
         status: mappedStatus,
         amount: orderData.amountInFact ? parseFloat(orderData.amountInFact) : undefined,
         transactionHash: orderData.txId,
         clientTransactionId: undefined, // Alfabit не возвращает clientTransactionId, поэтому оставляем undefined
-        token: orderData.currencyInCode || orderData.currencyOutCode,
+        token: mappedToken,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -620,5 +626,52 @@ export class ApiService {
       minOut: fee.minOut,
       maxOut: fee.maxOut,
     };
+  }
+
+  async getMerchantBalances(): Promise<{
+    assetCode: string;
+    currencyCode: string;
+    balance: string;
+    balanceUsd: string;
+  }[]> {
+    this.logger.debug('Getting merchant balances from Alfabit API');
+
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/api/v1/integration/merchant/balances`,
+        {
+          headers: {
+            'x-api-key': this.getApiKey(),
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.message !== 'ok') {
+        this.logger.error(
+          `Failed to get merchant balances: ${response.data.message}`,
+        );
+        throw new BadRequestException(
+          `Failed to get merchant balances: ${response.data.message}`,
+        );
+      }
+
+      const balances = response.data.data;
+      this.logger.log(`Retrieved ${balances.length} merchant balances from Alfabit`);
+
+      return balances;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          `Alfabit API error (getMerchantBalances): ${error.message}, response: ${JSON.stringify(error.response?.data)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Alfabit API error (getMerchantBalances): ${String(error)}`,
+        );
+        throw new BadRequestException(`Alfabit API error: ${String(error)}`);
+      }
+    }
   }
 }

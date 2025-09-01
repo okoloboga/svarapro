@@ -159,12 +159,18 @@ export class FinancesService {
         mappedStatus = 'ERROR';
       }
       
+      // Маппинг валют: USDTTON -> TON для корректной обработки
+      let mappedToken = callbackData.currencyInCode || callbackData.currencyOutCode;
+      if (mappedToken === 'USDTTON') {
+        mappedToken = 'TON';
+      }
+      
       transactionData = {
         status: mappedStatus,
         amount: callbackData.amountInFact ? parseFloat(callbackData.amountInFact) : undefined,
         transactionHash: callbackData.txId,
         clientTransactionId: undefined,
-        token: callbackData.currencyInCode || callbackData.currencyOutCode,
+        token: mappedToken,
       };
       
       this.logger.debug(`Using callback data: ${JSON.stringify(transactionData)}`);
@@ -338,5 +344,15 @@ export class FinancesService {
       return amount * this.TON_TO_USDT_RATE;
     }
     return amount;
+  }
+
+  async getMerchantBalances(): Promise<{
+    assetCode: string;
+    currencyCode: string;
+    balance: string;
+    balanceUsd: string;
+  }[]> {
+    this.logger.debug('Getting merchant balances from Alfabit API');
+    return await this.apiService.getMerchantBalances();
   }
 }
