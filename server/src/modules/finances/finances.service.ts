@@ -109,6 +109,17 @@ export class FinancesService {
       throw new BadRequestException('User not found');
     }
 
+    // Проверяем, не создали ли мы уже транзакцию с таким clientTransactionId
+    const existingTransaction = await this.transactionRepository.findOne({
+      where: { client_transaction_id: clientTransactionId },
+    });
+    if (existingTransaction) {
+      this.logger.warn(
+        `Transaction with clientTransactionId ${clientTransactionId} already exists, returning existing transaction`,
+      );
+      return existingTransaction;
+    }
+
     if (type === 'withdraw') {
       const withdrawAmount: number = amount!;
       if (user.balance < withdrawAmount) {
@@ -224,6 +235,14 @@ export class FinancesService {
     }
 
     if (transactionData.status === 'SUCCESS' && transactionData.amount) {
+      // Проверяем, не обработали ли мы уже эту транзакцию
+      if (transaction.status === 'complete') {
+        this.logger.warn(
+          `Transaction ${trackerId} already processed as complete, skipping duplicate processing`,
+        );
+        return;
+      }
+      
       transaction.status = 'complete';
       transaction.amount = transactionData.amount;
       transaction.transaction_hash = transactionData.transactionHash;
@@ -300,6 +319,14 @@ export class FinancesService {
         }
       }
     } else if (transactionData.status === 'ERROR') {
+      // Проверяем, не обработали ли мы уже эту транзакцию как ошибку
+      if (transaction.status === 'failed') {
+        this.logger.warn(
+          `Transaction ${trackerId} already processed as failed, skipping duplicate processing`,
+        );
+        return;
+      }
+      
       transaction.status = 'failed';
       if (transaction.type === 'withdraw') {
         const user = await this.userRepository.findOne({
@@ -349,7 +376,7 @@ export class FinancesService {
         { 
           attempts: 3, 
           backoff: 5000,
-          delay: 5000, // Задержка 5 секунд перед обработкой
+          delay: 2000, // Уменьшаем задержку до 2 секунд
           jobId: `callback-${trackerId}`, // Уникальный ID для дедупликации
           removeOnComplete: true,
           removeOnFail: false,
