@@ -338,7 +338,7 @@ export class FinancesService {
         { 
           attempts: 3, 
           backoff: 5000,
-          delay: 2000, // Задержка 2 секунды перед обработкой
+          delay: 5000, // Задержка 5 секунд перед обработкой
           jobId: `callback-${trackerId}`, // Уникальный ID для дедупликации
           removeOnComplete: true,
           removeOnFail: false,
