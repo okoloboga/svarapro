@@ -447,7 +447,11 @@ export class ApiService {
       
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
-      if (orderData.status === 'paid' || orderData.status === 'completed' || orderData.status === 'success') {
+      
+      // Промежуточные статусы - не обрабатываем как ошибки
+      if (orderData.status === 'invoiceWaitRequisites' || orderData.status === 'invoiceWaitPay' || orderData.status === 'invoiceWaitCheck' || orderData.status === 'inProgress') {
+        mappedStatus = 'pending';
+      } else if (orderData.status === 'paid' || orderData.status === 'completed' || orderData.status === 'success') {
         mappedStatus = 'SUCCESS';
       } else if (orderData.status === 'failed' || orderData.status === 'cancelled' || orderData.status === 'invoiceNotPayed') {
         mappedStatus = 'ERROR';

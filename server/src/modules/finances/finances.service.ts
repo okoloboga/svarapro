@@ -153,7 +153,11 @@ export class FinancesService {
     if (callbackData && callbackData.status) {
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
-      if (callbackData.status === 'success' || callbackData.status === 'completed' || callbackData.status === 'SUCCESS') {
+      
+      // Промежуточные статусы - не обрабатываем как ошибки
+      if (callbackData.status === 'invoiceWaitRequisites' || callbackData.status === 'invoiceWaitPay' || callbackData.status === 'invoiceWaitCheck' || callbackData.status === 'inProgress') {
+        mappedStatus = 'pending';
+      } else if (callbackData.status === 'success' || callbackData.status === 'completed' || callbackData.status === 'SUCCESS') {
         mappedStatus = 'SUCCESS';
       } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed' || callbackData.status === 'ERROR') {
         mappedStatus = 'ERROR';
@@ -308,6 +312,11 @@ export class FinancesService {
           );
         }
       }
+    } else if (transactionData.status === 'pending') {
+      // Промежуточный статус - это нормально, не логируем предупреждение
+      this.logger.debug(
+        `Transaction in pending status: ${transactionData.status} for trackerId: ${trackerId}`,
+      );
     } else {
       this.logger.warn(
         `Unexpected transaction status: ${transactionData.status} for trackerId: ${trackerId}`,
