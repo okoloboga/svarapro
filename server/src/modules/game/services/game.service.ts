@@ -577,12 +577,12 @@ export class GameService {
         );
       case 'call':
         // Обрабатываем call в обеих фазах
-        console.log(`[handlePlayerAction] Call action - status: ${gameState.status}, hasLookedAndMustAct: ${gameState.players[playerIndex].hasLookedAndMustAct}`);
+        console.log(`[DEBUG] Call routing - status: ${gameState.status}, hasLookedAndMustAct: ${gameState.players[playerIndex].hasLookedAndMustAct}`);
         if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
-          console.log(`[handlePlayerAction] Routing to processBlindBettingCallAction`);
+          console.log(`[DEBUG] Going to processBlindBettingCallAction`);
           return this.processBlindBettingCallAction(roomId, gameState, playerIndex);
         } else {
-          console.log(`[handlePlayerAction] Routing to processBettingAction`);
+          console.log(`[DEBUG] Going to processBettingAction`);
           return this.processBettingAction(
             roomId,
             gameState,
@@ -788,7 +788,6 @@ export class GameService {
     switch (action) {
       case 'call': {
         // Обрабатываем call только в фазе betting (не в blind_betting)
-        console.log(`[processBettingAction] Call action - hasLookedAndMustAct: ${player.hasLookedAndMustAct}`);
         
         // Проверяем, что это не call после look в blind_betting
         if (player.hasLookedAndMustAct) {
@@ -1287,7 +1286,6 @@ export class GameService {
     gameState: GameState,
     playerIndex: number,
   ): Promise<GameActionResult> {
-    console.log(`[processBlindBettingCallAction] Starting call action for player ${playerIndex}`);
     const player = gameState.players[playerIndex];
     
     // В blind_betting call означает оплату просмотра карт
@@ -1331,15 +1329,11 @@ export class GameService {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
     }
 
-    console.log(`[processBlindBettingCallAction] nextPlayerIndex: ${nextPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
-
     if (nextPlayerIndex === anchorPlayerIndex) {
       // Круг завершен, переходим к следующей фазе
-      console.log(`[processBlindBettingCallAction] Round complete, ending betting round`);
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = nextPlayerIndex;
-      console.log(`[processBlindBettingCallAction] Moving to next player: ${nextPlayerIndex}`);
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
