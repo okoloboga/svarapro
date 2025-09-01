@@ -73,4 +73,4 @@ RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
 
 USER nodejs
 EXPOSE 3000
-CMD ["pm2-runtime", "start", "ecosystem.config.js"]
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--no-daemon"]

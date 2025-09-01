@@ -1339,25 +1339,42 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    // Переходим к следующему игроку
-    const nextPlayerIndex = this.playerService.findNextActivePlayer(
+    // Устанавливаем текущего игрока как якорного (как в raise)
+    gameState.lastRaiseIndex = playerIndex;
+
+    // Анимация и проверка завершения круга (как в processBettingAction)
+    gameState.isAnimating = true;
+    gameState.animationType = 'chip_fly';
+
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    gameState.isAnimating = false;
+    gameState.animationType = undefined;
+
+    // Проверяем завершение круга ДО передачи хода (как в raise)
+    const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
-    
-    // Если следующий игрок будет якорем, то круг завершается
+
+    // Проверяем, будет ли следующий игрок якорем
     let anchorPlayerIndex: number | undefined = undefined;
     if (gameState.lastRaiseIndex !== undefined) {
       anchorPlayerIndex = gameState.lastRaiseIndex;
     } else if (gameState.lastBlindBettorIndex !== undefined) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    } else {
+      anchorPlayerIndex = gameState.dealerIndex;
     }
 
-    if (nextPlayerIndex === anchorPlayerIndex) {
-      // Круг завершен, переходим к следующей фазе
+    // Если следующий игрок - якорь, то круг завершается
+    if (aboutToActPlayerIndex === anchorPlayerIndex) {
       await this.endBettingRound(roomId, gameState);
     } else {
-      gameState.currentPlayerIndex = nextPlayerIndex;
+      gameState.currentPlayerIndex = aboutToActPlayerIndex;
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }

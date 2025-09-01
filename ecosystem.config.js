@@ -12,12 +12,16 @@ module.exports = {
       error_file: './logs/server-err.log',
       out_file: './logs/server-out.log',
       log_file: './logs/server-combined.log',
-      time: true
+      time: true,
+      kill_timeout: 5000,
+      wait_ready: true,
+      listen_timeout: 10000
     },
     {
       name: 'svara-pro-bot',
       script: './bot/dist/index.js',
       instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         BOT_TOKEN: process.env.BOT_TOKEN,
@@ -26,12 +30,16 @@ module.exports = {
       error_file: './logs/bot-err.log',
       out_file: './logs/bot-out.log',
       log_file: './logs/bot-combined.log',
-      time: true
+      time: true,
+      kill_timeout: 5000,
+      wait_ready: true,
+      listen_timeout: 10000
     },
     {
       name: 'svara-pro-service-bot',
       script: './service-bot/dist/index.js',
       instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         BOT_TOKEN: process.env.SERVICE_BOT_TOKEN,
@@ -42,7 +50,10 @@ module.exports = {
       error_file: './logs/service-bot-err.log',
       out_file: './logs/service-bot-out.log',
       log_file: './logs/service-bot-combined.log',
-      time: true
+      time: true,
+      kill_timeout: 5000,
+      wait_ready: true,
+      listen_timeout: 10000
     }
   ]
 };
