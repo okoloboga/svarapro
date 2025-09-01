@@ -134,9 +134,16 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState) {
-      return { success: false, error: 'Игра не найдена' };
+    let gameState: GameState | null;
+    try {
+      gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        console.error(`[joinRoom] Game state not found for room ${roomId}, user ${telegramId}`);
+        return { success: false, error: 'Игра не найдена' };
+      }
+    } catch (error) {
+      console.error(`[joinRoom] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
+      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
     }
 
     return { success: true, gameState };
@@ -148,9 +155,16 @@ export class GameService {
     position: number,
     userData: UserDataDto,
   ): Promise<GameActionResult> {
-    const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState) {
-      return { success: false, error: 'Игра не найдена' };
+    let gameState: GameState | null;
+    try {
+      gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        console.error(`[sitDown] Game state not found for room ${roomId}, user ${telegramId}`);
+        return { success: false, error: 'Игра не найдена' };
+      }
+    } catch (error) {
+      console.error(`[sitDown] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
+      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
     }
 
     if (gameState.players.some((p) => p.position === position)) {
@@ -369,9 +383,16 @@ export class GameService {
     roomId: string,
     telegramId: string,
   ): Promise<GameActionResult> {
-    const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState) {
-      return { success: false, error: 'Игра не найдена' };
+    let gameState: GameState | null;
+    try {
+      gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        console.error(`[joinSvara] Game state not found for room ${roomId}, user ${telegramId}`);
+        return { success: false, error: 'Игра не найдена' };
+      }
+    } catch (error) {
+      console.error(`[joinSvara] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
+      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
     }
 
     if (gameState.status !== 'svara_pending') {
@@ -498,9 +519,16 @@ export class GameService {
       return this.skipSvara(roomId, telegramId);
     }
 
-    const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState) {
-      return { success: false, error: 'Игра не найдена' };
+    let gameState: GameState | null;
+    try {
+      gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        console.error(`[processAction] Game state not found for room ${roomId}, user ${telegramId}, action ${action}`);
+        return { success: false, error: 'Игра не найдена' };
+      }
+    } catch (error) {
+      console.error(`[processAction] Redis error getting game state for room ${roomId}, user ${telegramId}, action ${action}:`, error);
+      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
     }
 
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
