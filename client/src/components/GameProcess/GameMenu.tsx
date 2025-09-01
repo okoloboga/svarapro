@@ -51,7 +51,7 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
       onClick={onClose}
     >
       <div
-        className="w-[250px] h-[192px]"
+        className="w-[250px] h-[150px]"
         onClick={(e) => e.stopPropagation()}
       >
         <StyledContainer
