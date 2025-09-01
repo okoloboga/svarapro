@@ -126,7 +126,7 @@ export class FinancesService {
       type,
       currency,
       amount: type === 'withdraw' ? amount! : 0,
-      address,
+      address: type === 'withdraw' ? receiver! : address, // Для withdraw используем receiver как address
       tracker_id: trackerId,
       client_transaction_id: clientTransactionId,
       status: 'pending',
