@@ -4,6 +4,8 @@ import {
   IsIn,
   IsOptional,
   MinLength,
+  MaxLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateRoomDto {
@@ -16,5 +18,7 @@ export class CreateRoomDto {
   @IsOptional()
   @IsString()
   @MinLength(6)
+  @MaxLength(6)
+  @Matches(/^\d{6}$/, { message: 'Password must be exactly 6 digits' })
   password?: string;
 }

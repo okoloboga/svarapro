@@ -42,7 +42,16 @@ export class RoomsService {
   }
 
   async createRoom(createRoomDto: CreateRoomDto): Promise<Room> {
-    const roomId = uuidv4().slice(0, 6);
+    let roomId: string;
+    
+    if (createRoomDto.type === 'private') {
+      // Для приватных комнат используем пароль как ID (только цифры)
+      roomId = createRoomDto.password!;
+    } else {
+      // Для публичных комнат генерируем случайный ID
+      roomId = uuidv4().slice(0, 6);
+    }
+    
     const newRoom: Room = {
       roomId,
       minBet: createRoomDto.minBet,
@@ -68,7 +77,23 @@ export class RoomsService {
   }
 
   async joinRoom(roomId: string, user: any): Promise<Room> {
-    const room = await this.redisService.getRoom(roomId);
+    // Сначала пытаемся найти комнату по ID
+    let room = await this.redisService.getRoom(roomId);
+    
+    // Если комната не найдена и ID состоит только из цифр, 
+    // возможно это пароль приватной комнаты
+    if (!room && /^\d+$/.test(roomId)) {
+      // Ищем приватную комнату по паролю
+      const activeRooms = await this.redisService.getActiveRooms();
+      for (const activeRoomId of activeRooms) {
+        const activeRoom = await this.redisService.getRoom(activeRoomId);
+        if (activeRoom && activeRoom.type === 'private' && activeRoom.password === roomId) {
+          room = activeRoom;
+          break;
+        }
+      }
+    }
+    
     if (!room) {
       throw new Error('Room not found');
     }
@@ -82,14 +107,14 @@ export class RoomsService {
       // Room is full, add as spectator
       if (!room.spectators.includes(user.telegramId)) {
         room.spectators.push(user.telegramId);
-        await this.redisService.setRoom(roomId, room);
+        await this.redisService.setRoom(room.roomId, room);
       }
       return room;
     }
 
     // Add to room players list, but not to gameState players
     room.players.push(user.telegramId);
-    await this.redisService.setRoom(roomId, room);
+    await this.redisService.setRoom(room.roomId, room);
 
     return room;
   }
