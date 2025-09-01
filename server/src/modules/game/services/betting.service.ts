@@ -197,7 +197,7 @@ export class BettingService {
         return { canPerform: true };
 
       case 'call': {
-        // Разрешаем call только в фазе betting
+        // Разрешаем call в фазе betting или в blind_betting после look
         if (gameState.status === 'betting') {
           // Разрешаем колл, если игрок является последним, кто повышал ставку.
           // Это действие завершит раунд торгов.
@@ -214,8 +214,11 @@ export class BettingService {
           return { canPerform: true };
         }
         
-        // ИСПРАВЛЕНИЕ: Убираем call из blind_betting фазы
-        // В blind_betting можно только blind_bet, look, fold или raise (после look)
+        // Разрешаем call в blind_betting только если игрок посмотрел карты
+        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
+          return { canPerform: true };
+        }
+        
         return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
       }
 

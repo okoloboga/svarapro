@@ -54,6 +54,7 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           fullWidth
           icon={tetherIcon}
           rightIcon={rightIcon}
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => handleDeposit('USDTTON')}
           justify="start"
         >
@@ -64,6 +65,7 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           fullWidth
           icon={tonIcon}
           rightIcon={rightIcon}
+          rightIconClassName="w-[6px] h-[17px]"
           onClick={() => handleDeposit('TON')}
           justify="start"
         >

@@ -576,6 +576,18 @@ export class GameService {
           action,
         );
       case 'call':
+        // Обрабатываем call в обеих фазах
+        if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
+          return this.processBlindBettingCallAction(roomId, gameState, playerIndex);
+        } else {
+          return this.processBettingAction(
+            roomId,
+            gameState,
+            playerIndex,
+            action,
+            amount,
+          );
+        }
       case 'raise':
         return this.processBettingAction(
           roomId,
@@ -772,8 +784,7 @@ export class GameService {
     const player = gameState.players[playerIndex];
     switch (action) {
       case 'call': {
-        // ИСПРАВЛЕНИЕ: Убираем обработку call для hasLookedAndMustAct
-        // В blind_betting можно только raise после look
+        // Обрабатываем call только в фазе betting (не в blind_betting)
 
         if (playerIndex === gameState.lastRaiseIndex) {
           await this.endBettingRound(roomId, gameState);
@@ -1254,6 +1265,66 @@ export class GameService {
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
       }
+    }
+
+    return { success: true, gameState };
+  }
+
+  private async processBlindBettingCallAction(
+    roomId: string,
+    gameState: GameState,
+    playerIndex: number,
+  ): Promise<GameActionResult> {
+    const player = gameState.players[playerIndex];
+    
+    // В blind_betting call означает оплату просмотра карт
+    const callAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet : gameState.minBet;
+    
+    if (callAmount <= 0) {
+      return {
+        success: false,
+        error: 'Нечего уравнивать',
+      };
+    }
+    
+    if (player.balance < callAmount) {
+      return { success: false, error: 'Недостаточно средств' };
+    }
+
+    const { updatedPlayer, action: callAction } =
+      this.playerService.processPlayerBet(player, callAmount, 'call');
+    
+    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+      updatedPlayer,
+      { hasLookedAndMustAct: false },
+    );
+    
+    gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+    gameState.chipCount += 1;
+    gameState.lastActionAmount = callAmount;
+    gameState.log.push(callAction);
+
+    // Переходим к следующему игроку
+    const nextPlayerIndex = this.playerService.findNextActivePlayer(
+      gameState.players,
+      gameState.currentPlayerIndex,
+    );
+    
+    // Если следующий игрок будет якорем, то круг завершается
+    let anchorPlayerIndex: number | undefined = undefined;
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    }
+
+    if (nextPlayerIndex === anchorPlayerIndex) {
+      // Круг завершен, переходим к следующей фазе
+      await this.endBettingRound(roomId, gameState);
+    } else {
+      gameState.currentPlayerIndex = nextPlayerIndex;
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
     }
 
     return { success: true, gameState };
