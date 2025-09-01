@@ -10,7 +10,6 @@ export class RedisService {
     this.client = new Redis({
       host: process.env.REDIS_HOST || 'redis',
       port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
       connectTimeout: 10000,
       commandTimeout: 5000,
