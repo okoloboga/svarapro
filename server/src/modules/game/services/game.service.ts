@@ -545,11 +545,11 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'all_in'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'all_in', 'call'].includes(action)) {
       return {
         success: false,
         error:
-          'После просмотра карт вы можете только повысить ставку или сбросить карты',
+          'После просмотра карт вы можете только повысить ставку, уравнять или сбросить карты',
       };
     }
 
@@ -577,12 +577,9 @@ export class GameService {
         );
       case 'call':
         // Обрабатываем call в обеих фазах
-        console.log(`[DEBUG] Call routing - status: ${gameState.status}, hasLookedAndMustAct: ${gameState.players[playerIndex].hasLookedAndMustAct}`);
         if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
-          console.log(`[DEBUG] Going to processBlindBettingCallAction`);
           return this.processBlindBettingCallAction(roomId, gameState, playerIndex);
         } else {
-          console.log(`[DEBUG] Going to processBettingAction`);
           return this.processBettingAction(
             roomId,
             gameState,
