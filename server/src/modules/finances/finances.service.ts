@@ -153,9 +153,9 @@ export class FinancesService {
     if (callbackData && callbackData.status) {
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
-      if (callbackData.status === 'success' || callbackData.status === 'completed') {
+      if (callbackData.status === 'success' || callbackData.status === 'completed' || callbackData.status === 'SUCCESS') {
         mappedStatus = 'SUCCESS';
-      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed') {
+      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed' || callbackData.status === 'ERROR') {
         mappedStatus = 'ERROR';
       }
       
@@ -167,6 +167,7 @@ export class FinancesService {
         token: callbackData.currencyInCode || callbackData.currencyOutCode,
       };
       
+      this.logger.debug(`Original callback status: ${callbackData.status}, mapped to: ${mappedStatus}`);
       this.logger.debug(`Using callback data: ${JSON.stringify(transactionData)}`);
     } else {
       // Fallback: получаем статус через API
