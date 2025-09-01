@@ -159,18 +159,12 @@ export class FinancesService {
         mappedStatus = 'ERROR';
       }
       
-      // Маппинг валют: USDTTON -> TON для корректной обработки
-      let mappedToken = callbackData.currencyInCode || callbackData.currencyOutCode;
-      if (mappedToken === 'USDTTON') {
-        mappedToken = 'TON';
-      }
-      
       transactionData = {
         status: mappedStatus,
         amount: callbackData.amountInFact ? parseFloat(callbackData.amountInFact) : undefined,
         transactionHash: callbackData.txId,
         clientTransactionId: undefined,
-        token: mappedToken,
+        token: callbackData.currencyInCode || callbackData.currencyOutCode,
       };
       
       this.logger.debug(`Using callback data: ${JSON.stringify(transactionData)}`);

@@ -457,18 +457,12 @@ export class ApiService {
         `Transaction status retrieved: trackerId: ${trackerId}, status: ${mappedStatus}`,
       );
 
-      // Маппинг валют: USDTTON -> TON для корректной обработки
-      let mappedToken = orderData.currencyInCode || orderData.currencyOutCode;
-      if (mappedToken === 'USDTTON') {
-        mappedToken = 'TON';
-      }
-
       return {
         status: mappedStatus,
         amount: orderData.amountInFact ? parseFloat(orderData.amountInFact) : undefined,
         transactionHash: orderData.txId,
         clientTransactionId: undefined, // Alfabit не возвращает clientTransactionId, поэтому оставляем undefined
-        token: mappedToken,
+        token: orderData.currencyInCode || orderData.currencyOutCode,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
