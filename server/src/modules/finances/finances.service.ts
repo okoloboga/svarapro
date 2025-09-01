@@ -154,14 +154,15 @@ export class FinancesService {
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
       
-      // Промежуточные статусы - не обрабатываем как ошибки
-      if (callbackData.status === 'invoiceWaitRequisites' || callbackData.status === 'invoiceWaitPay' || callbackData.status === 'invoiceWaitCheck' || callbackData.status === 'inProgress') {
-        mappedStatus = 'pending';
+      // Если есть сумма в amountInFact - это успешный депозит
+      if (callbackData.amountInFact && parseFloat(callbackData.amountInFact) > 0) {
+        mappedStatus = 'SUCCESS';
       } else if (callbackData.status === 'success' || callbackData.status === 'completed' || callbackData.status === 'SUCCESS') {
         mappedStatus = 'SUCCESS';
       } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed' || callbackData.status === 'ERROR') {
         mappedStatus = 'ERROR';
       }
+      // Промежуточные статусы остаются pending только если нет суммы
       
       transactionData = {
         status: mappedStatus,

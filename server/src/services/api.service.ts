@@ -448,14 +448,15 @@ export class ApiService {
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
       
-      // Промежуточные статусы - не обрабатываем как ошибки
-      if (orderData.status === 'invoiceWaitRequisites' || orderData.status === 'invoiceWaitPay' || orderData.status === 'invoiceWaitCheck' || orderData.status === 'inProgress') {
-        mappedStatus = 'pending';
+      // Если есть сумма в amountInFact - это успешный депозит
+      if (orderData.amountInFact && parseFloat(orderData.amountInFact) > 0) {
+        mappedStatus = 'SUCCESS';
       } else if (orderData.status === 'paid' || orderData.status === 'completed' || orderData.status === 'success') {
         mappedStatus = 'SUCCESS';
       } else if (orderData.status === 'failed' || orderData.status === 'cancelled' || orderData.status === 'invoiceNotPayed') {
         mappedStatus = 'ERROR';
       }
+      // Промежуточные статусы остаются pending только если нет суммы
 
       this.logger.log(
         `Transaction status retrieved: trackerId: ${trackerId}, status: ${mappedStatus}`,
