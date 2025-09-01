@@ -449,7 +449,7 @@ export class ApiService {
       let mappedStatus = 'pending';
       if (orderData.status === 'paid' || orderData.status === 'completed') {
         mappedStatus = 'SUCCESS';
-      } else if (orderData.status === 'failed' || orderData.status === 'cancelled') {
+      } else if (orderData.status === 'failed' || orderData.status === 'cancelled' || orderData.status === 'invoiceNotPayed') {
         mappedStatus = 'ERROR';
       }
 

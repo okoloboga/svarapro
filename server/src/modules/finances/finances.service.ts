@@ -155,7 +155,7 @@ export class FinancesService {
       let mappedStatus = 'pending';
       if (callbackData.status === 'success' || callbackData.status === 'completed') {
         mappedStatus = 'SUCCESS';
-      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled') {
+      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed') {
         mappedStatus = 'ERROR';
       }
       
@@ -187,6 +187,7 @@ export class FinancesService {
     }
 
     // Для Alfabit ищем транзакцию по tracker_id, так как clientTransactionId не возвращается
+    this.logger.debug(`Looking for transaction with tracker_id: ${trackerId}`);
     const transaction = await this.transactionRepository.findOne({
       where: { tracker_id: trackerId },
       relations: ['user'],
@@ -194,8 +195,25 @@ export class FinancesService {
 
     if (!transaction) {
       this.logger.warn(
-        `Transaction not found for trackerId: ${trackerId}`,
+        `Transaction not found for trackerId: ${trackerId}. Checking if transaction exists with different criteria...`,
       );
+      
+      // Попробуем найти транзакцию по другим критериям для отладки
+      const allTransactions = await this.transactionRepository.find({
+        where: {},
+        relations: ['user'],
+        take: 10,
+        order: { createdAt: 'DESC' },
+      });
+      
+      this.logger.debug(`Recent transactions: ${JSON.stringify(allTransactions.map(t => ({
+        id: t.id,
+        tracker_id: t.tracker_id,
+        currency: t.currency,
+        status: t.status,
+        createdAt: t.createdAt
+      })))}`);
+      
       return;
     }
 
@@ -317,7 +335,14 @@ export class FinancesService {
       await this.callbackQueue.add(
         'process-callback',
         { trackerId, clientTransactionId, callbackData },
-        { attempts: 3, backoff: 5000 },
+        { 
+          attempts: 3, 
+          backoff: 5000,
+          delay: 2000, // Задержка 2 секунды перед обработкой
+          jobId: `callback-${trackerId}`, // Уникальный ID для дедупликации
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
       );
       this.logger.log(
         `Added to callback queue: trackerId: ${trackerId}, clientTransactionId: ${clientTransactionId}`,
