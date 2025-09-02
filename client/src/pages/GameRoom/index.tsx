@@ -625,9 +625,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const tableHeight = 493 * scale;
     const verticalOffset = 100;
     
-    // Размер аватара (как в PlayerSpot)
+    // Размер аватара и имени (как в PlayerSpot)
     const baseAvatarSize = 71;
+    const baseNameHeight = 32;
     const avatarSize = baseAvatarSize * scale;
+    const nameHeight = baseNameHeight * scale;
     
     // Раздаем по 3 карты каждому активному игроку
     gameState.players.forEach((player, playerIndex) => {
@@ -657,15 +659,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const cardSide = (relativePosition === 2 || relativePosition === 3) ? 'left' : 'right';
       
       if (cardSide === 'left') {
-        // Карты справа от игрока
+        // CardDeckComponent с right: '50px' - карты справа от игрока
         cardDeckX = playerX + 50 * scale;
       } else {
-        // Карты слева от игрока
+        // CardDeckComponent с left: '50px' - карты слева от игрока  
         cardDeckX = playerX - 50 * scale;
       }
       
-      // Карты на 40% от высоты аватара игрока
-      cardDeckY = playerY + (avatarSize * 0.4);
+      // CardDeckComponent на top: '40%' от контейнера игрока
+      // Контейнер игрока имеет высоту avatarSize + nameHeight/1.5
+      const containerHeight = avatarSize + (nameHeight / 1.5);
+      cardDeckY = playerY + (containerHeight * 0.4);
       
       // Создаем 3 карты для каждого игрока
       for (let cardIndex = 0; cardIndex < 3; cardIndex++) {

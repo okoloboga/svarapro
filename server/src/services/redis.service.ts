@@ -154,9 +154,7 @@ export class RedisService {
 
   async setGameState(roomId: string, gameState: GameState): Promise<void> {
     await this.withRetry(async () => {
-      console.log(`[Redis] Setting game state for room ${roomId}, status: ${gameState.status}`);
       await this.client.set(`game:${roomId}`, JSON.stringify(gameState));
-      console.log(`[Redis] Game state saved for room ${roomId}`);
     });
   }
 
