@@ -645,12 +645,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       let playerY = 0;
       
       switch (relativePosition) {
-        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
-        case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
-        case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-        case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
-        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
+        case 2: playerX = centerX + tableWidth * 0.35; playerY = centerY - tableHeight * 0.35; break; // Левее и выше
+        case 3: playerX = centerX + tableWidth * 0.35; playerY = centerY + tableHeight * 0.15 - verticalOffset; break; // Левее и выше
+        case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
+        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.15 - verticalOffset; break; // Поднимаем выше
+        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.35; break; // Поднимаем выше
       }
       
       // Карты летят в центр компонента игрока
