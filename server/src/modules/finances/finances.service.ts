@@ -272,7 +272,7 @@ export class FinancesService {
               `💵 *Сумма:* ${convertedAmount.toFixed(2)} USDT\n` +
               `💳 *Новый баланс:* ${user.balance.toFixed(2)} USDT\n` +
               `📅 *Дата:* ${new Date().toLocaleString('ru-RU')}\n\n` +
-              `Спасибо за пополнение! Теперь вы можете играть в карты.`;
+              `Спасибо за пополнение!`;
             
             await this.telegramService.sendMessage(user.telegramId, message);
             this.logger.log(`Telegram notification sent for deposit to user ${user.telegramId}`);

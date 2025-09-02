@@ -17,6 +17,7 @@ import { apiService } from './services/api/api';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';
+import { useAppUpdate } from './hooks/useAppUpdate';
 import { SoundProvider } from './context/SoundContext';
 import { Notification } from './components/Notification';
 import { NotificationType } from './types/components';
@@ -74,6 +75,8 @@ function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationType | null>(null);
+
+  const { updateAvailable, updateApp } = useAppUpdate();
 
   const handleBack = useCallback(() => {
     if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory' || currentPage === 'gameRoom') {
@@ -222,6 +225,19 @@ function App() {
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
       <SoundProvider>
+        {/* Уведомление об обновлении приложения */}
+        {updateAvailable && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white p-3 text-center">
+            <span className="mr-2">Доступно обновление приложения</span>
+            <button 
+              onClick={updateApp}
+              className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium"
+            >
+              Обновить
+            </button>
+          </div>
+        )}
+        
         {isLoading ? (
           <LoadingPage isLoading={isLoading} />
         ) : error ? (
