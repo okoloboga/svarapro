@@ -170,7 +170,6 @@ export class RedisService {
         const gameState = JSON.parse(gameData) as GameState;
         return gameState;
       } catch (parseError) {
-        console.error(`[Redis] Failed to parse game state for room ${roomId}:`, parseError);
         return null;
       }
     });

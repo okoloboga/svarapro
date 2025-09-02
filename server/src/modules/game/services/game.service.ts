@@ -341,6 +341,14 @@ export class GameService {
     gameState = dealResult.updatedGameState;
     gameState.log.push(...dealResult.actions);
 
+    // Сохраняем состояние с разданными картами
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // Ждем завершения анимации раздачи карт на клиенте (3 секунды)
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // Только после завершения анимации переходим в blind_betting
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'blind_betting',
@@ -353,7 +361,7 @@ export class GameService {
       gameState.dealerIndex,
     );
 
-        await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
   }
 

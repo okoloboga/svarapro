@@ -167,7 +167,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
-  const [isDealingCards, setIsDealingCards] = useState(false);
+
   const [showChipStack, setShowChipStack] = useState(true);
   
   
@@ -323,7 +323,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const lastAction = gameState.log[currentLogLength - 1];
       
       // Создаем уникальный ключ для действия
-      const actionKey = `${lastAction.telegramId}-${lastAction.type}-${Date.now()}`;
+      const actionKey = `${lastAction.telegramId}-${lastAction.type}-${lastAction.timestamp}`;
       
       if (lastAction && 
           lastAction.telegramId !== currentUserId && 
@@ -342,24 +342,36 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       if (lastAction && lastAction.type === 'ante') {
         handlePlayerBet(lastAction.telegramId);
       }
-      
-      // Раздача карт в конце фазы ante (когда все игроки сделали ante)
-      if (gameState.status === 'ante' && !isDealingCards) {
-        const anteActions = gameState.log.filter(action => action.type === 'ante');
-        const activePlayers = gameState.players.filter(player => player.isActive);
-        
-        if (anteActions.length >= activePlayers.length) {
-          setIsDealingCards(true);
-          // Добавляем задержку для завершения ante анимаций перед раздачей карт
-          setTimeout(() => {
-            handleDealCards();
-          }, 1500); // 1.5 секунды для завершения всех ante анимаций
-        }
-      }
     }
     
     prevLogLengthRef.current = currentLogLength;
-  }, [gameState?.log?.length, currentUserId, gameState?.status, isDealingCards]); // Добавляем зависимости
+  }, [gameState?.log?.length, currentUserId, gameState?.status]);
+  
+  // Отслеживаем изменения в игроках для автоматического запуска анимации раздачи карт
+  const prevPlayersRef = useRef<typeof gameState?.players>([]);
+  
+  useEffect(() => {
+    if (!gameState?.players) return;
+    
+    const prevPlayers = prevPlayersRef.current;
+    const currentPlayers = gameState.players;
+    
+    // Проверяем, появились ли карты у игроков (раздача карт)
+    const cardsAppeared = currentPlayers.some((player, index) => {
+      const prevPlayer = prevPlayers[index];
+      return prevPlayer && 
+             (!prevPlayer.cards || prevPlayer.cards.length === 0) && 
+             player.cards && 
+             player.cards.length > 0;
+    });
+    
+    if (cardsAppeared && gameState.status === 'ante') {
+      // Запускаем анимацию раздачи карт
+      handleDealCards();
+    }
+    
+    prevPlayersRef.current = currentPlayers;
+  }, [gameState?.players, gameState?.status]);
 
   // Функция для сброса карт при fold
   const handleFoldCards = (playerId: string) => {
@@ -613,6 +625,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const tableHeight = 493 * scale;
     const verticalOffset = 100;
     
+    // Размер аватара (как в PlayerSpot)
+    const baseAvatarSize = 71;
+    const avatarSize = baseAvatarSize * scale;
+    
     // Раздаем по 3 карты каждому активному игроку
     gameState.players.forEach((player, playerIndex) => {
       if (!player.isActive) return;
@@ -633,6 +649,24 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
       }
       
+      // Вычисляем точную позицию CardDeckComponent для каждого игрока
+      let cardDeckX = 0;
+      let cardDeckY = 0;
+      
+      // CardDeckComponent находится на top: '40%' и либо right: '50px', либо left: '50px'
+      const cardSide = (relativePosition === 2 || relativePosition === 3) ? 'left' : 'right';
+      
+      if (cardSide === 'left') {
+        // Карты справа от игрока
+        cardDeckX = playerX + 50 * scale;
+      } else {
+        // Карты слева от игрока
+        cardDeckX = playerX - 50 * scale;
+      }
+      
+      // Карты на 40% от высоты аватара игрока
+      cardDeckY = playerY + (avatarSize * 0.4);
+      
       // Создаем 3 карты для каждого игрока
       for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
         const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
@@ -640,8 +674,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           id: cardId,
           fromX: centerX,
           fromY: centerY,
-          toX: playerX,
-          toY: playerY,
+          toX: cardDeckX,
+          toY: cardDeckY,
           delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
         }]);
       }
