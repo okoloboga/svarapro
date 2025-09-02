@@ -656,7 +656,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       let cardDeckY = 0;
       
       // CardDeckComponent находится на top: '40%' и либо right: '50px', либо left: '50px'
-      // Исправляем логику: если cardSide = 'left', то карты слева (left: '50px'), если 'right' - то справа (right: '50px')
       const cardSide = (relativePosition === 2 || relativePosition === 3) ? 'right' : 'left';
       
       if (cardSide === 'left') {
@@ -670,7 +669,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // CardDeckComponent на top: '40%' от контейнера игрока
       // Контейнер игрока имеет высоту avatarSize + nameHeight/1.5
       const containerHeight = avatarSize + (nameHeight / 1.5);
-      cardDeckY = playerY + (containerHeight * 0.4) - 30; // Поднимаем на 30px вверх
+      cardDeckY = playerY + (containerHeight * 0.3);
       
       // Создаем 3 карты для каждого игрока
       for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
