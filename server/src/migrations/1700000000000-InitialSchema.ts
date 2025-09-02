@@ -73,7 +73,7 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     // Создаем индексы
     await queryRunner.query(`CREATE INDEX "IDX_users_telegramId" ON "users" ("telegramId")`);
     await queryRunner.query(`CREATE INDEX "IDX_transactions_tracker_id" ON "transactions" ("tracker_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_transactions_telegramId" ON "transactions" ("telegramId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_transactions_userId" ON "transactions" ("userId")`);
     await queryRunner.query(`CREATE INDEX "IDX_rooms_roomId" ON "rooms" ("roomId")`);
     await queryRunner.query(`CREATE INDEX "IDX_rooms_type" ON "rooms" ("type")`);
 
@@ -102,6 +102,7 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     // Удаляем индексы
     await queryRunner.query(`DROP INDEX "IDX_rooms_type"`);
     await queryRunner.query(`DROP INDEX "IDX_rooms_roomId"`);
+    await queryRunner.query(`DROP INDEX "IDX_transactions_userId"`);
     await queryRunner.query(`DROP INDEX "IDX_transactions_tracker_id"`);
     await queryRunner.query(`DROP INDEX "IDX_users_telegramId"`);
     
