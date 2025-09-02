@@ -53,9 +53,6 @@ export class AuditInterceptor implements NestInterceptor {
     // Финансовые операции
     if (url.includes('/finances/transaction')) return true;
     
-    // Создание/присоединение к комнатам
-    if (url.includes('/rooms') && (method === 'POST' || method === 'PUT')) return true;
-    
     // Игровые действия с деньгами
     if (url.includes('/game') && method === 'POST') return true;
     

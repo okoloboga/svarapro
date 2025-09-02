@@ -41,17 +41,16 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     // Создаем таблицу transactions
     await queryRunner.query(`
       CREATE TABLE "transactions" (
-        "id" SERIAL PRIMARY KEY,
-        "tracker_id" character varying NOT NULL UNIQUE,
-        "clientTransactionId" character varying,
-        "telegramId" character varying NOT NULL,
-        "type" character varying NOT NULL,
-        "currency" character varying NOT NULL,
-        "amount" double precision NOT NULL,
-        "status" character varying NOT NULL DEFAULT 'pending',
-        "transaction_hash" character varying,
-        "receiver" character varying,
-        "destTag" character varying,
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "userId" uuid NOT NULL,
+        "type" character varying(16) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
+        "currency" character varying(16) NOT NULL,
+        "amount" decimal(12,2) NOT NULL,
+        "status" character varying(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'failed', 'complete')),
+        "address" character varying(128) NOT NULL,
+        "tracker_id" character varying(128) NOT NULL UNIQUE,
+        "client_transaction_id" character varying(36),
+        "transaction_hash" character varying(128),
         "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT now()
       )
@@ -84,16 +83,25 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       ADD CONSTRAINT "FK_users_referrer" 
       FOREIGN KEY ("referrerId") REFERENCES "users"("id") ON DELETE SET NULL
     `);
+
+    // Создаем foreign key для userId в transactions
+    await queryRunner.query(`
+      ALTER TABLE "transactions" 
+      ADD CONSTRAINT "FK_transactions_user" 
+      FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Удаляем foreign key
+    // Удаляем foreign key для transactions
+    await queryRunner.query(`ALTER TABLE "transactions" DROP CONSTRAINT "FK_transactions_user"`);
+    
+    // Удаляем foreign key для users
     await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_users_referrer"`);
     
     // Удаляем индексы
     await queryRunner.query(`DROP INDEX "IDX_rooms_type"`);
     await queryRunner.query(`DROP INDEX "IDX_rooms_roomId"`);
-    await queryRunner.query(`DROP INDEX "IDX_transactions_telegramId"`);
     await queryRunner.query(`DROP INDEX "IDX_transactions_tracker_id"`);
     await queryRunner.query(`DROP INDEX "IDX_users_telegramId"`);
     
