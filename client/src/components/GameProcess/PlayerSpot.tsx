@@ -388,7 +388,7 @@ export function PlayerSpot({
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            {!(isCurrentUser && hasLooked) && gameState?.status !== 'finished' && gameState?.status !== 'waiting' && gameState?.status !== 'ante' && CardDeckComponent}
+            {!(isCurrentUser && hasLooked) && gameState?.status !== 'finished' && gameState?.status !== 'waiting' && gameState?.status !== 'ante' && gameState?.status !== 'betting' && CardDeckComponent}
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
           </div>
         )}

@@ -6,8 +6,8 @@ import enCommon from '../locales/en/common.json';
 import ruCommon from '../locales/ru/common.json';
 
 i18n.use(initReactI18next).init({
-  lng: 'en',
-  fallbackLng: 'en',
+  lng: 'ru',
+  fallbackLng: 'ru',
   ns: ['common', 'errors'],
   defaultNS: 'common',
   resources: {

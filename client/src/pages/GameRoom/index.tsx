@@ -183,6 +183,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     if (previousStatus !== currentStatus) {
       if (currentStatus === 'finished') {
+        // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
         setWinSequenceStep('showdown');
         const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
         const t2 = setTimeout(() => {
@@ -201,6 +202,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
+        // Показываем ChipStack для новой игры
+        setShowChipStack(true);
+      } else if (currentStatus === 'waiting') {
+        // Показываем ChipStack когда комната ждет игроков
+        setShowChipStack(true);
       }
     }
 
@@ -259,8 +265,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentPlayerId = gameState?.players[gameState?.currentPlayerIndex]?.id;
     const turnKey = `${gameState?.status}-${currentPlayerId}-${gameState?.currentPlayerIndex}`;
 
-
-
     if (activeTurn) {
       // Сбрасываем таймер только если это новый ход
       if (turnKey !== currentTurnRef.current) {
@@ -279,7 +283,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       }, 1000);
       return () => clearInterval(interval);
     } else {
-      setTurnTimer(TURN_DURATION_SECONDS);
+      // Если ход не активен, сразу сбрасываем таймер
+      setTurnTimer(0);
     }
   }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn, currentUserId]);
 
@@ -597,7 +602,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
   
   const blindButtonsDisabled = !!(effectiveGameStatus !== 'blind_betting');
-  const showCards = winSequenceStep === 'showdown' || (gameState?.status === 'showdown');
+  // Карты показываются только после затемнения экрана
+  const showCards = winSequenceStep === 'showdown';
   const canAllIn = !!(isCurrentUserTurn && currentPlayer && 
     ((effectiveGameStatus === 'betting' && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount)) || 
     (effectiveGameStatus === 'blind_betting' && (currentPlayer.balance < blindBetAmount || (postLookActions && (currentPlayer.balance < postLookCallAmount || currentPlayer.balance < minRaiseAmount))))) 
@@ -651,25 +657,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
       }
       
-      // Вычисляем точную позицию CardDeckComponent для каждого игрока
-      let cardDeckX = 0;
-      let cardDeckY = 0;
-      
-      // CardDeckComponent находится на top: '40%' и либо right: '50px', либо left: '50px'
-      const cardSide = (relativePosition === 2 || relativePosition === 3) ? 'right' : 'left';
-      
-      if (cardSide === 'left') {
-        // CardDeckComponent с right: '50px' - карты справа от игрока
-        cardDeckX = playerX + 50 * scale;
-      } else {
-        // CardDeckComponent с left: '50px' - карты слева от игрока  
-        cardDeckX = playerX - 50 * scale;
-      }
-      
-      // CardDeckComponent на top: '40%' от контейнера игрока
-      // Контейнер игрока имеет высоту avatarSize + nameHeight/1.5
-      const containerHeight = avatarSize + (nameHeight / 1.5);
-      cardDeckY = playerY + (containerHeight * 0.3);
+      // Карты летят в центр компонента игрока
+      const cardDeckX = playerX;
+      const cardDeckY = playerY;
       
       // Создаем 3 карты для каждого игрока
       for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
@@ -682,6 +672,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           toY: cardDeckY,
           delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
         }]);
+        
+        // Проигрываем звук fold.mp3 для каждой карты с задержкой
+        setTimeout(() => {
+          actions.playSound('fold');
+        }, (playerIndex * 3 + cardIndex) * 200);
       }
     });
   };
@@ -983,11 +978,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   isBlindBetDisabled={isBlindBetDisabled || isProcessing}
                   minBet={effectiveGameStatus === 'blind_betting' ? blindBetAmount : minRaiseAmount}
                 />
-              ) : (
+              ) : gameState?.status === 'waiting' ? (
                 <div className="p-4 flex items-center justify-center h-full">
                   <p className="text-white font-bold text-[10px] leading-[150%] tracking-[-0.011em] text-center">{t('waiting_for_next_round')}</p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
