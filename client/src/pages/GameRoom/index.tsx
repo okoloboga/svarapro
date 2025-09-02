@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { GameRoomProps, GameState } from '@/types/game';
+import { GameRoomProps, GameState, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
@@ -348,7 +348,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, [gameState?.log?.length, currentUserId, gameState?.status]);
   
   // Отслеживаем изменения в игроках для автоматического запуска анимации раздачи карт
-  const prevPlayersRef = useRef<typeof gameState?.players>([]);
+  const prevPlayersRef = useRef<Player[]>([]);
   
   useEffect(() => {
     if (!gameState?.players) return;
