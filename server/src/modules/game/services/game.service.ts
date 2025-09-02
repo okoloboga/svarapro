@@ -1427,7 +1427,7 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    await new Promise((resolve) => setTimeout(resolve), 1000);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     gameState.isAnimating = false;
     gameState.animationType = undefined;
