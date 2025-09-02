@@ -824,16 +824,13 @@ export class GameService {
 
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
 
-        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-          updatedPlayer,
-          { hasLookedAndMustAct: false },
-        );
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.chipCount += 1;
         gameState.lastRaiseIndex = playerIndex;
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
 
+        // Проверяем переход в betting ДО сброса флага hasLookedAndMustAct
         if (isPostLookRaise) {
           const phaseResult = this.gameStateService.moveToNextPhase(
             gameState,
@@ -860,6 +857,12 @@ export class GameService {
           gameState = scoreResult.updatedGameState;
           gameState.log.push(...scoreResult.actions);
         }
+
+        // Сбрасываем флаг ПОСЛЕ проверки isPostLookRaise и перехода в betting
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+          updatedPlayer,
+          { hasLookedAndMustAct: false },
+        );
         break;
       }
     }
