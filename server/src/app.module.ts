@@ -14,6 +14,7 @@ import { HealthModule } from './modules/health/health.module';
 import { BullModule } from '@nestjs/bull';
 import { CustomThrottlerGuard } from './guards/throttler.guard';
 import { AuditInterceptor } from './interceptors/audit.interceptor';
+import { MigrationService } from './services/migration.service';
 import * as Joi from 'joi';
 
 @Module({
@@ -46,6 +47,7 @@ import * as Joi from 'joi';
           password: config.get<string>('POSTGRES_PASSWORD'),
           database: config.get<string>('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          migrations: [__dirname + '/migrations/*{.ts,.js}'],
           synchronize: false, // Отключаем для продакшена, используем миграции
           logging: process.env.NODE_ENV === 'development',
           autoCreateDatabase: false, // Отключаем для продакшена
@@ -87,6 +89,7 @@ import * as Joi from 'joi';
       provide: 'APP_INTERCEPTOR',
       useClass: AuditInterceptor,
     },
+    MigrationService,
   ],
 })
 export class AppModule {}
