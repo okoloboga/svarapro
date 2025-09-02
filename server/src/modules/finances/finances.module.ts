@@ -8,6 +8,7 @@ import { CallbackProcessor } from './callback.processor'; // Добавляем 
 import { Transaction } from '../../entities/transactions.entity';
 import { User } from '../../entities/user.entity';
 import { ApiService } from '../../services/api.service';
+import { TelegramService } from '../../services/telegram.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ApiService } from '../../services/api.service';
     ApiService,
     TransactionGateway,
     CallbackProcessor,
+    TelegramService,
   ], // Добавляем CallbackProcessor
 })
 export class FinancesModule {}

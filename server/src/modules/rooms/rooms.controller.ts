@@ -21,9 +21,10 @@ export class RoomsController {
     return details;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  async createRoom(@Body() createRoomDto: CreateRoomDto) {
-    return this.roomsService.createRoom(createRoomDto);
+  async createRoom(@Body() createRoomDto: CreateRoomDto, @Req() req) {
+    return this.roomsService.createRoom(createRoomDto, req.user);
   }
 
   @UseGuards(JwtAuthGuard)

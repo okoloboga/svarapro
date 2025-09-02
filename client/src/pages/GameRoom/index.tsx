@@ -56,27 +56,44 @@ const useWindowSize = () => {
   const [size, setSize] = useState([typeof window !== 'undefined' ? window.innerWidth : 0, typeof window !== 'undefined' ? window.innerHeight : 0]);
   useEffect(() => {
     function updateSize() {
-      setSize([window.innerWidth, window.innerHeight]);
+      // Для iOS Safari используем более надежный способ получения размеров
+      const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      setSize([width, height]);
     }
+    
     window.addEventListener('resize', updateSize);
-    updateSize(); // Initial size
-
-    // Force a second update after a short delay to handle viewport transitions
-    const timer = setTimeout(() => updateSize(), 100);
+    window.addEventListener('orientationchange', updateSize);
+    
+    // Initial size
+    updateSize();
+    
+    // Force updates to handle iOS Safari viewport issues
+    // Увеличиваем задержки для приватных комнат
+    const timer1 = setTimeout(updateSize, 100);
+    const timer2 = setTimeout(updateSize, 500);
+    const timer3 = setTimeout(updateSize, 1000);
+    const timer4 = setTimeout(updateSize, 2000); // Дополнительная задержка
 
     return () => {
       window.removeEventListener('resize', updateSize);
-      clearTimeout(timer);
+      window.removeEventListener('orientationchange', updateSize);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, []);
   return size;
 };
 
-const useTablePositioning = () => {
+const useTablePositioning = (gameStateLoaded: boolean) => {
   const [windowWidth] = useWindowSize();
   const [tableSize] = useState({ width: 315, height: 493 });
 
-  const scale = windowWidth > 0 ? (windowWidth * 0.85) / tableSize.width : 0;
+  // Улучшенный расчет scale для iOS Safari
+  // Откладываем расчет до загрузки gameState
+  const scale = gameStateLoaded && windowWidth > 0 ? Math.max(0.5, (windowWidth * 0.85) / tableSize.width) : 0.5;
 
   const getPositionClasses = (position: number, isShowdown: boolean): string => {
     const zIndex = isShowdown ? 'z-40' : 'z-30';
@@ -111,7 +128,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [activeChats, setActiveChats] = useState<Record<string, { phrase: string; timerId: NodeJS.Timeout }>>({});
   const [notification, setNotification] = useState<NotificationType | null>(null);
-  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning();
+  const { getPositionStyle, getPositionClasses, scale } = useTablePositioning(!!gameState);
   const [turnTimer, setTurnTimer] = useState(TURN_DURATION_SECONDS);
   const [svaraStep, setSvaraStep] = useState<'none' | 'animating' | 'joining'>('none');
   const { triggerImpact } = useHapticFeedback();
@@ -788,7 +805,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   };
 
   return (
-    <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative">
+    <div style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh' }} className="flex flex-col relative game-container">
       {/* Затемняющий оверлей для фазы вскрытия карт */}
       {winSequenceStep === 'showdown' && <div className="fixed inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
 

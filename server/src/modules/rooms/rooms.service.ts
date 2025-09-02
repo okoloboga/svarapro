@@ -6,6 +6,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { GameStateService } from '../game/services/game-state.service';
 import { Player } from '../../types/game';
 import { UsersService } from '../users/users.service';
+import { TelegramService } from '../../services/telegram.service';
 
 @Injectable()
 export class RoomsService {
@@ -13,6 +14,7 @@ export class RoomsService {
     private readonly redisService: RedisService,
     private readonly gameStateService: GameStateService,
     private readonly usersService: UsersService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async getRooms(): Promise<Room[]> {
@@ -41,7 +43,7 @@ export class RoomsService {
     };
   }
 
-  async createRoom(createRoomDto: CreateRoomDto): Promise<Room> {
+  async createRoom(createRoomDto: CreateRoomDto, user: any): Promise<Room> {
     let roomId: string;
     
     if (createRoomDto.type === 'private') {
@@ -72,6 +74,25 @@ export class RoomsService {
       createRoomDto.minBet,
     );
     await this.redisService.setGameState(roomId, initialGameState);
+
+    // Отправляем уведомление в Telegram о создании приватной комнаты
+    if (createRoomDto.type === 'private' && createRoomDto.password) {
+      try {
+        const message = `🎮 *Новая приватная комната создана!*\n\n` +
+          `🔐 *Пароль:* \`${createRoomDto.password}\`\n` +
+          `💰 *Минимальная ставка:* $${createRoomDto.minBet}\n` +
+          `👤 *Создатель:* ${user.username || user.telegramId}\n\n` +
+          `Присоединяйтесь к игре, используя пароль выше!`;
+        
+        // Отправляем сообщение в чат с ботом
+        await this.telegramService.sendMessage(user.telegramId, message);
+        
+        console.log(`Telegram notification sent for private room ${roomId} to user ${user.telegramId}`);
+      } catch (error) {
+        console.error(`Failed to send Telegram notification for private room ${roomId}:`, error);
+        // Не прерываем создание комнаты из-за ошибки уведомления
+      }
+    }
 
     return newRoom;
   }

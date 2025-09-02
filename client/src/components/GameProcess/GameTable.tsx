@@ -77,7 +77,7 @@ const GameTable: React.FC<GameTableProps> = ({
     backgroundPosition: 'center',
   };
 
-  const tableClasses = "relative";
+  const tableClasses = "relative game-table";
 
   // Стили для дополнительной рамки (65% от размера стола)
   const outerBorderStyle: React.CSSProperties = {

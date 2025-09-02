@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { TransactionStatusDto } from './dto/transaction-status.dto';
+import { TelegramService } from '../../services/telegram.service';
 
 @Injectable()
 export class FinancesService {
@@ -24,6 +25,7 @@ export class FinancesService {
     private apiService: ApiService,
     private transactionGateway: TransactionGateway,
     @InjectQueue('callback-queue') private callbackQueue: Queue,
+    private telegramService: TelegramService,
   ) {
     this.logger.log('FinancesService initialized');
   }
@@ -263,6 +265,21 @@ export class FinancesService {
           user.balance += convertedAmount;
           user.totalDeposit += convertedAmount;
           await this.userRepository.save(user);
+
+          // Отправляем уведомление в Telegram о пополнении баланса
+          try {
+            const message = `💰 *Баланс пополнен!*\n\n` +
+              `💵 *Сумма:* ${convertedAmount.toFixed(2)} USDT\n` +
+              `💳 *Новый баланс:* ${user.balance.toFixed(2)} USDT\n` +
+              `📅 *Дата:* ${new Date().toLocaleString('ru-RU')}\n\n` +
+              `Спасибо за пополнение! Теперь вы можете играть в карты.`;
+            
+            await this.telegramService.sendMessage(user.telegramId, message);
+            this.logger.log(`Telegram notification sent for deposit to user ${user.telegramId}`);
+          } catch (error) {
+            this.logger.error(`Failed to send Telegram notification for deposit to user ${user.telegramId}:`, error);
+            // Не прерываем процесс из-за ошибки уведомления
+          }
 
           try {
             // Отправляем уведомление через WebSocket

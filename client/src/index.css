@@ -5,6 +5,29 @@
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
+  /* iOS Safari fixes */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS Safari viewport fixes */
+@supports (-webkit-touch-callout: none) {
+  .game-container {
+    min-height: -webkit-fill-available;
+  }
+  
+  .game-table {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  .player-spot {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
 }
 
 .slide-panel-enter {

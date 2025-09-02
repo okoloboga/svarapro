@@ -197,7 +197,7 @@ export function PlayerSpot({
   // Render a placeholder for players waiting for the next round
   if (!player.isActive && !player.hasFolded) {
     return (
-      <div className={spotClasses} style={containerStyle}>
+      <div className={`${spotClasses} player-spot`} style={containerStyle}>
         <div className="relative">
           <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
             <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
@@ -236,7 +236,7 @@ export function PlayerSpot({
   }
 
   return (
-    <div className={spotClasses} style={containerStyle}>
+    <div className={`${spotClasses} player-spot`} style={containerStyle}>
       {chatPhrase && (
         <div 
           className="absolute left-1/2 -translate-x-1/2 z-50 flex items-center justify-center p-1"
