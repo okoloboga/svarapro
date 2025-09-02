@@ -569,13 +569,18 @@ export class GameService {
           );
         }
       case 'raise':
-        return this.processBettingAction(
-          roomId,
-          gameState,
-          playerIndex,
-          action,
-          amount,
-        );
+        // В blind_betting raise после look обрабатываем специально
+        if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
+          return this.processBlindBettingRaiseAction(roomId, gameState, playerIndex, amount);
+        } else {
+          return this.processBettingAction(
+            roomId,
+            gameState,
+            playerIndex,
+            action,
+            amount,
+          );
+        }
       case 'all_in':
         return this.handleAllIn(roomId, gameState, playerIndex, amount);
       default:
@@ -1320,6 +1325,114 @@ export class GameService {
     gameState.animationType = undefined;
 
     // Проверяем завершение круга ДО передачи хода (как в raise)
+    const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
+      gameState.players,
+      gameState.currentPlayerIndex,
+    );
+
+    // Проверяем, будет ли следующий игрок якорем
+    let anchorPlayerIndex: number | undefined = undefined;
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    } else {
+      anchorPlayerIndex = gameState.dealerIndex;
+    }
+
+    // Если следующий игрок - якорь, то круг завершается
+    if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      await this.endBettingRound(roomId, gameState);
+    } else {
+      gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+    }
+
+    return { success: true, gameState };
+  }
+
+  private async processBlindBettingRaiseAction(
+    roomId: string,
+    gameState: GameState,
+    playerIndex: number,
+    amount?: number,
+  ): Promise<GameActionResult> {
+    const player = gameState.players[playerIndex];
+    const raiseAmount = amount || 0;
+
+    const minRaiseAmount =
+      gameState.lastBlindBet > 0
+        ? gameState.lastBlindBet * 2
+        : gameState.minBet;
+
+    if (raiseAmount < minRaiseAmount) {
+      return {
+        success: false,
+        error: `Минимальное повышение: ${minRaiseAmount}`,
+      };
+    }
+
+    if (player.balance < raiseAmount) {
+      return { success: false, error: 'Недостаточно средств' };
+    }
+
+    const { updatedPlayer, action: raiseAction } =
+      this.playerService.processPlayerBet(player, raiseAmount, 'raise');
+
+    raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
+
+    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+      updatedPlayer,
+      { hasLookedAndMustAct: false },
+    );
+    
+    gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
+    gameState.chipCount += 1;
+    gameState.lastRaiseIndex = playerIndex;
+    gameState.lastActionAmount = raiseAmount;
+    gameState.log.push(raiseAction);
+
+    // Raise после look в blind_betting переводит игру в фазу betting
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'betting',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+
+    // Открываем карты у всех игроков
+    for (let i = 0; i < gameState.players.length; i++) {
+      if (
+        i !== playerIndex &&
+        gameState.players[i].isActive &&
+        !gameState.players[i].hasFolded
+      ) {
+        gameState.players[i] = this.playerService.updatePlayerStatus(
+          gameState.players[i],
+          { hasLooked: true },
+        );
+      }
+    }
+
+    // Рассчитываем очки для всех игроков
+    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    gameState = scoreResult.updatedGameState;
+    gameState.log.push(...scoreResult.actions);
+
+    // Анимация и проверка завершения круга
+    gameState.isAnimating = true;
+    gameState.animationType = 'chip_fly';
+
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    await new Promise((resolve) => setTimeout(resolve), 1000);
+
+    gameState.isAnimating = false;
+    gameState.animationType = undefined;
+
+    // Проверяем завершение круга ДО передачи хода
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
