@@ -492,7 +492,6 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
-    console.log(`[DEBUG] processAction called: action=${action}, amount=${amount}, telegramId=${telegramId}`);
     if (action === 'join_svara') {
       return this.joinSvara(roomId, telegramId);
     }
@@ -514,9 +513,6 @@ export class GameService {
 
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     const player = gameState.players[playerIndex];
-
-    console.log(`[DEBUG] Game state: status=${gameState.status}, currentPlayerIndex=${gameState.currentPlayerIndex}, playerIndex=${playerIndex}`);
-    console.log(`[DEBUG] Player: username=${player?.username}, hasLookedAndMustAct=${player?.hasLookedAndMustAct}, balance=${player?.balance}`);
 
     if (!player) {
       return { success: false, error: 'Игрок не найден в этой игре' };
@@ -574,12 +570,9 @@ export class GameService {
         }
       case 'raise':
         // В blind_betting raise после look обрабатываем специально
-        console.log(`[DEBUG] Processing raise action: status=${gameState.status}, hasLookedAndMustAct=${gameState.players[playerIndex].hasLookedAndMustAct}, amount=${amount}`);
         if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
-          console.log(`[DEBUG] Calling processBlindBettingRaiseAction for player ${gameState.players[playerIndex].username}`);
           return this.processBlindBettingRaiseAction(roomId, gameState, playerIndex, amount);
         } else {
-          console.log(`[DEBUG] Calling processBettingAction for player ${gameState.players[playerIndex].username}`);
           return this.processBettingAction(
             roomId,
             gameState,
@@ -761,6 +754,7 @@ export class GameService {
         break;
       }
     }
+    
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
     return { success: true, gameState };
@@ -1213,8 +1207,6 @@ export class GameService {
     const player = gameState.players[playerIndex];
     const allInAmount = amount ?? player.balance;
 
-    console.log(`[DEBUG] handleAllIn called for player ${player.username}, amount=${allInAmount}, status=${gameState.status}, hasLookedAndMustAct=${player.hasLookedAndMustAct}`);
-
     if (allInAmount > player.balance) {
       return { success: false, error: 'Недостаточно средств' };
     }
@@ -1238,8 +1230,6 @@ export class GameService {
 
     // Проверяем, нужно ли перейти в betting (если это all_in после look в blind_betting)
     if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
-      console.log(`[DEBUG] All-in after look in blind_betting - moving to betting phase`);
-      
       // Переходим в фазу betting
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
@@ -1247,7 +1237,6 @@ export class GameService {
       );
       gameState = phaseResult.updatedGameState;
       gameState.log.push(...phaseResult.actions);
-      console.log(`[DEBUG] Game status changed to: ${gameState.status}`);
 
       // Открываем карты у всех игроков
       for (let i = 0; i < gameState.players.length; i++) {
@@ -1256,7 +1245,6 @@ export class GameService {
           gameState.players[i].isActive &&
           !gameState.players[i].hasFolded
         ) {
-          console.log(`[DEBUG] Opening cards for player ${gameState.players[i].username} (all-in)`);
           gameState.players[i] = this.playerService.updatePlayerStatus(
             gameState.players[i],
             { hasLooked: true },
@@ -1273,22 +1261,16 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
-    console.log(`[DEBUG] Active players: ${activePlayers.length}, All-in players: ${allInPlayers.length}`);
-
     if (allInPlayers.length === activePlayers.length) {
-      console.log(`[DEBUG] All players are all-in, ending betting round`);
       await this.endBettingRound(roomId, gameState);
     } else {
-      console.log(`[DEBUG] Not all players are all-in, continuing game`);
       gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
       if (this.bettingService.isBettingRoundComplete(gameState)) {
-        console.log(`[DEBUG] Betting round is complete, ending`);
         await this.endBettingRound(roomId, gameState);
       } else {
-        console.log(`[DEBUG] Betting round continues, next player: ${gameState.currentPlayerIndex}`);
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
       }
@@ -1302,7 +1284,6 @@ export class GameService {
     gameState: GameState,
     playerIndex: number,
   ): Promise<GameActionResult> {
-    console.log(`[DEBUG] processBlindBettingCallAction called for player ${gameState.players[playerIndex].username}`);
     const player = gameState.players[playerIndex];
     
     // В blind_betting call означает оплату просмотра карт
@@ -1333,14 +1314,12 @@ export class GameService {
     gameState.log.push(callAction);
 
     // Call после look переводит игру в фазу betting и открывает карты
-    console.log(`[DEBUG] Moving from blind_betting to betting phase (call)`);
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'betting',
     );
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
-    console.log(`[DEBUG] Game status changed to: ${gameState.status} (call)`);
 
     // Открываем карты у всех игроков
     for (let i = 0; i < gameState.players.length; i++) {
@@ -1410,7 +1389,6 @@ export class GameService {
     playerIndex: number,
     amount?: number,
   ): Promise<GameActionResult> {
-    console.log(`[DEBUG] processBlindBettingRaiseAction called for player ${gameState.players[playerIndex].username}, amount=${amount}`);
     const player = gameState.players[playerIndex];
     const raiseAmount = amount || 0;
 
@@ -1447,14 +1425,12 @@ export class GameService {
     gameState.log.push(raiseAction);
 
     // Raise после look в blind_betting переводит игру в фазу betting
-    console.log(`[DEBUG] Moving from blind_betting to betting phase`);
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'betting',
     );
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
-    console.log(`[DEBUG] Game status changed to: ${gameState.status}`);
 
     // Открываем карты у всех игроков
     for (let i = 0; i < gameState.players.length; i++) {

@@ -154,7 +154,9 @@ export class RedisService {
 
   async setGameState(roomId: string, gameState: GameState): Promise<void> {
     await this.withRetry(async () => {
+      console.log(`[Redis] Setting game state for room ${roomId}, status: ${gameState.status}`);
       await this.client.set(`game:${roomId}`, JSON.stringify(gameState));
+      console.log(`[Redis] Game state saved for room ${roomId}`);
     });
   }
 
@@ -164,7 +166,13 @@ export class RedisService {
       if (!gameData) {
         return null;
       }
-      return JSON.parse(gameData) as GameState;
+      try {
+        const gameState = JSON.parse(gameData) as GameState;
+        return gameState;
+      } catch (parseError) {
+        console.error(`[Redis] Failed to parse game state for room ${roomId}:`, parseError);
+        return null;
+      }
     });
   }
 

@@ -166,7 +166,6 @@ export class GameStateService {
     updatedGameState: GameState;
     actions: GameAction[];
   } {
-    console.log(`[DEBUG] moveToNextPhase called: from ${gameState.status} to ${nextPhase}`);
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
