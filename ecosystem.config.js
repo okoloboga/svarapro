@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'svara-pro-server',
-      script: './server/dist/main.js',
+      script: './server/dist/src/main.js',
       instances: 1,
       exec_mode: 'fork',
       env: {
