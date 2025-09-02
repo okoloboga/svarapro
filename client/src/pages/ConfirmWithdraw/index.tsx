@@ -16,7 +16,7 @@ export function ConfirmWithdraw({ withdrawAmount, walletAddress }: ConfirmWithdr
     setIsProcessing(true);
     try {
       const amount = parseFloat(withdrawAmount);
-      const result = await apiService.initiateWithdraw('USDTTON', amount, walletAddress);
+      await apiService.initiateWithdraw('USDTTON', amount, walletAddress);
       alert('Заявка на вывод создана успешно!');
       // Здесь можно добавить переход на другую страницу или обновление состояния
     } catch (error) {

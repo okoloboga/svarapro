@@ -32,7 +32,7 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
     console.error('WebSocket connection error:', error.message);
   });
 
-  socket.on('disconnect', (reason) => {
+  socket.on('disconnect', () => {
   });
 
   socket.on('error', (error) => {
