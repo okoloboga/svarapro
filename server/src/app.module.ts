@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FinancesModule } from './modules/finances/finances.module';
@@ -8,7 +10,10 @@ import { GameModule } from './modules/game/game.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { AdminsModule } from './modules/admins/admins.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HealthModule } from './modules/health/health.module';
 import { BullModule } from '@nestjs/bull';
+import { CustomThrottlerGuard } from './guards/throttler.guard';
+import { AuditInterceptor } from './interceptors/audit.interceptor';
 import * as Joi from 'joi';
 
 @Module({
@@ -33,12 +38,6 @@ import * as Joi from 'joi';
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService) => {
         const nodeEnv = config.get<string>('NODE_ENV');
-        console.log('Current NODE_ENV:', nodeEnv);
-        console.log('Config loaded:', {
-          host: config.get<string>('POSTGRES_HOST'),
-          port: config.get<number>('POSTGRES_PORT'),
-          env: nodeEnv,
-        });
         return {
           type: 'postgres',
           host: config.get<string>('POSTGRES_HOST'),
@@ -47,9 +46,9 @@ import * as Joi from 'joi';
           password: config.get<string>('POSTGRES_PASSWORD'),
           database: config.get<string>('POSTGRES_DB'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: true, // Временно включено для отладки
-          logging: false,
-          autoCreateDatabase: true,
+          synchronize: false, // Отключаем для продакшена, используем миграции
+          logging: process.env.NODE_ENV === 'development',
+          autoCreateDatabase: false, // Отключаем для продакшена
         };
       },
       inject: [ConfigService],
@@ -66,6 +65,10 @@ import * as Joi from 'joi';
     BullModule.registerQueue({
       name: 'callback-queue',
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 минута
+      limit: 100, // максимум 100 запросов в минуту
+    }]),
     AuthModule,
     UsersModule,
     FinancesModule,
@@ -73,6 +76,17 @@ import * as Joi from 'joi';
     GameModule,
     AdminsModule,
     AdminModule,
+    HealthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: AuditInterceptor,
+    },
   ],
 })
 export class AppModule {}

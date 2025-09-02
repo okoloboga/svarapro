@@ -5,7 +5,6 @@ const api = axios.create({
   baseURL: 'https://svarapro.com/api/v1',
   withCredentials: true,
 });
-console.log('API baseURL is now hardcoded to https://svarapro.com/api/v1');
 
 export const apiService = {
   async login(initData: string, startPayload?: string): Promise<{ accessToken: string, roomId?: string }> {

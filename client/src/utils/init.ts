@@ -4,7 +4,6 @@ let isInitialized = false;
 
 export async function initTelegramSdk(): Promise<void> {
   if (isInitialized) {
-    console.log('Telegram SDK already initialized');
     return;
   }
 
@@ -20,27 +19,20 @@ export async function initTelegramSdk(): Promise<void> {
   }
 
   try {
-    console.log('Starting Telegram SDK initialization');
-    console.log('Telegram.WebApp version:', window.Telegram.WebApp.version);
     await init();
-    console.log('SDK init() called successfully');
 
     await expandViewport();
-    console.log('Viewport expanded');
 
     if (backButton.isSupported()) {
       await backButton.mount();
-      console.log('BackButton mounted');
     } else {
       console.warn('BackButton is not supported in this environment');
     }
 
     await swipeBehavior.mount();
     swipeBehavior.disableVertical();
-    console.log('Swipe behavior configured');
 
     isInitialized = true;
-    console.log('Telegram SDK initialized successfully');
   } catch (e) {
     console.error('Telegram SDK init error:', e);
     isInitialized = false;

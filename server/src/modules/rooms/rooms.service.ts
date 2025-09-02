@@ -85,8 +85,6 @@ export class RoomsService {
         
         // Отправляем сообщение в чат с ботом
         await this.telegramService.sendMessage(user.telegramId, message);
-        
-        console.log(`Telegram notification sent for private room ${roomId} to user ${user.telegramId}`);
       } catch (error) {
         console.error(`Failed to send Telegram notification for private room ${roomId}:`, error);
         // Не прерываем создание комнаты из-за ошибки уведомления

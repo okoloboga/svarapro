@@ -200,7 +200,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         };
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
-        console.log('🔄 Resetting winSequenceStep to none for new game (ante phase)');
         setWinSequenceStep('none');
       }
     }
@@ -211,17 +210,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
   
-  // Логируем изменения состояния для отладки
-  useEffect(() => {
-    console.log('🎮 Game state debug:', {
-      gameStateStatus: gameState?.status,
-      winSequenceStep,
-      effectiveGameStatus,
-      isSeated,
-      currentPlayerId: gameState?.players[gameState?.currentPlayerIndex]?.id,
-      currentUserId
-    });
-  }, [gameState?.status, winSequenceStep, effectiveGameStatus, isSeated, currentUserId]);
+
   
   // Chat message handling
   useEffect(() => {
@@ -257,7 +246,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const handleSelectPhrase = (phrase: string) => {
     if (socket) {
-      console.log('🗨️ Sending chat_message:', { roomId, phrase, currentUserId });
       socket.emit('chat_message', { roomId, phrase });
       setShowChatMenu(false); // Close chat menu after sending
     }
@@ -276,11 +264,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (activeTurn) {
       // Сбрасываем таймер только если это новый ход
       if (turnKey !== currentTurnRef.current) {
-        console.log('⏰ New turn detected, resetting timer to:', TURN_DURATION_SECONDS, 'seconds');
         currentTurnRef.current = turnKey;
         setTurnTimer(TURN_DURATION_SECONDS);
-      } else {
-        console.log('⏰ Same turn, keeping timer at:', turnTimer, 'seconds');
       }
       
       const interval = setInterval(() => {
@@ -321,7 +306,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     
     if (lastAction && lastAction.type === 'fold') {
-      console.log('🎵 Fold action detected, playing sound:', lastAction);
       actions.playSound('fold');
     }
   }, [gameState?.log, actions]);
@@ -337,7 +321,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (currentLogLength > prevLogLengthRef.current) {
       // Новое действие добавлено в лог
       const lastAction = gameState.log[currentLogLength - 1];
-      console.log('🃏 New action in log:', lastAction);
       
       // Создаем уникальный ключ для действия
       const actionKey = `${lastAction.telegramId}-${lastAction.type}-${Date.now()}`;
@@ -426,19 +409,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для анимации фишек к победителю
   const handleChipsToWinner = () => {
-    console.log('🎯 WINNER: handleChipsToWinner called, savedChipCount:', savedChipCount, 'gameState.pot:', gameState?.pot);
     if (!gameState?.winners || gameState.winners.length === 0) {
-      console.log('🎯 WINNER: No winners found');
       return;
     }
     
     // Если ничья - не запускаем анимацию (фишки остаются в банке)
     if (gameState.winners.length > 1) {
-      console.log('🎯 WINNER: Multiple winners (tie) - chips stay in pot');
       return;
     }
-    
-    console.log('🎯 WINNER: Single winner found:', gameState.winners[0]);
     
     const winner = gameState.winners[0];
     const winnerPlayer = gameState.players.find(p => p.id === winner.id);
@@ -511,7 +489,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const hasWinnerChips = prev.some(chip => chip.id.startsWith('winner-chip-'));
       
       if (hasWinnerChips && remainingWinnerChips.length === 0) {
-        console.log('🎯 All winner chip animations completed - hiding ChipStack');
         setTimeout(() => {
           setShowChipStack(false);
         }, 500); // Небольшая задержка перед скрытием
@@ -616,7 +593,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const handleAllInClick = () => {
     if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
-      console.log('❌ Cannot perform all-in: player not active or not turn');
       return;
     }
     handlePlayerBet(currentPlayer.id);
@@ -630,7 +606,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Функция для раздачи карт от центра стола к игрокам
   const handleDealCards = () => {
-    console.log('🃏 handleDealCards called');
     
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
@@ -676,7 +651,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handlePlayerBet = (playerId: string) => {
     const player = gameState.players.find(p => p.id === playerId);
     if (!player || !player.isActive) {
-      console.log('❌ Cannot create chip animation: player not found or not active:', playerId);
       return;
     }
     
@@ -748,7 +722,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handleBlindBetClick = () => {
     // Проверяем, что игрок активен и это его ход
     if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
-      console.log('❌ Cannot perform blind bet: player not active or not turn');
       return;
     }
     
@@ -759,7 +732,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handleBetConfirm = (amount: number) => {
     // Проверяем, что игрок активен и это его ход
     if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
-      console.log('❌ Cannot perform raise: player not active or not turn');
       return;
     }
     
@@ -772,7 +744,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const handleCallClick = () => {
     // Проверяем, что игрок активен и это его ход
     if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
-      console.log('❌ Cannot perform call: player not active or not turn');
       return;
     }
     

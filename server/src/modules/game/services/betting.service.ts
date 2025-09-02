@@ -118,15 +118,7 @@ export class BettingService {
     // Если есть несколько победителей, делим выигрыш поровну
     const winPerPlayer = Number((winAmount / winnerIds.length).toFixed(2));
 
-    // Отладочный лог для проверки выигрыша
-    console.log('🎯 Win Calculation Debug:', {
-      pot: updatedGameState.pot,
-      rake,
-      winAmount,
-      winnerIds,
-      winnerIdsLength: winnerIds.length,
-      winPerPlayer,
-    });
+
 
     for (const winnerId of winnerIds) {
       const winner = updatedGameState.players.find((p) => p.id === winnerId);

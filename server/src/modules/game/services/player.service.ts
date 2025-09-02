@@ -83,8 +83,6 @@ export class PlayerService {
     // Округляем сумму до 2 знаков после запятой
     const roundedAmount = Number(amount.toFixed(2));
 
-    console.log(`[processPlayerBet] Processing bet for ${player.username}: action=${action}, amount=${roundedAmount}, balance_before=${player.balance}`);
-
     const updatedPlayer = { ...player };
     updatedPlayer.balance -= roundedAmount;
     updatedPlayer.tableBalance += roundedAmount;
@@ -135,7 +133,6 @@ export class PlayerService {
     
 
     if (activePlayers.length === 0) {
-      console.log('❌ No active players found');
       return [];
     }
 
@@ -144,10 +141,6 @@ export class PlayerService {
 
     // Возвращаем всех игроков с максимальным счетом
     const winners = activePlayers.filter((p) => (p.score || 0) === maxScore);
-    console.log(
-      '🏆 Winners found:',
-      winners.map((w) => ({ id: w.id, username: w.username, score: w.score })),
-    );
 
     return winners;
   }

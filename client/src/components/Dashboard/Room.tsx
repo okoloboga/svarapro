@@ -25,7 +25,6 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
       console.error('Failed to join room:', error);
       
       if (error.response?.data?.message?.includes('game already started')) {
-        console.log('Game already started, switching to watch mode');
         setCurrentPage('gameRoom', { roomId, autoSit: false });
       } else {
         setNotification('gameJoinError');

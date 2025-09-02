@@ -91,6 +91,12 @@ export class RedisService {
     });
   }
 
+  async ping(): Promise<string> {
+    return await this.withRetry(async () => {
+      return await this.client.ping();
+    });
+  }
+
   async publishRoomUpdate(roomId: string, room: Room | null): Promise<void> {
     await this.withRetry(async () => {
       if (room === null) {
@@ -265,8 +271,6 @@ export class RedisService {
   }
 
   async cleanupDeadPlayers(): Promise<void> {
-    console.log('Starting cleanup of dead players...');
-
     try {
       // Получаем все активные комнаты
       const activeRooms = await this.getActiveRooms();
@@ -292,8 +296,6 @@ export class RedisService {
             );
 
             if (deadPlayers.length > 0) {
-              console.log(`Found dead players in room ${roomId}:`, deadPlayers);
-
               // Удаляем мертвых игроков из gameState
               gameState.players = gameState.players.filter(
                 (p) => !deadPlayers.includes(p.id),
@@ -305,7 +307,6 @@ export class RedisService {
 
               // Если комната пуста, удаляем её
               if (gameState.players.length === 0) {
-                console.log(`Room ${roomId} is empty after cleanup, removing`);
                 await this.removeRoom(roomId);
                 await this.clearGameData(roomId);
               }
@@ -315,8 +316,6 @@ export class RedisService {
           console.error(`Error cleaning up room ${roomId}:`, error);
         }
       }
-
-      console.log('Cleanup of dead players completed');
     } catch (error) {
       console.error('Error during cleanup of dead players:', error);
     }

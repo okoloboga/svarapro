@@ -21,8 +21,6 @@ export class AuthService {
       throw new Error('JWT_SECRET is not configured');
     }
 
-    // Временное отключение валидации хэша для отладки
-    console.log('Skipping hash validation for debug, raw initData:', initData);
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
     
@@ -116,16 +114,7 @@ export class AuthService {
       .update(dataToCheck.join('\n'))
       .digest('hex');
 
-    console.log('Computed hash:', computedHash);
-    console.log('Received hash:', hash);
-    console.log('Data checked:', dataToCheck);
-
     if (hash !== computedHash) {
-      console.log('Hash mismatch:', {
-        dataToCheck,
-        computedHash,
-        receivedHash: hash,
-      });
       return null;
     }
 

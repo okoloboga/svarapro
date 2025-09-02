@@ -26,7 +26,6 @@ export const useAppBackButton = (isVisible: boolean, handler: () => void) => {
       backButton.onClick(handler);
 
       return () => {
-        console.log('BackButton: Cleaning up handler');
         try {
           backButton.offClick(handler);
           backButton.hide();

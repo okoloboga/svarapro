@@ -54,7 +54,6 @@ export class GameService {
     if (room) {
       room.players = room.players.filter((pId) => pId !== telegramId);
       if (room.players.length === 0) {
-        console.log(`Room ${roomId} is now empty, removing it.`);
         await this.redisService.removeRoom(roomId);
         await this.redisService.clearGameData(roomId);
         await this.redisService.publishRoomUpdate(roomId, null);
@@ -210,14 +209,8 @@ export class GameService {
   }
 
   async startGame(roomId: string): Promise<void> {
-    console.log(`[startGame] Starting game for room ${roomId}`);
     const room = await this.redisService.getRoom(roomId);
     if (!room || (room.status !== 'waiting' && room.status !== 'finished')) {
-      console.log(`[startGame] Cannot start game for room ${roomId}:`, {
-        hasRoom: !!room,
-        roomStatus: room?.status,
-        allowedStatuses: ['waiting', 'finished']
-      });
       return;
     }
 
@@ -235,9 +228,6 @@ export class GameService {
     }
 
     if (!gameState || gameState.players.length < 2) {
-      console.log(
-        `Not enough players to start/continue game in room ${roomId}. Going to waiting state.`,
-      );
       room.status = 'waiting';
       await this.redisService.setRoom(roomId, room);
       if (gameState) {
@@ -268,18 +258,12 @@ export class GameService {
     await this.redisService.setGameState(roomId, finalGameState);
     await this.redisService.publishGameUpdate(roomId, finalGameState);
 
-    console.log(`[startGame] Game successfully started for room ${roomId}, starting ante phase`);
     await this.startAntePhase(roomId);
   }
 
   async startAntePhase(roomId: string): Promise<void> {
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState || gameState.status !== 'ante') {
-      console.log('🚫 startAntePhase skipped:', {
-        roomId,
-        hasGameState: !!gameState,
-        status: gameState?.status,
-      });
       return;
     }
 
@@ -292,8 +276,6 @@ export class GameService {
       // Если у участников свары нет денег для анте, делим банк пополам
       const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState!.minBet);
       if (participantsWithoutMoney.length === svaraParticipants.length && svaraParticipants.length === 2) {
-        console.log(`[startAntePhase] Svara participants have no money, splitting pot between ${svaraParticipants.length} players`);
-        
         const winAmount = Number((gameState!.pot / 2).toFixed(2));
         const rake = Number((gameState!.pot * 0.05).toFixed(2));
         
@@ -371,10 +353,8 @@ export class GameService {
       gameState.dealerIndex,
     );
 
-    await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-    
-    console.log(`[startAntePhase] Ante phase completed for room ${roomId}, moved to blind_betting`);
   }
 
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
@@ -944,9 +924,6 @@ export class GameService {
       (gameState.svaraDeclined?.length || 0);
 
     if (decisionsCount >= totalPlayers) {
-      console.log(
-        `All ${totalPlayers} players have made a decision for svara in room ${roomId}. Resolving immediately.`,
-      );
       await this.resolveSvara(roomId);
     }
   }
@@ -971,8 +948,6 @@ export class GameService {
       
       // Если у всех участников свары нет денег, делим банк пополам
       if (playersWithoutMoney.length === svaraPlayers.length && svaraPlayers.length === 2) {
-        console.log(`[resolveSvara] Svara participants have no money, splitting pot between ${svaraPlayers.length} players`);
-        
         const winAmount = Number((gameState.pot / 2).toFixed(2));
         const rake = Number((gameState.pot * 0.05).toFixed(2));
         
@@ -1061,8 +1036,6 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
-    console.log(`[endGameWithWinner] Starting winner determination for room ${roomId}`);
-
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
@@ -1072,7 +1045,6 @@ export class GameService {
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
     if (overallWinners.length > 1) {
-      console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
         'svara_pending',
@@ -1104,7 +1076,6 @@ export class GameService {
       }, TURN_DURATION_SECONDS * 1000);
       this.svaraTimers.set(roomId, timer);
     } else {
-      console.log(`Winner determined in room ${roomId}. Publishing 'showdown' state.`);
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
         'showdown',
@@ -1131,8 +1102,6 @@ export class GameService {
       return;
     }
 
-    console.log(`[distributeWinnings] Distributing winnings for room ${roomId}`);
-
     // Reset lastWinAmount for all players
     for (const p of gameState.players) {
       p.lastWinAmount = 0;
@@ -1142,13 +1111,11 @@ export class GameService {
     const winners = gameState.winners || [];
 
     if (winners.length === 0) {
-      console.log('[distributeWinnings] No winners found, ending game.');
       await this.endGame(roomId, gameState, 'no_winner');
       return;
     }
 
     if (isAllInGame) {
-      console.log(`[distributeWinnings] All-in game detected in room ${roomId}.`);
       const potManager = new PotManager();
       potManager.processBets(gameState.players);
       const potWinnersList = potManager.getWinners(gameState.players);
@@ -1169,7 +1136,6 @@ export class GameService {
       gameState.pot = 0;
       gameState.chipCount = 0;
     } else if (winners.length === 1) {
-      console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
       const winnerId = winners[0].id;
       const winnerBefore = gameState.players.find(p => p.id === winnerId);
       const balanceBefore = winnerBefore ? winnerBefore.balance : 0;
@@ -1207,8 +1173,6 @@ export class GameService {
   }
 
   private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
-    console.log(`[endGame] Ending game for room ${roomId}, reason: ${reason}`);
-
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
@@ -1218,9 +1182,7 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    console.log(`[endGame] Scheduling auto-restart for room ${roomId} in 5 seconds`);
     setTimeout(() => {
-      console.log(`[endGame] Auto-restarting game for room ${roomId}`);
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
       );

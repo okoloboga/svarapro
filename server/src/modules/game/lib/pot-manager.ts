@@ -32,11 +32,6 @@ export class PotManager {
   }
 
   private calculatePots() {
-    console.log(
-      `[calculatePots] Starting pot calculation. Player bets: ${JSON.stringify(
-        [...this.playerBets],
-      )}`,
-    );
 
     const tempBets = new Map(this.playerBets);
     let lastPotLevel = 0;
@@ -60,11 +55,6 @@ export class PotManager {
 
       if (pot.amount > 0) {
         this.pots.push(pot);
-        console.log(
-          `[calculatePots] Created Pot #${this.pots.length - 1}: Amount: ${
-            pot.amount
-          }, Eligible: ${[...pot.eligiblePlayers]}`,
-        );
       }
       lastPotLevel = betLevel;
     }
@@ -86,9 +76,6 @@ export class PotManager {
       if (amountToReturn > 0) {
         const highestBettorId = playersWithHighestBet[0][0];
         this.returnedBets.set(highestBettorId, amountToReturn);
-        console.log(
-          `[calculatePots] Returning uncalled bet of ${amountToReturn} to ${highestBettorId}`,
-        );
 
         // Adjust the last pot amount
         const lastPot = this.pots[this.pots.length - 1];
@@ -98,15 +85,7 @@ export class PotManager {
       }
     }
 
-    console.log(
-      `[calculatePots] Final pots: ${JSON.stringify(
-        this.pots,
-        (key, value) => (value instanceof Set ? [...value] : value),
-      )}`,
-    );
-    console.log(
-      `[calculatePots] Returned bets: ${JSON.stringify([...this.returnedBets])}`,
-    );
+
   }
 
   public getPots(): Pot[] {
@@ -118,21 +97,17 @@ export class PotManager {
   }
 
   public getWinners(players: Player[]): { potIndex: number; winners: Player[]; amount: number }[] {
-    console.log(`[getWinners] Determining winners. Pots: ${JSON.stringify(this.pots, (key, value) => value instanceof Set ? [...value] : value)}`);
     const winnersResult: { potIndex: number; winners: Player[]; amount: number }[] = [];
     
     for (let i = 0; i < this.pots.length; i++) {
       const pot = this.pots[i];
-      console.log(`[getWinners] Calculating winner for Pot #${i} (Amount: ${pot.amount})`);
       let bestHandValue = -1;
       let potWinners: Player[] = [];
 
       const eligiblePlayers = players.filter(p => pot.eligiblePlayers.has(p.id));
-      console.log(`[getWinners] Eligible players for Pot #${i}: ${JSON.stringify(eligiblePlayers.map(p => p.id))}`);
 
       for (const player of eligiblePlayers) {
         const handValue = player.score || 0; // Assuming score is pre-calculated
-        console.log(`[getWinners] Player ${player.id} has hand value ${handValue}`);
         if (handValue > bestHandValue) {
           bestHandValue = handValue;
           potWinners = [player];
@@ -140,10 +115,8 @@ export class PotManager {
           potWinners.push(player);
         }
       }
-      console.log(`[getWinners] Winner(s) for Pot #${i}: ${JSON.stringify(potWinners.map(p => p.id))}`);
       winnersResult.push({ potIndex: i, winners: potWinners, amount: pot.amount });
     }
-    console.log(`[getWinners] Final winners distribution: ${JSON.stringify(winnersResult.map(r => ({...r, winners: r.winners.map(w => w.id)})))}`);
     return winnersResult;
   }
 
@@ -151,6 +124,5 @@ export class PotManager {
     this.pots = [];
     this.playerBets.clear();
     this.returnedBets.clear();
-    console.log(`[reset] Pot manager cleared.`);
   }
 }

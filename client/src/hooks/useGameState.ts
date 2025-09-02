@@ -21,10 +21,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       return;
     }
 
-    console.log('Joining game with roomId:', roomId);
-    
     socket.on('game_state', (state: GameState) => {
-      console.log('Received game_state:', state);
       setGameState(state);
       setLoading(false);
       setIsProcessing(false);
@@ -34,7 +31,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     });
     
     socket.on('game_update', (state: GameState) => {
-      console.log('Received game_update:', state);
       setGameState(state);
       setLoading(false);
       setIsProcessing(false);
@@ -58,7 +54,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     socket.emit('join_room', { roomId });
     
     return () => {
-      console.log('Cleaning up socket listeners for roomId:', roomId);
       socket.off('game_state');
       socket.off('game_update');
       socket.off('error');
@@ -69,7 +64,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
   const performAction = useCallback((action: string, amount?: number) => {
     if (socket) {
       setIsProcessing(true);
-      console.log('Emitting game_action:', { roomId, action, amount });
       socket.emit('game_action', { roomId, action, amount });
     } else {
       console.error('Cannot perform action: socket not initialized');
@@ -80,7 +74,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     if (socket) {
       setIsProcessing(true);
       const payload = { roomId, position, userData };
-      console.log('Emitting sit_down with payload:', payload);
       socket.emit('sit_down', payload);
     } else {
       console.error('Cannot sit down: socket not initialized');
@@ -89,7 +82,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
 
   const invitePlayer = useCallback(() => {
     if (socket) {
-      console.log('Emitting game_action for invite:', { roomId });
       socket.emit('game_action', { roomId, action: 'invite' });
     } else {
       console.error('Cannot invite player: socket not initialized');
@@ -107,7 +99,6 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
 
   const leaveRoom = useCallback(() => {
     if (socket) {
-      console.log('Emitting leave_room:', { roomId });
       socket.emit('leave_room', { roomId });
     } else {
       console.error('Cannot leave room: socket not initialized');

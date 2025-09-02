@@ -25,14 +25,12 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ) {}
 
   afterInit() {
-    console.log('GameGateway initialized, subscribing to game updates');
     void this.redisService.subscribeToGameUpdates((roomId, gameState) => {
       this.server.to(roomId).emit('game_update', gameState);
     });
 
     // Подписываемся на обновления баланса
     void this.redisService.subscribeToBalanceUpdates((telegramId, balance) => {
-      console.log(`Publishing balance_update to user ${telegramId}:`, balance);
       this.server.to(telegramId).emit('balanceUpdated', { balance });
     });
 
@@ -92,7 +90,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
 
     if (telegramId) {
       void client.join(telegramId);
-      console.log(`Client ${telegramId} subscribed to balance updates`);
     } else {
       console.error('No telegramId provided for subscribe_balance');
       client.emit('error', { message: 'Требуется авторизация (telegramId)' });
@@ -170,7 +167,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     }
 
     const { roomId, phrase } = payload;
-    console.log(`Broadcasting chat message in room ${roomId} from ${telegramId}: ${phrase}`);
     
     // Broadcast to all clients in the room, including the sender
     this.server.to(roomId).emit('new_chat_message', { 
@@ -208,30 +204,15 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     const telegramId = this.getTelegramId(client);
 
     if (!telegramId) {
-      console.log(`[GEMINI] Unauthenticated client disconnected: ${client.id}`);
       return;
     }
 
-    console.log(
-      `[GEMINI] Client disconnected: ${client.id}, User: ${telegramId}`,
-    );
     try {
       const roomIds = await this.redisService.getPlayerRooms(telegramId);
       if (roomIds && roomIds.length > 0) {
-        console.log(
-          `[GEMINI] User ${telegramId} was in rooms: ${roomIds.join(', ')}. Cleaning up...`,
-        );
         for (const roomId of roomIds) {
-          console.log(
-            `[GEMINI] Auto-leaving room ${roomId} for user ${telegramId}`,
-          );
           await this.gameService.leaveRoom(roomId, telegramId);
         }
-        console.log(`[GEMINI] Cleanup complete for user ${telegramId}`);
-      } else {
-        console.log(
-          `[GEMINI] User ${telegramId} was not in any rooms. No cleanup needed.`,
-        );
       }
     } catch (error) {
       console.error(

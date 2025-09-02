@@ -23,7 +23,6 @@ export class RoomsGateway
   ) {}
 
   afterInit() {
-    console.log('Subscribing to room updates');
     void this.redisService.subscribeToRoomUpdates(() => {
       void this.broadcastRoomsUpdate();
     });
@@ -40,7 +39,6 @@ export class RoomsGateway
 
   @SubscribeMessage('request_rooms')
   async handleRequestRooms(client: Socket) {
-    console.log('Received request_rooms from client');
     const rooms = await this.roomsService.getRooms();
     client.emit('rooms', { action: 'initial', rooms });
   }

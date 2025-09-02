@@ -17,28 +17,12 @@ export const useHapticFeedback = () => {
   }, []);
 
   const triggerImpact = useCallback((style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-    console.log('triggerImpact called:', { 
-      style, 
-      isEnabled, 
-      isTMA: isTMA(), 
-      isSupported: hapticFeedback.isSupported(),
-      isAvailable: hapticFeedback.impactOccurred.isAvailable()
-    });
-    
     if (isEnabled && isTMA() && hapticFeedback.impactOccurred.isAvailable()) {
       try {
         hapticFeedback.impactOccurred(style);
-        console.log('Haptic feedback triggered successfully');
       } catch (error) {
         console.error('Error triggering haptic feedback:', error);
       }
-    } else {
-      console.log('Haptic feedback not triggered:', { 
-        isEnabled, 
-        isTMA: isTMA(), 
-        isSupported: hapticFeedback.isSupported(),
-        isAvailable: hapticFeedback.impactOccurred.isAvailable()
-      });
     }
   }, [isEnabled]);
 

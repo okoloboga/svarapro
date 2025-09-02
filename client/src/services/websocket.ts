@@ -10,12 +10,7 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
     avatar: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
   };
 
-  console.log(
-    'Initializing WebSocket with telegramId:',
-    telegramId || defaultTelegramId,
-    'userData:',
-    userData || defaultUserData,
-  );
+
 
   const socket = io('https://svarapro.com', {
     withCredentials: true,
@@ -30,7 +25,6 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
   });
 
   socket.on('connect', () => {
-    console.log('WebSocket connected, telegramId:', telegramId || defaultTelegramId);
     socket.emit('request_rooms');
   });
 
@@ -39,7 +33,6 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
   });
 
   socket.on('disconnect', (reason) => {
-    console.log('WebSocket disconnected:', reason);
   });
 
   socket.on('error', (error) => {
@@ -49,9 +42,6 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
   // --- Логика восстановления соединения при возвращении в приложение ---
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible' && !socket.connected) {
-      console.log(
-        'App is visible and socket is disconnected. Forcing connect...',
-      );
       socket.connect();
     }
   };

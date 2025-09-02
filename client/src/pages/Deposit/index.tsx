@@ -19,7 +19,6 @@ export function Deposit({ setCurrentPage }: DepositProps) {
     setError(null);
     try {
       const depositData = await apiService.initiateDeposit(currency);
-      console.log('Deposit data received:', depositData);
       setCurrentPage('confirmDeposit', {
         address: depositData.address,
         trackerId: depositData.trackerId, // Преобразуем tracker_id в trackerId
