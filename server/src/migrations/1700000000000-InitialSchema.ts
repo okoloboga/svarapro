@@ -4,19 +4,25 @@ export class InitialSchema1700000000000 implements MigrationInterface {
   name = 'InitialSchema1700000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Создаем расширение для UUID
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+    
     // Создаем таблицу users
     await queryRunner.query(`
       CREATE TABLE "users" (
-        "id" SERIAL PRIMARY KEY,
-        "telegramId" character varying NOT NULL UNIQUE,
-        "username" character varying,
-        "avatar" character varying,
-        "balance" double precision NOT NULL DEFAULT 0,
-        "walletAddress" character varying,
-        "totalDeposit" double precision NOT NULL DEFAULT 0,
-        "totalWithdraw" double precision NOT NULL DEFAULT 0,
-        "refBalance" double precision NOT NULL DEFAULT 0,
-        "referrerId" integer,
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "telegramId" character varying(64) NOT NULL UNIQUE,
+        "username" character varying(32),
+        "firstName" character varying(64),
+        "lastName" character varying(64),
+        "avatar" character varying(512),
+        "balance" decimal(12,2) NOT NULL DEFAULT 1000,
+        "walletAddress" character varying(255),
+        "totalDeposit" decimal(12,2) NOT NULL DEFAULT 0,
+        "refBalance" decimal(12,2) NOT NULL DEFAULT 0,
+        "refBonus" decimal(5,2) NOT NULL DEFAULT 0,
+        "referrerId" uuid,
+        "currentRoomRoomId" character varying,
         "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT now()
       )
@@ -96,5 +102,8 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "transactions"`);
     await queryRunner.query(`DROP TABLE "admins"`);
     await queryRunner.query(`DROP TABLE "users"`);
+    
+    // Удаляем расширение UUID
+    await queryRunner.query(`DROP EXTENSION IF EXISTS "uuid-ossp"`);
   }
 } 
