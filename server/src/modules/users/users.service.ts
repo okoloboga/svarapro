@@ -158,7 +158,7 @@ export class UsersService {
 
       user.balance = newBalance;
       await this.usersRepository.save(user);
-      console.log(`Balance updated for user ${telegramId}: ${newBalance}`);
+      // Balance update log removed
     } catch (error) {
       console.error(`Failed to update balance for user ${telegramId}:`, error);
       throw error;

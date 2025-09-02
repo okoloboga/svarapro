@@ -38,9 +38,7 @@ export class FinancesService {
     receiver?: string,
     destTag?: string,
   ): Promise<Transaction> {
-    this.logger.debug(
-      `Initiating transaction: telegramId=${telegramId}, currency=${currency}, type=${type}, amount=${amount}, receiver=${receiver}, destTag=${destTag}`,
-    );
+    // DEBUG log removed
 
     if (!this.supportedCurrencies.includes(currency)) {
       this.logger.error(`Unsupported currency: ${currency}`);
@@ -156,9 +154,7 @@ export class FinancesService {
     clientTransactionIdFromCallback?: string,
     callbackData?: any,
   ): Promise<void> {
-    this.logger.debug(
-      `Processing callback for trackerId: ${trackerId}, clientTransactionIdFromCallback: ${clientTransactionIdFromCallback}`,
-    );
+    // DEBUG log removed
 
     let transactionData: TransactionStatusDto;
     
@@ -185,13 +181,12 @@ export class FinancesService {
         token: callbackData.currencyInCode || callbackData.currencyOutCode,
       };
       
-      this.logger.debug(`Original callback status: ${callbackData.status}, mapped to: ${mappedStatus}`);
-      this.logger.debug(`Using callback data: ${JSON.stringify(transactionData)}`);
+      // DEBUG logs removed
     } else {
       // Fallback: получаем статус через API
       try {
         transactionData = await this.apiService.getTransactionStatus(trackerId);
-        this.logger.debug(`Transaction data from API: ${JSON.stringify(transactionData)}`);
+        // DEBUG log removed
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         this.logger.error(
@@ -206,7 +201,7 @@ export class FinancesService {
     }
 
     // Для Alfabit ищем транзакцию по tracker_id, так как clientTransactionId не возвращается
-    this.logger.debug(`Looking for transaction with tracker_id: ${trackerId}`);
+    // DEBUG log removed
     const transaction = await this.transactionRepository.findOne({
       where: { tracker_id: trackerId },
       relations: ['user'],
@@ -225,13 +220,7 @@ export class FinancesService {
         order: { createdAt: 'DESC' },
       });
       
-      this.logger.debug(`Recent transactions: ${JSON.stringify(allTransactions.map(t => ({
-        id: t.id,
-        tracker_id: t.tracker_id,
-        currency: t.currency,
-        status: t.status,
-        createdAt: t.createdAt
-      })))}`);
+      // DEBUG log removed
       
       return;
     }
@@ -359,9 +348,7 @@ export class FinancesService {
       }
     } else if (transactionData.status === 'pending') {
       // Промежуточный статус - это нормально, не логируем предупреждение
-      this.logger.debug(
-        `Transaction in pending status: ${transactionData.status} for trackerId: ${trackerId}`,
-      );
+      // DEBUG log removed
     } else {
       this.logger.warn(
         `Unexpected transaction status: ${transactionData.status} for trackerId: ${trackerId}`,
@@ -426,7 +413,7 @@ export class FinancesService {
     balance: string;
     balanceUsd: string;
   }[]> {
-    this.logger.debug('Getting merchant balances from Alfabit API');
+    // DEBUG log removed
     return await this.apiService.getMerchantBalances();
   }
 }

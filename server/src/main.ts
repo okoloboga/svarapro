@@ -10,7 +10,7 @@ const processId = Math.random().toString(36).substring(2, 15);
 async function bootstrap() {
   console.log(`[${processId}] Starting server process...`);
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug'],
+    logger: ['error', 'warn', 'log'],
   });
 
   app.useGlobalPipes(

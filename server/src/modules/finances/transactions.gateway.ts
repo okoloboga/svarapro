@@ -38,9 +38,7 @@ export class TransactionGateway {
   // Подключение клиента
   @SubscribeMessage('join')
   handleJoin(client: Socket, userId: string) {
-    void client.join(userId); // Логируем только в debug-режиме
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.debug(`Client joined: userId=${userId}`);
-    }
+    void client.join(userId);
+          // DEBUG log removed
   }
 }

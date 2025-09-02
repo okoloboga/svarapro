@@ -26,7 +26,7 @@ export class FinancesController {
       destTag?: string;
     },
   ) {
-    this.logger.debug(`Received transaction request: ${JSON.stringify(body)}`);
+    // DEBUG log removed
 
     // Валидация telegramId
     if (
@@ -79,7 +79,7 @@ export class FinancesController {
   async handleCallback(
     @Body() body: any,
   ) {
-    this.logger.debug(`Callback received: ${JSON.stringify(body)}`);
+    // DEBUG log removed
     
     // Поддержка как старого формата (tracker_id), так и нового (uid)
     const trackerId = body.tracker_id || body.uid;
@@ -118,7 +118,7 @@ export class FinancesController {
 
   @Get('merchant-balances')
   async getMerchantBalances() {
-    this.logger.debug('Getting merchant balances');
+    // DEBUG log removed
     const balances = await this.financesService.getMerchantBalances();
     return balances;
   }

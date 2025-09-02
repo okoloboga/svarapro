@@ -117,13 +117,7 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    this.logger.debug(
-      `Creating deposit address: token=${token}, clientTransactionId=${clientTransactionId}`,
-    );
-    this.logger.debug(
-      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
-    );
-    this.logger.debug(`Request body: ${body}`);
+    // DEBUG logs removed
 
     try {
       const response = await axios.post<ExnodeCreateTransactionResponse>(
@@ -185,14 +179,10 @@ export class ApiService {
       isBayerPaysService: false,
     };
 
-    this.logger.debug(
-      `Creating deposit invoice: token=${token}, clientTransactionId=${clientTransactionId}`,
-    );
-    this.logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
+    // DEBUG logs removed
 
     try {
-      this.logger.debug(`Making request to: ${this.baseUrl}/api/v1/integration/orders/invoice/without-amount`);
-      this.logger.debug(`API Key: ${this.getApiKey().substring(0, 10)}...`);
+      // DEBUG logs removed
       
       const response = await axios.post(
         `${this.baseUrl}/api/v1/integration/orders/invoice/without-amount`,
@@ -288,13 +278,7 @@ export class ApiService {
       .update(timestamp + body)
       .digest('hex');
 
-    this.logger.debug(
-      `Creating withdraw transaction: token=${token}, clientTransactionId=${clientTransactionId}, amount=${amount}, receiver=${receiver}`,
-    );
-    this.logger.debug(
-      `Request headers: ApiPublic=${this.apiPublic}, Timestamp=${timestamp}, Signature=${signature}`,
-    );
-    this.logger.debug(`Request body: ${body}`);
+    // DEBUG logs removed
 
     try {
       const response = await axios.post<ExnodeCreateTransactionResponse>(
@@ -352,14 +336,10 @@ export class ApiService {
       comment: `Withdraw for transaction ${clientTransactionId}`,
     };
 
-    this.logger.debug(
-      `Creating withdraw transaction: token=${token}, clientTransactionId=${clientTransactionId}, amount=${amount}, receiver=${receiver}`,
-    );
-    this.logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
+    // DEBUG logs removed
 
     try {
-      this.logger.debug(`Making request to: ${this.baseUrl}/api/v1/integration/orders/withdraw`);
-      this.logger.debug(`API Key: ${this.getApiKey().substring(0, 10)}...`);
+      // DEBUG logs removed
 
       const response = await axios.post(
         `${this.baseUrl}/api/v1/integration/orders/withdraw`,
@@ -421,7 +401,7 @@ export class ApiService {
       throw new BadRequestException(`Invalid trackerId: ${trackerId}`);
     }
 
-    this.logger.debug(`Checking transaction status: trackerId=${trackerId}`);
+    // DEBUG log removed
 
     try {
       const response = await axios.get(
@@ -489,7 +469,7 @@ export class ApiService {
     usdPrice: string;
     assetName: string;
   }[]> {
-    this.logger.debug('Getting currencies from Alfabit API');
+    // DEBUG log removed
 
     try {
       const response = await axios.get(
@@ -558,7 +538,7 @@ export class ApiService {
     minOut: number;
     maxOut: number;
   }[]> {
-    this.logger.debug('Getting withdraw fees from Alfabit API');
+    // DEBUG log removed
 
     try {
       const response = await axios.get(
@@ -633,7 +613,7 @@ export class ApiService {
     balance: string;
     balanceUsd: string;
   }[]> {
-    this.logger.debug('Getting merchant balances from Alfabit API');
+    // DEBUG log removed
 
     try {
       const response = await axios.get(

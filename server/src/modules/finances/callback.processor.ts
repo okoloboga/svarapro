@@ -15,9 +15,7 @@ export class CallbackProcessor {
   async handleCallback(
     job: Job<{ trackerId: string; clientTransactionId?: string; callbackData?: any }>,
   ) {
-    this.logger.debug(
-      `Processing job ${job.id} for trackerId: ${job.data.trackerId}, clientTransactionId: ${job.data.clientTransactionId}`,
-    );
+    // DEBUG log removed
     try {
       await this.financesService.processCallback(
         job.data.trackerId,
