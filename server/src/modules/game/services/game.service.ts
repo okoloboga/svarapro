@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../../../services/redis.service';
 import {
   GameState,
@@ -17,6 +17,7 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 
 @Injectable()
 export class GameService {
+  private readonly logger = new Logger(GameService.name);
   constructor(
     private readonly redisService: RedisService,
     private readonly cardService: CardService,
@@ -780,6 +781,7 @@ export class GameService {
           { lastAction: 'blind' },
         );
         gameState.lastBlindBet = blindBetAmount;
+        gameState.lastActionAmount = blindBetAmount; // Устанавливаем для консистентности
         gameState.lastBlindBettorIndex = playerIndex;
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
@@ -1298,6 +1300,7 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
+    this.logger.log(`[${roomId}] Winnings distributed. Ending game.`);
     await this.endGame(roomId, gameState, 'winner');
   }
 
@@ -1318,6 +1321,7 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
+    this.logger.log(`[${roomId}] Game ended. Scheduling new game.`);
     setTimeout(() => {
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
@@ -1390,6 +1394,7 @@ export class GameService {
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
     if (allInPlayers.length === activePlayers.length) {
+      this.logger.log(`[${roomId}] All players are all-in. Ending betting round.`);
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
@@ -1414,9 +1419,11 @@ export class GameService {
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
 
-    // В blind_betting call означает оплату просмотра карт
+    // В blind_betting call означает оплату просмотра карт. Сумма должна быть равна последней ставке.
     const callAmount =
-      gameState.lastBlindBet > 0 ? gameState.lastBlindBet : gameState.minBet;
+      gameState.lastActionAmount > 0
+        ? gameState.lastActionAmount
+        : gameState.minBet;
 
     if (callAmount <= 0) {
       return {
