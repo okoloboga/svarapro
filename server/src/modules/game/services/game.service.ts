@@ -1587,7 +1587,7 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    // Анимация и проверка завершения круга
+    // Анимация
     gameState.isAnimating = true;
     gameState.animationType = 'chip_fly';
 
@@ -1599,30 +1599,16 @@ export class GameService {
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
-    // Проверяем завершение круга ДО передачи хода
+    // Передаем ход следующему игроку
+    // Проверка завершения круга будет происходить в фазе betting
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
 
-    // Проверяем, будет ли следующий игрок якорем
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      anchorPlayerIndex = gameState.dealerIndex;
-    }
-
-    // Если следующий игрок - якорь, то круг завершается
-    if (aboutToActPlayerIndex === anchorPlayerIndex) {
-      await this.endBettingRound(roomId, gameState);
-    } else {
-      gameState.currentPlayerIndex = aboutToActPlayerIndex;
-      await this.redisService.setGameState(roomId, gameState);
-      await this.redisService.publishGameUpdate(roomId, gameState);
-    }
+    gameState.currentPlayerIndex = aboutToActPlayerIndex;
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
 
     return { success: true, gameState };
   }
