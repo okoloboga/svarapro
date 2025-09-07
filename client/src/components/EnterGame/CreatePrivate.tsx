@@ -78,7 +78,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#47444C] w-[316px] h-[280px] rounded-lg flex flex-col items-center py-4 px-4 relative animate-slide-up">
+      <div className="bg-[#47444C] w-[316px] h-[215px] rounded-lg flex flex-col items-center py-4 px-4 relative animate-slide-up">
         <h2 className="text-white font-semibold text-lg mb-4">{t('create_private_room')}</h2>
         {error && (
           <p className="text-red-500 text-sm mb-2">{error}</p>

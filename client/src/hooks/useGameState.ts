@@ -21,6 +21,11 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       return;
     }
 
+    // Очищаем ошибку при успешном подключении
+    if (socket.connected) {
+      setError(null);
+    }
+
     socket.on('game_state', (state: GameState) => {
       setGameState(state);
       setLoading(false);
@@ -50,6 +55,23 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       setIsProcessing(false);
     });
 
+    // Обработчики подключения/отключения
+    socket.on('connect', () => {
+      console.log('WebSocket connected, clearing error');
+      setError(null);
+      setLoading(false);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+      setError('Соединение потеряно. Попытка переподключения...');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+      setError('Ошибка подключения. Попытка переподключения...');
+    });
+
     // Emit join_room after listeners are set up
     socket.emit('join_room', { roomId });
     
@@ -58,6 +80,9 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
       socket.off('game_update');
       socket.off('error');
       socket.off('play_sound');
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
     };
   }, [roomId, socket, playSound]);
 

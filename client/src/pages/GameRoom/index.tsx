@@ -690,7 +690,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   if (error) {
     return (
       <div className="bg-primary min-h-screen flex flex-col items-center justify-center">
-        <div className="text-red-500 text-xl">{t('error_colon')} {error}</div>
+        <div className="text-red-500 text-xl mb-4">{t('error_colon')} {error}</div>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Перезагрузить страницу
+        </button>
       </div>
     );
   }

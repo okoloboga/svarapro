@@ -32,7 +32,24 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
     console.error('WebSocket connection error:', error.message);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
+    console.log('WebSocket disconnected:', reason);
+  });
+
+  socket.on('reconnect', (attemptNumber) => {
+    console.log('WebSocket reconnected after', attemptNumber, 'attempts');
+  });
+
+  socket.on('reconnect_attempt', (attemptNumber) => {
+    console.log('WebSocket reconnection attempt:', attemptNumber);
+  });
+
+  socket.on('reconnect_error', (error) => {
+    console.error('WebSocket reconnection error:', error);
+  });
+
+  socket.on('reconnect_failed', () => {
+    console.error('WebSocket reconnection failed');
   });
 
   socket.on('error', (error) => {

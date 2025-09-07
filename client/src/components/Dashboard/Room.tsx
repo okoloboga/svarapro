@@ -58,7 +58,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
 
   return (
     <StyledContainer 
-      className="w-[95vw] h-[90px] p-4 rounded-[15px]"
+      className="w-[95vw] h-[105px] p-4 rounded-[15px]"
     >
       <div
         className="grid"
@@ -111,7 +111,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         style={{
           position: 'absolute',
           left: '5%',
-          right: '33.6%',
+          right: '32%',
           top: '50%',
           height: '1px',
           background: '#FFFFFF',

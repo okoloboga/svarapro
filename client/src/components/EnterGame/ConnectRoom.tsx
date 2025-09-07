@@ -54,7 +54,7 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#47444C] w-[316px] h-[200px] rounded-lg flex flex-col items-center py-4 px-4 relative animate-slide-up">
+      <div className="bg-[#47444C] w-[316px] h-[172px] rounded-lg flex flex-col items-center py-4 px-4 relative animate-slide-up">
         <h2 className="text-white font-semibold text-lg mb-4">{t('join_room')}</h2>
         {error && (
           <p className="text-red-500 text-sm mb-2">{error}</p>
