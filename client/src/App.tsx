@@ -16,7 +16,6 @@ import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
 import axios from 'axios';
 import { ErrorAlert } from './components/ErrorAlert';
-import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { SoundProvider } from './context/SoundContext';
@@ -75,7 +74,6 @@ type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | '
 function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSdkInitialized, setIsSdkInitialized] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
