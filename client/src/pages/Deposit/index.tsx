@@ -75,9 +75,14 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           {t('cryptocurrency')}
         </div>
         
-        {/* Right text "Ещё" */}
-        <div 
-          className="flex items-center justify-center"
+        {/* Right button "Ещё" */}
+        <button 
+          className="flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80"
+          onClick={() => {
+            // Open Telegram bot @SvaraPaybot
+            const telegramUrl = 'https://t.me/SvaraPaybot';
+            window.open(telegramUrl, '_blank');
+          }}
           style={{
             color: '#808797',
             fontWeight: 600,
@@ -85,11 +90,16 @@ export function Deposit({ setCurrentPage }: DepositProps) {
             lineHeight: '131%',
             letterSpacing: '-1.1%',
             textAlign: 'center',
-            verticalAlign: 'middle'
+            verticalAlign: 'middle',
+            background: 'transparent',
+            border: 'none',
+            padding: '0',
+            WebkitTapHighlightColor: 'transparent',
+            touchAction: 'manipulation'
           }}
         >
           {t('more')}
-        </div>
+        </button>
       </div>
 
       <h2 className="text-lg font-semibold text-gray-400 mb-4">
