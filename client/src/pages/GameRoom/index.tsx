@@ -387,12 +387,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // TODO: fix svara animation
 
   useEffect(() => {
-    if (gameState?.status === 'svara_pending' && svaraStep === 'none') {
+    if (gameState?.status === 'svara_pending' && svaraStep === 'none' && winSequenceStep === 'none') {
+      // Показываем SvaraAnimation только после завершения winSequenceStep
       setSvaraStep('animating');
     } else if (gameState?.status !== 'svara_pending') {
       setSvaraStep('none');
     }
-  }, [gameState?.status, svaraStep]);
+  }, [gameState?.status, svaraStep, winSequenceStep]);
 
   const handleLeaveRoom = useCallback(() => {
     setShowMenuModal(false);
@@ -817,7 +818,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       {/* Затемняющий оверлей для фазы вскрытия карт */}
       {winSequenceStep === 'showdown' && <div className="fixed inset-0 bg-black bg-opacity-60 z-20 transition-opacity duration-500" />}
 
-      {svaraStep === 'animating' && <SvaraAnimation onAnimationComplete={() => setSvaraStep('joining')} />}
+      {svaraStep === 'animating' && winSequenceStep === 'none' && <SvaraAnimation onAnimationComplete={() => setSvaraStep('joining')} />}
       
       {svaraStep === 'joining' && !(gameState.svaraParticipants?.includes(currentUserId) ?? false) && (
         <SvaraJoinPopup 
