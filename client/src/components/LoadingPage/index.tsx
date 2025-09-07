@@ -41,20 +41,6 @@ export function LoadingPage({ isLoading }: { isLoading: boolean }) {
               fillOpacity="0.7" 
             />
           </g>
-          <text
-            x="50%"
-            y="53%"
-            textAnchor="middle"
-            dy=".3em"
-            fill="#C9C6CE"
-            style={{
-              fontStyle: 'normal',
-              fontWeight: 600,
-              fontSize: '10px',
-            }}
-          >
-            18+
-          </text>
         </svg>
       </div>
     </div>

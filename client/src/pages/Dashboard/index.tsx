@@ -12,6 +12,8 @@ import { CreatePublic } from '@/components/EnterGame/CreatePublic';
 import { CreatePrivate } from '@/components/EnterGame/CreatePrivate';
 import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
 import { DashboardProps, NotificationType } from '@/types/components';
+import { LoadingPage } from '@/components/LoadingPage';
+import { useFilterState } from '@/hooks/useFilterState';
 
 export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
 
@@ -21,12 +23,13 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   }, []);
 
   const [searchId, setSearchId] = useState('');
-  const [isAvailableFilter, setIsAvailableFilter] = useState(false);
+  const [isAvailableFilter, setIsAvailableFilter] = useFilterState();
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
   const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const [isEnterGameMenuVisible, setIsEnterGameMenuVisible] = useState(false);
   const [activeModal, setActiveModal] = useState<'createPublic' | 'createPrivate' | 'connectRoom' | null>(null);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   const handleWithdrawClick = () => {
     if (walletAddress) {
@@ -62,6 +65,10 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
     setActiveModal(null);
   };
 
+  if (isCreatingRoom) {
+    return <LoadingPage isLoading={true} />;
+  }
+
   return (
     <div className="bg-primary min-h-screen flex flex-col">
       <div className="flex-1">
@@ -95,8 +102,8 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
         </div>
       )}
       {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
-      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
-      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} />}
+      {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} setIsCreatingRoom={setIsCreatingRoom} />}
+      {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} setIsCreatingRoom={setIsCreatingRoom} />}
       {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}
       <Notification type={notification} onClose={() => setNotification(null)} />
     </div>

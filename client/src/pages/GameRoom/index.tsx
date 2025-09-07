@@ -615,6 +615,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     handlePlayerBet(currentPlayer.id);
     actions.allIn(currentPlayer.balance);
+    setShowBetSlider(false);
   };
 
   // Обработчик для анимации действий других игроков

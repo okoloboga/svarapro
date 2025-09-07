@@ -9,7 +9,7 @@ export function PopSuccess({ message, onClose }: PopSuccessProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 3000);
+    }, 1500);
 
     return () => {
       clearTimeout(timer);

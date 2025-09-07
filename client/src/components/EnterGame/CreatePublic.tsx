@@ -6,15 +6,14 @@ import completeIcon from '@/assets/completeSmallGreen.png';
 import { apiService } from '@/services/api/api';
 import { CreatePublicProps } from '@/types/components';
 
-export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage, balance, setNotification }) => {
+export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, setCurrentPage, balance, setNotification, setIsCreatingRoom }) => {
   const { t } = useTranslation('common');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Разрешаем только цифры, точку и максимум 2 знака после запятой
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       setInputValue(value);
       const numValue = parseFloat(value);
@@ -34,16 +33,28 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
     }
 
     if (!isValid) return;
-    setIsCreating(true);
+
+    setIsProcessing(true);
+    setIsCreatingRoom(true);
+    onClose(); // Close the modal
+
+    const startTime = Date.now();
     try {
       const room = await apiService.createRoom(stake, 'public');
-      onClose();
+      
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = 3000 - elapsedTime;
+
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+
       setCurrentPage('gameRoom', { roomId: room.roomId, autoSit: true });
     } catch (error) {
       console.error('Failed to create room:', error);
-    } finally {
-      setIsCreating(false);
-    }
+      setIsCreatingRoom(false); // Hide loading on error
+      setNotification('gameJoinError'); // Show a generic error
+    } 
   };
 
   const handleCancel = () => {
@@ -59,6 +70,7 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
           <img src={dollarIcon} alt="dollar" className="absolute left-3 top-1/2 -translate-y-1/2 w-[11px] h-[17px]" />
           <input
             type="text"
+            inputMode="decimal"
             value={inputValue}
             onChange={handleInputChange}
             placeholder={t('min_stake')}
@@ -70,13 +82,14 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
           <button 
             className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-r border-white border-opacity-10 disabled:opacity-50"
             onClick={handleCreate}
-            disabled={isCreating || !isValid}
+            disabled={isProcessing || !isValid}
           >
             {t('create')}
           </button>
           <button 
             className="w-[164px] h-[49px] text-[#5F8BE7] border-t border-white border-opacity-10"
             onClick={handleCancel}
+            disabled={isProcessing}
           >
             {t('cancel')}
           </button>

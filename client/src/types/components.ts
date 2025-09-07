@@ -17,6 +17,7 @@ export type CreatePublicProps = {
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
   setNotification: (type: NotificationType | null) => void;
+  setIsCreatingRoom: (isCreating: boolean) => void;
 };
 
 export type CreatePrivateProps = {
@@ -25,6 +26,7 @@ export type CreatePrivateProps = {
   setCurrentPage: (page: Page, data?: Record<string, unknown>) => void;
   balance: string;
   setNotification: (type: NotificationType | null) => void;
+  setIsCreatingRoom: (isCreating: boolean) => void;
 };
 
 export type ConnectRoomProps = {

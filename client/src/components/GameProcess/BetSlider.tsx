@@ -170,8 +170,8 @@ export function BetSlider({
               </div>
               {/* Кнопка "Повысить" */}
               <button
-                onClick={() => value === maxBet ? onAllIn() : onConfirm(value)}
-                className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs ${
+                onClick={() => (value === maxBet ? onAllIn() : onConfirm(value))}
+                className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs cursor-pointer ${
                   value > maxBet || isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 style={{ backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00' }}
@@ -192,7 +192,7 @@ export function BetSlider({
                   <button
                     key={index}
                     onClick={() => handleMultiplier(mult.value)}
-                    className={`font-medium text-xs leading-none transition flex items-center justify-center ${
+                    className={`font-medium text-xs leading-none transition flex items-center justify-center cursor-pointer ${
                       isDisabled ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     style={{
