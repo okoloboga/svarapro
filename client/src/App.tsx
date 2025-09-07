@@ -75,7 +75,7 @@ type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | '
 function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSdkInitialized, setIsSdkInitialized] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [pageData, setPageData] = useState<PageData | null>(null);
@@ -139,7 +139,6 @@ function App() {
       const loadData = async () => {
         if (!initData) {
           setError('Telegram initialization data not found.');
-          setIsLoading(false);
           return;
         }
 
@@ -220,7 +219,6 @@ function App() {
           console.error('Login error:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
           setError('Failed to load data. Please try again later.');
         }
-        setIsLoading(false);
       };
 
       await loadData();
@@ -251,9 +249,7 @@ function App() {
           </div>
         )}
         
-        {isLoading ? (
-          <LoadingPage isLoading={isLoading} />
-        ) : error ? (
+        {error ? (
           <ErrorAlert code={undefined} customMessage={error} />
         ) : currentPage === 'more' ? (
           <More userData={userData} setCurrentPage={handleSetCurrentPage} />

@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { apiService } from '@/services/api/api';
 import { useState } from 'react';
 import { RoomProps } from '@/types/components';
+import { LoadingPage } from '@/components/LoadingPage';
 
 export function Room({ roomId, players, stake, setCurrentPage, balance, setNotification }: RoomProps) {
   const { t } = useTranslation('common');
   const [isJoining, setIsJoining] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleJoin = async () => {
     const hasEnoughBalance = parseFloat(balance) >= stake * 10;
@@ -17,6 +19,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
     }
 
     setIsJoining(true);
+    setIsLoading(true);
     try {
       await apiService.joinRoom(roomId);
       setCurrentPage('gameRoom', { roomId, autoSit: true });
@@ -28,6 +31,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         setCurrentPage('gameRoom', { roomId, autoSit: false });
       } else {
         setNotification('gameJoinError');
+        setIsLoading(false);
       }
     } finally {
       setIsJoining(false);
@@ -36,15 +40,21 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
 
   const handleWatch = async () => {
     setIsJoining(true);
+    setIsLoading(true);
     try {
       setCurrentPage('gameRoom', { roomId, autoSit: false });
     } catch (error) {
       console.error('Failed to watch room:', error);
       setNotification('gameJoinError');
+      setIsLoading(false);
     } finally {
       setIsJoining(false);
     }
   };
+
+  if (isLoading) {
+    return <LoadingPage isLoading={true} />;
+  }
 
   return (
     <StyledContainer 

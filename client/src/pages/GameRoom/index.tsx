@@ -3,6 +3,7 @@ import { GameRoomProps, GameState, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
+import { useAssetPreloader } from '@/hooks/useAssetPreloader';
 import GameTable from '../../components/GameProcess/GameTable';
 import { ActionButtons } from '../../components/GameProcess/ActionButton';
 import { BetSlider } from '../../components/GameProcess/BetSlider';
@@ -123,6 +124,7 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
   const { gameState, loading, error, isSeated, isProcessing, actions } = useGameState(roomId, socket);
+  const { isLoading: assetsLoading } = useAssetPreloader();
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
@@ -681,7 +683,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [pageData, isSeated, gameState, actions, userData, isSittingDown]);
 
-  if (loading) return <LoadingPage isLoading={loading} />;
+  if (loading || assetsLoading) return <LoadingPage isLoading={loading || assetsLoading} />;
 
   if (error) {
     return (

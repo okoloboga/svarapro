@@ -5,12 +5,14 @@ import incompleteIcon from '@/assets/completeSmallGrey.png';
 import completeIcon from '@/assets/completeSmallGreen.png';
 import { apiService } from '@/services/api/api';
 import { ConnectRoomProps } from '@/types/components';
+import { LoadingPage } from '@/components/LoadingPage';
 
 export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, setCurrentPage }) => {
   const { t } = useTranslation('common');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,6 +26,7 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
   const handleJoin = async () => {
     if (!isValid) return;
     setIsJoining(true);
+    setIsLoading(true);
     setError(null);
     try {
       if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
@@ -34,6 +37,7 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
       setCurrentPage('gameRoom', { roomId: inputValue });
     } catch (error: unknown) {
       setError((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to join room');
+      setIsLoading(false);
     } finally {
       setIsJoining(false);
     }
@@ -43,6 +47,10 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
     onClose();
     openModal();
   };
+
+  if (isLoading) {
+    return <LoadingPage isLoading={true} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
