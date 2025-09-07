@@ -19,10 +19,10 @@ export function SvaraAnimation({ onAnimationComplete }: SvaraAnimationProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 pointer-events-none">
       <div className="animate-pulse-svara">
-        <div className="flex items-center mx-4">
-          <img src={starIcon} alt="*" className="w-12 h-12" />
-          <h1 className="font-semibold text-5xl mx-4 text-white">{t('svara')}</h1>
-          <img src={starIcon} alt="*" className="w-12 h-12" />
+        <div className="flex items-center mx-2">
+          <img src={starIcon} alt="*" className="w-8 h-8" />
+          <h1 className="font-semibold text-3xl mx-2 text-white">{t('svara')}</h1>
+          <img src={starIcon} alt="*" className="w-8 h-8" />
         </div>
       </div>
     </div>
