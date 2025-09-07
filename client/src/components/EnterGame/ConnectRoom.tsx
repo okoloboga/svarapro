@@ -55,6 +55,7 @@ export const ConnectRoom: React.FC<ConnectRoomProps> = ({ onClose, openModal, se
           <img src={lockIcon} alt="lock" className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6" />
           <input
             type="text"
+            inputMode="numeric"
             value={inputValue}
             onChange={handleInputChange}
             placeholder={t('password_for_entry')}
