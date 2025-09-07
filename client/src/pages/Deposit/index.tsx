@@ -43,6 +43,55 @@ export function Deposit({ setCurrentPage }: DepositProps) {
 
   return (
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
+      {/* Cryptocurrency selector element */}
+      <div 
+        className="flex items-center justify-between mb-4"
+        style={{
+          width: '90%',
+          height: '53px',
+          borderRadius: '8px',
+          backgroundColor: '#13121757',
+          boxShadow: '0px 0px 4px 0px #00000040 inset',
+          padding: '0 8px'
+        }}
+      >
+        {/* Left container with "Криптовалюта" */}
+        <div 
+          className="flex items-center justify-center"
+          style={{
+            width: '44%',
+            height: '40px',
+            borderRadius: '8px',
+            background: 'linear-gradient(180deg, #36333B 7.5%, #46434B 100%, #48454D 100%)',
+            color: '#FFFFFF',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '131%',
+            letterSpacing: '-1.1%',
+            textAlign: 'center',
+            verticalAlign: 'middle'
+          }}
+        >
+          {t('cryptocurrency')}
+        </div>
+        
+        {/* Right text "Ещё" */}
+        <div 
+          className="flex items-center justify-center"
+          style={{
+            color: '#808797',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '131%',
+            letterSpacing: '-1.1%',
+            textAlign: 'center',
+            verticalAlign: 'middle'
+          }}
+        >
+          {t('more')}
+        </div>
+      </div>
+
       <h2 className="text-lg font-semibold text-gray-400 mb-4">
         {t('select_currency')}
       </h2>
