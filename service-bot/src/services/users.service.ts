@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 export interface User {
   id: string;
@@ -28,56 +28,70 @@ export class UsersService {
     try {
       const response = await axios.get(`${this.API_BASE_URL}/admin/users`, {
         params: { page, limit },
-        headers: { 'Authorization': `Bearer ${this.API_SECRET}` }
+        headers: { Authorization: `Bearer ${this.API_SECRET}` },
       });
-      
+
       return response.data;
     } catch (error) {
-      console.error('Get users error:', error);
+      console.error("Get users error:", error);
       throw error;
     }
   }
 
   async searchUsers(query: string): Promise<User[]> {
     try {
-      const response = await axios.get(`${this.API_BASE_URL}/admin/users/search`, {
-        params: { q: query },
-        headers: { 'Authorization': `Bearer ${this.API_SECRET}` }
-      });
-      
+      const response = await axios.get(
+        `${this.API_BASE_URL}/admin/users/search`,
+        {
+          params: { q: query },
+          headers: { Authorization: `Bearer ${this.API_SECRET}` },
+        },
+      );
+
       return response.data.users;
     } catch (error) {
-      console.error('Search users error:', error);
+      console.error("Search users error:", error);
       throw error;
     }
   }
 
   async getUserById(telegramId: string): Promise<User> {
     try {
-      const response = await axios.get(`${this.API_BASE_URL}/admin/users/${telegramId}`, {
-        headers: { 'Authorization': `Bearer ${this.API_SECRET}` }
-      });
-      
+      const response = await axios.get(
+        `${this.API_BASE_URL}/admin/users/${telegramId}`,
+        {
+          headers: { Authorization: `Bearer ${this.API_SECRET}` },
+        },
+      );
+
       return response.data;
     } catch (error) {
-      console.error('Get user error:', error);
+      console.error("Get user error:", error);
       throw error;
     }
   }
 
-  async updateBalance(telegramId: string, amount: number, operation: 'add' | 'remove'): Promise<User> {
+  async updateBalance(
+    telegramId: string,
+    amount: number,
+    operation: "add" | "remove",
+  ): Promise<User> {
     try {
-      const response = await axios.post(`${this.API_BASE_URL}/admin/users/${telegramId}/balance`, {
-        amount,
-        operation
-      }, {
-        headers: { 'Authorization': `Bearer ${this.API_SECRET}` }
-      });
-      
+      const response = await axios.post(
+        `${this.API_BASE_URL}/admin/users/${telegramId}/balance`,
+        {
+          amount,
+          operation,
+        },
+        {
+          headers: { Authorization: `Bearer ${this.API_SECRET}` },
+        },
+      );
+
       return response.data;
     } catch (error) {
-      console.error('Update balance error:', error);
+      console.error("Update balance error:", error);
       throw error;
     }
   }
-} 
+}

@@ -14,6 +14,7 @@ import { GameRoom } from './pages/GameRoom';
 import { PopSuccess } from './components/PopSuccess';
 import { initTelegramSdk } from './utils/init';
 import { apiService } from './services/api/api';
+import axios from 'axios';
 import { ErrorAlert } from './components/ErrorAlert';
 import { LoadingPage } from './components/LoadingPage';
 import { useAppBackButton } from './hooks/useAppBackButton';

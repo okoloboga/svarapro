@@ -1,5 +1,5 @@
-declare module 'telegraf-ratelimit' {
-  import { Context, MiddlewareFn } from 'telegraf';
+declare module "telegraf-ratelimit" {
+  import { Context, MiddlewareFn } from "telegraf";
 
   interface RateLimitOptions {
     window?: number;
@@ -9,4 +9,4 @@ declare module 'telegraf-ratelimit' {
 
   function rateLimit(options: RateLimitOptions): MiddlewareFn<Context>;
   export = rateLimit;
-} 
+}

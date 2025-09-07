@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 export interface Stats {
   deposits: number;
@@ -22,13 +22,13 @@ export class StatsService {
   async getStats(): Promise<StatsResponse> {
     try {
       const response = await axios.get(`${this.API_BASE_URL}/admin/stats`, {
-        headers: { 'Authorization': `Bearer ${this.API_SECRET}` }
+        headers: { Authorization: `Bearer ${this.API_SECRET}` },
       });
-      
+
       return response.data;
     } catch (error) {
-      console.error('Get stats error:', error);
+      console.error("Get stats error:", error);
       throw error;
     }
   }
-} 
+}

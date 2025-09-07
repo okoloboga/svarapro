@@ -1221,7 +1221,7 @@ export class GameService {
         if (player && refundAmount > 0) {
           player.balance += refundAmount;
           const refundAction: GameAction = {
-            type: 'return',
+            type: 'return_bet',
             telegramId: playerId,
             amount: refundAmount,
             timestamp: Date.now(),

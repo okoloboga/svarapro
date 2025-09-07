@@ -1,11 +1,11 @@
-import { Context } from 'telegraf';
+import { Context } from "telegraf";
 
 export interface ServiceBotContext extends Context {
   isAdmin?: boolean;
-  locale?: 'ru' | 'en';
+  locale?: "ru" | "en";
 }
 
-export type Locale = 'ru' | 'en';
+export type Locale = "ru" | "en";
 
 export interface AdminSession {
   telegramId: string;

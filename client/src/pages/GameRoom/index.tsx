@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GameRoomProps, GameState, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
@@ -137,6 +137,251 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
   const [isSittingDown, setIsSittingDown] = useState(false);
 
+  // Объявляем переменные для useCallback
+  const currentPlayer = gameState?.players.find(p => p.id === currentUserId);
+  const currentUserPosition = currentPlayer?.position;
+
+  // Объявляем состояния для useCallback
+  const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
+  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
+
+  const getScreenPosition = useCallback((absolutePosition: number) => {
+    if (!currentUserPosition || !isSeated) {
+      return absolutePosition;
+    }
+    const offset = 4 - currentUserPosition;
+    return ((absolutePosition + offset - 1 + 6) % 6) + 1;
+  }, [currentUserPosition, isSeated]);
+
+  const handlePlayerBet = useCallback((playerId: string) => {
+    if (!gameState) return;
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player || !player.isActive) {
+      return;
+    }
+    
+    // Проверяем, не создается ли уже анимация для этого игрока
+    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
+    if (existingAnimation) {
+      return;
+    }
+    
+    const absolutePosition = player.position;
+    const isCurrentPlayer = player.id === currentUserId;
+    // Текущий игрок ВСЕГДА в позиции 4 (снизу по центру), другие игроки преобразуются через getScreenPosition
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(absolutePosition);
+    
+    // Получаем координаты на основе CSS классов позиций PlayerSpot
+    let playerX = 0;
+    let playerY = 0;
+    
+    // Центр экрана (где находится банк)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    // Вычисляем позицию игрока на основе CSS классов из getPositionClasses
+    // Используем точные координаты, соответствующие реальным позициям PlayerSpot
+    const tableWidth = 315 * scale; // Ширина стола
+    const tableHeight = 493 * scale; // Высота стола
+    const verticalOffset = 100; // Смещение вверх для всех позиций
+    
+    switch (relativePosition) {
+      case 1: // -top-10 left-1/2 (верхний центр)
+        playerX = centerX;
+        playerY = centerY - tableHeight * 0.4 - verticalOffset; // Поднимаем выше
+        break;
+      case 2: // top-1/4 -right-5 (правый верхний)
+        playerX = centerX + tableWidth * 0.4;
+        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
+        break;
+      case 3: // bottom-1/4 -right-5 (правый нижний)
+        playerX = centerX + tableWidth * 0.4;
+        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
+        break;
+      case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
+        playerX = centerX;
+        playerY = centerY + tableHeight * 0.4 - verticalOffset; // Поднимаем выше
+        break;
+      case 5: // bottom-1/4 -left-5 (левый нижний)
+        playerX = centerX - tableWidth * 0.4;
+        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
+        break;
+      case 6: // top-1/4 -left-5 (левый верхний)
+        playerX = centerX - tableWidth * 0.4;
+        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
+        break;
+    }
+
+    const chipId = `chip-${Date.now()}-${Math.random()}`;
+    
+    setChipAnimations(prev => [...prev, { 
+      id: chipId, 
+      fromX: playerX, 
+      fromY: playerY, 
+      toX: centerX, 
+      toY: centerY, 
+      delay: 0 
+    }]);
+  }, [gameState, chipAnimations, currentUserId, getScreenPosition, scale, setChipAnimations]);
+
+  const handleOtherPlayerAction = useCallback((playerId: string) => {
+    handlePlayerBet(playerId);
+  }, [handlePlayerBet]);
+
+  const handleDealCards = useCallback(() => {
+    if (!gameState) return;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    // Раздаем по 3 карты каждому активному игроку
+    gameState.players.forEach((player, playerIndex) => {
+      if (!player.isActive) return;
+      
+      const isCurrentPlayer = player.id === currentUserId;
+      const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+      
+      // Вычисляем позицию игрока
+      let playerX = 0;
+      let playerY = 0;
+      
+      switch (relativePosition) {
+        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
+        case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
+        case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
+        case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
+        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
+        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
+      }
+      
+      // Карты летят в центр компонента игрока
+      const cardDeckX = playerX;
+      const cardDeckY = playerY;
+      
+      // Создаем 3 карты для каждого игрока
+      for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+        const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
+        setCardAnimations(prev => [...prev, {
+          id: cardId,
+          fromX: centerX,
+          fromY: centerY,
+          toX: cardDeckX,
+          toY: cardDeckY,
+          delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
+        }]);
+        
+        // Проигрываем звук fold.mp3 для каждой карты с задержкой
+        setTimeout(() => {
+          actions.playSound('fold');
+        }, (playerIndex * 3 + cardIndex) * 200);
+      }
+    });
+  }, [gameState, scale, currentUserId, getScreenPosition, setCardAnimations, actions]);
+
+  const handleChipsToWinner = useCallback(() => {
+    if (!gameState?.winners || gameState.winners.length === 0) {
+      return;
+    }
+    
+    // Если ничья - не запускаем анимацию (фишки остаются в банке)
+    if (gameState.winners.length > 1) {
+      return;
+    }
+    
+    const winner = gameState.winners[0];
+    const winnerPlayer = gameState.players.find(p => p.id === winner.id);
+    
+    if (!winnerPlayer) {
+      return;
+    }
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    
+    const isCurrentPlayer = winnerPlayer.id === currentUserId;
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(winnerPlayer.position);
+    
+    // Вычисляем позицию победителя
+    let winnerX = 0;
+    let winnerY = 0;
+    
+    switch (relativePosition) {
+      case 1: winnerX = centerX; winnerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+      case 2: winnerX = centerX + tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
+      case 3: winnerX = centerX + tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 4: winnerX = centerX; winnerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+      case 5: winnerX = centerX - tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 6: winnerX = centerX - tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
+    }
+    
+    // Подсчитываем количество фишек в банке
+    const chipCount = 10;
+    
+    // Создаем анимацию для каждой фишки
+    for (let i = 0; i < chipCount; i++) {
+      const chipId = `winner-chip-${Date.now()}-${i}`;
+      setChipAnimations(prev => [...prev, {
+        id: chipId,
+        fromX: centerX,
+        fromY: centerY,
+        toX: winnerX,
+        toY: winnerY,
+        delay: i * 50 // Небольшая задержка между фишками
+      }]);
+    }
+  }, [gameState?.winners, gameState?.players, scale, currentUserId, getScreenPosition, setChipAnimations]);
+
+  const handleFoldCards = useCallback((playerId: string) => {
+    if (!gameState) return;
+    
+    const player = gameState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Показываем анимацию сброса карт даже для неактивных игроков (которые только что сбросили)
+    if (!player.isActive && !player.hasFolded) return;
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const tableWidth = 315 * scale;
+    const tableHeight = 493 * scale;
+    const verticalOffset = 100;
+    
+    const isCurrentPlayer = player.id === currentUserId;
+    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+    
+    // Вычисляем позицию игрока
+    let playerX = 0;
+    let playerY = 0;
+    
+    switch (relativePosition) {
+      case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+      case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+      case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+      case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+      case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+    }
+    
+    // Создаем 3 карты для сброса
+    for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+      const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
+      setCardAnimations(prev => [...prev, {
+        id: cardId,
+        fromX: playerX,
+        fromY: playerY,
+        toX: centerX,
+        toY: centerY,
+        delay: cardIndex * 100 // Небольшая задержка между картами
+      }]);
+    }
+  }, [gameState, scale, currentUserId, getScreenPosition, setCardAnimations]);
+
   // TODO: fix svara animation
 
   useEffect(() => {
@@ -164,8 +409,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState, currentUserId, actions]);
 
-  const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
-  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
   const [winSoundPlayed, setWinSoundPlayed] = useState(false);
 
   const [showChipStack, setShowChipStack] = useState(true);
@@ -211,7 +454,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
 
     prevGameStateRef.current = gameState;
-  }, [gameState]);
+  }, [gameState, handleChipsToWinner]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
@@ -257,7 +500,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   };
 
-  const activeGamePhases: GameState['status'][] = ['blind_betting', 'betting'];
+  const activeGamePhases: GameState['status'][] = useMemo(() => ['blind_betting', 'betting'], []);
   const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(effectiveGameStatus) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
   useEffect(() => {
@@ -286,7 +529,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Если ход не активен, сбрасываем таймер в начальное значение
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn, currentUserId]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState]);
 
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {
@@ -350,7 +593,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     
     prevLogLengthRef.current = currentLogLength;
-  }, [gameState?.log?.length, currentUserId, gameState?.status]);
+  }, [gameState?.log?.length, currentUserId, gameState?.status, handleOtherPlayerAction, handleFoldCards, handlePlayerBet, gameState?.log]);
   
   // Отслеживаем изменения в игроках для автоматического запуска анимации раздачи карт
   const prevPlayersRef = useRef<Player[]>([]);
@@ -376,111 +619,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     
     prevPlayersRef.current = currentPlayers;
-  }, [gameState?.players, gameState?.status]);
+  }, [gameState?.players, gameState?.status, handleDealCards]);
 
   // Функция для сброса карт при fold
-  const handleFoldCards = (playerId: string) => {
-    if (!gameState) return;
-    
-    const player = gameState.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    // Показываем анимацию сброса карт даже для неактивных игроков (которые только что сбросили)
-    if (!player.isActive && !player.hasFolded) return;
-    
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    const verticalOffset = 100;
-    
-    const isCurrentPlayer = player.id === currentUserId;
-    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
-    
-    // Вычисляем позицию игрока
-    let playerX = 0;
-    let playerY = 0;
-    
-    switch (relativePosition) {
-      case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
-      case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
-      case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
-      case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
-    }
-    
-    // Создаем 3 карты для сброса
-    for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
-      const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
-      setCardAnimations(prev => [...prev, {
-        id: cardId,
-        fromX: playerX,
-        fromY: playerY,
-        toX: centerX,
-        toY: centerY,
-        delay: cardIndex * 100 // Небольшая задержка между картами
-      }]);
-    }
-  };
-
-  // Функция для анимации фишек к победителю
-  const handleChipsToWinner = () => {
-    if (!gameState?.winners || gameState.winners.length === 0) {
-      return;
-    }
-    
-    // Если ничья - не запускаем анимацию (фишки остаются в банке)
-    if (gameState.winners.length > 1) {
-      return;
-    }
-    
-    const winner = gameState.winners[0];
-    const winnerPlayer = gameState.players.find(p => p.id === winner.id);
-    
-    if (!winnerPlayer) {
-      return;
-    }
-    
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    const verticalOffset = 100;
-    
-    const isCurrentPlayer = winnerPlayer.id === currentUserId;
-    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(winnerPlayer.position);
-    
-    // Вычисляем позицию победителя
-    let winnerX = 0;
-    let winnerY = 0;
-    
-    switch (relativePosition) {
-      case 1: winnerX = centerX; winnerY = centerY - tableHeight * 0.4 - verticalOffset; break;
-      case 2: winnerX = centerX + tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
-      case 3: winnerX = centerX + tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 4: winnerX = centerX; winnerY = centerY + tableHeight * 0.4 - verticalOffset; break;
-      case 5: winnerX = centerX - tableWidth * 0.4; winnerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 6: winnerX = centerX - tableWidth * 0.4; winnerY = centerY - tableHeight * 0.25; break;
-    }
-    
-    // Подсчитываем количество фишек в банке
-    const chipCount = 10;
-    
-    // Создаем анимацию для каждой фишки
-    for (let i = 0; i < chipCount; i++) {
-      const chipId = `winner-chip-${Date.now()}-${i}`;
-      setChipAnimations(prev => [...prev, {
-        id: chipId,
-        fromX: centerX,
-        fromY: centerY,
-        toX: winnerX,
-        toY: winnerY,
-        delay: i * 50 // Небольшая задержка между фишками
-      }]);
-    }
-  };
-
   // Play win sound for current user if they won
   useEffect(() => {
     if (winSequenceStep === 'winner') {
@@ -558,17 +699,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     );
   }
 
-  const currentPlayer = gameState.players.find(p => p.id === currentUserId);
-  const currentUserPosition = currentPlayer?.position;
-
-  const getScreenPosition = (absolutePosition: number) => {
-    if (!currentUserPosition || !isSeated) {
-      return absolutePosition;
-    }
-    const offset = 4 - currentUserPosition;
-    return ((absolutePosition + offset - 1 + 6) % 6) + 1;
-  };
-  
   const callAmount = gameState.lastActionAmount;
   const isAnimating = !!(gameState.isAnimating);
   const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
@@ -618,135 +748,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     setShowBetSlider(false);
   };
 
-  // Обработчик для анимации действий других игроков
-  const handleOtherPlayerAction = (playerId: string) => {
-    handlePlayerBet(playerId);
-  };
 
-  // Функция для раздачи карт от центра стола к игрокам
-  const handleDealCards = () => {
-    
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    const verticalOffset = 100;
-    
 
-    
-    // Раздаем по 3 карты каждому активному игроку
-    gameState.players.forEach((player, playerIndex) => {
-      if (!player.isActive) return;
-      
-      const isCurrentPlayer = player.id === currentUserId;
-      const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
-      
-      // Вычисляем позицию игрока
-      let playerX = 0;
-      let playerY = 0;
-      
-      switch (relativePosition) {
-        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
-        case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
-        case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
-        case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
-        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
-        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
-      }
-      
-      // Карты летят в центр компонента игрока
-      const cardDeckX = playerX;
-      const cardDeckY = playerY;
-      
-      // Создаем 3 карты для каждого игрока
-      for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
-        const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
-        setCardAnimations(prev => [...prev, {
-          id: cardId,
-          fromX: centerX,
-          fromY: centerY,
-          toX: cardDeckX,
-          toY: cardDeckY,
-          delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
-        }]);
-        
-        // Проигрываем звук fold.mp3 для каждой карты с задержкой
-        setTimeout(() => {
-          actions.playSound('fold');
-        }, (playerIndex * 3 + cardIndex) * 200);
-      }
-    });
-  };
 
-  const handlePlayerBet = (playerId: string) => {
-    const player = gameState.players.find(p => p.id === playerId);
-    if (!player || !player.isActive) {
-      return;
-    }
-    
-    // Проверяем, не создается ли уже анимация для этого игрока
-    const existingAnimation = chipAnimations.find(chip => chip.id.includes(playerId));
-    if (existingAnimation) {
-      return;
-    }
-    
-    const absolutePosition = player.position;
-    const isCurrentPlayer = player.id === currentUserId;
-    // Текущий игрок ВСЕГДА в позиции 4 (снизу по центру), другие игроки преобразуются через getScreenPosition
-    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(absolutePosition);
-    
-    // Получаем координаты на основе CSS классов позиций PlayerSpot
-    let playerX = 0;
-    let playerY = 0;
-    
-    // Центр экрана (где находится банк)
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    
-    // Вычисляем позицию игрока на основе CSS классов из getPositionClasses
-    // Используем точные координаты, соответствующие реальным позициям PlayerSpot
-    const tableWidth = 315 * scale; // Ширина стола
-    const tableHeight = 493 * scale; // Высота стола
-    const verticalOffset = 100; // Смещение вверх для всех позиций
-    
-    switch (relativePosition) {
-      case 1: // -top-10 left-1/2 (верхний центр)
-        playerX = centerX;
-        playerY = centerY - tableHeight * 0.4 - verticalOffset; // Поднимаем выше
-        break;
-      case 2: // top-1/4 -right-5 (правый верхний)
-        playerX = centerX + tableWidth * 0.4;
-        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
-        break;
-      case 3: // bottom-1/4 -right-5 (правый нижний)
-        playerX = centerX + tableWidth * 0.4;
-        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
-        break;
-      case 4: // -bottom-10 left-1/2 (нижний центр) - текущий пользователь
-        playerX = centerX;
-        playerY = centerY + tableHeight * 0.4 - verticalOffset; // Поднимаем выше
-        break;
-      case 5: // bottom-1/4 -left-5 (левый нижний)
-        playerX = centerX - tableWidth * 0.4;
-        playerY = centerY + tableHeight * 0.25 - verticalOffset; // Поднимаем выше
-        break;
-      case 6: // top-1/4 -left-5 (левый верхний)
-        playerX = centerX - tableWidth * 0.4;
-        playerY = centerY - tableHeight * 0.25; // Поднимаем выше
-        break;
-    }
-
-    const chipId = `chip-${Date.now()}-${Math.random()}`;
-    
-    setChipAnimations(prev => [...prev, { 
-      id: chipId, 
-      fromX: playerX, 
-      fromY: playerY, 
-      toX: centerX, 
-      toY: centerY, 
-      delay: 0 
-    }]);
-  };
 
   const handleRaiseClick = () => setShowBetSlider(true);
   const handleBlindBetClick = () => {
