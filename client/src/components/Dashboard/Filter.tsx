@@ -37,12 +37,12 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
   };
 
   return (
-    <div className="mb-4 relative" style={{ zIndex: 10 }}>
+    <div className="mb-4 relative" style={{ zIndex: 15 }}>
       <StyledContainer 
         className="mx-auto mt-6 w-[93vw] h-[50px]"
         contentClassName="w-full h-full flex items-center justify-between p-2"
       >
-        <div className="relative w-[120px]">
+        <div className="relative w-[104px]">
           <input
             type="text"
             placeholder={t('room_number')}
@@ -63,7 +63,8 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
           iconPosition="right"
           iconClassName={`w-[15px] h-[7px] transition-transform duration-300 ${isPanelOpen ? 'rotate-180' : ''}`}
           onClick={handleTogglePanel} 
-          className="w-[48px] h-[34px] mx-2 text-sm"
+          className="w-[48px] h-[34px] mx-2"
+          style={{ fontSize: '10px' }}
         >
           {t('stakes')}
         </Button>
