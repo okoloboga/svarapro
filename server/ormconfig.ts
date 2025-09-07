@@ -14,4 +14,4 @@ export default new DataSource({
   migrations: [__dirname + '/src/migrations/*{.ts,.js}'],
   synchronize: false, // Отключаем для продакшена
   logging: process.env.NODE_ENV === 'development',
-}); 
+});

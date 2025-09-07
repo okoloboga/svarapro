@@ -38,7 +38,6 @@ import * as Joi from 'joi';
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (config: ConfigService) => {
-        const nodeEnv = config.get<string>('NODE_ENV');
         return {
           type: 'postgres',
           host: config.get<string>('POSTGRES_HOST'),
@@ -67,10 +66,12 @@ import * as Joi from 'joi';
     BullModule.registerQueue({
       name: 'callback-queue',
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 минута
-      limit: 100, // максимум 100 запросов в минуту
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 минута
+        limit: 100, // максимум 100 запросов в минуту
+      },
+    ]),
     AuthModule,
     UsersModule,
     FinancesModule,

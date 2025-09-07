@@ -39,6 +39,6 @@ export class TransactionGateway {
   @SubscribeMessage('join')
   handleJoin(client: Socket, userId: string) {
     void client.join(userId);
-          // DEBUG log removed
+    // DEBUG log removed
   }
 }

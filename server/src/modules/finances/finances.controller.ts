@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { FinancesService } from './finances.service';
 import { Logger } from '@nestjs/common';
+import { CallbackDto } from './dto/callback.dto';
 
 @Controller('finances')
 export class FinancesController {
@@ -76,19 +77,17 @@ export class FinancesController {
   }
 
   @Post('callback')
-  async handleCallback(
-    @Body() body: any,
-  ) {
+  async handleCallback(@Body() body: CallbackDto) {
     // DEBUG log removed
-    
+
     // Поддержка как старого формата (tracker_id), так и нового (uid)
     const trackerId = body.tracker_id || body.uid;
-    
+
     if (!trackerId) {
       this.logger.error('tracker_id or uid is required in callback');
       throw new BadRequestException('tracker_id or uid is required');
     }
-    
+
     await this.financesService.addToCallbackQueue(
       trackerId,
       body.client_transaction_id,

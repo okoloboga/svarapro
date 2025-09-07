@@ -13,7 +13,7 @@ export class AdminsService {
 
   async createPassword(telegramId: string, password: string): Promise<Admin> {
     const passwordHash = await bcrypt.hash(password, 10);
-    
+
     const admin = this.adminRepository.create({
       telegramId,
       passwordHash,
@@ -24,32 +24,32 @@ export class AdminsService {
   }
 
   async verifyPassword(telegramId: string, password: string): Promise<boolean> {
-    const admin = await this.adminRepository.findOne({ 
-      where: { telegramId, isActive: true } 
+    const admin = await this.adminRepository.findOne({
+      where: { telegramId, isActive: true },
     });
-    
+
     if (!admin) return false;
-    
+
     const isValid = await bcrypt.compare(password, admin.passwordHash);
-    
+
     if (isValid) {
       admin.lastLoginAt = new Date();
       await this.adminRepository.save(admin);
     }
-    
+
     return isValid;
   }
 
   async hasPassword(telegramId: string): Promise<boolean> {
-    const admin = await this.adminRepository.findOne({ 
-      where: { telegramId, isActive: true } 
+    const admin = await this.adminRepository.findOne({
+      where: { telegramId, isActive: true },
     });
     return !!admin;
   }
 
   async isAdmin(telegramId: string): Promise<boolean> {
-    const admin = await this.adminRepository.findOne({ 
-      where: { telegramId, isActive: true } 
+    const admin = await this.adminRepository.findOne({
+      where: { telegramId, isActive: true },
     });
     return !!admin;
   }

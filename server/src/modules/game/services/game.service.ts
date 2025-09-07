@@ -64,7 +64,9 @@ export class GameService {
     }
 
     if (gameState) {
-      const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
+      const playerIndex = gameState.players.findIndex(
+        (p) => p.id === telegramId,
+      );
 
       if (playerIndex > -1) {
         const removedPlayer = gameState.players[playerIndex];
@@ -137,12 +139,20 @@ export class GameService {
     try {
       gameState = await this.redisService.getGameState(roomId);
       if (!gameState) {
-        console.error(`[joinRoom] Game state not found for room ${roomId}, user ${telegramId}`);
+        console.error(
+          `[joinRoom] Game state not found for room ${roomId}, user ${telegramId}`,
+        );
         return { success: false, error: 'Игра не найдена' };
       }
     } catch (error) {
-      console.error(`[joinRoom] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
-      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
+      console.error(
+        `[joinRoom] Redis error getting game state for room ${roomId}, user ${telegramId}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: 'Ошибка подключения к серверу. Попробуйте еще раз.',
+      };
     }
 
     return { success: true, gameState };
@@ -158,12 +168,20 @@ export class GameService {
     try {
       gameState = await this.redisService.getGameState(roomId);
       if (!gameState) {
-        console.error(`[sitDown] Game state not found for room ${roomId}, user ${telegramId}`);
+        console.error(
+          `[sitDown] Game state not found for room ${roomId}, user ${telegramId}`,
+        );
         return { success: false, error: 'Игра не найдена' };
       }
     } catch (error) {
-      console.error(`[sitDown] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
-      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
+      console.error(
+        `[sitDown] Redis error getting game state for room ${roomId}, user ${telegramId}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: 'Ошибка подключения к серверу. Попробуйте еще раз.',
+      };
     }
 
     if (gameState.players.some((p) => p.position === position)) {
@@ -268,22 +286,29 @@ export class GameService {
     }
 
     // ИСПРАВЛЕНИЕ: Проверяем случай свары с недостатком средств
-    if (gameState!.isSvara) {
-      const svaraParticipants = gameState!.players.filter(p => 
-        gameState!.svaraParticipants?.includes(p.id) && p.isActive
+    if (gameState.isSvara) {
+      const svaraParticipants = gameState.players.filter(
+        (p) => gameState!.svaraParticipants?.includes(p.id) && p.isActive,
       );
-      
+
       // Если у участников свары нет денег для анте, делим банк пополам
-      const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState!.minBet);
-      if (participantsWithoutMoney.length === svaraParticipants.length && svaraParticipants.length === 2) {
-        const winAmount = Number((gameState!.pot / 2).toFixed(2));
-        const rake = Number((gameState!.pot * 0.05).toFixed(2));
-        
+      const participantsWithoutMoney = svaraParticipants.filter(
+        (p) => p.balance < gameState!.minBet,
+      );
+      if (
+        participantsWithoutMoney.length === svaraParticipants.length &&
+        svaraParticipants.length === 2
+      ) {
+        const winAmount = Number((gameState.pot / 2).toFixed(2));
+        const rake = Number((gameState.pot * 0.05).toFixed(2));
+
         for (const participant of svaraParticipants) {
-          const playerIndex = gameState!.players.findIndex(p => p.id === participant.id);
+          const playerIndex = gameState.players.findIndex(
+            (p) => p.id === participant.id,
+          );
           if (playerIndex !== -1) {
-            gameState!.players[playerIndex].balance += winAmount;
-            
+            gameState.players[playerIndex].balance += winAmount;
+
             const action: GameAction = {
               type: 'win',
               telegramId: participant.id,
@@ -291,10 +316,10 @@ export class GameService {
               timestamp: Date.now(),
               message: `Игрок ${participant.username} получил ${winAmount} в сваре (недостаток средств)`,
             };
-            gameState!.log.push(action);
+            gameState.log.push(action);
           }
         }
-        
+
         // Добавляем действие о комиссии
         if (rake > 0) {
           const action: GameAction = {
@@ -303,16 +328,16 @@ export class GameService {
             timestamp: Date.now(),
             message: `Комиссия: ${rake}`,
           };
-          gameState!.log.push(action);
+          gameState.log.push(action);
         }
-        
+
         // Завершаем игру
-        gameState!.pot = 0;
-        gameState!.status = 'finished';
-        gameState!.winners = svaraParticipants;
-        
-        await this.redisService.setGameState(roomId, gameState!);
-        await this.redisService.publishGameUpdate(roomId, gameState!);
+        gameState.pot = 0;
+        gameState.status = 'finished';
+        gameState.winners = svaraParticipants;
+
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
         return;
       }
     }
@@ -375,19 +400,30 @@ export class GameService {
     try {
       gameState = await this.redisService.getGameState(roomId);
       if (!gameState) {
-        console.error(`[joinSvara] Game state not found for room ${roomId}, user ${telegramId}`);
+        console.error(
+          `[joinSvara] Game state not found for room ${roomId}, user ${telegramId}`,
+        );
         return { success: false, error: 'Игра не найдена' };
       }
     } catch (error) {
-      console.error(`[joinSvara] Redis error getting game state for room ${roomId}, user ${telegramId}:`, error);
-      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
+      console.error(
+        `[joinSvara] Redis error getting game state for room ${roomId}, user ${telegramId}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: 'Ошибка подключения к серверу. Попробуйте еще раз.',
+      };
     }
 
     if (gameState.status !== 'svara_pending') {
       if (gameState.svaraConfirmed?.includes(telegramId)) {
         return { success: true, gameState };
       } else {
-        return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
+        return {
+          success: false,
+          error: 'Сейчас нельзя присоединиться к сваре',
+        };
       }
     }
 
@@ -511,12 +547,20 @@ export class GameService {
     try {
       gameState = await this.redisService.getGameState(roomId);
       if (!gameState) {
-        console.error(`[processAction] Game state not found for room ${roomId}, user ${telegramId}, action ${action}`);
+        console.error(
+          `[processAction] Game state not found for room ${roomId}, user ${telegramId}, action ${action}`,
+        );
         return { success: false, error: 'Игра не найдена' };
       }
     } catch (error) {
-      console.error(`[processAction] Redis error getting game state for room ${roomId}, user ${telegramId}, action ${action}:`, error);
-      return { success: false, error: 'Ошибка подключения к серверу. Попробуйте еще раз.' };
+      console.error(
+        `[processAction] Redis error getting game state for room ${roomId}, user ${telegramId}, action ${action}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: 'Ошибка подключения к серверу. Попробуйте еще раз.',
+      };
     }
 
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
@@ -533,7 +577,10 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'all_in', 'call'].includes(action)) {
+    if (
+      player.hasLookedAndMustAct &&
+      !['raise', 'all_in', 'call'].includes(action)
+    ) {
       return {
         success: false,
         error:
@@ -565,8 +612,15 @@ export class GameService {
         );
       case 'call':
         // Обрабатываем call в обеих фазах
-        if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
-          return this.processBlindBettingCallAction(roomId, gameState, playerIndex);
+        if (
+          gameState.status === 'blind_betting' &&
+          gameState.players[playerIndex].hasLookedAndMustAct
+        ) {
+          return this.processBlindBettingCallAction(
+            roomId,
+            gameState,
+            playerIndex,
+          );
         } else {
           return this.processBettingAction(
             roomId,
@@ -578,8 +632,16 @@ export class GameService {
         }
       case 'raise':
         // В blind_betting raise после look обрабатываем специально
-        if (gameState.status === 'blind_betting' && gameState.players[playerIndex].hasLookedAndMustAct) {
-          return this.processBlindBettingRaiseAction(roomId, gameState, playerIndex, amount);
+        if (
+          gameState.status === 'blind_betting' &&
+          gameState.players[playerIndex].hasLookedAndMustAct
+        ) {
+          return this.processBlindBettingRaiseAction(
+            roomId,
+            gameState,
+            playerIndex,
+            amount,
+          );
         } else {
           return this.processBettingAction(
             roomId,
@@ -665,7 +727,7 @@ export class GameService {
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      
+
       // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
       // Если следующий игрок будет якорем, то круг завершается
       let anchorPlayerIndex: number | undefined = undefined;
@@ -760,7 +822,7 @@ export class GameService {
         break;
       }
     }
-    
+
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
     return { success: true, gameState };
@@ -777,12 +839,13 @@ export class GameService {
     switch (action) {
       case 'call': {
         // Обрабатываем call только в фазе betting (не в blind_betting)
-        
+
         // Проверяем, что это не call после look в blind_betting
         if (player.hasLookedAndMustAct) {
           return {
             success: false,
-            error: 'После просмотра карт вы можете только повысить ставку или сбросить карты',
+            error:
+              'После просмотра карт вы можете только повысить ставку или сбросить карты',
           };
         }
 
@@ -918,7 +981,8 @@ export class GameService {
     roomId: string,
     gameState: GameState,
   ): Promise<void> {
-    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    const scoreResult =
+      this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
@@ -954,19 +1018,28 @@ export class GameService {
 
     if (participants.length >= 2) {
       // ИСПРАВЛЕНИЕ: Проверяем, могут ли участники свары внести деньги
-      const svaraPlayers = gameState.players.filter(p => participants.includes(p.id));
-      const playersWithoutMoney = svaraPlayers.filter(p => p.balance < gameState.minBet);
-      
+      const svaraPlayers = gameState.players.filter((p) =>
+        participants.includes(p.id),
+      );
+      const playersWithoutMoney = svaraPlayers.filter(
+        (p) => p.balance < gameState.minBet,
+      );
+
       // Если у всех участников свары нет денег, делим банк пополам
-      if (playersWithoutMoney.length === svaraPlayers.length && svaraPlayers.length === 2) {
+      if (
+        playersWithoutMoney.length === svaraPlayers.length &&
+        svaraPlayers.length === 2
+      ) {
         const winAmount = Number((gameState.pot / 2).toFixed(2));
         const rake = Number((gameState.pot * 0.05).toFixed(2));
-        
+
         for (const player of svaraPlayers) {
-          const playerIndex = gameState.players.findIndex(p => p.id === player.id);
+          const playerIndex = gameState.players.findIndex(
+            (p) => p.id === player.id,
+          );
           if (playerIndex !== -1) {
             gameState.players[playerIndex].balance += winAmount;
-            
+
             const action: GameAction = {
               type: 'win',
               telegramId: player.id,
@@ -977,7 +1050,7 @@ export class GameService {
             gameState.log.push(action);
           }
         }
-        
+
         // Добавляем действие о комиссии
         if (rake > 0) {
           const action: GameAction = {
@@ -988,17 +1061,17 @@ export class GameService {
           };
           gameState.log.push(action);
         }
-        
+
         // Завершаем игру
         gameState.pot = 0;
         gameState.status = 'finished';
         gameState.winners = svaraPlayers;
-        
+
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
         return;
       }
-      
+
       await this.startSvaraGame(roomId, participants);
     } else if (participants.length === 1) {
       await this.endGameWithWinner(roomId, gameState);
@@ -1100,7 +1173,10 @@ export class GameService {
 
       setTimeout(() => {
         this.distributeWinnings(roomId).catch((error) => {
-          console.error(`Failed to distribute winnings for room ${roomId}:`, error);
+          console.error(
+            `Failed to distribute winnings for room ${roomId}:`,
+            error,
+          );
         });
       }, 3000);
     }
@@ -1109,7 +1185,9 @@ export class GameService {
   private async distributeWinnings(roomId: string): Promise<void> {
     let gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
-      console.error(`[distributeWinnings] Game state not found for room ${roomId}`);
+      console.error(
+        `[distributeWinnings] Game state not found for room ${roomId}`,
+      );
       return;
     }
 
@@ -1118,11 +1196,13 @@ export class GameService {
       p.lastWinAmount = 0;
     }
 
-    const activePlayersWithBets = gameState.players.filter(p => !p.hasFolded && p.totalBet > 0);
+    const activePlayersWithBets = gameState.players.filter(
+      (p) => !p.hasFolded && p.totalBet > 0,
+    );
     if (activePlayersWithBets.length === 0 && gameState.pot === 0) {
-        // No bets were made, just end the game
-        await this.endGame(roomId, gameState, 'no_winner');
-        return;
+      // No bets were made, just end the game
+      await this.endGame(roomId, gameState, 'no_winner');
+      return;
     }
 
     const potManager = new PotManager();
@@ -1161,13 +1241,16 @@ export class GameService {
       const rake = Number((amount * 0.05).toFixed(2));
       totalRake += rake;
       const winAmount = amount - rake;
-      const winPerPlayer = Number((winAmount / potWinnerPlayers.length).toFixed(2));
+      const winPerPlayer = Number(
+        (winAmount / potWinnerPlayers.length).toFixed(2),
+      );
 
       for (const winner of potWinnerPlayers) {
         const playerInState = gameState.players.find((p) => p.id === winner.id);
         if (playerInState) {
           playerInState.balance += winPerPlayer;
-          playerInState.lastWinAmount = (playerInState.lastWinAmount || 0) + winPerPlayer;
+          playerInState.lastWinAmount =
+            (playerInState.lastWinAmount || 0) + winPerPlayer;
 
           const winAction: GameAction = {
             type: 'win',
@@ -1180,16 +1263,16 @@ export class GameService {
         }
       }
     }
-    
+
     // Log total rake
     if (totalRake > 0) {
-        const rakeAction: GameAction = {
-            type: 'join', // Using 'join' for system messages as before
-            telegramId: 'system',
-            timestamp: Date.now(),
-            message: `Общая комиссия: ${totalRake.toFixed(2)}`,
-        };
-        gameState.log.push(rakeAction);
+      const rakeAction: GameAction = {
+        type: 'join', // Using 'join' for system messages as before
+        telegramId: 'system',
+        timestamp: Date.now(),
+        message: `Общая комиссия: ${totalRake.toFixed(2)}`,
+      };
+      gameState.log.push(rakeAction);
     }
 
     // 3. Finalize state
@@ -1218,12 +1301,19 @@ export class GameService {
     await this.endGame(roomId, gameState, 'winner');
   }
 
-  private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
+  private async endGame(
+    roomId: string,
+    gameState: GameState,
+    reason: 'winner' | 'no_winner' | 'svara',
+  ): Promise<void> {
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
       room.finishedAt = new Date();
-      room.winner = reason === 'winner' && gameState.winners ? gameState.winners[0]?.id : undefined;
+      room.winner =
+        reason === 'winner' && gameState.winners
+          ? gameState.winners[0]?.id
+          : undefined;
       await this.redisService.setRoom(roomId, room);
       await this.redisService.publishRoomUpdate(roomId, room);
     }
@@ -1248,16 +1338,16 @@ export class GameService {
       return { success: false, error: 'Недостаточно средств' };
     }
 
-    const { updatedPlayer, action: allInAction } = this.playerService.processPlayerBet(
-      player,
-      allInAmount,
-      'all_in',
-    );
+    const { updatedPlayer, action: allInAction } =
+      this.playerService.processPlayerBet(player, allInAmount, 'all_in');
 
-    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(updatedPlayer, {
-      isAllIn: true,
-      lastAction: 'raise',
-    });
+    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+      updatedPlayer,
+      {
+        isAllIn: true,
+        lastAction: 'raise',
+      },
+    );
 
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
@@ -1288,12 +1378,15 @@ export class GameService {
       }
 
       // Рассчитываем очки для всех игроков
-      const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+      const scoreResult =
+        this.gameStateService.calculateScoresForPlayers(gameState);
       gameState = scoreResult.updatedGameState;
       gameState.log.push(...scoreResult.actions);
     }
 
-    const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
+    const activePlayers = gameState.players.filter(
+      (p) => p.isActive && !p.hasFolded,
+    );
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
     if (allInPlayers.length === activePlayers.length) {
@@ -1320,29 +1413,30 @@ export class GameService {
     playerIndex: number,
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
-    
+
     // В blind_betting call означает оплату просмотра карт
-    const callAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet : gameState.minBet;
-    
+    const callAmount =
+      gameState.lastBlindBet > 0 ? gameState.lastBlindBet : gameState.minBet;
+
     if (callAmount <= 0) {
       return {
         success: false,
         error: 'Нечего уравнивать',
       };
     }
-    
+
     if (player.balance < callAmount) {
       return { success: false, error: 'Недостаточно средств' };
     }
 
     const { updatedPlayer, action: callAction } =
       this.playerService.processPlayerBet(player, callAmount, 'call');
-    
+
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       updatedPlayer,
       { hasLookedAndMustAct: false },
     );
-    
+
     gameState.lastActionAmount = callAmount;
     gameState.log.push(callAction);
 
@@ -1369,7 +1463,8 @@ export class GameService {
     }
 
     // Рассчитываем очки для всех игроков
-    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    const scoreResult =
+      this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
@@ -1450,7 +1545,7 @@ export class GameService {
       updatedPlayer,
       { hasLookedAndMustAct: false },
     );
-    
+
     gameState.lastRaiseIndex = playerIndex;
     gameState.lastActionAmount = raiseAmount;
     gameState.log.push(raiseAction);
@@ -1478,7 +1573,8 @@ export class GameService {
     }
 
     // Рассчитываем очки для всех игроков
-    const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+    const scoreResult =
+      this.gameStateService.calculateScoresForPlayers(gameState);
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 

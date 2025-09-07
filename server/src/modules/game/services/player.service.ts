@@ -130,8 +130,6 @@ export class PlayerService {
   determineWinners(players: Player[]): Player[] {
     const activePlayers = players.filter((p) => p.isActive && !p.hasFolded);
 
-    
-
     if (activePlayers.length === 0) {
       return [];
     }

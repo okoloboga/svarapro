@@ -1,6 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
+interface ExistsResult {
+  exists: boolean;
+}
+
 @Injectable()
 export class MigrationService implements OnModuleInit {
   constructor(private readonly dataSource: DataSource) {}
@@ -8,9 +12,9 @@ export class MigrationService implements OnModuleInit {
   async onModuleInit() {
     try {
       console.log('🔄 Starting database migrations...');
-      
+
       // Проверяем, есть ли таблица migrations
-      const hasMigrationsTable = await this.dataSource.query(`
+      const hasMigrationsTable = await this.dataSource.query<ExistsResult[]>(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_name = 'migrations'
@@ -30,11 +34,11 @@ export class MigrationService implements OnModuleInit {
 
       // Запускаем миграции
       await this.dataSource.runMigrations();
-      
+
       console.log('✅ Database migrations completed successfully');
     } catch (error) {
       console.error('❌ Error running migrations:', error);
       throw error;
     }
   }
-} 
+}

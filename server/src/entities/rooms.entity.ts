@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('rooms')
@@ -12,7 +12,7 @@ export class Room {
   @Column()
   type: 'public' | 'private';
 
-  @OneToMany(() => User, user => user.currentRoom)
+  @OneToMany(() => User, (user) => user.currentRoom)
   players: User[];
 
   @Column()

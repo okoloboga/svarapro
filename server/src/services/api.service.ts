@@ -1,41 +1,54 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { createHmac } from 'crypto';
 import axiosRetry from 'axios-retry';
 
-interface ExnodeCreateTransactionResponse {
-  status: string;
-  tracker_id: string;
-  token_name?: string;
-  refer?: string;
-  alter_refer?: string;
-  description?: string | null;
-  dest_tag?: string | null;
-  extra_info?: Record<string, any> | null;
+// Alfabit API Response Interfaces
+interface AlfabitApiResponse<T> {
+  message: string;
+  data: T;
 }
 
-interface ExnodeTransactionStatusResponse {
+interface AlfabitInvoiceData {
+  uid: string;
+  requisites: string;
+  requisitesMemoTag?: string | null;
+  requisitesQrCode?: string | null;
+}
+
+interface AlfabitWithdrawData {
+  uid: string;
+}
+
+interface AlfabitOrderStatusData {
+  amountInFact?: string;
   status: string;
-  transaction: {
-    amount?: number;
-    status: string;
-    hash?: string;
-    client_transaction_id?: string;
-    token?: string;
-    amount_usd?: number;
-    invoice_amount_usd?: number;
-    transaction_commission?: number;
-    transaction_description?: string | null;
-    type?: string;
-    receiver?: string;
-    callback_url?: string | null;
-    dest_tag?: string | null;
-    extra_info?: Record<string, any> | null;
-    date_create?: string;
-    date_update?: string;
-    token_major_name?: string;
-    course?: number;
-  };
+  txId?: string;
+  currencyInCode?: string;
+  currencyOutCode?: string;
+}
+
+interface AlfabitCurrency {
+  assetCode: string;
+  usdPrice: string;
+  assetName: string;
+}
+
+interface AlfabitWithdrawFee {
+  toAssetCode: string;
+  toCurrencyCode: string;
+  toCurrencyName: string;
+  fixFee: number;
+  rate: number;
+  isTurnRate: boolean;
+  minOut: number;
+  maxOut: number;
+}
+
+interface AlfabitBalance {
+  assetCode: string;
+  currencyCode: string;
+  balance: string;
+  balanceUsd: string;
 }
 
 @Injectable()
@@ -43,9 +56,10 @@ export class ApiService {
   // Старый эквайринг Exnode (закомментирован для возможности восстановления)
   // private readonly baseUrl = 'https://my.exnode.io';
   // private readonly apiPublic = process.env.EXNODE_API_PUBLIC;
-  
+
   // Новый эквайринг Alfabit
-  private readonly baseUrl = process.env.ALFABIT_BASE_URL || 'https://pay.alfabit.org';
+  private readonly baseUrl =
+    process.env.ALFABIT_BASE_URL || 'https://pay.alfabit.org';
   private readonly apiKey = process.env.ALFABIT_API_KEY;
   private readonly callBackUrl =
     'https://svarapro.com/api/v1/finances/callback';
@@ -87,7 +101,12 @@ export class ApiService {
   async createDepositAddress(
     token: string,
     clientTransactionId: string,
-  ): Promise<{ address: string; trackerId: string; destTag?: string | null; qrCodeUrl?: string | null }> {
+  ): Promise<{
+    address: string;
+    trackerId: string;
+    destTag?: string | null;
+    qrCodeUrl?: string | null;
+  }> {
     if (!this.supportedTokens.includes(token)) {
       this.logger.error(`Unsupported token: ${token}`);
       throw new BadRequestException(`Unsupported token: ${token}`);
@@ -183,8 +202,8 @@ export class ApiService {
 
     try {
       // DEBUG logs removed
-      
-      const response = await axios.post(
+
+      const response = await axios.post<AlfabitApiResponse<AlfabitInvoiceData>>(
         `${this.baseUrl}/api/v1/integration/orders/invoice/without-amount`,
         requestBody,
         {
@@ -341,17 +360,15 @@ export class ApiService {
     try {
       // DEBUG logs removed
 
-      const response = await axios.post(
-        `${this.baseUrl}/api/v1/integration/orders/withdraw`,
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.getApiKey(),
-          },
-          timeout: 10000,
+      const response = await axios.post<
+        AlfabitApiResponse<AlfabitWithdrawData>
+      >(`${this.baseUrl}/api/v1/integration/orders/withdraw`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': this.getApiKey(),
         },
-      );
+        timeout: 10000,
+      });
 
       if (response.data.message !== 'ok') {
         this.logger.error(
@@ -363,9 +380,7 @@ export class ApiService {
       }
 
       const withdrawData = response.data.data;
-      this.logger.log(
-        `Withdraw transaction created: uid: ${withdrawData.uid}`,
-      );
+      this.logger.log(`Withdraw transaction created: uid: ${withdrawData.uid}`);
 
       return {
         trackerId: withdrawData.uid,
@@ -404,15 +419,14 @@ export class ApiService {
     // DEBUG log removed
 
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/api/v1/integration/orders/${trackerId}`,
-        {
-          headers: {
-            'x-api-key': this.getApiKey(),
-          },
-          timeout: 10000,
+      const response = await axios.get<
+        AlfabitApiResponse<AlfabitOrderStatusData>
+      >(`${this.baseUrl}/api/v1/integration/orders/${trackerId}`, {
+        headers: {
+          'x-api-key': this.getApiKey(),
         },
-      );
+        timeout: 10000,
+      });
 
       if (response.data.message !== 'ok') {
         this.logger.error(
@@ -424,16 +438,24 @@ export class ApiService {
       }
 
       const orderData = response.data.data;
-      
+
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
-      
+
       // Если есть сумма в amountInFact - это успешный депозит
       if (orderData.amountInFact && parseFloat(orderData.amountInFact) > 0) {
         mappedStatus = 'SUCCESS';
-      } else if (orderData.status === 'paid' || orderData.status === 'completed' || orderData.status === 'success') {
+      } else if (
+        orderData.status === 'paid' ||
+        orderData.status === 'completed' ||
+        orderData.status === 'success'
+      ) {
         mappedStatus = 'SUCCESS';
-      } else if (orderData.status === 'failed' || orderData.status === 'cancelled' || orderData.status === 'invoiceNotPayed') {
+      } else if (
+        orderData.status === 'failed' ||
+        orderData.status === 'cancelled' ||
+        orderData.status === 'invoiceNotPayed'
+      ) {
         mappedStatus = 'ERROR';
       }
       // Промежуточные статусы остаются pending только если нет суммы
@@ -444,7 +466,9 @@ export class ApiService {
 
       return {
         status: mappedStatus,
-        amount: orderData.amountInFact ? parseFloat(orderData.amountInFact) : undefined,
+        amount: orderData.amountInFact
+          ? parseFloat(orderData.amountInFact)
+          : undefined,
         transactionHash: orderData.txId,
         clientTransactionId: undefined, // Alfabit не возвращает clientTransactionId, поэтому оставляем undefined
         token: orderData.currencyInCode || orderData.currencyOutCode,
@@ -464,15 +488,17 @@ export class ApiService {
     }
   }
 
-  async getCurrencies(): Promise<{
-    assetCode: string;
-    usdPrice: string;
-    assetName: string;
-  }[]> {
+  async getCurrencies(): Promise<
+    {
+      assetCode: string;
+      usdPrice: string;
+      assetName: string;
+    }[]
+  > {
     // DEBUG log removed
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<AlfabitApiResponse<AlfabitCurrency[]>>(
         `${this.baseUrl}/api/v1/integration/assets/currencies`,
         {
           headers: {
@@ -483,9 +509,7 @@ export class ApiService {
       );
 
       if (response.data.message !== 'ok') {
-        this.logger.error(
-          `Failed to get currencies: ${response.data.message}`,
-        );
+        this.logger.error(`Failed to get currencies: ${response.data.message}`);
         throw new BadRequestException(
           `Failed to get currencies: ${response.data.message}`,
         );
@@ -494,7 +518,7 @@ export class ApiService {
       const currencies = response.data.data;
       this.logger.log(`Retrieved ${currencies.length} currencies from Alfabit`);
 
-      return currencies.map((currency: any) => ({
+      return currencies.map((currency) => ({
         assetCode: currency.assetCode,
         usdPrice: currency.usdPrice,
         assetName: currency.assetName,
@@ -516,8 +540,8 @@ export class ApiService {
 
   async getCurrencyRate(assetCode: string): Promise<number> {
     const currencies = await this.getCurrencies();
-    const currency = currencies.find(c => c.assetCode === assetCode);
-    
+    const currency = currencies.find((c) => c.assetCode === assetCode);
+
     if (!currency) {
       this.logger.warn(`Currency ${assetCode} not found, using default rate`);
       return 1; // Fallback rate
@@ -528,28 +552,29 @@ export class ApiService {
     return rate;
   }
 
-  async getWithdrawFees(): Promise<{
-    toAssetCode: string;
-    toCurrencyCode: string;
-    toCurrencyName: string;
-    fixFee: number;
-    rate: number;
-    isTurnRate: boolean;
-    minOut: number;
-    maxOut: number;
-  }[]> {
+  async getWithdrawFees(): Promise<
+    {
+      toAssetCode: string;
+      toCurrencyCode: string;
+      toCurrencyName: string;
+      fixFee: number;
+      rate: number;
+      isTurnRate: boolean;
+      minOut: number;
+      maxOut: number;
+    }[]
+  > {
     // DEBUG log removed
 
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/api/v1/integration/assets/withdraw-fee`,
-        {
-          headers: {
-            'x-api-key': this.getApiKey(),
-          },
-          timeout: 10000,
+      const response = await axios.get<
+        AlfabitApiResponse<AlfabitWithdrawFee[]>
+      >(`${this.baseUrl}/api/v1/integration/assets/withdraw-fee`, {
+        headers: {
+          'x-api-key': this.getApiKey(),
         },
-      );
+        timeout: 10000,
+      });
 
       if (response.data.message !== 'ok') {
         this.logger.error(
@@ -586,10 +611,12 @@ export class ApiService {
     maxOut: number;
   }> {
     const fees = await this.getWithdrawFees();
-    const fee = fees.find(f => f.toCurrencyCode === currencyCode);
-    
+    const fee = fees.find((f) => f.toCurrencyCode === currencyCode);
+
     if (!fee) {
-      this.logger.warn(`Withdraw fee for ${currencyCode} not found, using default`);
+      this.logger.warn(
+        `Withdraw fee for ${currencyCode} not found, using default`,
+      );
       return {
         fixFee: 0,
         rate: 0,
@@ -598,7 +625,9 @@ export class ApiService {
       };
     }
 
-    this.logger.log(`Withdraw fee for ${currencyCode}: fixFee=${fee.fixFee}, rate=${fee.rate}%`);
+    this.logger.log(
+      `Withdraw fee for ${currencyCode}: fixFee=${fee.fixFee}, rate=${fee.rate}%`,
+    );
     return {
       fixFee: fee.fixFee,
       rate: fee.rate,
@@ -607,16 +636,18 @@ export class ApiService {
     };
   }
 
-  async getMerchantBalances(): Promise<{
-    assetCode: string;
-    currencyCode: string;
-    balance: string;
-    balanceUsd: string;
-  }[]> {
+  async getMerchantBalances(): Promise<
+    {
+      assetCode: string;
+      currencyCode: string;
+      balance: string;
+      balanceUsd: string;
+    }[]
+  > {
     // DEBUG log removed
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<AlfabitApiResponse<AlfabitBalance[]>>(
         `${this.baseUrl}/api/v1/integration/merchant/balances`,
         {
           headers: {
@@ -636,7 +667,9 @@ export class ApiService {
       }
 
       const balances = response.data.data;
-      this.logger.log(`Retrieved ${balances.length} merchant balances from Alfabit`);
+      this.logger.log(
+        `Retrieved ${balances.length} merchant balances from Alfabit`,
+      );
 
       return balances;
     } catch (error) {

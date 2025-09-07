@@ -64,7 +64,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId } = payload;
     const telegramId = this.getTelegramId(client);
-    const userData = this.getUserData(client);
 
     if (!telegramId) {
       console.error('No telegramId provided for join_room');
@@ -125,7 +124,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId, action, amount } = payload;
     const telegramId = this.getTelegramId(client);
-    
 
     if (telegramId) {
       const result = await this.gameService.processAction(
@@ -167,11 +165,11 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     }
 
     const { roomId, phrase } = payload;
-    
+
     // Broadcast to all clients in the room, including the sender
-    this.server.to(roomId).emit('new_chat_message', { 
-      playerId: telegramId, 
-      phrase 
+    this.server.to(roomId).emit('new_chat_message', {
+      playerId: telegramId,
+      phrase,
     });
   }
 

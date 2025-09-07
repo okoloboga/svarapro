@@ -10,6 +10,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { TransactionStatusDto } from './dto/transaction-status.dto';
 import { TelegramService } from '../../services/telegram.service';
+import { CallbackDto } from './dto/callback.dto';
 
 @Injectable()
 export class FinancesService {
@@ -152,35 +153,49 @@ export class FinancesService {
   async processCallback(
     trackerId: string,
     clientTransactionIdFromCallback?: string,
-    callbackData?: any,
+    callbackData?: CallbackDto,
   ): Promise<void> {
     // DEBUG log removed
 
     let transactionData: TransactionStatusDto;
-    
+
     // Если у нас есть данные из колбэка, используем их
     if (callbackData && callbackData.status) {
       // Маппинг статусов Alfabit на наши статусы
       let mappedStatus = 'pending';
-      
+
       // Если есть сумма в amountInFact - это успешный депозит
-      if (callbackData.amountInFact && parseFloat(callbackData.amountInFact) > 0) {
+      if (
+        callbackData.amountInFact &&
+        parseFloat(callbackData.amountInFact) > 0
+      ) {
         mappedStatus = 'SUCCESS';
-      } else if (callbackData.status === 'success' || callbackData.status === 'completed' || callbackData.status === 'SUCCESS') {
+      } else if (
+        callbackData.status === 'success' ||
+        callbackData.status === 'completed' ||
+        callbackData.status === 'SUCCESS'
+      ) {
         mappedStatus = 'SUCCESS';
-      } else if (callbackData.status === 'failed' || callbackData.status === 'cancelled' || callbackData.status === 'invoiceNotPayed' || callbackData.status === 'ERROR') {
+      } else if (
+        callbackData.status === 'failed' ||
+        callbackData.status === 'cancelled' ||
+        callbackData.status === 'invoiceNotPayed' ||
+        callbackData.status === 'ERROR'
+      ) {
         mappedStatus = 'ERROR';
       }
       // Промежуточные статусы остаются pending только если нет суммы
-      
+
       transactionData = {
         status: mappedStatus,
-        amount: callbackData.amountInFact ? parseFloat(callbackData.amountInFact) : undefined,
+        amount: callbackData.amountInFact
+          ? parseFloat(callbackData.amountInFact)
+          : undefined,
         transactionHash: callbackData.txId,
         clientTransactionId: undefined,
         token: callbackData.currencyInCode || callbackData.currencyOutCode,
       };
-      
+
       // DEBUG logs removed
     } else {
       // Fallback: получаем статус через API
@@ -211,17 +226,11 @@ export class FinancesService {
       this.logger.warn(
         `Transaction not found for trackerId: ${trackerId}. Checking if transaction exists with different criteria...`,
       );
-      
+
       // Попробуем найти транзакцию по другим критериям для отладки
-      const allTransactions = await this.transactionRepository.find({
-        where: {},
-        relations: ['user'],
-        take: 10,
-        order: { createdAt: 'DESC' },
-      });
-      
+
       // DEBUG log removed
-      
+
       return;
     }
 
@@ -233,7 +242,7 @@ export class FinancesService {
         );
         return;
       }
-      
+
       transaction.status = 'complete';
       transaction.amount = transactionData.amount;
       transaction.transaction_hash = transactionData.transactionHash;
@@ -244,29 +253,37 @@ export class FinancesService {
       if (user) {
         if (transaction.type === 'deposit') {
           // Конвертируем валюту в USDT по курсу
-          const currencyRate = await this.apiService.getCurrencyRate(transaction.currency);
+          const currencyRate = await this.apiService.getCurrencyRate(
+            transaction.currency,
+          );
           const convertedAmount = transactionData.amount * currencyRate;
-          
+
           this.logger.log(
             `Deposit conversion: ${transactionData.amount} ${transaction.currency} * ${currencyRate} = ${convertedAmount} USDT`,
           );
-          
+
           user.balance += convertedAmount;
           user.totalDeposit += convertedAmount;
           await this.userRepository.save(user);
 
           // Отправляем уведомление в Telegram о пополнении баланса
           try {
-            const message = `💰 *Баланс пополнен!*\n\n` +
+            const message =
+              `💰 *Баланс пополнен!*\n\n` +
               `💵 *Сумма:* ${convertedAmount.toFixed(2)} USDT\n` +
               `💳 *Новый баланс:* ${user.balance.toFixed(2)} USDT\n` +
               `📅 *Дата:* ${new Date().toLocaleString('ru-RU')}\n\n` +
               `Спасибо за пополнение!`;
-            
+
             await this.telegramService.sendMessage(user.telegramId, message);
-            this.logger.log(`Telegram notification sent for deposit to user ${user.telegramId}`);
+            this.logger.log(
+              `Telegram notification sent for deposit to user ${user.telegramId}`,
+            );
           } catch (error) {
-            this.logger.error(`Failed to send Telegram notification for deposit to user ${user.telegramId}:`, error);
+            this.logger.error(
+              `Failed to send Telegram notification for deposit to user ${user.telegramId}:`,
+              error,
+            );
             // Не прерываем процесс из-за ошибки уведомления
           }
 
@@ -332,7 +349,7 @@ export class FinancesService {
         );
         return;
       }
-      
+
       transaction.status = 'failed';
       if (transaction.type === 'withdraw') {
         const user = await this.userRepository.findOne({
@@ -371,14 +388,14 @@ export class FinancesService {
   async addToCallbackQueue(
     trackerId: string,
     clientTransactionId?: string,
-    callbackData?: any,
+    callbackData?: CallbackDto,
   ): Promise<void> {
     try {
       await this.callbackQueue.add(
         'process-callback',
         { trackerId, clientTransactionId, callbackData },
-        { 
-          attempts: 3, 
+        {
+          attempts: 3,
           backoff: 5000,
           delay: 2000, // Уменьшаем задержку до 2 секунд
           jobId: `callback-${trackerId}`, // Уникальный ID для дедупликации
@@ -407,12 +424,14 @@ export class FinancesService {
     return amount;
   }
 
-  async getMerchantBalances(): Promise<{
-    assetCode: string;
-    currencyCode: string;
-    balance: string;
-    balanceUsd: string;
-  }[]> {
+  async getMerchantBalances(): Promise<
+    {
+      assetCode: string;
+      currencyCode: string;
+      balance: string;
+      balanceUsd: string;
+    }[]
+  > {
     // DEBUG log removed
     return await this.apiService.getMerchantBalances();
   }

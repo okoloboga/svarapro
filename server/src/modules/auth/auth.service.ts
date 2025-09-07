@@ -23,7 +23,7 @@ export class AuthService {
 
     const params = new URLSearchParams(decodeURIComponent(initData));
     const userParam = params.get('user');
-    
+
     if (!userParam)
       throw new UnauthorizedException('Missing user data in initData');
 

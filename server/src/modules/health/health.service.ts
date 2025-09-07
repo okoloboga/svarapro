@@ -60,7 +60,7 @@ export class HealthService {
 
   async detailedCheck(): Promise<DetailedHealthStatus> {
     const startTime = Date.now();
-    
+
     const status: DetailedHealthStatus = {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -80,7 +80,8 @@ export class HealthService {
     } catch (error) {
       status.database.status = 'error';
       status.database.responseTime = Date.now() - dbStart;
-      status.database.error = error.message;
+      status.database.error =
+        error instanceof Error ? error.message : String(error);
       status.status = 'error';
     }
 
@@ -93,7 +94,8 @@ export class HealthService {
     } catch (error) {
       status.redis.status = 'error';
       status.redis.responseTime = Date.now() - redisStart;
-      status.redis.error = error.message;
+      status.redis.error =
+        error instanceof Error ? error.message : String(error);
       status.status = 'error';
     }
 
@@ -106,7 +108,8 @@ export class HealthService {
     } catch (error) {
       status.external.status = 'error';
       status.external.responseTime = Date.now() - externalStart;
-      status.external.error = error.message;
+      status.external.error =
+        error instanceof Error ? error.message : String(error);
       status.status = 'error';
     }
 
@@ -129,7 +132,9 @@ export class HealthService {
     try {
       await this.redisService.ping();
     } catch (error) {
-      throw new Error(`Redis connection failed: ${error.message}`);
+      throw new Error(
+        `Redis connection failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -138,4 +143,4 @@ export class HealthService {
     // Можно добавить проверку других внешних API
     return Promise.resolve();
   }
-} 
+}

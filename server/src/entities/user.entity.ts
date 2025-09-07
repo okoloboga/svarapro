@@ -110,6 +110,6 @@ export class User {
   })
   walletAddress: string | null;
 
-  @ManyToOne(() => Room, room => room.players)
+  @ManyToOne(() => Room, (room) => room.players)
   currentRoom: Room | null;
 }

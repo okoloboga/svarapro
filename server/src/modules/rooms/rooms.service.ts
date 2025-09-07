@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '../../services/redis.service';
 import { Room } from '../../types/game';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameStateService } from '../game/services/game-state.service';
-import { Player } from '../../types/game';
+import { User } from '../../entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { TelegramService } from '../../services/telegram.service';
 
@@ -29,7 +28,9 @@ export class RoomsService {
     return rooms;
   }
 
-  async getRoomDetails(roomId: string): Promise<Partial<Room> & { playerCount: number } | null> {
+  async getRoomDetails(
+    roomId: string,
+  ): Promise<(Partial<Room> & { playerCount: number }) | null> {
     const room = await this.redisService.getRoom(roomId);
     if (!room) {
       return null;
@@ -43,9 +44,9 @@ export class RoomsService {
     };
   }
 
-  async createRoom(createRoomDto: CreateRoomDto, user: any): Promise<Room> {
+  async createRoom(createRoomDto: CreateRoomDto, user: User): Promise<Room> {
     let roomId: string;
-    
+
     if (createRoomDto.type === 'private') {
       // Для приватных комнат ID = пароль
       roomId = createRoomDto.password!;
@@ -53,7 +54,7 @@ export class RoomsService {
       // Для публичных комнат генерируем случайный 6-значный ID
       roomId = Math.floor(100000 + Math.random() * 900000).toString();
     }
-    
+
     const newRoom: Room = {
       roomId,
       minBet: createRoomDto.minBet,
@@ -78,15 +79,19 @@ export class RoomsService {
     // Отправляем уведомление в Telegram о создании приватной комнаты
     if (createRoomDto.type === 'private' && createRoomDto.password) {
       try {
-        const message = `🎮 *Новая приватная комната создана!*\n\n` +
+        const message =
+          `🎮 *Новая приватная комната создана!*\n\n` +
           `🔐 *Пароль:* \`${createRoomDto.password}\`\n` +
           `💰 *Минимальная ставка:* $${createRoomDto.minBet}\n\n` +
           `Присоединяйтесь к игре, используя пароль выше!`;
-        
+
         // Отправляем сообщение в чат с ботом
         await this.telegramService.sendMessage(user.telegramId, message);
       } catch (error) {
-        console.error(`Failed to send Telegram notification for private room ${roomId}:`, error);
+        console.error(
+          `Failed to send Telegram notification for private room ${roomId}:`,
+          error,
+        );
         // Не прерываем создание комнаты из-за ошибки уведомления
       }
     }
@@ -94,10 +99,10 @@ export class RoomsService {
     return newRoom;
   }
 
-  async joinRoom(roomId: string, user: any): Promise<Room> {
+  async joinRoom(roomId: string, user: User): Promise<Room> {
     // Ищем комнату по ID
-    let room = await this.redisService.getRoom(roomId);
-    
+    const room = await this.redisService.getRoom(roomId);
+
     if (!room) {
       throw new Error('Room not found');
     }

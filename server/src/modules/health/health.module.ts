@@ -8,4 +8,4 @@ import { RedisService } from '../../services/redis.service';
   providers: [HealthService, RedisService],
   exports: [HealthService],
 })
-export class HealthModule {} 
+export class HealthModule {}

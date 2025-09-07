@@ -1,4 +1,3 @@
-
 import { Player } from '../../../types/game';
 
 // Represents a single pot
@@ -17,22 +16,20 @@ export class PotManager {
   private pots: Pot[] = [];
   private playerBets: Map<string, number> = new Map(); // Total bet per player for the round
   private returnedBets: Map<string, number> = new Map();
-  
 
   public processBets(players: Player[]) {
     this.reset();
-    const activePlayers = players.filter(p => !p.hasFolded && p.totalBet > 0);
+    const activePlayers = players.filter((p) => !p.hasFolded && p.totalBet > 0);
     if (activePlayers.length === 0) return;
 
-    activePlayers.forEach(p => {
-        this.playerBets.set(p.id, p.totalBet);
+    activePlayers.forEach((p) => {
+      this.playerBets.set(p.id, p.totalBet);
     });
 
     this.calculatePots();
   }
 
   private calculatePots() {
-
     const tempBets = new Map(this.playerBets);
     let lastPotLevel = 0;
 
@@ -84,8 +81,6 @@ export class PotManager {
         }
       }
     }
-
-
   }
 
   public getPots(): Pot[] {
@@ -96,15 +91,23 @@ export class PotManager {
     return this.returnedBets;
   }
 
-  public getWinners(players: Player[]): { potIndex: number; winners: Player[]; amount: number }[] {
-    const winnersResult: { potIndex: number; winners: Player[]; amount: number }[] = [];
-    
+  public getWinners(
+    players: Player[],
+  ): { potIndex: number; winners: Player[]; amount: number }[] {
+    const winnersResult: {
+      potIndex: number;
+      winners: Player[];
+      amount: number;
+    }[] = [];
+
     for (let i = 0; i < this.pots.length; i++) {
       const pot = this.pots[i];
       let bestHandValue = -1;
       let potWinners: Player[] = [];
 
-      const eligiblePlayers = players.filter(p => pot.eligiblePlayers.has(p.id));
+      const eligiblePlayers = players.filter((p) =>
+        pot.eligiblePlayers.has(p.id),
+      );
 
       for (const player of eligiblePlayers) {
         const handValue = player.score || 0; // Assuming score is pre-calculated
@@ -115,7 +118,11 @@ export class PotManager {
           potWinners.push(player);
         }
       }
-      winnersResult.push({ potIndex: i, winners: potWinners, amount: pot.amount });
+      winnersResult.push({
+        potIndex: i,
+        winners: potWinners,
+        amount: pot.amount,
+      });
     }
     return winnersResult;
   }

@@ -32,7 +32,9 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   await app.listen(3000);
-  console.log(`[${processId}] Application is running on: ${await app.getUrl()}`);
+  console.log(
+    `[${processId}] Application is running on: ${await app.getUrl()}`,
+  );
 }
 
 // Обработчики сигналов для корректного завершения

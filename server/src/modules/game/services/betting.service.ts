@@ -118,8 +118,6 @@ export class BettingService {
     // Если есть несколько победителей, делим выигрыш поровну
     const winPerPlayer = Number((winAmount / winnerIds.length).toFixed(2));
 
-
-
     for (const winnerId of winnerIds) {
       const winner = updatedGameState.players.find((p) => p.id === winnerId);
       if (winner) {
@@ -205,12 +203,15 @@ export class BettingService {
           // The check for whether a bet exists is handled by game.service.
           return { canPerform: true };
         }
-        
+
         // Разрешаем call в blind_betting только если игрок посмотрел карты
-        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
+        if (
+          gameState.status === 'blind_betting' &&
+          player.hasLookedAndMustAct
+        ) {
           return { canPerform: true };
         }
-        
+
         return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
       }
 
@@ -219,7 +220,10 @@ export class BettingService {
           return { canPerform: true };
         }
         // ИСПРАВЛЕНИЕ: В blind_betting raise разрешен только для игроков, которые посмотрели карты
-        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) {
+        if (
+          gameState.status === 'blind_betting' &&
+          player.hasLookedAndMustAct
+        ) {
           return { canPerform: true };
         }
         return { canPerform: false, error: 'Сейчас нельзя повышать' };

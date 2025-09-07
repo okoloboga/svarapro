@@ -11,4 +11,4 @@ import { Room } from '../../entities/rooms.entity';
   controllers: [AdminController],
   providers: [AdminApiGuard],
 })
-export class AdminModule {} 
+export class AdminModule {}

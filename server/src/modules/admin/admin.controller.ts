@@ -1,10 +1,23 @@
-import { Controller, Get, Post, Body, Param, Query, BadRequestException, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  BadRequestException,
+  UseGuards,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { Transaction } from '../../entities/transactions.entity';
 import { Room } from '../../entities/rooms.entity';
 import { AdminApiGuard } from './admin.guard';
+
+interface SumResult {
+  total: string | null;
+}
 
 @Controller('admin')
 @UseGuards(AdminApiGuard)
@@ -24,7 +37,7 @@ export class AdminController {
     @Query('limit') limit: number = 10,
   ) {
     const skip = (page - 1) * limit;
-    
+
     const [users, total] = await this.userRepository.findAndCount({
       skip,
       take: limit,
@@ -32,7 +45,7 @@ export class AdminController {
     });
 
     return {
-      users: users.map(user => ({
+      users: users.map((user) => ({
         id: user.id,
         telegramId: user.telegramId,
         username: user.username,
@@ -66,7 +79,7 @@ export class AdminController {
       .getMany();
 
     return {
-      users: users.map(user => ({
+      users: users.map((user) => ({
         id: user.id,
         telegramId: user.telegramId,
         username: user.username,
@@ -84,7 +97,7 @@ export class AdminController {
   @Get('users/:telegramId')
   async getUserById(@Param('telegramId') telegramId: string) {
     const user = await this.userRepository.findOne({ where: { telegramId } });
-    
+
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -109,7 +122,7 @@ export class AdminController {
     @Body() body: { amount: number; operation: 'add' | 'remove' },
   ) {
     const user = await this.userRepository.findOne({ where: { telegramId } });
-    
+
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -149,13 +162,13 @@ export class AdminController {
 
     // Статистика по дням
     const dayStats = await this.getPeriodStats(dayStart, now);
-    
+
     // Статистика по неделям
     const weekStats = await this.getPeriodStats(weekStart, now);
-    
+
     // Статистика по месяцам
     const monthStats = await this.getPeriodStats(monthStart, now);
-    
+
     // Общая статистика
     const totalStats = await this.getPeriodStats(new Date(0), now);
 
@@ -169,32 +182,41 @@ export class AdminController {
 
   private async getPeriodStats(startDate: Date, endDate: Date) {
     // Статистика транзакций
-    const [deposits, withdrawals] = await Promise.all([
+    const [deposits, withdrawals] = (await Promise.all([
       this.transactionRepository
         .createQueryBuilder('transaction')
         .where('transaction.type = :type', { type: 'deposit' })
         .andWhere('transaction.status = :status', { status: 'complete' })
-        .andWhere('transaction.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+        .andWhere('transaction.createdAt BETWEEN :start AND :end', {
+          start: startDate,
+          end: endDate,
+        })
         .select('SUM(transaction.amount)', 'total')
         .getRawOne(),
-      
+
       this.transactionRepository
         .createQueryBuilder('transaction')
         .where('transaction.type = :type', { type: 'withdraw' })
         .andWhere('transaction.status = :status', { status: 'complete' })
-        .andWhere('transaction.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+        .andWhere('transaction.createdAt BETWEEN :start AND :end', {
+          start: startDate,
+          end: endDate,
+        })
         .select('SUM(transaction.amount)', 'total')
         .getRawOne(),
-    ]);
+    ])) as [SumResult, SumResult];
 
     // Количество игр
     const gamesCount = await this.roomRepository
       .createQueryBuilder('room')
-      .where('room.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+      .where('room.createdAt BETWEEN :start AND :end', {
+        start: startDate,
+        end: endDate,
+      })
       .getCount();
 
-    const depositsTotal = parseFloat(deposits.total) || 0;
-    const withdrawalsTotal = parseFloat(withdrawals.total) || 0;
+    const depositsTotal = parseFloat(deposits?.total || '0') || 0;
+    const withdrawalsTotal = parseFloat(withdrawals?.total || '0') || 0;
     const profit = depositsTotal - withdrawalsTotal;
 
     return {
@@ -204,4 +226,4 @@ export class AdminController {
       gamesCount,
     };
   }
-} 
+}

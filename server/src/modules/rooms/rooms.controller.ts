@@ -1,7 +1,22 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Request } from 'express';
+import { User } from '../../entities/user.entity';
+
+interface AuthenticatedRequest extends Request {
+  user: User;
+}
 
 @Controller('rooms')
 export class RoomsController {
@@ -23,13 +38,16 @@ export class RoomsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async createRoom(@Body() createRoomDto: CreateRoomDto, @Req() req) {
+  async createRoom(
+    @Body() createRoomDto: CreateRoomDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.roomsService.createRoom(createRoomDto, req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/join')
-  join(@Param('id') id: string, @Req() req) {
+  join(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.roomsService.joinRoom(id, req.user);
   }
 }

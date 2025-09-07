@@ -2,6 +2,7 @@ import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { FinancesService } from './finances.service';
 import { Logger } from '@nestjs/common';
+import { CallbackDto } from './dto/callback.dto';
 
 @Processor('callback-queue')
 export class CallbackProcessor {
@@ -13,7 +14,11 @@ export class CallbackProcessor {
 
   @Process('process-callback')
   async handleCallback(
-    job: Job<{ trackerId: string; clientTransactionId?: string; callbackData?: any }>,
+    job: Job<{
+      trackerId: string;
+      clientTransactionId?: string;
+      callbackData?: CallbackDto;
+    }>,
   ) {
     // DEBUG log removed
     try {
