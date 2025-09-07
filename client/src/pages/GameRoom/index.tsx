@@ -427,8 +427,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
-      if (currentStatus === 'finished') {
+      if (currentStatus === 'finished' && winSequenceStep === 'none') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
+        // Защита от повторного срабатывания
         setWinSequenceStep('showdown');
         const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
         const t2 = setTimeout(() => {
@@ -456,7 +457,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
 
     prevGameStateRef.current = gameState;
-  }, [gameState, handleChipsToWinner]);
+  }, [gameState, handleChipsToWinner, winSequenceStep]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');

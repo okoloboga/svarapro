@@ -412,7 +412,7 @@ export function PlayerSpot({
             </div>
           );
         })()}
-        {score !== undefined && !hasFolded && gameState?.status !== 'finished' && (showCards || (isCurrentUser && hasLooked)) && (
+        {score !== undefined && !hasFolded && ((gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 
             width: `${22 * scale}px`, 
             height: `${22 * scale}px`, 
