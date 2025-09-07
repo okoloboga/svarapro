@@ -23,22 +23,38 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
       className="mx-auto mt-6 w-[93vw] h-[108px]"
       contentClassName="w-full h-full flex justify-between items-center p-4"
     >
-      <div className="flex flex-col items-center">
-        <img
-          src={user?.photo_url || 'https://via.placeholder.com/64'}
-          alt="Avatar"
-          className="w-[48.39px] h-[48.39px] rounded-full mb-2"
-        />
+      <div className="flex flex-col items-center" style={{ marginLeft: '5px' }}>
+        <div className="relative">
+          <img
+            src={user?.photo_url || 'https://via.placeholder.com/64'}
+            alt="Avatar"
+            className="w-[48px] h-[48px] rounded-full mb-2 relative z-10"
+          />
+          <div 
+            className="absolute top-0 left-0 rounded-full"
+            style={{ 
+              width: '53px', 
+              height: '53px', 
+              backgroundColor: '#252329',
+              zIndex: 1,
+              transform: 'translate(-2.5px, -2.5px)'
+            }}
+          />
+        </div>
         <p
           className="text-white font-inter font-semibold text-[14px] leading-[21px] text-center"
-          style={{ letterSpacing: '-0.011em', textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)' }}
+          style={{ 
+            letterSpacing: '-0.011em', 
+            textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0px 1px 3px 1px #00000026'
+          }}
         >
           {truncateUsername(user?.username || user?.first_name)}
         </p>
       </div>
       <div className="text-left">
         <div
-          className="bg-[#36333B] text-left px-2 py-1 rounded-lg flex items-baseline"
+          className="bg-[#36333B] text-left px-2 py-1 rounded-lg flex items-center"
           style={{ boxShadow: 'inset 0px 0px 4px rgba(0, 0, 0, 0.25)', width: '185px', height: '30px', position: 'relative', top: '-10px' }}
         >
           <span
@@ -53,10 +69,16 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           </span>
         </div>
         <div className="flex space-x-2 mt-4">
-          <GreenButton onClick={() => setCurrentPage('deposit')}>
+          <GreenButton 
+            onClick={() => setCurrentPage('deposit')}
+            style={{ boxShadow: '0px 1px 3px 1px #00000026' }}
+          >
             {t('deposit')}
           </GreenButton>
-          <RedButton onClick={onWithdrawClick}>
+          <RedButton 
+            onClick={onWithdrawClick}
+            style={{ boxShadow: '0px 1px 3px 1px #00000026' }}
+          >
             {t('withdraw')}
           </RedButton>
         </div>
