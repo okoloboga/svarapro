@@ -45,9 +45,8 @@ export function Deposit({ setCurrentPage }: DepositProps) {
     <div className="bg-primary min-h-screen flex flex-col items-center pt-4 px-4">
       {/* Cryptocurrency selector element */}
       <div 
-        className="flex items-center justify-between mb-4"
+        className="w-[93vw] flex items-center justify-between mb-4"
         style={{
-          width: '90%',
           height: '53px',
           borderRadius: '8px',
           backgroundColor: '#13121757',
@@ -55,51 +54,67 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           padding: '0 8px'
         }}
       >
-        {/* Left container with "Криптовалюта" */}
+        {/* Left half - centered "Криптовалюта" */}
         <div 
           className="flex items-center justify-center"
           style={{
-            width: '44%',
-            height: '40px',
-            borderRadius: '8px',
-            background: 'linear-gradient(180deg, #36333B 7.5%, #46434B 100%, #48454D 100%)',
-            color: '#FFFFFF',
-            fontWeight: 600,
-            fontSize: '16px',
-            lineHeight: '131%',
-            letterSpacing: '-1.1%',
-            textAlign: 'center',
-            verticalAlign: 'middle'
+            width: '50%',
+            height: '100%'
           }}
         >
-          {t('cryptocurrency')}
+          <div 
+            className="flex items-center justify-center"
+            style={{
+              width: '48.8%',
+              height: '40px',
+              borderRadius: '8px',
+              background: 'linear-gradient(0deg, #36333B 7.5%, #46434B 100%, #48454D 100%)',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '16px',
+              lineHeight: '131%',
+              letterSpacing: '-1.1%',
+              textAlign: 'center',
+              verticalAlign: 'middle'
+            }}
+          >
+            {t('cryptocurrency')}
+          </div>
         </div>
         
-        {/* Right button "Ещё" */}
-        <button 
-          className="flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80"
-          onClick={() => {
-            // Open Telegram bot @SvaraPaybot
-            const telegramUrl = 'https://t.me/SvaraPaybot';
-            window.open(telegramUrl, '_blank');
-          }}
+        {/* Right half - centered "Ещё" */}
+        <div 
+          className="flex items-center justify-center"
           style={{
-            color: '#808797',
-            fontWeight: 600,
-            fontSize: '16px',
-            lineHeight: '131%',
-            letterSpacing: '-1.1%',
-            textAlign: 'center',
-            verticalAlign: 'middle',
-            background: 'transparent',
-            border: 'none',
-            padding: '0',
-            WebkitTapHighlightColor: 'transparent',
-            touchAction: 'manipulation'
+            width: '50%',
+            height: '100%'
           }}
         >
-          {t('more')}
-        </button>
+          <button 
+            className="flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80"
+            onClick={() => {
+              // Open Telegram bot @SvaraPaybot
+              const telegramUrl = 'https://t.me/SvaraPaybot';
+              window.open(telegramUrl, '_blank');
+            }}
+            style={{
+              color: '#808797',
+              fontWeight: 600,
+              fontSize: '16px',
+              lineHeight: '131%',
+              letterSpacing: '-1.1%',
+              textAlign: 'center',
+              verticalAlign: 'middle',
+              background: 'transparent',
+              border: 'none',
+              padding: '0',
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
+          >
+            {t('more')}
+          </button>
+        </div>
       </div>
 
       <h2 className="text-lg font-semibold text-gray-400 mb-4">
