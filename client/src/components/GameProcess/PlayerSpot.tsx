@@ -76,30 +76,30 @@ export function PlayerSpot({
   };
 
   // Функция для вычисления суммы последнего действия игрока
-  const getLastActionAmount = () => {
-    if (!gameState?.log) return 0;
-    
-    if (gameState.status === 'betting') {
-      if (gameState.lastActionAmount && gameState.lastActionAmount > 0) {
-        return gameState.lastActionAmount;
-      }
-      
-      const currentPlayerBet = player.currentBet || 0;
-      const gameStateCurrentBet = gameState.currentBet || 0;
-      return Math.max(0, gameStateCurrentBet - currentPlayerBet);
-    }
-    
-    const playerActions = gameState.log
-      .filter((action) => action.telegramId === player.id)
-      .sort((a, b) => b.timestamp - a.timestamp);
-    
-    if (playerActions.length === 0) return 0;
-    
-    const lastAction = playerActions[0];
-    const amount = lastAction.amount || 0;
-    
-    return amount;
-  };
+  // const getLastActionAmount = () => {
+  //   if (!gameState?.log) return 0;
+  //   
+  //   if (gameState.status === 'betting') {
+  //     if (gameState.lastActionAmount && gameState.lastActionAmount > 0) {
+  //       return gameState.lastActionAmount;
+  //     }
+  //     
+  //     const currentPlayerBet = player.currentBet || 0;
+  //     const gameStateCurrentBet = gameState.currentBet || 0;
+  //     return Math.max(0, gameStateCurrentBet - currentPlayerBet);
+  //   }
+  //   
+  //   const playerActions = gameState.log
+  //     .filter((action) => action.telegramId === player.id)
+  //     .sort((a, b) => b.timestamp - a.timestamp);
+  //   
+  //   if (playerActions.length === 0) return 0;
+  //   
+  //   const lastAction = playerActions[0];
+  //   const amount = lastAction.amount || 0;
+  //   
+  //   return amount;
+  // };
 
   const progress = (turnTimer / TURN_DURATION_SECONDS) * 100;
 
@@ -405,7 +405,7 @@ export function PlayerSpot({
           </div>
         )}
 
-        {(() => {
+        {/* {(() => {
           // For other players, show last action amount
           if (!isCurrentUser) {
             const lastActionAmount = getLastActionAmount();
@@ -419,7 +419,7 @@ export function PlayerSpot({
 
           // For the current user, total bet is now shown above avatar
           return null;
-        })()}
+        })()} */}
         {score !== undefined && !hasFolded && ((gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 
             width: `${22 * scale}px`, 
