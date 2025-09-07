@@ -717,8 +717,6 @@ export class GameService {
           updatedPlayer,
           { lastAction: 'blind' },
         );
-        gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
-        gameState.chipCount += 1;
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex;
         gameState.log.push(blindAction);
@@ -807,8 +805,6 @@ export class GameService {
         const { updatedPlayer, action: callAction } =
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
-        gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-        gameState.chipCount += 1;
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         break;
@@ -838,8 +834,6 @@ export class GameService {
 
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
 
-        gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-        gameState.chipCount += 1;
         gameState.lastRaiseIndex = playerIndex;
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
@@ -1124,58 +1118,93 @@ export class GameService {
       p.lastWinAmount = 0;
     }
 
-    const isAllInGame = gameState.players.some((p) => p.isAllIn);
-    const winners = gameState.winners || [];
-
-    if (winners.length === 0) {
-      await this.endGame(roomId, gameState, 'no_winner');
-      return;
+    const activePlayersWithBets = gameState.players.filter(p => !p.hasFolded && p.totalBet > 0);
+    if (activePlayersWithBets.length === 0 && gameState.pot === 0) {
+        // No bets were made, just end the game
+        await this.endGame(roomId, gameState, 'no_winner');
+        return;
     }
 
-    if (isAllInGame) {
-      const potManager = new PotManager();
-      potManager.processBets(gameState.players);
-      const potWinnersList = potManager.getWinners(gameState.players);
+    const potManager = new PotManager();
+    // Use all players for processing, as even folded players might be in the pot from ante
+    potManager.processBets(gameState.players);
 
-      for (const potResult of potWinnersList) {
-        const { winners: potWinnerPlayers, amount } = potResult;
-        if (potWinnerPlayers.length > 0) {
-          const winAmount = Number((amount / potWinnerPlayers.length).toFixed(2));
-          for (const winner of potWinnerPlayers) {
-            const playerInState = gameState.players.find((p) => p.id === winner.id);
-            if (playerInState) {
-              playerInState.balance += winAmount;
-              playerInState.lastWinAmount = (playerInState.lastWinAmount || 0) + winAmount;
-            }
-          }
+    const refunds = potManager.getReturnedBets();
+    const potWinnersList = potManager.getWinners(gameState.players);
+
+    // 1. Process Refunds
+    if (refunds.size > 0) {
+      for (const [playerId, refundAmount] of refunds.entries()) {
+        const player = gameState.players.find((p) => p.id === playerId);
+        if (player && refundAmount > 0) {
+          player.balance += refundAmount;
+          const refundAction: GameAction = {
+            type: 'return',
+            telegramId: playerId,
+            amount: refundAmount,
+            timestamp: Date.now(),
+            message: `Игроку ${player.username} возвращена не-коллированная ставка ${refundAmount}`,
+          };
+          gameState.log.push(refundAction);
         }
       }
-      gameState.pot = 0;
-      gameState.chipCount = 0;
-    } else if (winners.length === 1) {
-      const winnerId = winners[0].id;
-      const winnerBefore = gameState.players.find(p => p.id === winnerId);
-      const balanceBefore = winnerBefore ? winnerBefore.balance : 0;
-
-      const { updatedGameState, actions } = this.bettingService.processWinnings(
-        gameState,
-        [winnerId],
-      );
-      gameState = updatedGameState;
-      gameState.log.push(...actions);
-
-      const winnerAfter = gameState.players.find(p => p.id === winnerId);
-      const balanceAfter = winnerAfter ? winnerAfter.balance : 0;
-      if (winnerAfter) {
-        winnerAfter.lastWinAmount = balanceAfter - balanceBefore;
-      }
     }
 
+    // 2. Process Winnings from each pot
+    let totalRake = 0;
+    for (const potResult of potWinnersList) {
+      const { winners: potWinnerPlayers, amount } = potResult;
+      if (amount <= 0 || potWinnerPlayers.length === 0) {
+        continue;
+      }
+
+      const rake = Number((amount * 0.05).toFixed(2));
+      totalRake += rake;
+      const winAmount = amount - rake;
+      const winPerPlayer = Number((winAmount / potWinnerPlayers.length).toFixed(2));
+
+      for (const winner of potWinnerPlayers) {
+        const playerInState = gameState.players.find((p) => p.id === winner.id);
+        if (playerInState) {
+          playerInState.balance += winPerPlayer;
+          playerInState.lastWinAmount = (playerInState.lastWinAmount || 0) + winPerPlayer;
+
+          const winAction: GameAction = {
+            type: 'win',
+            telegramId: winner.id,
+            amount: winPerPlayer,
+            timestamp: Date.now(),
+            message: `Игрок ${playerInState.username} выиграл ${winPerPlayer}`,
+          };
+          gameState.log.push(winAction);
+        }
+      }
+    }
+    
+    // Log total rake
+    if (totalRake > 0) {
+        const rakeAction: GameAction = {
+            type: 'join', // Using 'join' for system messages as before
+            telegramId: 'system',
+            timestamp: Date.now(),
+            message: `Общая комиссия: ${totalRake.toFixed(2)}`,
+        };
+        gameState.log.push(rakeAction);
+    }
+
+    // 3. Finalize state
+    gameState.pot = 0;
+    gameState.rake = totalRake;
+    gameState.chipCount = 0;
+    // Winners are already set in gameState.winners from endGameWithWinner
+
+    // 4. Persist final balances
     for (const player of gameState.players) {
       await this.usersService.updatePlayerBalance(player.id, player.balance);
       await this.redisService.publishBalanceUpdate(player.id, player.balance);
     }
 
+    // 5. Move to finished state
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'finished',
@@ -1230,8 +1259,6 @@ export class GameService {
       lastAction: 'raise',
     });
 
-    gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
-    gameState.chipCount += 1;
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
     gameState.log.push(allInAction);
@@ -1316,8 +1343,6 @@ export class GameService {
       { hasLookedAndMustAct: false },
     );
     
-    gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-    gameState.chipCount += 1;
     gameState.lastActionAmount = callAmount;
     gameState.log.push(callAction);
 
@@ -1426,8 +1451,6 @@ export class GameService {
       { hasLookedAndMustAct: false },
     );
     
-    gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-    gameState.chipCount += 1;
     gameState.lastRaiseIndex = playerIndex;
     gameState.lastActionAmount = raiseAmount;
     gameState.log.push(raiseAction);
