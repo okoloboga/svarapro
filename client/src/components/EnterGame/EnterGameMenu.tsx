@@ -18,7 +18,7 @@ const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div
-        className="modal-content bg-[#18171C] rounded-[15px]"
+        className="modal-content bg-[#18171C] rounded-[15px] animate-slide-up"
         style={{ width: '316px', height: '162px' }}
       >
         <button className="menu-button" onClick={() => openModal('createPublic')}>

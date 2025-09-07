@@ -61,3 +61,18 @@ body {
 .animate-pulse-svara {
   animation: pulse-svara 2s ease-in-out;
 }
+
+@keyframes slide-up-fade-in {
+  0% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up-fade-in 0.3s ease-out;
+}

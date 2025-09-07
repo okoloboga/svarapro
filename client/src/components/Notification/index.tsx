@@ -46,7 +46,7 @@ export function Notification({ type, onClose }: NotificationProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#47444C] w-[277px] h-[155px] rounded-lg flex flex-col items-center py-4 px-4 relative">
+      <div className="bg-[#47444C] w-[277px] h-[155px] rounded-lg flex flex-col items-center py-4 px-4 relative animate-slide-up">
         <div className="flex flex-col items-center text-center mt-2">
           <img src={icon} alt={type} className="w-8 h-8 mb-4" />
           <p className="text-white font-semibold text-sm">{t(textKey)}</p>
