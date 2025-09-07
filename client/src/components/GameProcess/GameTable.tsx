@@ -32,7 +32,6 @@ interface GameTableProps {
 const GameTable: React.FC<GameTableProps> = ({ 
   gameState, 
   scale = 1, 
-  onChatOpen: _onChatOpen,
   showChipStack = true,
   savedChipCount = 0
 }) => {

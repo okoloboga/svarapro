@@ -1394,7 +1394,9 @@ export class GameService {
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
     if (allInPlayers.length === activePlayers.length) {
-      this.logger.log(`[${roomId}] All players are all-in. Ending betting round.`);
+      this.logger.log(
+        `[${roomId}] All players are all-in. Ending betting round.`,
+      );
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(

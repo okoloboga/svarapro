@@ -60,6 +60,15 @@ interface UserProfile {
   walletAddress?: string | null;
 }
 
+function isErrorResponse(data: unknown): data is { message: string } {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'message' in data &&
+    typeof (data as { message: string }).message === 'string'
+  );
+}
+
 type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
 
 function App() {
@@ -164,8 +173,11 @@ function App() {
               await apiService.joinRoom(roomIdFromPayload);
               handleSetCurrentPage('gameRoom', { roomId: roomIdFromPayload, autoSit: true });
             } catch (error) {
-              const axiosError = error as any;
-              const errorMessage = axiosError.response?.data?.message || '';
+              let errorMessage = '';
+              if (axios.isAxiosError(error) && isErrorResponse(error.response?.data)) {
+                errorMessage = error.response.data.message;
+              }
+
               if (errorMessage.toLowerCase().includes('insufficient') || errorMessage.toLowerCase().includes('funds')) {
                 handleSetCurrentPage('deposit');
               } else {
