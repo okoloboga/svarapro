@@ -85,6 +85,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             rightIcon={copyIcon}
             rightContentClassName="text-[#BBB9BD]"
             iconClassName="w-4 h-4"
+            style={{ height: '53px' }}
           >
             {t('my_id')}
           </Button>
@@ -99,6 +100,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             iconClassName="w-4 h-4"
             rightIconClassName="w-[15px] h-[7px]"
             onClick={() => setShowLanguageSelector(true)}
+            style={{ height: '53px' }}
           >
             {t('current_language')}
           </Button>
@@ -110,6 +112,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={() => setCurrentPage('depositHistory')}
+            style={{ height: '53px' }}
           >
             {t('deposit_history')}
           </Button>
@@ -121,6 +124,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={() => setIsReferralVisible(true)}
+            style={{ height: '53px' }}
           >
             {t('referral_program')}
           </Button>
@@ -132,6 +136,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={handleOpenNewsChannel}
+            style={{ height: '53px' }}
           >
             {t('news_channel')}
           </Button>
@@ -143,6 +148,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={() => setIsEulaVisible(true)}
+            style={{ height: '53px' }}
           >
             {t('user_agreement')}
           </Button>
@@ -154,6 +160,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={() => setIsGamerulesVisible(true)}
+            style={{ height: '53px' }}
           >
             {t('how_to_play')}
           </Button>
@@ -165,6 +172,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             justify="start"
             rightIconClassName="w-[6px] h-[17px]"
             onClick={handleOpenSupportChat}
+            style={{ height: '53px' }}
           >
             {t('support_chat')}
           </Button>
