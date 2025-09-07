@@ -65,9 +65,12 @@ export function More({ userData, setCurrentPage }: MoreProps) {
             <div
               className="fixed inset-0 z-40 bg-black bg-opacity-40 backdrop-blur-sm"
               style={{ backdropFilter: 'blur(6px)' }}
+              onClick={() => setShowLanguageSelector(false)}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
+              </div>
             </div>
           </>
         )}

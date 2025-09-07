@@ -24,7 +24,7 @@ export function LanguageSelector({ onClose }: { onClose: () => void }) {
       className="animate-slide-up"
       style={{
         width: 270,
-        height: 100,
+        height: 95,
         background: '#47444C',
         borderRadius: 8,
         display: 'flex',
