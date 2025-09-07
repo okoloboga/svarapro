@@ -308,6 +308,18 @@ export function PlayerSpot({
               {avatar ? <img src={avatar} alt={username} className="w-full h-full object-cover" /> : <img src={defaultAvatar} alt={username} className="w-full h-full object-cover" /> }
             </div>
             
+            {/* Total bet for current user - positioned above avatar */}
+            {isCurrentUser && TotalBetComponent && (
+              <div 
+                className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center"
+                style={{ 
+                  top: `${-25 * scale}px`,
+                  zIndex: 30
+                }}
+              >
+                {TotalBetComponent}
+              </div>
+            )}
 
           </div>
           <div className="absolute left-1/2 transform -translate-x-1/2 z-20" style={{ bottom: '-4px' }}>
@@ -405,12 +417,8 @@ export function PlayerSpot({
             ) : null;
           }
 
-          // For the current user, show their total bet in the same position
-          return (
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-              {TotalBetComponent}
-            </div>
-          );
+          // For the current user, total bet is now shown above avatar
+          return null;
         })()}
         {score !== undefined && !hasFolded && ((gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 
