@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyledContainer } from '@/components/StyledContainer';
 import { Button } from '@/components/Button/Button';
 import searchIcon from '@/assets/search.svg';
@@ -7,12 +7,18 @@ import { CSSTransition } from 'react-transition-group';
 import { SlidePanel } from './SlidePanel';
 import { useTranslation } from 'react-i18next';
 import { FilterProps } from '@/types/components';
+import { useFilterState } from '@/hooks/useFilterState';
 
 export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: FilterProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isToggleOn, setIsToggleOn] = useState(false);
+  const [isToggleOn, setIsToggleOn] = useFilterState();
   const [searchId, setSearchId] = useState('');
   const { t } = useTranslation('common');
+
+  // Инициализируем состояние Dashboard при загрузке
+  useEffect(() => {
+    onAvailabilityChange(isToggleOn);
+  }, []); // Только при первой загрузке
 
   const handleTogglePanel = () => {
     setIsPanelOpen((prev) => !prev);

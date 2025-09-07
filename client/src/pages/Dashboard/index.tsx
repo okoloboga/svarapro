@@ -13,7 +13,6 @@ import { CreatePrivate } from '@/components/EnterGame/CreatePrivate';
 import { ConnectRoom } from '@/components/EnterGame/ConnectRoom';
 import { DashboardProps, NotificationType } from '@/types/components';
 import { LoadingPage } from '@/components/LoadingPage';
-import { useFilterState } from '@/hooks/useFilterState';
 
 export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress, socket }: DashboardProps) {
 
@@ -23,7 +22,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   }, []);
 
   const [searchId, setSearchId] = useState('');
-  const [isAvailableFilter, setIsAvailableFilter] = useFilterState();
+  const [isAvailableFilter, setIsAvailableFilter] = useState(false);
   const [stakeRange, setStakeRange] = useState<[number, number]>([0, 1000000]);
   const [isAddWalletVisible, setIsAddWalletVisible] = useState(false);
   const [notification, setNotification] = useState<NotificationType | null>(null);
