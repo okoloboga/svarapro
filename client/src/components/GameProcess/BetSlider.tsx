@@ -65,6 +65,7 @@ export function BetSlider({
 
   // Обработчик изменения значения слайдера
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const newValue = parseInt(e.target.value);
     // Ограничиваем значение балансом пользователя
     const limitedValue = Math.min(newValue, maxBet);
@@ -90,6 +91,15 @@ export function BetSlider({
     }
   };
 
+  // Обработчик подтверждения ставки
+  const handleConfirm = () => {
+    if (value === maxBet) {
+      onAllIn();
+    } else {
+      onConfirm(value);
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -101,11 +111,18 @@ export function BetSlider({
     >
       {/* Close Button - над компонентом */}
       <button 
-        onClick={onClose} 
+        onClick={onClose}
+        onTouchStart={(e) => e.preventDefault()}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
         className="absolute z-50"
         style={{ 
           top: 'calc(75vh - 40px)', 
           right: '20px',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation'
         }}
       >
         <img src={closeIcon} alt="Close" style={{ width: '19px', height: '19px' }} />
@@ -170,11 +187,20 @@ export function BetSlider({
               </div>
               {/* Кнопка "Повысить" */}
               <button
-                onClick={() => (value === maxBet ? onAllIn() : onConfirm(value))}
+                onClick={handleConfirm}
+                onTouchStart={(e) => e.preventDefault()}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handleConfirm();
+                }}
                 className={`w-1/4 h-[29px] text-white font-bold rounded-md transition flex items-center justify-center text-xs cursor-pointer ${
                   value > maxBet || isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                style={{ backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00' }}
+                style={{ 
+                  backgroundColor: value > maxBet || isProcessing ? '#666' : '#56BF00',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
+                }}
                 disabled={value > maxBet || isProcessing}
               >
                 {value === maxBet ? t('all_in') : t('raise')}
@@ -192,6 +218,13 @@ export function BetSlider({
                   <button
                     key={index}
                     onClick={() => handleMultiplier(mult.value)}
+                    onTouchStart={(e) => e.preventDefault()}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      if (!isDisabled) {
+                        handleMultiplier(mult.value);
+                      }
+                    }}
                     className={`font-medium text-xs leading-none transition flex items-center justify-center cursor-pointer ${
                       isDisabled ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
@@ -200,7 +233,9 @@ export function BetSlider({
                       height: '19px',
                       borderRadius: '4px',
                       backgroundColor: isDisabled ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.06)',
-                      color: isDisabled ? '#666' : '#C9C6CE'
+                      color: isDisabled ? '#666' : '#C9C6CE',
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation'
                     }}
                     disabled={isDisabled}
                   >
@@ -227,8 +262,15 @@ export function BetSlider({
                     max={maxBet}
                     value={value}
                     onChange={handleChange}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     className="absolute w-full h-full appearance-none bg-transparent cursor-pointer"
-                    style={{ WebkitAppearance: 'none' }}
+                    style={{ 
+                      WebkitAppearance: 'none',
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'pan-x'
+                    }}
                   />
                   {/* Thumb */}
                   <div 
