@@ -54,9 +54,9 @@ export function ConfirmDeposit({ address, currency, trackerId }: ConfirmDepositP
         <p className="font-inter font-medium text-sm leading-normal tracking-tight text-gray-400 text-left mb-4">
           Отправляй по этому адресу только {currency}, иначе средства могут быть утеряны.
         </p>
-        <div className="bg-red-900 bg-opacity-30 rounded-lg p-3 mb-4 w-full flex items-center text-left">
+        <div className="bg-red-900 bg-opacity-30 rounded-lg p-3 mb-4 w-full flex items-center justify-center">
           <img src={warningIcon} alt="Warning" className="w-6 h-6 mr-2" />
-          <span className="text-white font-inter text-xs">
+          <span className="text-white font-inter text-xs text-center">
             Это временный адрес для депозита, осталось минут: {minutes}:{seconds < 10 ? '0' : ''}{seconds}
           </span>
         </div>
@@ -96,25 +96,75 @@ export function ConfirmDeposit({ address, currency, trackerId }: ConfirmDepositP
       </div>
 
       {/* Кнопка копирования адреса */}
-      <YellowButton
-        size="lg"
-        icon={copyIcon}
-        iconPosition="left"
-        onClick={handleCopyAddress}
-        className="w-[93vw]"
-      >
-        Скопировать адрес
-      </YellowButton>
+      <div className="mt-[25px] mb-[25px]">
+        <YellowButton
+          size="lg"
+          icon={copyIcon}
+          iconPosition="left"
+          onClick={handleCopyAddress}
+          className="w-[93vw]"
+        >
+          Скопировать адрес
+        </YellowButton>
+      </div>
 
       {/* Минимальная сумма и комиссия */}
-      <div className="w-[93vw] text-sm text-[#C9C6CE] mb-4 font-semibold tracking-tighter text-[12px]">
+      <div className="w-[93vw] text-[#C9C6CE] mb-4">
         <div className="flex justify-between">
-          <span className="text-left">Минимальная сумма:</span>
-          <span className="text-right">5$ USDT</span>
+          <span 
+            className="text-left"
+            style={{
+              fontWeight: 500,
+              fontStyle: 'normal',
+              fontSize: '12px',
+              lineHeight: '150%',
+              letterSpacing: '-1.1%',
+              verticalAlign: 'middle'
+            }}
+          >
+            Мин.сумма:
+          </span>
+          <span 
+            className="text-right"
+            style={{
+              fontWeight: 500,
+              fontStyle: 'normal',
+              fontSize: '12px',
+              lineHeight: '150%',
+              letterSpacing: '-1.1%',
+              verticalAlign: 'middle'
+            }}
+          >
+            5$ USDT
+          </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-left">Комиссия:</span>
-          <span className="text-right">1%</span>
+          <span 
+            className="text-left"
+            style={{
+              fontWeight: 500,
+              fontStyle: 'normal',
+              fontSize: '12px',
+              lineHeight: '150%',
+              letterSpacing: '-1.1%',
+              verticalAlign: 'middle'
+            }}
+          >
+            Комиссия:
+          </span>
+          <span 
+            className="text-right"
+            style={{
+              fontWeight: 500,
+              fontStyle: 'normal',
+              fontSize: '12px',
+              lineHeight: '150%',
+              letterSpacing: '-1.1%',
+              verticalAlign: 'middle'
+            }}
+          >
+            1%
+          </span>
         </div>
       </div>
     </div>
