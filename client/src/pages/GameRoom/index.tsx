@@ -1047,7 +1047,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       </div>
       
       {isSeated && (
-        <div className="p-4">
+        <div className="px-4 pt-2 pb-4">
           <div className="flex flex-col items-center space-y-4">
             <div>
               {effectiveGameStatus === 'waiting' ? (
