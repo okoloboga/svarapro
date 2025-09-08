@@ -61,7 +61,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             border: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10 }}>
+          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10, margin: '0 auto' }}>
             <Slider
               range
               min={0}
