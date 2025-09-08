@@ -5,6 +5,7 @@ import {
   GameAction,
   GameActionResult,
   Room,
+  Player,
 } from '../../../types/game';
 import { CardService } from './card.service';
 import { PlayerService } from './player.service';
@@ -1147,8 +1148,11 @@ export class GameService {
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
     gameState.winners = overallWinners;
-    
-    console.log(`[${roomId}] Winners set in endGameWithWinner:`, overallWinners.map(w => ({ id: w.id, username: w.username })));
+
+    console.log(
+      `[${roomId}] Winners set in endGameWithWinner:`,
+      overallWinners.map((w) => ({ id: w.id, username: w.username })),
+    );
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
@@ -1172,7 +1176,11 @@ export class GameService {
     }, 3000); // Ждем 3 секунды для показа карт в showdown
   }
 
-  private async declareSvara(roomId: string, gameState: GameState, winners: Player[]): Promise<void> {
+  private async declareSvara(
+    roomId: string,
+    gameState: GameState,
+    winners: Player[],
+  ): Promise<void> {
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'svara_pending',
@@ -1319,7 +1327,14 @@ export class GameService {
     gameState.log.push(...phaseResult.actions);
 
     // Ensure winners are preserved for client animation
-    console.log(`[${roomId}] Final winners:`, gameState.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
+    console.log(
+      `[${roomId}] Final winners:`,
+      gameState.winners?.map((w) => ({
+        id: w.id,
+        username: w.username,
+        lastWinAmount: w.lastWinAmount,
+      })),
+    );
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
