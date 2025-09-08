@@ -36,7 +36,17 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
       }}
     >
       <div className="relative z-10">
-        <p className="text-white text-center mb-2">{t('show_only')}</p>
+        <p 
+          className="text-white text-center mb-2"
+          style={{
+            fontWeight: 600,
+            fontStyle: 'normal',
+            fontSize: '13px',
+            lineHeight: '150%',
+            letterSpacing: '-1.1%',
+            verticalAlign: 'middle'
+          }}
+        >{t('show_only')}</p>
         <div
           className="p-1 rounded-lg relative"
           style={{
@@ -48,6 +58,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             background: '#48454D',
             overflow: 'hidden',
             position: 'relative',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
           <div style={{ position: 'relative', height: '37px', width: '100%', zIndex: 10 }}>
@@ -65,27 +76,31 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   border: 'none', 
                   width: '20px', 
                   height: '20px', 
-                  top: '60%', 
+                  top: '50%', 
                   transform: 'translateY(-50%)',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1
+                  opacity: 1,
+                  left: '50%',
+                  marginLeft: '-130.5px'
                 },
                 { 
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
                   border: 'none', 
                   width: '20px', 
                   height: '20px', 
-                  top: '60%', 
-                  transform: 'translateY(-50%) translateX(-20px)',
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1
+                  opacity: 1,
+                  left: '50%',
+                  marginLeft: '130.5px'
                 },
               ]}
               style={{ width: '100%', position: 'relative', height: '37px' }}
             />
           </div>
         </div>
-        <div className="flex justify-around mt-2" style={{ width: '261px' }}>
+        <div className="flex justify-around mt-2 mx-auto" style={{ width: '261px' }}>
           <span 
             className="text-white"
             style={{
