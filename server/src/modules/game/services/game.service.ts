@@ -1169,6 +1169,8 @@ export class GameService {
       gameState = phaseResult.updatedGameState;
       gameState.log.push(...phaseResult.actions);
       gameState.winners = overallWinners;
+      
+      console.log(`[${roomId}] Winners set in endGameWithWinner:`, overallWinners.map(w => ({ id: w.id, username: w.username })));
 
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
@@ -1296,6 +1298,9 @@ export class GameService {
     );
     gameState = phaseResult.updatedGameState;
     gameState.log.push(...phaseResult.actions);
+
+    // Ensure winners are preserved for client animation
+    console.log(`[${roomId}] Final winners:`, gameState.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
