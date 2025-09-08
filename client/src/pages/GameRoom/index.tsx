@@ -101,12 +101,12 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const zIndex = isShowdown ? 'z-40' : 'z-30';
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
-      1: "-top-15 left-1/2",      // было -top-10, стало -top-15 (на 5px выше)
-      2: "top-1/4 -right-10",     // было -right-5, стало -right-10 (на 5px правее)
-      3: "bottom-1/4 -right-10",  // было -right-5, стало -right-10 (на 5px правее)
-      4: "-bottom-15 left-1/2",   // было -bottom-10, стало -bottom-15 (на 5px ниже)
-      5: "bottom-1/4 -left-10",   // было -left-5, стало -left-10 (на 5px левее)
-      6: "top-1/4 -left-10",      // было -left-5, стало -left-10 (на 5px левее)
+      1: "-top-10 left-1/2",
+      2: "top-1/4 -right-5",
+      3: "bottom-1/4 -right-5",
+      4: "-bottom-10 left-1/2",
+      5: "bottom-1/4 -left-5",
+      6: "top-1/4 -left-5",
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
@@ -429,10 +429,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
+      console.log('🎯 Status change:', previousStatus, '->', currentStatus, 'winSequenceStep:', winSequenceStep);
       if (currentStatus === 'showdown' && winSequenceStep === 'none') {
         // Показываем showdown (затемнение + карты)
         console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         setWinSequenceStep('showdown');
+        
+        // Защита от повторного срабатывания
         const t1 = setTimeout(() => {
           console.log('🎯 Moving to winner step');
           setWinSequenceStep('winner');
