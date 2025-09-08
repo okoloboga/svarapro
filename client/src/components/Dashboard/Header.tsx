@@ -69,7 +69,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
             </span>
           </div>
         </div>
-        <div className="flex space-x-2 mt-4">
+        <div className="flex space-x-2 mt-4" style={{ position: 'relative', zIndex: 20 }}>
           <GreenButton 
             onClick={() => setCurrentPage('deposit')}
             style={{ boxShadow: '0px 1px 3px 1px #00000026' }}
