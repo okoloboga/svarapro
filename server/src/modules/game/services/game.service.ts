@@ -1081,6 +1081,9 @@ export class GameService {
 
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Запускаем новую игру через endGame
+        await this.endGame(roomId, gameState, 'svara');
         return;
       }
 
