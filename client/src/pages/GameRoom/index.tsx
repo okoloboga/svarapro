@@ -457,6 +457,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           clearTimeout(t2);
           clearTimeout(t3);
         };
+      } else if (currentStatus === 'svara_pending') {
+        // Сбрасываем winSequenceStep для свары
+        setWinSequenceStep('none');
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
