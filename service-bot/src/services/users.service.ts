@@ -55,7 +55,7 @@ export class UsersService {
     }
   }
 
-  async getUserById(telegramId: string): Promise<User> {
+  async getUserById(telegramId: string): Promise<User | null> {
     try {
       const response = await axios.get(
         `${this.API_BASE_URL}/admin/users/${telegramId}`,
@@ -65,7 +65,11 @@ export class UsersService {
       );
 
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        console.log(`User ${telegramId} not found`);
+        return null;
+      }
       console.error("Get user error:", error);
       throw error;
     }

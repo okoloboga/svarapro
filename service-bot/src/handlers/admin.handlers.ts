@@ -259,6 +259,13 @@ export class AdminHandlers {
     try {
       const user = await this.usersService.getUserById(telegramId);
 
+      if (!user) {
+        await ctx.reply(`❌ Пользователь с ID \`${telegramId}\` не найден в системе.`, {
+          parse_mode: "Markdown"
+        });
+        return;
+      }
+
       const message =
         `👤 **Информация о пользователе**\n\n` +
         `🆔 ID: \`${user.telegramId}\`\n` +
@@ -441,6 +448,14 @@ export class AdminHandlers {
       );
 
       const user = await this.usersService.getUserById(balanceState.telegramId);
+      
+      if (!user) {
+        await ctx.reply(`❌ Пользователь с ID \`${balanceState.telegramId}\` не найден в системе.`, {
+          parse_mode: "Markdown"
+        });
+        return;
+      }
+      
       const actionText =
         balanceState.action === "add" ? "добавлено" : "списано";
 
