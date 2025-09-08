@@ -102,11 +102,11 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
       1: "-top-12 left-1/2",
-      2: "top-1/5 -right-7",
-      3: "bottom-1/5 -right-7",
+      2: "top-1/3 -right-7",
+      3: "bottom-1/3 -right-7",
       4: "-bottom-12 left-1/2",
-      5: "bottom-1/5 -left-7",
-      6: "top-1/5 -left-7",
+      5: "bottom-1/3 -left-7",
+      6: "top-1/3 -left-7",
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
@@ -457,6 +457,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }
         
         // Запускаем последовательность анимации
+        console.log('🎯 Setting up timers for win sequence');
         const t1 = setTimeout(() => {
           console.log('🎯 Moving to winner step');
           setWinSequenceStep('winner');
@@ -475,6 +476,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setWinSequenceTimer(t3);
 
         return () => {
+          console.log('🎯 Cleaning up win sequence timers (showdown)');
           clearTimeout(t1);
           clearTimeout(t2);
           clearTimeout(t3);
@@ -507,6 +509,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setWinSequenceTimer(t3);
 
         return () => {
+          console.log('🎯 Cleaning up win sequence timers (finished)');
           clearTimeout(t1);
           clearTimeout(t2);
           clearTimeout(t3);
