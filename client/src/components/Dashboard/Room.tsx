@@ -110,7 +110,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
       <div
         style={{
           position: 'absolute',
-          left: '7.5%',
+          left: '30px',
           right: '20%',
           top: '50%',
           height: '1px',
