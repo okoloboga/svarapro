@@ -31,7 +31,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
         background: '#48454D',
         position: 'relative',
         overflow: 'visible',
-        zIndex: 10,
+        zIndex: 5,
         marginTop: '-5px'
       }}
     >
