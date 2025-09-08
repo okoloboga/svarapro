@@ -101,12 +101,12 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const zIndex = isShowdown ? 'z-40' : 'z-30';
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
-      1: "-top-8 left-1/2",
-      2: "top-1/4 -right-8",
-      3: "bottom-1/4 -right-8",
-      4: "-bottom-8 left-1/2",
-      5: "bottom-1/4 -left-8",
-      6: "top-1/4 -left-8",
+      1: "-top-12 left-1/2",
+      2: "top-1/5 -right-7",
+      3: "bottom-1/5 -right-7",
+      4: "-bottom-12 left-1/2",
+      5: "bottom-1/5 -left-7",
+      6: "top-1/5 -left-7",
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
@@ -140,6 +140,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
   const [isSittingDown, setIsSittingDown] = useState(false);
   const [isMenuButtonPressed, setIsMenuButtonPressed] = useState(false);
+  const [winSequenceTimer, setWinSequenceTimer] = useState<NodeJS.Timeout | null>(null);
 
   const handleMenuButtonPress = () => {
     setIsMenuButtonPressed(true);
@@ -450,7 +451,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         setWinSequenceStep('showdown');
         
-        // Защита от повторного срабатывания
+        // Очищаем предыдущий таймер если есть
+        if (winSequenceTimer) {
+          clearTimeout(winSequenceTimer);
+        }
+        
+        // Запускаем последовательность анимации
         const t1 = setTimeout(() => {
           console.log('🎯 Moving to winner step');
           setWinSequenceStep('winner');
@@ -465,6 +471,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           setWinSequenceStep('none');
         }, 7000);
 
+        // Сохраняем таймеры для очистки
+        setWinSequenceTimer(t3);
+
         return () => {
           clearTimeout(t1);
           clearTimeout(t2);
@@ -472,9 +481,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         };
       } else if (currentStatus === 'finished' && winSequenceStep === 'none') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
-        // Защита от повторного срабатывания
         console.log('🎯 Starting win sequence - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         setWinSequenceStep('showdown');
+        
+        // Очищаем предыдущий таймер если есть
+        if (winSequenceTimer) {
+          clearTimeout(winSequenceTimer);
+        }
+        
         const t1 = setTimeout(() => {
           console.log('🎯 Moving to winner step');
           setWinSequenceStep('winner');
@@ -488,6 +502,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           console.log('🎯 Ending win sequence');
           setWinSequenceStep('none');
         }, 7000);
+
+        // Сохраняем таймеры для очистки
+        setWinSequenceTimer(t3);
 
         return () => {
           clearTimeout(t1);
@@ -510,7 +527,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
 
     prevGameStateRef.current = gameState;
-  }, [gameState, handleChipsToWinner, winSequenceStep]);
+  }, [gameState, handleChipsToWinner, winSequenceStep, winSequenceTimer]);
+
+  // Очистка таймера при размонтировании
+  useEffect(() => {
+    return () => {
+      if (winSequenceTimer) {
+        clearTimeout(winSequenceTimer);
+      }
+    };
+  }, [winSequenceTimer]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
