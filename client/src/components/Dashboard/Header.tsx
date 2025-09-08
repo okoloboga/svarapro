@@ -45,8 +45,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           className="text-white font-inter font-semibold text-[14px] leading-[21px] text-center"
           style={{ 
             letterSpacing: '-0.011em', 
-            textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)',
-            boxShadow: '0px 1px 3px 1px #00000026'
+            textShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.15)'
           }}
         >
           {truncateUsername(user?.username || user?.first_name)}
@@ -57,16 +56,18 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
           className="bg-[#36333B] text-left px-2 py-1 rounded-lg flex items-center"
           style={{ boxShadow: 'inset 0px 0px 4px rgba(0, 0, 0, 0.25)', width: '185px', height: '30px', position: 'relative', top: '-10px' }}
         >
-          <span
-            className="font-inter font-semibold text-[20px] text-white"
-          >
-            {displayBalance.split('.')[0]}
-          </span>
-          <span
-            className="font-inter font-semibold text-[15px] text-gray-400"
-          >
-            .{displayBalance.split('.')[1]}
-          </span>
+          <div className="flex items-end">
+            <span
+              className="font-inter font-semibold text-[20px] text-white"
+            >
+              {displayBalance.split('.')[0]}
+            </span>
+            <span
+              className="font-inter font-semibold text-[15px] text-gray-400"
+            >
+              .{displayBalance.split('.')[1]}
+            </span>
+          </div>
         </div>
         <div className="flex space-x-2 mt-4">
           <GreenButton 
