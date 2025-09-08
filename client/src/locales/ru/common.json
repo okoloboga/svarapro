@@ -39,6 +39,8 @@
   "tournaments": "Турниры",
   "more": "Ещё",
   "cryptocurrency": "Криптовалюта",
+  "no_internet_connection": "Нет соединения с интернетом",
+  "check_internet_connection": "Проверьте подключение к интернету",
   "add_wallet_window_text": "Для выполнения вывода средств, пожалуйста, добавьте ваш адрес USDT-TON",
   "cancel": "Отмена",
   "success_copied": "Успешно скопировано!",

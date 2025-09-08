@@ -39,6 +39,8 @@
   "tournaments": "Tournaments",
   "more": "More",
   "cryptocurrency": "Cryptocurrency",
+  "no_internet_connection": "No internet connection",
+  "check_internet_connection": "Check your internet connection",
   "add_wallet_window_text": "To withdraw funds, please add your USDT-TON address",
   "cancel": "Cancel",
   "success_copied": "Successfully copied!",

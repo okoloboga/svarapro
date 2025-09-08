@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import noconnectIcon from '../../assets/noconnect.png';
 
 interface NoConnectProps {
   isVisible: boolean;
@@ -6,35 +8,82 @@ interface NoConnectProps {
 }
 
 export function NoConnect({ isVisible, onRetry }: NoConnectProps) {
+  const { t } = useTranslation('common');
+
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#36333B] rounded-lg p-6 mx-4 max-w-sm w-full text-center">
-        <div className="mb-4">
-          {/* Иконка подключения - будет заменена на дизайн */}
-          <div className="w-16 h-16 mx-auto mb-4 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-2xl">!</span>
-          </div>
-          
-          {/* Заголовок */}
-          <h3 className="text-white text-lg font-semibold mb-2">
-            Проблемы с подключением
-          </h3>
-          
-          {/* Описание */}
-          <p className="text-gray-300 text-sm mb-4">
-            Потеряно соединение с сервером. Проверьте интернет-соединение.
-          </p>
-        </div>
-        
-        {/* Кнопка повтора */}
-        <button
-          onClick={onRetry}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
+      onClick={onRetry}
+    >
+      {/* Bottom Sheet Panel */}
+      <div
+        className={`w-full transition-transform duration-300 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ height: '25vh' }}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
+      >
+        {/* NoConnect Container - во всю ширину экрана */}
+        <div
+          className="relative w-full h-full flex flex-col items-center justify-center"
+          style={{
+            background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)',
+            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
+            borderRadius: '20px 20px 0 0', // Скругление только сверху
+          }}
         >
-          Попробовать снова
-        </button>
+          {/* Inner background */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: '1px',
+              background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)',
+              borderRadius: '19px 19px 0 0',
+            }}
+          />
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-6">
+            {/* Иконка */}
+            <img 
+              src={noconnectIcon} 
+              alt="No connection" 
+              style={{ width: '69px', height: '69px', marginBottom: '16px' }}
+            />
+            
+            {/* Заголовок */}
+            <h3 
+              className="text-white mb-2"
+              style={{
+                fontWeight: 700,
+                fontStyle: 'normal',
+                fontSize: '16px',
+                lineHeight: '150%',
+                letterSpacing: '-1.1%',
+                textAlign: 'center',
+                verticalAlign: 'middle'
+              }}
+            >
+              {t('no_internet_connection')}
+            </h3>
+            
+            {/* Описание */}
+            <p 
+              className="text-white"
+              style={{
+                fontWeight: 600,
+                fontStyle: 'normal',
+                fontSize: '13px',
+                lineHeight: '150%',
+                letterSpacing: '-1.1%',
+                textAlign: 'center',
+                verticalAlign: 'middle'
+              }}
+            >
+              {t('check_internet_connection')}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
