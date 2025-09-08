@@ -1421,11 +1421,11 @@ export class GameService {
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
 
-    // В blind_betting call означает оплату просмотра карт. Сумма должна быть равна последней ставке вслепую.
+    // В blind_betting call означает оплату просмотра карт. Сумма должна быть равна последней ставке вслепую * 2.
     const callAmount =
       gameState.lastBlindBet > 0
-        ? gameState.lastBlindBet
-        : gameState.minBet;
+        ? gameState.lastBlindBet * 2
+        : gameState.minBet * 2;
 
     if (callAmount <= 0) {
       return {
