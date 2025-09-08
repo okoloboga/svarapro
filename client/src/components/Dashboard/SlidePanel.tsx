@@ -26,7 +26,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
     <div
       className="shadow-lg rounded-b-lg p-2 mx-auto w-[93vw] relative"
       style={{
-        boxShadow: '0px 5.5px 10px rgba(0, 0, 0, 0.25)',
+        boxShadow: '0px 5.5px 10px rgba(0, 0, 0, 0.25), 0px -2px 8px rgba(0, 0, 0, 0.3)',
         borderRadius: '0 0 8px 8px',
         background: '#48454D',
         position: 'relative',
@@ -61,7 +61,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             border: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10, margin: '0 auto' }}>
+          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
             <Slider
               range
               min={0}
