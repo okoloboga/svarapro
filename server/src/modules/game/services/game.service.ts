@@ -783,6 +783,9 @@ export class GameService {
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastActionAmount = blindBetAmount; // Устанавливаем для консистентности
         gameState.lastBlindBettorIndex = playerIndex;
+        // Обновляем банк
+        gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
+        gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
@@ -871,6 +874,9 @@ export class GameService {
           this.playerService.processPlayerBet(player, callAmount, 'call');
         gameState.players[playerIndex] = updatedPlayer;
         gameState.lastActionAmount = callAmount;
+        // Обновляем банк
+        gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+        gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(callAction);
         break;
       }
@@ -901,6 +907,9 @@ export class GameService {
 
         gameState.lastRaiseIndex = playerIndex;
         gameState.lastActionAmount = raiseAmount;
+        // Обновляем банк
+        gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
+        gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(raiseAction);
 
         // Проверяем переход в betting ДО сброса флага hasLookedAndMustAct
@@ -1370,6 +1379,9 @@ export class GameService {
 
     gameState.lastActionAmount = allInAmount;
     gameState.lastRaiseIndex = playerIndex;
+    // Обновляем банк
+    gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
+    gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(allInAction);
 
     // Проверяем, нужно ли перейти в betting (если это all_in после look в blind_betting)
@@ -1462,6 +1474,9 @@ export class GameService {
     );
 
     gameState.lastActionAmount = callAmount;
+    // Обновляем банк
+    gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
+    gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(callAction);
 
     // Call после look переводит игру в фазу betting и открывает карты
@@ -1572,6 +1587,9 @@ export class GameService {
 
     gameState.lastRaiseIndex = playerIndex;
     gameState.lastActionAmount = raiseAmount;
+    // Обновляем банк
+    gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
+    gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(raiseAction);
 
     // Raise после look в blind_betting переводит игру в фазу betting
