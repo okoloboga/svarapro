@@ -1599,16 +1599,30 @@ export class GameService {
     gameState.isAnimating = false;
     gameState.animationType = undefined;
 
-    // Передаем ход следующему игроку
-    // Проверка завершения круга будет происходить в фазе betting
+    // Проверяем завершение круга ДО передачи хода
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
 
-    gameState.currentPlayerIndex = aboutToActPlayerIndex;
-    await this.redisService.setGameState(roomId, gameState);
-    await this.redisService.publishGameUpdate(roomId, gameState);
+    // Определяем якорного игрока
+    let anchorPlayerIndex: number | undefined = undefined;
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastBlindBettorIndex;
+    } else {
+      anchorPlayerIndex = gameState.dealerIndex;
+    }
+
+    // Если следующий игрок - якорь, то круг завершается
+    if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      await this.endBettingRound(roomId, gameState);
+    } else {
+      gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+    }
 
     return { success: true, gameState };
   }
