@@ -140,9 +140,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
   const [isSittingDown, setIsSittingDown] = useState(false);
   const [isMenuButtonPressed, setIsMenuButtonPressed] = useState(false);
-  const [winSequenceTimer, setWinSequenceTimer] = useState<NodeJS.Timeout | null>(null);
-  const isWinSequenceActiveRef = useRef(false);
-  const [shouldStartWinSequence, setShouldStartWinSequence] = useState(false);
 
   const handleMenuButtonPress = () => {
     setIsMenuButtonPressed(true);
@@ -440,54 +437,27 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
-      if (currentStatus === 'showdown' && winSequenceStep === 'none' && !isWinSequenceActiveRef.current) {
-        // Показываем showdown (затемнение + карты)
-        console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
-        isWinSequenceActiveRef.current = true;
-        setWinSequenceStep('showdown');
-        setShouldStartWinSequence(true);
-      } else if (currentStatus === 'finished' && winSequenceStep === 'none') {
+      if (currentStatus === 'finished') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
         console.log('🎯 Starting win sequence - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         setWinSequenceStep('showdown');
-        
-        // Очищаем предыдущий таймер если есть
-        if (winSequenceTimer) {
-          clearTimeout(winSequenceTimer);
-        }
-        
-        const t1 = setTimeout(() => {
-          console.log('🎯 Moving to winner step');
-          setWinSequenceStep('winner');
-        }, 3000);
+        const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
         const t2 = setTimeout(() => {
-          console.log('🎯 Moving to chips step');
           setWinSequenceStep('chips');
           handleChipsToWinner();
         }, 5000);
         const t3 = setTimeout(() => {
-          console.log('🎯 Ending win sequence');
           setWinSequenceStep('none');
-          isWinSequenceActiveRef.current = false;
         }, 7000);
 
-        // Сохраняем таймеры для очистки
-        setWinSequenceTimer(t3);
-
         return () => {
-          console.log('🎯 Cleaning up win sequence timers (finished)');
           clearTimeout(t1);
           clearTimeout(t2);
           clearTimeout(t3);
         };
-      } else if (currentStatus === 'svara_pending') {
-        // Сбрасываем winSequenceStep когда начинается svara
-        setWinSequenceStep('none');
-        isWinSequenceActiveRef.current = false;
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
-        isWinSequenceActiveRef.current = false;
         // Показываем ChipStack для новой игры
         setShowChipStack(true);
       } else if (currentStatus === 'waiting') {
@@ -497,50 +467,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
 
     prevGameStateRef.current = gameState;
-  }, [gameState, handleChipsToWinner, winSequenceTimer]);
+  }, [gameState, handleChipsToWinner]);
 
-  // Очистка таймера при размонтировании
-  useEffect(() => {
-    return () => {
-      if (winSequenceTimer) {
-        clearTimeout(winSequenceTimer);
-      }
-    };
-  }, [winSequenceTimer]);
 
-  // Отдельный useEffect для таймеров win sequence
-  useEffect(() => {
-    if (shouldStartWinSequence) {
-      console.log('🎯 Starting win sequence timers');
-      setShouldStartWinSequence(false);
-      
-      const t1 = setTimeout(() => {
-        console.log('🎯 Moving to winner step');
-        setWinSequenceStep('winner');
-      }, 3000);
-      
-      const t2 = setTimeout(() => {
-        console.log('🎯 Moving to chips step');
-        setWinSequenceStep('chips');
-        handleChipsToWinner();
-      }, 5000);
-      
-      const t3 = setTimeout(() => {
-        console.log('🎯 Ending win sequence');
-        setWinSequenceStep('none');
-        isWinSequenceActiveRef.current = false;
-      }, 7000);
-
-      setWinSequenceTimer(t3);
-
-      return () => {
-        console.log('🎯 Cleaning up win sequence timers');
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-      };
-    }
-  }, [shouldStartWinSequence, handleChipsToWinner]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
