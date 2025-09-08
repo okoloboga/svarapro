@@ -79,9 +79,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   top: '50%', 
                   transform: 'translateY(-50%)',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1,
-                  left: '50%',
-                  marginLeft: '-130.5px'
+                  opacity: 1
                 },
                 { 
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
@@ -91,9 +89,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   top: '50%', 
                   transform: 'translateY(-50%)',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1,
-                  left: '50%',
-                  marginLeft: '130.5px'
+                  opacity: 1
                 },
               ]}
               style={{ width: '100%', position: 'relative', height: '37px' }}
