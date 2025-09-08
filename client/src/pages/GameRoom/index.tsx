@@ -432,13 +432,19 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       if (currentStatus === 'finished' && winSequenceStep === 'none') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
         // Защита от повторного срабатывания
+        console.log('🎯 Starting win sequence - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         setWinSequenceStep('showdown');
-        const t1 = setTimeout(() => setWinSequenceStep('winner'), 3000);
+        const t1 = setTimeout(() => {
+          console.log('🎯 Moving to winner step');
+          setWinSequenceStep('winner');
+        }, 3000);
         const t2 = setTimeout(() => {
+          console.log('🎯 Moving to chips step');
           setWinSequenceStep('chips');
           handleChipsToWinner();
         }, 5000);
         const t3 = setTimeout(() => {
+          console.log('🎯 Ending win sequence');
           setWinSequenceStep('none');
         }, 7000);
 
@@ -896,6 +902,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
                         const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
+  console.log('🎯 showWinIndicator:', showWinIndicator, 'winSequenceStep:', winSequenceStep, 'isWinner:', isWinner, 'winners:', gameState?.winners?.map(w => w.id));
 
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
                         if (!isCurrentUser) {
