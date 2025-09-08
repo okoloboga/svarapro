@@ -64,7 +64,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         className="grid"
         style={{
           gridTemplateColumns: '1fr 1fr 1fr 1fr',
-          gridTemplateRows: 'auto 1px auto',
+          gridTemplateRows: 'auto auto auto',
           gap: '10px 25px',
           alignItems: 'center',
         }}
@@ -79,6 +79,14 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         >
           {t('enter')}
         </YellowButton>
+        <div
+          style={{
+            gridColumn: '1 / 4',
+            height: '1px',
+            background: '#FFFFFF',
+            opacity: 0.05,
+          }}
+        />
         <p className="text-base font-semibold text-white text-left m-0">№{roomId.slice(0, 8)}</p>
         <p className="text-base font-semibold text-center m-0">
           <span style={{ color: '#12B754' }}>{players}</span>
@@ -106,14 +114,6 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         >
           {t('watch')}
         </button>
-        <div
-          style={{
-            gridColumn: '1 / -1',
-            height: '1px',
-            background: '#FFFFFF',
-            opacity: 0.05,
-          }}
-        />
       </div>
     </StyledContainer>
   );

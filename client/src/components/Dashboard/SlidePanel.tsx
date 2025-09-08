@@ -78,7 +78,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
                   opacity: 1,
-                  transform: 'translateY(-5px)'
+                  transform: 'translateY(-2px)'
                 },
                 { 
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
@@ -87,14 +87,14 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
                   opacity: 1,
-                  transform: 'translateY(-5px)'
+                  transform: 'translate(-10px, -2px)'
                 },
               ]}
               style={{ width: '100%', position: 'relative', height: '4px' }}
             />
           </div>
         </div>
-        <div className="flex justify-around mt-2 mx-auto" style={{ width: '320px' }}>
+        <div className="flex justify-around mt-2 mx-auto" style={{ width: '270px' }}>
           <span 
             className="text-white"
             style={{
