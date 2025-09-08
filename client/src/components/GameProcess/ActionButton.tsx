@@ -88,7 +88,7 @@ export function ActionButtons({
   if (postLookActions) {
     // Если игрок посмотрел карты, показываем Fold, Call и Raise
     return (
-      <div className="flex flex-col items-center justify-center -mt-[10px]">
+      <div className="flex flex-col items-center justify-center -mt-[25px]">
         <div className="relative flex items-center justify-center space-x-2 p-2">
           {/* Fold Button */}
           <div className="relative">
@@ -159,7 +159,7 @@ export function ActionButtons({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center -mt-[10px]">
+      <div className="flex flex-col items-center justify-center -mt-[25px]">
       <div className="relative flex items-center justify-center space-x-2 p-2">
         {canFold && (
           <div className="relative">
