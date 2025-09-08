@@ -114,6 +114,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
             opacity: 0.05,
           }}
         />
+      </div>
     </StyledContainer>
   );
 }
