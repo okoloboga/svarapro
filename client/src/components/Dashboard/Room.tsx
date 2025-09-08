@@ -64,7 +64,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         className="grid"
         style={{
           gridTemplateColumns: '1fr 1fr 1fr 1fr',
-          gridTemplateRows: 'auto auto',
+          gridTemplateRows: 'auto 1px auto',
           gap: '10px 25px',
           alignItems: 'center',
         }}
@@ -106,18 +106,14 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         >
           {t('watch')}
         </button>
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          left: '30px',
-          right: '20%',
-          top: '50%',
-          height: '1px',
-          background: '#FFFFFF',
-          opacity: 0.05,
-        }}
-      />
+        <div
+          style={{
+            gridColumn: '1 / -1',
+            height: '1px',
+            background: '#FFFFFF',
+            opacity: 0.05,
+          }}
+        />
     </StyledContainer>
   );
 }

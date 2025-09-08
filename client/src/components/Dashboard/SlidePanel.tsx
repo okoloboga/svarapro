@@ -61,7 +61,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             border: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          <div style={{ position: 'relative', height: '4px', width: '80%', zIndex: 10, margin: '-5px auto 0 auto', display: 'flex', alignItems: 'center' }}>
+          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
             <Slider
               range
               min={0}
@@ -77,7 +77,8 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   width: '20px', 
                   height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1
+                  opacity: 1,
+                  transform: 'translateY(-5px)'
                 },
                 { 
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
@@ -85,7 +86,8 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   width: '20px', 
                   height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
-                  opacity: 1
+                  opacity: 1,
+                  transform: 'translateY(-5px)'
                 },
               ]}
               style={{ width: '100%', position: 'relative', height: '4px' }}
