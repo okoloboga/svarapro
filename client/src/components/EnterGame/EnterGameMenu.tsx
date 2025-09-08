@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './EnterGameMenu.css';
 import plusIcon from '@/assets/plus.png';
 import lockIcon from '@/assets/lock.png';
@@ -8,10 +8,20 @@ import { EnterGameMenuProps } from '@/types/components';
 
 const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => {
   const { t } = useTranslation('common');
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Запускаем анимацию появления
+    setIsVisible(true);
+  }, []);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      // Запускаем анимацию исчезновения
+      setIsVisible(false);
+      setTimeout(() => {
+        onClose();
+      }, 300); // Ждем завершения анимации
     }
   };
 
@@ -22,8 +32,11 @@ const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => 
     >
       {/* Bottom Sheet Panel */}
       <div
-        className="w-full transition-transform duration-300 ease-out translate-y-0"
-        style={{ height: '250px' }}
+        className="w-full transition-transform duration-300 ease-out"
+        style={{ 
+          height: '250px',
+          transform: isVisible ? 'translateY(0)' : 'translateY(100%)'
+        }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
       >
         {/* EnterGameMenu Container - во всю ширину экрана */}
