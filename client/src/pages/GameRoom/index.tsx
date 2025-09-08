@@ -101,12 +101,12 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const zIndex = isShowdown ? 'z-40' : 'z-30';
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
-      1: "-top-10 left-1/2",
-      2: "top-1/4 -right-5",
-      3: "bottom-1/4 -right-5",
-      4: "-bottom-10 left-1/2",
-      5: "bottom-1/4 -left-5",
-      6: "top-1/4 -left-5",
+      1: "-top-8 left-1/2",
+      2: "top-1/4 -right-8",
+      3: "bottom-1/4 -right-8",
+      4: "-bottom-8 left-1/2",
+      5: "bottom-1/4 -left-8",
+      6: "top-1/4 -left-8",
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
