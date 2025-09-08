@@ -1140,6 +1140,19 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => !p.hasFolded);
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
+    // Рассчитываем выигрыш для каждого победителя
+    const rake = Number((gameState.pot * 0.05).toFixed(2));
+    const winAmount = gameState.pot - rake;
+    const winPerPlayer = Number((winAmount / overallWinners.length).toFixed(2));
+
+    // Устанавливаем lastWinAmount для победителей
+    for (const winner of overallWinners) {
+      const playerInState = gameState.players.find((p) => p.id === winner.id);
+      if (playerInState) {
+        playerInState.lastWinAmount = winPerPlayer;
+      }
+    }
+
     // ВСЕГДА сначала переходим в showdown для показа карт
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
@@ -1151,7 +1164,11 @@ export class GameService {
 
     console.log(
       `[${roomId}] Winners set in endGameWithWinner:`,
-      overallWinners.map((w) => ({ id: w.id, username: w.username })),
+      overallWinners.map((w) => ({ 
+        id: w.id, 
+        username: w.username, 
+        lastWinAmount: gameState.players.find(p => p.id === w.id)?.lastWinAmount 
+      })),
     );
 
     await this.redisService.setGameState(roomId, gameState);
@@ -1280,8 +1297,7 @@ export class GameService {
         const playerInState = gameState.players.find((p) => p.id === winner.id);
         if (playerInState) {
           playerInState.balance += winPerPlayer;
-          playerInState.lastWinAmount =
-            (playerInState.lastWinAmount || 0) + winPerPlayer;
+          // lastWinAmount уже установлен в endGameWithWinner, не перезаписываем
 
           const winAction: GameAction = {
             type: 'win',

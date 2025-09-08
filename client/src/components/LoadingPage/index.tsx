@@ -28,7 +28,7 @@ export function LoadingPage({ isLoading }: { isLoading: boolean }) {
         className="loading-logo"
       />
       
-      {/* 18+ Badge */}
+      {/* 18+ Badge 
       <div className="loading-badge">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <mask id="mask0" maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
@@ -43,6 +43,7 @@ export function LoadingPage({ isLoading }: { isLoading: boolean }) {
           </g>
         </svg>
       </div>
+      */}
     </div>
   );
 }
