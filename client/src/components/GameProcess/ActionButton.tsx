@@ -78,11 +78,11 @@ export function ActionButtons({
     setIsPressed(prev => ({ ...prev, [buttonType]: true }));
     setTimeout(() => {
       setIsPressed(prev => ({ ...prev, [buttonType]: false }));
-    }, 300);
+    }, 500); // Увеличиваем время анимации
     // Задержка перед вызовом callback, чтобы анимация успела показаться
     setTimeout(() => {
       callback();
-    }, 100);
+    }, 200); // Увеличиваем задержку перед callback
   };
 
   if (postLookActions) {
