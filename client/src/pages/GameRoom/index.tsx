@@ -22,6 +22,7 @@ import { GameMenu } from '../../components/GameProcess/GameMenu';
 import { ChatMenu } from '../../components/GameProcess/ChatMenu';
 import { SvaraAnimation } from '../../components/GameProcess/SvaraAnimation';
 import { SvaraJoinPopup } from '../../components/GameProcess/SvaraJoinPopup';
+import { NoConnect } from '../../components/NoConnect';
 import { TURN_DURATION_SECONDS } from '@/constants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useAppBackButton } from '@/hooks/useAppBackButton';
@@ -123,7 +124,7 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
 
 export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pageData }: GameRoomPropsExtended) {
   const { t } = useTranslation('common');
-  const { gameState, loading, error, isSeated, isProcessing, actions } = useGameState(roomId, socket);
+  const { gameState, loading, error, isSeated, isProcessing, showNoConnect, retryConnection, actions } = useGameState(roomId, socket);
   const { isLoading: assetsLoading } = useAssetPreloader();
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -1048,6 +1049,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           />
         ))}
       </div>
+      
+      {/* NoConnect компонент для проблем с подключением */}
+      <NoConnect 
+        isVisible={showNoConnect} 
+        onRetry={retryConnection}
+      />
     </div>
   );
 }

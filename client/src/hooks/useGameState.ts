@@ -11,6 +11,7 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
   const [error, setError] = useState<string | null>(null);
   const [isSeated, setIsSeated] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showNoConnect, setShowNoConnect] = useState(false);
   const { playSound } = useSoundContext();
 
   useEffect(() => {
@@ -50,7 +51,16 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     
     socket.on('error', (data: { message: string }) => {
       console.error('Socket error:', data.message);
-      setError(data.message);
+      
+      // Показываем NoConnect для определенных ошибок подключения
+      if (data.message === 'Игра не найдена' || data.message === 'WebSocket не инициализирован') {
+        setShowNoConnect(true);
+        setError(null); // Не показываем эти ошибки как критические
+      } else {
+        setError(data.message);
+        setShowNoConnect(false);
+      }
+      
       setLoading(false);
       setIsProcessing(false);
     });
@@ -59,17 +69,20 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     socket.on('connect', () => {
       console.log('WebSocket connected, clearing error');
       setError(null);
+      setShowNoConnect(false); // Скрываем NoConnect при успешном подключении
       setLoading(false);
     });
 
     socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
-      setError('Соединение потеряно. Попытка переподключения...');
+      setShowNoConnect(true); // Показываем NoConnect при отключении
+      setError(null);
     });
 
     socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
-      setError('Ошибка подключения. Попытка переподключения...');
+      setShowNoConnect(true); // Показываем NoConnect при ошибке подключения
+      setError(null);
     });
 
     // Emit join_room after listeners are set up
@@ -130,6 +143,17 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     }
   }, [roomId, socket]);
 
+  const retryConnection = useCallback(() => {
+    if (socket) {
+      setShowNoConnect(false);
+      setLoading(true);
+      // Попытка переподключения
+      socket.connect();
+      // Повторная попытка присоединения к комнате
+      socket.emit('join_room', { roomId });
+    }
+  }, [roomId, socket]);
+
   const actions = useMemo(() => ({
     blindBet: (amount: number) => performAction('blind_bet', amount),
     lookCards: () => performAction('look'),
@@ -151,6 +175,8 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     error,
     isSeated,
     isProcessing,
+    showNoConnect,
+    retryConnection,
     actions,
   };
 };
