@@ -65,7 +65,7 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           <div 
             className="flex items-center justify-center"
             style={{
-              width: '48.8%',
+              width: '100%',
               height: '40px',
               borderRadius: '8px',
               background: 'linear-gradient(0deg, #36333B 7.5%, #46434B 100%, #48454D 100%)',

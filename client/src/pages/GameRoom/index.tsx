@@ -101,12 +101,12 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const zIndex = isShowdown ? 'z-40' : 'z-30';
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
-      1: "-top-10 left-1/2",
-      2: "top-1/4 -right-5",
-      3: "bottom-1/4 -right-5",
-      4: "-bottom-10 left-1/2",
-      5: "bottom-1/4 -left-5",
-      6: "top-1/4 -left-5",
+      1: "-top-15 left-1/2",      // было -top-10, стало -top-15 (на 5px выше)
+      2: "top-1/4 -right-10",     // было -right-5, стало -right-10 (на 5px правее)
+      3: "bottom-1/4 -right-10",  // было -right-5, стало -right-10 (на 5px правее)
+      4: "-bottom-15 left-1/2",   // было -bottom-10, стало -bottom-15 (на 5px ниже)
+      5: "bottom-1/4 -left-10",   // было -left-5, стало -left-10 (на 5px левее)
+      6: "top-1/4 -left-10",      // было -left-5, стало -left-10 (на 5px левее)
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
@@ -1041,8 +1041,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           onClick={() => setShowChatMenu(true)}
           className="fixed z-40"
           style={{ 
-            width: '35px', 
-            height: '35px',
+            width: '40px', 
+            height: '40px',
             bottom: '25%',
             left: '18px'
           }}

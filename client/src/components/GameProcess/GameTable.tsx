@@ -90,6 +90,7 @@ const GameTable: React.FC<GameTableProps> = ({
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none', // Чтобы рамка не мешала взаимодействию
     zIndex: 2,
+    filter: 'drop-shadow(0px 8px 16px rgba(0, 0, 0, 0.3))',
   };
 
   const potContainerStyle: React.CSSProperties = {

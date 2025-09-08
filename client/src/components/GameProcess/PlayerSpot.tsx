@@ -154,16 +154,16 @@ export function PlayerSpot({
   };
 
   if (cardSide === 'left') {
-    cardDeckStyle.right = '50px';
+    cardDeckStyle.right = '45px'; // было 50px, стало 45px (на 5px ближе)
   } else {
-    cardDeckStyle.left = '50px';
+    cardDeckStyle.left = '45px'; // было 50px, стало 45px (на 5px ближе)
   }
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div 
-      className="text-white font-semibold text-xs leading-4 flex items-center justify-center"
+      className="text-white font-semibold text-xs leading-4 flex items-center justify-center px-2"
       style={{
-        width: '48px',
+        minWidth: '32px',
         height: '19px',
         borderRadius: '8px',
         backgroundColor: 'rgba(35, 34, 40, 0.61)',
