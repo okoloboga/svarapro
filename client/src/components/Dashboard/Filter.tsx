@@ -41,7 +41,6 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
       <StyledContainer 
         className="mx-auto mt-6 w-[93vw] h-[50px]"
         contentClassName="w-full h-full flex items-center justify-between p-2"
-        style={{ boxShadow: '0px 5.5px 10px rgba(0, 0, 0, 0.25), 0px 2px 4px rgba(0, 0, 0, 0.15)' }}
       >
         <div className="relative w-[104px]">
           <input
