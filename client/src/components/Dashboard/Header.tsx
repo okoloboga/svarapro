@@ -54,7 +54,7 @@ export function Header({ user, balance, onWithdrawClick, setCurrentPage }: Heade
       <div className="text-left">
         <div
           className="bg-[#36333B] text-left px-2 py-1 rounded-lg flex items-center"
-          style={{ boxShadow: 'inset 0px 0px 4px rgba(0, 0, 0, 0.25)', width: '185px', height: '30px', position: 'relative', top: '5px' }}
+          style={{ boxShadow: 'inset 0px 0px 4px rgba(0, 0, 0, 0.25)', width: '185px', height: '30px', position: 'relative', top: '1px' }}
         >
           <div className="flex items-baseline">
             <span
