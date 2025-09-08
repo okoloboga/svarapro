@@ -1130,60 +1130,70 @@ export class GameService {
     const activePlayers = gameState.players.filter((p) => !p.hasFolded);
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
-    if (overallWinners.length > 1) {
-      const phaseResult = this.gameStateService.moveToNextPhase(
-        gameState,
-        'svara_pending',
-      );
-      gameState = phaseResult.updatedGameState;
-      gameState.log.push(...phaseResult.actions);
+    // ВСЕГДА сначала переходим в showdown для показа карт
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'showdown',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+    gameState.winners = overallWinners;
+    
+    console.log(`[${roomId}] Winners set in endGameWithWinner:`, overallWinners.map(w => ({ id: w.id, username: w.username })));
 
-      gameState.isSvara = true;
-      gameState.svaraParticipants = overallWinners.map((w) => w.id);
-      gameState.winners = overallWinners;
-      gameState.svaraConfirmed = [];
-      gameState.svaraDeclined = [];
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
 
-      const svaraAction: GameAction = {
-        type: 'svara',
-        telegramId: 'system',
-        timestamp: Date.now(),
-        message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
-      };
-      gameState.log.push(svaraAction);
-
-      await this.redisService.setGameState(roomId, gameState);
-      await this.redisService.publishGameUpdate(roomId, gameState);
-
-      const timer = setTimeout(() => {
-        this.resolveSvara(roomId).catch((error) => {
-          console.error(`Error resolving svara for room ${roomId}:`, error);
+    // После showdown проверяем, нужна ли свара
+    setTimeout(() => {
+      if (overallWinners.length > 1) {
+        // Если несколько победителей - объявляем свару
+        this.declareSvara(roomId, gameState, overallWinners).catch((error) => {
+          console.error(`Error declaring svara for room ${roomId}:`, error);
         });
-      }, TURN_DURATION_SECONDS * 1000);
-      this.svaraTimers.set(roomId, timer);
-    } else {
-      const phaseResult = this.gameStateService.moveToNextPhase(
-        gameState,
-        'showdown',
-      );
-      gameState = phaseResult.updatedGameState;
-      gameState.log.push(...phaseResult.actions);
-      gameState.winners = overallWinners;
-      
-      console.log(`[${roomId}] Winners set in endGameWithWinner:`, overallWinners.map(w => ({ id: w.id, username: w.username })));
-
-      await this.redisService.setGameState(roomId, gameState);
-      await this.redisService.publishGameUpdate(roomId, gameState);
-
-      setTimeout(() => {
+      } else {
+        // Если один победитель - распределяем выигрыш
         this.distributeWinnings(roomId).catch((error) => {
           console.error(
             `Failed to distribute winnings for room ${roomId}:`,
             error,
           );
         });
-      }, 3000);
-    }
+      }
+    }, 3000); // Ждем 3 секунды для показа карт в showdown
+  }
+
+  private async declareSvara(roomId: string, gameState: GameState, winners: Player[]): Promise<void> {
+    const phaseResult = this.gameStateService.moveToNextPhase(
+      gameState,
+      'svara_pending',
+    );
+    gameState = phaseResult.updatedGameState;
+    gameState.log.push(...phaseResult.actions);
+
+    gameState.isSvara = true;
+    gameState.svaraParticipants = winners.map((w) => w.id);
+    gameState.winners = winners;
+    gameState.svaraConfirmed = [];
+    gameState.svaraDeclined = [];
+
+    const svaraAction: GameAction = {
+      type: 'svara',
+      telegramId: 'system',
+      timestamp: Date.now(),
+      message: `Объявлена "Свара"! Банк ${gameState.pot} переходит в следующий раунд.`,
+    };
+    gameState.log.push(svaraAction);
+
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    const timer = setTimeout(() => {
+      this.resolveSvara(roomId).catch((error) => {
+        console.error(`Error resolving svara for room ${roomId}:`, error);
+      });
+    }, TURN_DURATION_SECONDS * 1000);
+    this.svaraTimers.set(roomId, timer);
   }
 
   private async distributeWinnings(roomId: string): Promise<void> {

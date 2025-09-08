@@ -2,6 +2,7 @@ import lookIcon from '../../assets/game/look.svg';
 import passIcon from '../../assets/game/pass.svg';
 import raiseIcon from '../../assets/game/raise.svg';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 const formatAmount = (amount: number): string => {
   const num = Number(amount);
@@ -61,17 +62,35 @@ export function ActionButtons({
   postLookActions,
 }: ActionButtonsProps) {
   const { t } = useTranslation('common');
+  
+  // Состояния для анимации нажатия каждой кнопки
+  const [isPressed, setIsPressed] = useState({
+    fold: false,
+    call: false,
+    raise: false,
+    look: false,
+    blindBet: false,
+    allIn: false,
+  });
+
+  const handleButtonPress = (buttonType: keyof typeof isPressed, callback: () => void) => {
+    setIsPressed(prev => ({ ...prev, [buttonType]: true }));
+    setTimeout(() => {
+      setIsPressed(prev => ({ ...prev, [buttonType]: false }));
+    }, 150);
+    callback();
+  };
 
   if (postLookActions) {
     // Если игрок посмотрел карты, показываем Fold, Call и Raise
     return (
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center -mt-[10px]">
         <div className="relative flex items-center justify-center space-x-2 p-2">
           {/* Fold Button */}
           <div className="relative">
             <button
-              onClick={onFold}
-              className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+              onClick={() => handleButtonPress('fold', onFold)}
+              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.fold ? 'button-press' : ''}`}
               style={{ backgroundColor: '#FF443A' }}
             >
               <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
@@ -94,8 +113,8 @@ export function ActionButtons({
 
           {canAllIn ? (
             <button
-                onClick={onAllIn}
-                className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+                onClick={() => handleButtonPress('allIn', onAllIn)}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.allIn ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
             >
                 <span>${formatAmount(callAmount)}</span>
@@ -105,10 +124,10 @@ export function ActionButtons({
             <>
               {/* Call Button */}
               <button
-                onClick={onCall}
+                onClick={() => handleButtonPress('call', onCall)}
                 className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
                   isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                } ${isPressed.call ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
                 disabled={isCallDisabled}
               >
@@ -118,10 +137,10 @@ export function ActionButtons({
 
               {/* Raise Button */}
               <button
-                onClick={onRaise}
+                onClick={() => handleButtonPress('raise', onRaise)}
                 className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
                   isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                } ${isPressed.raise ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#56BF00' }}
                 disabled={isRaiseDisabled}
               >
@@ -136,13 +155,13 @@ export function ActionButtons({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center -mt-[10px]">
       <div className="relative flex items-center justify-center space-x-2 p-2">
         {canFold && (
           <div className="relative">
             <button
-              onClick={onFold}
-              className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+              onClick={() => handleButtonPress('fold', onFold)}
+              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.fold ? 'button-press' : ''}`}
               style={{ backgroundColor: '#FF443A' }}
             >
               <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
@@ -166,10 +185,10 @@ export function ActionButtons({
         
         {canCall && (
           <button
-            onClick={onCall}
+            onClick={() => handleButtonPress('call', onCall)}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
               isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            } ${isPressed.call ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
             disabled={isCallDisabled}
           >
@@ -180,10 +199,10 @@ export function ActionButtons({
 
         {canRaise && (
           <button
-            onClick={onRaise}
+            onClick={() => handleButtonPress('raise', onRaise)}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
               isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            } ${isPressed.raise ? 'button-press' : ''}`}
             style={{ backgroundColor: '#56BF00' }}
             disabled={isRaiseDisabled}
           >
@@ -194,8 +213,8 @@ export function ActionButtons({
 
         {canAllIn && (
             <button
-                onClick={onAllIn}
-                className="flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition"
+                onClick={() => handleButtonPress('allIn', onAllIn)}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.allIn ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
             >
                 <span>${formatAmount(callAmount)}</span>
@@ -205,10 +224,10 @@ export function ActionButtons({
         
         {canLook && (
           <button
-            onClick={onLook}
+            onClick={() => handleButtonPress('look', onLook)}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
               blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            } ${isPressed.look ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
             disabled={blindButtonsDisabled}
           >
@@ -219,10 +238,10 @@ export function ActionButtons({
 
         {canBlindBet && !canAllIn && (
           <button
-            onClick={onBlindBet}
+            onClick={() => handleButtonPress('blindBet', onBlindBet)}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
               blindButtonsDisabled || isBlindBetDisabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            } ${isPressed.blindBet ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
             disabled={blindButtonsDisabled || isBlindBetDisabled}
           >

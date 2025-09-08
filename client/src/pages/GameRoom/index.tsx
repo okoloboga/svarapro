@@ -429,7 +429,30 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
-      if (currentStatus === 'finished' && winSequenceStep === 'none') {
+      if (currentStatus === 'showdown' && winSequenceStep === 'none') {
+        // Показываем showdown (затемнение + карты)
+        console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
+        setWinSequenceStep('showdown');
+        const t1 = setTimeout(() => {
+          console.log('🎯 Moving to winner step');
+          setWinSequenceStep('winner');
+        }, 3000);
+        const t2 = setTimeout(() => {
+          console.log('🎯 Moving to chips step');
+          setWinSequenceStep('chips');
+          handleChipsToWinner();
+        }, 5000);
+        const t3 = setTimeout(() => {
+          console.log('🎯 Ending win sequence');
+          setWinSequenceStep('none');
+        }, 7000);
+
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+        };
+      } else if (currentStatus === 'finished' && winSequenceStep === 'none') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
         // Защита от повторного срабатывания
         console.log('🎯 Starting win sequence - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));

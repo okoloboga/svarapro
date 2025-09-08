@@ -76,3 +76,14 @@ body {
 .animate-slide-up {
   animation: slide-up-fade-in 0.3s ease-out;
 }
+
+/* Button press effect */
+@keyframes button-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.button-press {
+  animation: button-press 0.15s ease-out;
+}

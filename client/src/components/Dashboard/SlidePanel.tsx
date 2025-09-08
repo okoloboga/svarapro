@@ -53,6 +53,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
             borderRadius: '15px',
             width: '96%',
+            height: '34px',
             margin: '0 auto',
             maxWidth: '320px',
             background: '#48454D',

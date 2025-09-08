@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { ButtonProps } from '@/types/components';
+import { useState } from 'react';
 
 export function YellowButton({
   children,
@@ -11,6 +12,13 @@ export function YellowButton({
   className,
   ...rest
 }: ButtonProps) {
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 150);
+    onClick?.(e);
+  };
   const sizeClasses: Record<string, string> = {
     sm: 'h-[28px] px-3 text-[13px]',
     lg: 'h-[47px] px-4 text-[16px]',
@@ -32,12 +40,13 @@ export function YellowButton({
     'flex',
     'items-center',
     'justify-center',
+    isPressed ? 'button-press' : '',
     className
   );
 
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={buttonClasses}
       disabled={!isActive}
       {...rest}

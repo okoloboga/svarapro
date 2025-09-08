@@ -1,5 +1,6 @@
 import { StyledContainer } from '@/components/StyledContainer';
 import { ButtonProps } from '@/types/components';
+import { useState } from 'react';
 
 export function Button({
   children,
@@ -19,6 +20,13 @@ export function Button({
   rightIconClassName,
   ...rest
 }: ButtonProps) {
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 150);
+    onClick?.(e);
+  };
   const baseClasses = 'relative flex items-center font-semibold text-white';
 
   const sizeClasses = {
@@ -58,7 +66,7 @@ export function Button({
 
   if (variant === 'secondary') {
     return (
-      <button onClick={onClick} className={`${baseClasses} ${finalSizeClasses} ${fullWidthClass} ${rest.className || ''}`} {...rest}>
+      <button onClick={handleClick} className={`${baseClasses} ${finalSizeClasses} ${fullWidthClass} ${isPressed ? 'button-press' : ''} ${rest.className || ''}`} {...rest}>
         <StyledContainer
           className="w-full h-full"
           contentClassName={`w-full h-full flex items-center px-4 ${justifyClass} ${contentLayoutClass}`}
@@ -83,7 +91,7 @@ export function Button({
   const finalVariantClasses = variantClasses[variant] || '';
 
   return (
-    <button onClick={onClick} className={`${baseClasses} ${finalSizeClasses} ${fullWidthClass} ${finalVariantClasses} ${rest.className || ''}`} {...rest}>
+    <button onClick={handleClick} className={`${baseClasses} ${finalSizeClasses} ${fullWidthClass} ${finalVariantClasses} ${isPressed ? 'button-press' : ''} ${rest.className || ''}`} {...rest}>
     <div className={`flex items-center px-4 ${justifyClass} ${contentLayoutClass}`}>
       {content}
       {(rightIcon || rightText) && (
