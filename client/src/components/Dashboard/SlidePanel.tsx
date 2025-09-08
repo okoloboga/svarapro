@@ -61,14 +61,14 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             border: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          <div style={{ position: 'relative', height: '37px', width: '80%', zIndex: 10, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+          <div style={{ position: 'relative', height: '4px', width: '80%', zIndex: 10, margin: '-5px auto 0 auto', display: 'flex', alignItems: 'center' }}>
             <Slider
               range
               min={0}
               max={1000000}
               value={rangeValues}
               onChange={handleRangeChange}
-              railStyle={{ background: 'transparent', borderRadius: '15px', height: '37px' }}
+              railStyle={{ background: 'transparent', borderRadius: '15px', height: '4px' }}
               trackStyle={[{ background: '#807C7C', height: '4px' }]}
               handleStyle={[
                 { 
@@ -88,7 +88,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   opacity: 1
                 },
               ]}
-              style={{ width: '100%', position: 'relative', height: '37px' }}
+              style={{ width: '100%', position: 'relative', height: '4px' }}
             />
           </div>
         </div>
