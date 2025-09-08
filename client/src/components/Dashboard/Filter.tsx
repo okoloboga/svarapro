@@ -37,7 +37,7 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
   };
 
   return (
-    <div className="mb-4 relative" style={{ zIndex: 25 }}>
+    <div className="mb-4 relative" style={{ zIndex: 50 }}>
       <StyledContainer 
         className="mx-auto mt-6 w-[93vw] h-[50px]"
         contentClassName="w-full h-full flex items-center justify-between p-2"
