@@ -7,7 +7,7 @@ export const ExitMenu: React.FC<ExitMenuProps> = ({ onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#47444C] w-[316px] h-[200px] rounded-lg flex flex-col items-center py-4 px-4 relative">
+      <div className="bg-[#47444C] w-[316px] h-[172px] rounded-lg flex flex-col items-center py-4 px-4 relative">
         <h2 className="text-white font-semibold text-lg mb-4">{t('confirmation')}</h2>
         
         <div className="flex-1 flex items-center justify-center text-center">
