@@ -3,7 +3,6 @@ import './EnterGameMenu.css';
 import plusIcon from '@/assets/plus.png';
 import lockIcon from '@/assets/lock.png';
 import partyIcon from '@/assets/party.png';
-import closeIcon from '@/assets/close.png';
 import { useTranslation } from 'react-i18next';
 import { EnterGameMenuProps } from '@/types/components';
 
