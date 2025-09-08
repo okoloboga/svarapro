@@ -21,29 +21,10 @@ const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => 
       className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
       onClick={onClose}
     >
-      {/* Close Button - над компонентом */}
-      <button 
-        onClick={onClose}
-        onTouchStart={(e) => e.preventDefault()}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          onClose();
-        }}
-        className="absolute z-50"
-        style={{ 
-          top: 'calc(75vh - 40px)', 
-          right: '20px',
-          WebkitTapHighlightColor: 'transparent',
-          touchAction: 'manipulation'
-        }}
-      >
-        <img src={closeIcon} alt="Close" style={{ width: '19px', height: '19px' }} />
-      </button>
-
       {/* Bottom Sheet Panel */}
       <div
         className="w-full transition-transform duration-300 ease-out translate-y-0"
-        style={{ height: '25vh' }}
+        style={{ height: '250px' }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
       >
         {/* EnterGameMenu Container - во всю ширину экрана */}
@@ -69,7 +50,7 @@ const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => 
           {/* Original EnterGameMenu content */}
           <div className="relative z-10" onClick={handleOverlayClick}>
             <div
-              className="modal-content bg-[#18171C] rounded-[15px] animate-slide-up"
+              className="modal-content bg-[#18171C] rounded-[15px]"
               style={{ width: '316px', height: '162px' }}
             >
               <button className="menu-button" onClick={() => openModal('createPublic')}>
