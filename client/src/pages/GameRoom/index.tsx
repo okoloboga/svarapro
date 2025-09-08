@@ -139,6 +139,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentTurnRef = useRef<string>(''); // Отслеживаем текущий ход
   const [winSequenceStep, setWinSequenceStep] = useState<'none' | 'showdown' | 'winner' | 'chips'>('none');
   const [isSittingDown, setIsSittingDown] = useState(false);
+  const [isMenuButtonPressed, setIsMenuButtonPressed] = useState(false);
+
+  const handleMenuButtonPress = () => {
+    setIsMenuButtonPressed(true);
+    setTimeout(() => setIsMenuButtonPressed(false), 300);
+    setTimeout(() => setShowMenuModal(true), 100);
+  };
 
   // Объявляем переменные для useCallback
   const currentPlayer = gameState?.players.find(p => p.id === currentUserId);
@@ -870,7 +877,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       <div className="relative z-30 text-white p-4 flex justify-between items-center">
         <h2 className="text-xs font-semibold">{t('room_number_colon')}{roomId.slice(0, 8)}</h2>
         <div className="flex items-center space-x-3">
-          <button onClick={() => setShowMenuModal(true)} className="transition-all duration-200 ease-in-out hover:opacity-75">
+          <button onClick={handleMenuButtonPress} className={`transition-all duration-200 ease-in-out hover:opacity-75 ${isMenuButtonPressed ? 'button-press' : ''}`}>
             <img src={menuIcon} alt={t('menu')} className="w-5 h-5" />
           </button>
         </div>

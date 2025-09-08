@@ -13,6 +13,7 @@ export function Deposit({ setCurrentPage }: DepositProps) {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMoreButtonPressed, setIsMoreButtonPressed] = useState(false);
 
   const handleDeposit = async (currency: string) => {
     setLoading(true);
@@ -31,6 +32,15 @@ export function Deposit({ setCurrentPage }: DepositProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMoreButtonPress = () => {
+    setIsMoreButtonPressed(true);
+    setTimeout(() => setIsMoreButtonPressed(false), 300);
+    setTimeout(() => {
+      const telegramUrl = 'https://t.me/SvaraPaybot';
+      window.open(telegramUrl, '_blank');
+    }, 100);
   };
 
   if (loading) {
@@ -91,12 +101,8 @@ export function Deposit({ setCurrentPage }: DepositProps) {
           }}
         >
           <button 
-            className="flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80"
-            onClick={() => {
-              // Open Telegram bot @SvaraPaybot
-              const telegramUrl = 'https://t.me/SvaraPaybot';
-              window.open(telegramUrl, '_blank');
-            }}
+            className={`flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80 ${isMoreButtonPressed ? 'button-press' : ''}`}
+            onClick={handleMoreButtonPress}
             style={{
               color: '#808797',
               fontWeight: 600,

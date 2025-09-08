@@ -31,6 +31,13 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCloseButtonPressed, setIsCloseButtonPressed] = useState(false);
+
+  const handleCloseButtonPress = () => {
+    setIsCloseButtonPressed(true);
+    setTimeout(() => setIsCloseButtonPressed(false), 300);
+    setTimeout(() => setCurrentPage('more'), 100);
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -72,7 +79,7 @@ export function DepositHistory({ setCurrentPage, userId }: DepositHistoryProps) 
           >
             {t('deposit_history')}
           </h2>
-          <button onClick={() => setCurrentPage('more')} className="z-10">
+          <button onClick={handleCloseButtonPress} className={`z-10 ${isCloseButtonPressed ? 'button-press' : ''}`}>
             <img src={closeIcon} alt="Close" className="w-6 h-6" />
           </button>
         </div>
