@@ -64,7 +64,7 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         className="grid"
         style={{
           gridTemplateColumns: '1fr 1fr 1fr 1fr',
-          gridTemplateRows: 'auto auto auto',
+          gridTemplateRows: 'auto auto',
           gap: '10px 25px',
           alignItems: 'center',
         }}
@@ -81,7 +81,10 @@ export function Room({ roomId, players, stake, setCurrentPage, balance, setNotif
         </YellowButton>
         <div
           style={{
-            gridColumn: '1 / 4',
+            position: 'absolute',
+            left: '16px',
+            right: '25%',
+            top: '50%',
             height: '1px',
             background: '#FFFFFF',
             opacity: 0.05,
