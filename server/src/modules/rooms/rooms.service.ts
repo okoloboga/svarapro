@@ -51,8 +51,8 @@ export class RoomsService {
       // Для приватных комнат ID = пароль
       roomId = createRoomDto.password!;
     } else {
-      // Для публичных комнат генерируем случайный 6-значный ID
-      roomId = Math.floor(100000 + Math.random() * 900000).toString();
+      // Для публичных комнат генерируем случайный 4-значный ID
+      roomId = Math.floor(1000 + Math.random() * 9000).toString();
     }
 
     const newRoom: Room = {
