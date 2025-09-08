@@ -142,6 +142,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [isMenuButtonPressed, setIsMenuButtonPressed] = useState(false);
   const [winSequenceTimer, setWinSequenceTimer] = useState<NodeJS.Timeout | null>(null);
   const isWinSequenceActiveRef = useRef(false);
+  const [shouldStartWinSequence, setShouldStartWinSequence] = useState(false);
 
   const handleMenuButtonPress = () => {
     setIsMenuButtonPressed(true);
@@ -444,36 +445,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
         isWinSequenceActiveRef.current = true;
         setWinSequenceStep('showdown');
-        
-        // Очищаем предыдущий таймер если есть
-        if (winSequenceTimer) {
-          clearTimeout(winSequenceTimer);
-        }
-        
-        // Запускаем последовательность анимации
-        const t1 = setTimeout(() => {
-          console.log('🎯 Moving to winner step');
-          setWinSequenceStep('winner');
-        }, 3000);
-        const t2 = setTimeout(() => {
-          console.log('🎯 Moving to chips step');
-          setWinSequenceStep('chips');
-          handleChipsToWinner();
-        }, 5000);
-        const t3 = setTimeout(() => {
-          console.log('🎯 Ending win sequence');
-          setWinSequenceStep('none');
-          isWinSequenceActiveRef.current = false;
-        }, 7000);
-
-        // Сохраняем таймеры для очистки
-        setWinSequenceTimer(t3);
-
-        return () => {
-          clearTimeout(t1);
-          clearTimeout(t2);
-          clearTimeout(t3);
-        };
+        setShouldStartWinSequence(true);
       } else if (currentStatus === 'finished' && winSequenceStep === 'none') {
         // Сначала показываем showdown (затемнение + карты), потом winner, потом chips
         console.log('🎯 Starting win sequence - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
@@ -535,6 +507,40 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       }
     };
   }, [winSequenceTimer]);
+
+  // Отдельный useEffect для таймеров win sequence
+  useEffect(() => {
+    if (shouldStartWinSequence) {
+      console.log('🎯 Starting win sequence timers');
+      setShouldStartWinSequence(false);
+      
+      const t1 = setTimeout(() => {
+        console.log('🎯 Moving to winner step');
+        setWinSequenceStep('winner');
+      }, 3000);
+      
+      const t2 = setTimeout(() => {
+        console.log('🎯 Moving to chips step');
+        setWinSequenceStep('chips');
+        handleChipsToWinner();
+      }, 5000);
+      
+      const t3 = setTimeout(() => {
+        console.log('🎯 Ending win sequence');
+        setWinSequenceStep('none');
+        isWinSequenceActiveRef.current = false;
+      }, 7000);
+
+      setWinSequenceTimer(t3);
+
+      return () => {
+        console.log('🎯 Cleaning up win sequence timers');
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [shouldStartWinSequence, handleChipsToWinner]);
 
   // Эффективное состояние игры, управляемое новой машиной состояний
   const effectiveGameStatus = winSequenceStep !== 'none' ? 'finished' : (gameState?.status || 'waiting');
