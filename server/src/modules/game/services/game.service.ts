@@ -1239,9 +1239,11 @@ export class GameService {
       return;
     }
 
-    // Reset lastWinAmount for all players
+    // Reset lastWinAmount only for non-winners
     for (const p of gameState.players) {
-      p.lastWinAmount = 0;
+      if (!gameState.winners?.some(w => w.id === p.id)) {
+        p.lastWinAmount = 0;
+      }
     }
 
     const activePlayersWithBets = gameState.players.filter(

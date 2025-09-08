@@ -88,3 +88,7 @@ body {
   animation: button-press 0.3s ease-out;
   transform-origin: center;
 }
+
+.action-button-shadow {
+  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.4));
+}

@@ -397,13 +397,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // TODO: fix svara animation
 
   useEffect(() => {
-    console.log('🎯 SvaraAnimation check:', {
-      status: gameState?.status,
-      svaraStep,
-      winSequenceStep,
-      shouldShow: gameState?.status === 'svara_pending' && svaraStep === 'none' && winSequenceStep === 'none'
-    });
-    
     if (gameState?.status === 'svara_pending' && svaraStep === 'none' && winSequenceStep === 'none') {
       // Показываем SvaraAnimation только после завершения winSequenceStep
       console.log('🎯 Starting SvaraAnimation');
@@ -446,7 +439,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     const currentStatus = gameState.status;
 
     if (previousStatus !== currentStatus) {
-      console.log('🎯 Status change:', previousStatus, '->', currentStatus, 'winSequenceStep:', winSequenceStep);
       if (currentStatus === 'showdown' && winSequenceStep === 'none' && !isWinSequenceActiveRef.current) {
         // Показываем showdown (затемнение + карты)
         console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
@@ -459,7 +451,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }
         
         // Запускаем последовательность анимации
-        console.log('🎯 Setting up timers for win sequence');
         const t1 = setTimeout(() => {
           console.log('🎯 Moving to winner step');
           setWinSequenceStep('winner');
@@ -479,7 +470,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setWinSequenceTimer(t3);
 
         return () => {
-          console.log('🎯 Cleaning up win sequence timers (showdown)');
           clearTimeout(t1);
           clearTimeout(t2);
           clearTimeout(t3);
@@ -520,7 +510,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         };
       } else if (currentStatus === 'svara_pending') {
         // Сбрасываем winSequenceStep когда начинается svara
-        console.log('🎯 Svara pending - resetting winSequenceStep');
         setWinSequenceStep('none');
         isWinSequenceActiveRef.current = false;
       } else if (currentStatus === 'ante') {
@@ -982,7 +971,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const isWinner = !!(gameState.winners && gameState.winners.some(winner => winner.id === player.id));
                         const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
-  console.log('🎯 showWinIndicator:', showWinIndicator, 'winSequenceStep:', winSequenceStep, 'isWinner:', isWinner, 'winners:', gameState?.winners?.map(w => w.id));
 
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
                         if (!isCurrentUser) {
@@ -1047,7 +1035,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       </div>
       
       {isSeated && (
-        <div className="px-4 pt-2 pb-4">
+        <div className="px-4 -mt-2 pb-4">
           <div className="flex flex-col items-center space-y-4">
             <div>
               {effectiveGameStatus === 'waiting' ? (
