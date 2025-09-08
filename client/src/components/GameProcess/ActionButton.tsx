@@ -159,7 +159,7 @@ export function ActionButtons({
   }
 
   return (
-      <div className="flex flex-col items-center justify-center -mt-[25px]">
+      <div className="flex flex-col items-center justify-center -mt-[50px]">
       <div className="relative flex items-center justify-center space-x-2 p-2">
         {canFold && (
           <div className="relative">

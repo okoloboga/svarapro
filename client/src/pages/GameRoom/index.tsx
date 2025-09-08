@@ -102,11 +102,11 @@ const useTablePositioning = (gameStateLoaded: boolean) => {
     const baseClasses = `absolute ${zIndex} transition-all duration-300 ease-in-out hover:scale-105 hover:z-40 w-20 h-24 flex items-center justify-center`;
     const positionClasses = {
       1: "-top-12 left-1/2",
-      2: "top-1/3 -right-7",
-      3: "bottom-1/3 -right-7",
+      2: "top-1/4 -right-7",
+      3: "bottom-1/4 -right-7",
       4: "-bottom-12 left-1/2",
-      5: "bottom-1/3 -left-7",
-      6: "top-1/3 -left-7",
+      5: "bottom-1/4 -left-7",
+      6: "top-1/4 -left-7",
     };
     return `${baseClasses} ${positionClasses[position as keyof typeof positionClasses] || ''}`;
   };
@@ -141,6 +141,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [isSittingDown, setIsSittingDown] = useState(false);
   const [isMenuButtonPressed, setIsMenuButtonPressed] = useState(false);
   const [winSequenceTimer, setWinSequenceTimer] = useState<NodeJS.Timeout | null>(null);
+  const isWinSequenceActiveRef = useRef(false);
 
   const handleMenuButtonPress = () => {
     setIsMenuButtonPressed(true);
@@ -446,9 +447,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     if (previousStatus !== currentStatus) {
       console.log('🎯 Status change:', previousStatus, '->', currentStatus, 'winSequenceStep:', winSequenceStep);
-      if (currentStatus === 'showdown' && winSequenceStep === 'none') {
+      if (currentStatus === 'showdown' && winSequenceStep === 'none' && !isWinSequenceActiveRef.current) {
         // Показываем showdown (затемнение + карты)
         console.log('🎯 Starting showdown - winners:', gameState?.winners?.map(w => ({ id: w.id, username: w.username, lastWinAmount: w.lastWinAmount })));
+        isWinSequenceActiveRef.current = true;
         setWinSequenceStep('showdown');
         
         // Очищаем предыдущий таймер если есть
@@ -470,6 +472,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         const t3 = setTimeout(() => {
           console.log('🎯 Ending win sequence');
           setWinSequenceStep('none');
+          isWinSequenceActiveRef.current = false;
         }, 7000);
 
         // Сохраняем таймеры для очистки
@@ -503,6 +506,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         const t3 = setTimeout(() => {
           console.log('🎯 Ending win sequence');
           setWinSequenceStep('none');
+          isWinSequenceActiveRef.current = false;
         }, 7000);
 
         // Сохраняем таймеры для очистки
@@ -518,9 +522,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // Сбрасываем winSequenceStep когда начинается svara
         console.log('🎯 Svara pending - resetting winSequenceStep');
         setWinSequenceStep('none');
+        isWinSequenceActiveRef.current = false;
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
+        isWinSequenceActiveRef.current = false;
         // Показываем ChipStack для новой игры
         setShowChipStack(true);
       } else if (currentStatus === 'waiting') {
@@ -530,7 +536,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
 
     prevGameStateRef.current = gameState;
-  }, [gameState, handleChipsToWinner, winSequenceStep, winSequenceTimer]);
+  }, [gameState, handleChipsToWinner, winSequenceTimer]);
 
   // Очистка таймера при размонтировании
   useEffect(() => {
