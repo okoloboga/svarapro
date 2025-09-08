@@ -36,19 +36,44 @@ export function NoConnect({ isVisible, onRetry }: NoConnectProps) {
             style={{
               position: 'absolute',
               inset: '1px',
-              background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)',
-              borderRadius: '19px 19px 0 0',
+              background: '#2E2B33',
+              borderRadius: '19px 19px 0 0', // 20px - 1px
+              zIndex: 0,
             }}
           />
           
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center text-center px-6">
             {/* Иконка */}
-            <img 
-              src={noconnectIcon} 
-              alt="No connection" 
-              style={{ width: '69px', height: '69px', marginBottom: '16px' }}
-            />
+            <div style={{ width: '69px', height: '69px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img 
+                src={noconnectIcon} 
+                alt="No connection" 
+                style={{ width: '69px', height: '69px' }}
+                onError={(e) => {
+                  console.error('Failed to load noconnect.png:', e);
+                  // Fallback to a simple div if image fails to load
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              {/* Fallback icon if image fails to load */}
+              <div 
+                style={{ 
+                  width: '69px', 
+                  height: '69px', 
+                  backgroundColor: '#FF443A', 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '24px',
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}
+              >
+                !
+              </div>
+            </div>
             
             {/* Заголовок */}
             <h3 
