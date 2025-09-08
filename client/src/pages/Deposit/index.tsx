@@ -123,13 +123,14 @@ export function Deposit({ setCurrentPage }: DepositProps) {
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold text-gray-400 mb-4">
+      <h2 className="text-lg font-semibold text-gray-400 mb-4 self-start">
         {t('select_currency')}
       </h2>
 
       <div className="w-[93vw] flex flex-col items-start space-y-3">
         <Button
           variant="secondary"
+          size="xl"
           fullWidth
           icon={tetherIcon}
           rightIcon={rightIcon}
@@ -141,6 +142,7 @@ export function Deposit({ setCurrentPage }: DepositProps) {
         </Button>
         <Button
           variant="secondary"
+          size="xl"
           fullWidth
           icon={tonIcon}
           rightIcon={rightIcon}

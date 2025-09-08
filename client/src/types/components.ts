@@ -97,7 +97,7 @@ export type ButtonProps = {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'tertiary';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   fullWidth?: boolean;
   icon?: string;
   iconPosition?: 'left' | 'right';

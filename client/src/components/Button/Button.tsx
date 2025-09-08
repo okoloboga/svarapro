@@ -34,6 +34,7 @@ export function Button({
     sm: 'h-10 text-sm',
     md: 'h-12 text-base',
     lg: 'h-14 text-lg',
+    xl: 'h-[55px] text-base',
   };
   const finalSizeClasses = `${sizeClasses[size]}`;
 
