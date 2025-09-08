@@ -395,8 +395,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // TODO: fix svara animation
 
   useEffect(() => {
+    console.log('🎯 SvaraAnimation check:', {
+      status: gameState?.status,
+      svaraStep,
+      winSequenceStep,
+      shouldShow: gameState?.status === 'svara_pending' && svaraStep === 'none' && winSequenceStep === 'none'
+    });
+    
     if (gameState?.status === 'svara_pending' && svaraStep === 'none' && winSequenceStep === 'none') {
       // Показываем SvaraAnimation только после завершения winSequenceStep
+      console.log('🎯 Starting SvaraAnimation');
       setSvaraStep('animating');
     } else if (gameState?.status !== 'svara_pending') {
       setSvaraStep('none');
@@ -486,6 +494,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
           clearTimeout(t2);
           clearTimeout(t3);
         };
+      } else if (currentStatus === 'svara_pending') {
+        // Сбрасываем winSequenceStep когда начинается svara
+        console.log('🎯 Svara pending - resetting winSequenceStep');
+        setWinSequenceStep('none');
       } else if (currentStatus === 'ante') {
         // Сбрасываем winSequenceStep когда начинается новая игра
         setWinSequenceStep('none');
