@@ -69,15 +69,13 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
               value={rangeValues}
               onChange={handleRangeChange}
               railStyle={{ background: 'transparent', borderRadius: '15px', height: '37px' }}
-              trackStyle={[{ background: '#807C7C', height: '4px', top: '50%', transform: 'translateY(-50%)', position: 'absolute', width: '261px', left: '50%', marginLeft: '-130.5px' }]}
+              trackStyle={[{ background: '#807C7C', height: '4px' }]}
               handleStyle={[
                 { 
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
                   border: 'none', 
                   width: '20px', 
-                  height: '20px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)',
+                  height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
                   opacity: 1
                 },
@@ -85,9 +83,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)', 
                   border: 'none', 
                   width: '20px', 
-                  height: '20px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)',
+                  height: '20px',
                   background: 'linear-gradient(0deg, #666666 0%, #FFFFFF 100%)',
                   opacity: 1
                 },
@@ -96,7 +92,7 @@ export function SlidePanel({ isOpen, onRangeChange }: SlidePanelProps) {
             />
           </div>
         </div>
-        <div className="flex justify-around mt-2 mx-auto" style={{ width: '261px' }}>
+        <div className="flex justify-around mt-2 mx-auto" style={{ width: '320px' }}>
           <span 
             className="text-white"
             style={{

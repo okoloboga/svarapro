@@ -91,7 +91,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
             value={password}
             onChange={handlePasswordChange}
             placeholder={t('come_up_with_a_password')}
-            className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-12 rounded-lg pl-10 pr-10"
+            className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-[36px] rounded-lg pl-10 pr-10"
           />
           <img src={isPasswordValid ? completeIcon : incompleteIcon} alt="complete" className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6" />
         </div>
@@ -103,7 +103,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
             value={stake}
             onChange={handleStakeChange}
             placeholder={t('min_stake')}
-            className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-12 rounded-lg pl-10 pr-10"
+            className="bg-[#13121780] text-[#808797] text-center text-xs font-normal w-full h-[36px] rounded-lg pl-10 pr-10"
           />
           <img src={hasEnoughBalance ? completeIcon : incompleteIcon} alt="complete" className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6" />
         </div>
