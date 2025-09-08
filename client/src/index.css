@@ -86,4 +86,5 @@ body {
 
 .button-press {
   animation: button-press 0.15s ease-out;
+  transform-origin: center;
 }

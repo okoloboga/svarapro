@@ -23,6 +23,7 @@ export function Button({
   const [isPressed, setIsPressed] = useState(false);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log('🎯 Button click, isPressed:', isPressed);
     setIsPressed(true);
     setTimeout(() => setIsPressed(false), 150);
     onClick?.(e);

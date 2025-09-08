@@ -74,6 +74,7 @@ export function ActionButtons({
   });
 
   const handleButtonPress = (buttonType: keyof typeof isPressed, callback: () => void) => {
+    console.log('🎯 Button press:', buttonType, 'isPressed:', isPressed[buttonType]);
     setIsPressed(prev => ({ ...prev, [buttonType]: true }));
     setTimeout(() => {
       setIsPressed(prev => ({ ...prev, [buttonType]: false }));
@@ -90,7 +91,7 @@ export function ActionButtons({
           <div className="relative">
             <button
               onClick={() => handleButtonPress('fold', onFold)}
-              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.fold ? 'button-press' : ''}`}
+              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${isPressed.fold ? 'button-press' : ''}`}
               style={{ backgroundColor: '#FF443A' }}
             >
               <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
@@ -114,7 +115,7 @@ export function ActionButtons({
           {canAllIn ? (
             <button
                 onClick={() => handleButtonPress('allIn', onAllIn)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.allIn ? 'button-press' : ''}`}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${isPressed.allIn ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
             >
                 <span>${formatAmount(callAmount)}</span>
@@ -125,7 +126,7 @@ export function ActionButtons({
               {/* Call Button */}
               <button
                 onClick={() => handleButtonPress('call', onCall)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
                   isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
                 } ${isPressed.call ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
@@ -138,7 +139,7 @@ export function ActionButtons({
               {/* Raise Button */}
               <button
                 onClick={() => handleButtonPress('raise', onRaise)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
                   isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
                 } ${isPressed.raise ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#56BF00' }}
@@ -161,7 +162,7 @@ export function ActionButtons({
           <div className="relative">
             <button
               onClick={() => handleButtonPress('fold', onFold)}
-              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.fold ? 'button-press' : ''}`}
+              className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${isPressed.fold ? 'button-press' : ''}`}
               style={{ backgroundColor: '#FF443A' }}
             >
               <img src={passIcon} alt={t('pass')} style={{ width: '16px', height: '16px' }} />
@@ -186,7 +187,7 @@ export function ActionButtons({
         {canCall && (
           <button
             onClick={() => handleButtonPress('call', onCall)}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
               isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
             } ${isPressed.call ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
@@ -200,7 +201,7 @@ export function ActionButtons({
         {canRaise && (
           <button
             onClick={() => handleButtonPress('raise', onRaise)}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
               isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
             } ${isPressed.raise ? 'button-press' : ''}`}
             style={{ backgroundColor: '#56BF00' }}
@@ -214,7 +215,7 @@ export function ActionButtons({
         {canAllIn && (
             <button
                 onClick={() => handleButtonPress('allIn', onAllIn)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${isPressed.allIn ? 'button-press' : ''}`}
+                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${isPressed.allIn ? 'button-press' : ''}`}
                 style={{ backgroundColor: '#0E5C89' }}
             >
                 <span>${formatAmount(callAmount)}</span>
@@ -225,7 +226,7 @@ export function ActionButtons({
         {canLook && (
           <button
             onClick={() => handleButtonPress('look', onLook)}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
               blindButtonsDisabled ? 'opacity-50 cursor-not-allowed' : ''
             } ${isPressed.look ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
@@ -239,7 +240,7 @@ export function ActionButtons({
         {canBlindBet && !canAllIn && (
           <button
             onClick={() => handleButtonPress('blindBet', onBlindBet)}
-            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg transition ${
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg  ${
               blindButtonsDisabled || isBlindBetDisabled ? 'opacity-50 cursor-not-allowed' : ''
             } ${isPressed.blindBet ? 'button-press' : ''}`}
             style={{ backgroundColor: '#0E5C89' }}
