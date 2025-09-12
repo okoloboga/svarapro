@@ -235,7 +235,7 @@ export class GameService {
     }
 
     if (room.status === 'waiting') {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
     const gameState = await this.redisService.getGameState(roomId);
@@ -373,7 +373,7 @@ export class GameService {
     await this.redisService.publishGameUpdate(roomId, gameState);
 
     // Ждем завершения анимации раздачи карт на клиенте (3 секунды)
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Только после завершения анимации переходим в blind_betting
     const phaseResult = this.gameStateService.moveToNextPhase(
@@ -756,7 +756,7 @@ export class GameService {
         gameState.lastBlindBettorIndex = playerIndex;
         // Обновляем банк
         gameState.pot = Number((gameState.pot + blindBetAmount).toFixed(2));
-        gameState.chipCount += 1; // Увеличиваем счетчик фишек
+        // gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
@@ -847,7 +847,7 @@ export class GameService {
         gameState.lastActionAmount = callAmount;
         // Обновляем банк
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-        gameState.chipCount += 1; // Увеличиваем счетчик фишек
+        // gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(callAction);
         break;
       }
@@ -880,7 +880,7 @@ export class GameService {
         gameState.lastActionAmount = raiseAmount;
         // Обновляем банк
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-        gameState.chipCount += 1; // Увеличиваем счетчик фишек
+        // gameState.chipCount += 1; // Увеличиваем счетчик фишек
         gameState.log.push(raiseAction);
 
         // Проверяем переход в betting ДО сброса флага hasLookedAndMustAct
@@ -920,16 +920,16 @@ export class GameService {
       }
     }
 
-    gameState.isAnimating = true;
-    gameState.animationType = 'chip_fly';
+    // gameState.isAnimating = true;
+    // gameState.animationType = 'chip_fly';
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    gameState.isAnimating = false;
-    gameState.animationType = undefined;
+    // gameState.isAnimating = false;
+    // gameState.animationType = undefined;
 
     // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
     // Если следующий игрок будет якорем, то круг завершается
@@ -1093,7 +1093,7 @@ export class GameService {
       gameState.dealerIndex,
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
@@ -1301,7 +1301,7 @@ export class GameService {
     // 3. Finalize state
     gameState.pot = 0;
     gameState.rake = totalRake;
-    gameState.chipCount = 0;
+    // gameState.chipCount = 0;
     // Winners are already set in gameState.winners from endGameWithWinner
 
     // 4. Persist final balances
@@ -1388,7 +1388,7 @@ export class GameService {
     gameState.lastRaiseIndex = playerIndex;
     // Обновляем банк
     gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
-    gameState.chipCount += 1; // Увеличиваем счетчик фишек
+    // gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(allInAction);
 
     // Проверяем, нужно ли перейти в betting (если это all_in после look в blind_betting)
@@ -1483,7 +1483,7 @@ export class GameService {
     gameState.lastActionAmount = callAmount;
     // Обновляем банк
     gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
-    gameState.chipCount += 1; // Увеличиваем счетчик фишек
+    // gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(callAction);
 
     // Call после look переводит игру в фазу betting и открывает карты
@@ -1518,16 +1518,16 @@ export class GameService {
     gameState.lastRaiseIndex = playerIndex;
 
     // Анимация и проверка завершения круга (как в processBettingAction)
-    gameState.isAnimating = true;
-    gameState.animationType = 'chip_fly';
+    // gameState.isAnimating = true;
+    // gameState.animationType = 'chip_fly';
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    gameState.isAnimating = false;
-    gameState.animationType = undefined;
+    // gameState.isAnimating = false;
+    // gameState.animationType = undefined;
 
     // Проверяем завершение круга ДО передачи хода (как в raise)
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
@@ -1596,7 +1596,7 @@ export class GameService {
     gameState.lastActionAmount = raiseAmount;
     // Обновляем банк
     gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
-    gameState.chipCount += 1; // Увеличиваем счетчик фишек
+    // gameState.chipCount += 1; // Увеличиваем счетчик фишек
     gameState.log.push(raiseAction);
 
     // Raise после look в blind_betting переводит игру в фазу betting
@@ -1628,16 +1628,16 @@ export class GameService {
     gameState.log.push(...scoreResult.actions);
 
     // Анимация
-    gameState.isAnimating = true;
-    gameState.animationType = 'chip_fly';
+    // gameState.isAnimating = true;
+    // gameState.animationType = 'chip_fly';
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    gameState.isAnimating = false;
-    gameState.animationType = undefined;
+    // gameState.isAnimating = false;
+    // gameState.animationType = undefined;
 
     // Проверяем завершение круга ДО передачи хода
     const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(

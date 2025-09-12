@@ -1051,7 +1051,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             onComplete={handleChipAnimationComplete}
           />
         ))}
-        {cardAnimations.map(card => (
+        {/* {cardAnimations.map(card => (
           <FlyingCard
             key={card.id}
             cardId={card.id}
@@ -1062,7 +1062,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             delay={card.delay}
             onComplete={handleCardAnimationComplete}
           />
-        ))}
+        ))} */}
       </div>
       
       {/* NoConnect компонент для проблем с подключением */}
