@@ -16,8 +16,10 @@ export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      // Небольшая задержка для запуска анимации появления
-      const timer = setTimeout(() => setIsVisible(true), 10);
+      // Устанавливаем isVisible в false сначала, чтобы панель была внизу
+      setIsVisible(false);
+      // Затем через небольшую задержку запускаем анимацию появления
+      const timer = setTimeout(() => setIsVisible(true), 50);
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
@@ -64,7 +66,10 @@ export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50
         className={`w-full transition-transform duration-300 ease-out ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={{ height }}
+        style={{ 
+          height,
+          transform: isVisible ? 'translateY(0)' : 'translateY(100%)'
+        }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
       >
         {/* Container with gradient border and rounded corners */}
