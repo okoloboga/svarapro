@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import foldSoundSrc from '@/assets/game/fold.mp3';
 import turnSoundSrc from '@/assets/game/turn.mp3';
 import winSoundSrc from '@/assets/game/win.mp3';
+import chipSoundSrc from '@/assets/game/chip.mp3';
 
-export type SoundType = 'fold' | 'turn' | 'win';
+export type SoundType = 'fold' | 'turn' | 'win' | 'chip';
 
 export const useSound = () => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
@@ -48,6 +49,7 @@ export const useSound = () => {
     fold: new Audio(foldSoundSrc),
     turn: new Audio(turnSoundSrc),
     win: new Audio(winSoundSrc),
+    chip: new Audio(chipSoundSrc),
   }), []);
 
   useEffect(() => {

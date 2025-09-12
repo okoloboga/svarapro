@@ -175,6 +175,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     if (existingAnimation) {
       return;
     }
+
+    actions.playSound('chip');
     
     const absolutePosition = player.position;
     const isCurrentPlayer = player.id === currentUserId;
@@ -232,7 +234,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       toY: centerY, 
       delay: 0 
     }]);
-  }, [gameState, chipAnimations, currentUserId, getScreenPosition, scale, setChipAnimations]);
+  }, [gameState, chipAnimations, currentUserId, getScreenPosition, scale, setChipAnimations, actions]);
 
   const handleOtherPlayerAction = useCallback((playerId: string) => {
     handlePlayerBet(playerId);
