@@ -22,7 +22,7 @@ const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ isOpen, onClose, openModa
           className="modal-content bg-[#18171C] rounded-[15px]"
           style={{ width: '316px', height: '162px' }}
         >
-          <button className="menu-button" onClick={() => openModal('createPublic')}>
+          <button className="menu-button" style={{ position: 'relative', left: '-10px' }} onClick={() => openModal('createPublic')}>
             <img src={plusIcon} alt="Create" className="w-[26px] h-[26px]" />
             <span className="menu-button-text">{t('create_room')}</span>
           </button>
