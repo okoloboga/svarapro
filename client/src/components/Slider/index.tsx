@@ -68,6 +68,7 @@ export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50
         }`}
         style={{ 
           height,
+          margin: '0 2px', // 2px margin с каждой стороны
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)'
         }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
