@@ -670,36 +670,6 @@ export class GameService {
   ): Promise<GameActionResult> {
     const player = gameState.players[playerIndex];
 
-    if (
-      gameState.status === 'blind_betting' &&
-      gameState.lastBlindBettorIndex !== undefined
-    ) {
-      const lastBettor = gameState.players[gameState.lastBlindBettorIndex];
-      if (lastBettor && lastBettor.id !== player.id) {
-        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-          player,
-          {
-            hasFolded: true,
-            lastAction: 'fold',
-            hasLookedAndMustAct: false,
-          },
-        );
-        const foldAction: GameAction = {
-          type: 'fold',
-          telegramId: player.id,
-          timestamp: Date.now(),
-          message: `Игрок ${player.username} сбросил карты в ответ на ставку вслепую`,
-        };
-        gameState.log.push(foldAction);
-
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-
-        await this.endGameWithWinner(roomId, gameState);
-        return { success: true };
-      }
-    }
-
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       player,
       {
@@ -1081,7 +1051,7 @@ export class GameService {
 
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
-        
+
         // Запускаем новую игру через endGame
         await this.endGame(roomId, gameState, 'svara');
         return;
@@ -1167,10 +1137,11 @@ export class GameService {
 
     console.log(
       `[${roomId}] Winners set in endGameWithWinner:`,
-      overallWinners.map((w) => ({ 
-        id: w.id, 
-        username: w.username, 
-        lastWinAmount: gameState.players.find(p => p.id === w.id)?.lastWinAmount 
+      overallWinners.map((w) => ({
+        id: w.id,
+        username: w.username,
+        lastWinAmount: gameState.players.find((p) => p.id === w.id)
+          ?.lastWinAmount,
       })),
     );
 
@@ -1244,7 +1215,7 @@ export class GameService {
 
     // Reset lastWinAmount only for non-winners
     for (const p of gameState.players) {
-      if (!gameState.winners?.some(w => w.id === p.id)) {
+      if (!gameState.winners?.some((w) => w.id === p.id)) {
         p.lastWinAmount = 0;
       }
     }
