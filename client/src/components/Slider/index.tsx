@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import closeIcon from '../../assets/close.png';
 
 interface SliderProps {
@@ -10,13 +10,32 @@ interface SliderProps {
 }
 
 export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50 }: SliderProps) {
-  if (!isOpen) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Небольшая задержка для запуска анимации появления
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      // Ждем завершения анимации исчезновения перед размонтированием
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  if (!shouldRender) {
     return null;
   }
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 flex items-end`}
+      className={`fixed inset-0 bg-black flex items-end transition-opacity duration-300 ${
+        isVisible ? 'bg-opacity-50' : 'bg-opacity-0'
+      }`}
       style={{ zIndex }}
       onClick={onClose}
     >
@@ -42,7 +61,9 @@ export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50
 
       {/* Bottom Sheet Panel */}
       <div
-        className={`w-full transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`w-full transition-transform duration-300 ease-out ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
         style={{ height }}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
       >
