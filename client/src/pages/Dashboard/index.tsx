@@ -100,7 +100,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
           />
         </div>
       )}
-      {isEnterGameMenuVisible && <EnterGameMenu onClose={handleCloseEnterGameMenu} openModal={openModal} />}
+      <EnterGameMenu isOpen={isEnterGameMenuVisible} onClose={handleCloseEnterGameMenu} openModal={openModal} />
       {activeModal === 'createPublic' && <CreatePublic onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} setIsCreatingRoom={setIsCreatingRoom} />}
       {activeModal === 'createPrivate' && <CreatePrivate onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} balance={balance} setNotification={setNotification} setIsCreatingRoom={setIsCreatingRoom} />}
       {activeModal === 'connectRoom' && <ConnectRoom onClose={closeModal} openModal={openEnterGameMenu} setCurrentPage={setCurrentPage} />}

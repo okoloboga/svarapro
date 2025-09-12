@@ -111,16 +111,7 @@ export function GameMenu({ isOpen, onClose, onExit }: GameMenuProps) {
           onConfirm={handleExitConfirm}
         />
       )}
-      {showLanguageSelector && (
-        <div 
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setShowLanguageSelector(false)}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
-          </div>
-        </div>
-      )}
+            <LanguageSelector isOpen={showLanguageSelector} onClose={() => setShowLanguageSelector(false)} zIndex={60} />
     </div>
   );
 }

@@ -1,89 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './EnterGameMenu.css';
 import plusIcon from '@/assets/plus.png';
 import lockIcon from '@/assets/lock.png';
 import partyIcon from '@/assets/party.png';
 import { useTranslation } from 'react-i18next';
-import { EnterGameMenuProps } from '@/types/components';
+import { Slider } from '../Slider';
 
-const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ onClose, openModal }) => {
+interface EnterGameMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  openModal: (type: 'createPublic' | 'createPrivate' | 'connectRoom') => void;
+}
+
+const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ isOpen, onClose, openModal }) => {
   const { t } = useTranslation('common');
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    // Запускаем анимацию появления
-    setIsVisible(true);
-  }, []);
-
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      // Запускаем анимацию исчезновения
-      setIsVisible(false);
-      setTimeout(() => {
-        onClose();
-      }, 300); // Ждем завершения анимации
-    }
-  };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
-      onClick={onClose}
-    >
-      {/* Bottom Sheet Panel */}
-      <div
-        className="w-full transition-transform duration-300 ease-out"
-        style={{ 
-          height: '250px',
-          transform: isVisible ? 'translateY(0)' : 'translateY(100%)'
-        }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
-      >
-        {/* EnterGameMenu Container - во всю ширину экрана */}
+    <Slider isOpen={isOpen} onClose={onClose} height="250px">
+      <div className="relative z-10 flex items-center justify-center h-full">
         <div
-          className="relative w-full h-full flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)',
-            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
-            borderRadius: '20px 20px 0 0', // Скругление только сверху
-          }}
+          className="modal-content bg-[#18171C] rounded-[15px]"
+          style={{ width: '316px', height: '162px' }}
         >
-          {/* Inner background */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: '1px',
-              background: '#2E2B33',
-              borderRadius: '19px 19px 0 0', // 20px - 1px
-              zIndex: 0,
-            }}
-          />
-          
-          {/* Original EnterGameMenu content */}
-          <div className="relative z-10" onClick={handleOverlayClick}>
-            <div
-              className="modal-content bg-[#18171C] rounded-[15px]"
-              style={{ width: '316px', height: '162px' }}
-            >
-              <button className="menu-button" onClick={() => openModal('createPublic')}>
-                <img src={plusIcon} alt="Create" className="w-[26px] h-[26px]" />
-                <span className="menu-button-text">{t('create_room')}</span>
-              </button>
-              <div className="divider"></div>
-              <button className="menu-button" onClick={() => openModal('createPrivate')}>
-                <img src={lockIcon} alt="Create Private" className="w-[26px] h-[26px]" />
-                <span className="menu-button-text">{t('create_private_room')}</span>
-              </button>
-              <div className="divider"></div>
-              <button className="menu-button" onClick={() => openModal('connectRoom')}>
-                <img src={partyIcon} alt="Join" className="w-[26px] h-[26px]" />
-                <span className="menu-button-text">{t('join_room')}</span>
-              </button>
-            </div>
-          </div>
+          <button className="menu-button" onClick={() => openModal('createPublic')}>
+            <img src={plusIcon} alt="Create" className="w-[26px] h-[26px]" />
+            <span className="menu-button-text">{t('create_room')}</span>
+          </button>
+          <div className="divider"></div>
+          <button className="menu-button" onClick={() => openModal('createPrivate')}>
+            <img src={lockIcon} alt="Create Private" className="w-[26px] h-[26px]" />
+            <span className="menu-button-text">{t('create_private_room')}</span>
+          </button>
+          <div className="divider"></div>
+          <button className="menu-button" onClick={() => openModal('connectRoom')}>
+            <img src={partyIcon} alt="Join" className="w-[26px] h-[26px]" />
+            <span className="menu-button-text">{t('join_room')}</span>
+          </button>
         </div>
       </div>
-    </div>
+    </Slider>
   );
 };
 

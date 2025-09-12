@@ -60,21 +60,8 @@ export function More({ userData, setCurrentPage }: MoreProps) {
       <div className="flex-1">
         {showSuccess && <PopSuccess onClose={() => setShowSuccess(false)} />}
         {/* Blur overlay and modal for language selector */}
-        {showLanguageSelector && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black bg-opacity-40 backdrop-blur-sm"
-              style={{ backdropFilter: 'blur(6px)' }}
-              onClick={() => setShowLanguageSelector(false)}
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div onClick={(e) => e.stopPropagation()}>
-                <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
-              </div>
-            </div>
-          </>
-        )}
-        <div className={`mx-auto w-[93vw] flex flex-col items-center space-y-3 mt-6 ${showLanguageSelector ? 'pointer-events-none select-none filter blur-sm' : ''}`}>
+        
+        <div className="mx-auto w-[93vw] flex flex-col items-center space-y-3 mt-6">
           <Button
             variant="secondary"
             fullWidth
@@ -194,6 +181,7 @@ export function More({ userData, setCurrentPage }: MoreProps) {
           </div>
         </div>
       </div>
+      <LanguageSelector isOpen={showLanguageSelector} onClose={() => setShowLanguageSelector(false)} zIndex={60} />
       <Footer />
       {isEulaVisible && <Eula onClose={() => setIsEulaVisible(false)} />}
       {isReferralVisible && <Referral onClose={() => setIsReferralVisible(false)} />}
