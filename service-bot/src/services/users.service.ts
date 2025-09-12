@@ -65,10 +65,16 @@ export class UsersService {
       );
 
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 400 || error.response?.status === 404) {
-        console.log(`User ${telegramId} not found`);
-        return null;
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (
+          axiosError.response?.status === 400 ||
+          axiosError.response?.status === 404
+        ) {
+          console.log(`User ${telegramId} not found`);
+          return null;
+        }
       }
       console.error("Get user error:", error);
       throw error;

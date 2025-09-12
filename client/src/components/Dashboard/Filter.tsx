@@ -18,7 +18,7 @@ export function Filter({ onSearchChange, onAvailabilityChange, onRangeChange }: 
   // Инициализируем состояние Dashboard при загрузке
   useEffect(() => {
     onAvailabilityChange(isToggleOn);
-  }, []); // Только при первой загрузке
+  }, [isToggleOn, onAvailabilityChange]); // Добавляем зависимости
 
   const handleTogglePanel = () => {
     setIsPanelOpen((prev) => !prev);

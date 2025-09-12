@@ -13,7 +13,7 @@ import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 import { UserData, PageData } from '@/types/entities';
 import FlyingChip from '../../components/GameProcess/FlyingChip';
-import FlyingCard from '../../components/GameProcess/FlyingCard';
+// import FlyingCard from '../../components/GameProcess/FlyingCard';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
@@ -38,14 +38,14 @@ interface ChipAnimation {
   delay: number;
 }
 
-interface CardAnimation {
-  id: string;
-  fromX: number;
-  fromY: number;
-  toX: number;
-  toY: number;
-  delay: number;
-}
+// interface CardAnimation {
+//   id: string;
+//   fromX: number;
+//   fromY: number;
+//   toX: number;
+//   toY: number;
+//   delay: number;
+// }
 
 interface GameRoomPropsExtended extends GameRoomProps {
   socket: Socket | null;
@@ -153,7 +153,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   // Объявляем состояния для useCallback
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
-  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
+  // const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
 
   const getScreenPosition = useCallback((absolutePosition: number) => {
     if (!currentUserPosition || !isSeated) {
@@ -242,47 +242,47 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
   const handleDealCards = useCallback(() => {
     if (!gameState) return;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    const verticalOffset = 100;
+    // const centerX = window.innerWidth / 2;
+    // const centerY = window.innerHeight / 2;
+    // const tableWidth = 315 * scale;
+    // const tableHeight = 493 * scale;
+    // const verticalOffset = 100;
     
     // Раздаем по 3 карты каждому активному игроку
     gameState.players.forEach((player, playerIndex) => {
       if (!player.isActive) return;
       
-      const isCurrentPlayer = player.id === currentUserId;
-      const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+      // const isCurrentPlayer = player.id === currentUserId;
+      // const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
       
       // Вычисляем позицию игрока
-      let playerX = 0;
-      let playerY = 0;
+      // let playerX = 0;
+      // let playerY = 0;
       
-      switch (relativePosition) {
-        case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
-        case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
-        case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
-        case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
-        case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
-        case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
-      }
+      // switch (relativePosition) {
+      //   case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
+      //   case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
+      //   case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
+      //   case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
+      //   case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
+      //   case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
+      // }
       
       // Карты летят в центр компонента игрока
-      const cardDeckX = playerX;
-      const cardDeckY = playerY;
+      // const cardDeckX = playerX;
+      // const cardDeckY = playerY;
       
       // Создаем 3 карты для каждого игрока
       for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
-        const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
-        setCardAnimations(prev => [...prev, {
-          id: cardId,
-          fromX: centerX,
-          fromY: centerY,
-          toX: cardDeckX,
-          toY: cardDeckY,
-          delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
-        }]);
+        // const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
+        // setCardAnimations(prev => [...prev, {
+        //   id: cardId,
+        //   fromX: centerX,
+        //   fromY: centerY,
+        //   toX: cardDeckX,
+        //   toY: cardDeckY,
+        //   delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
+        // }]);
         
         // Проигрываем звук fold.mp3 для каждой карты с задержкой
         setTimeout(() => {
@@ -290,7 +290,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         }, (playerIndex * 3 + cardIndex) * 200);
       }
     });
-  }, [gameState, scale, currentUserId, getScreenPosition, setCardAnimations, actions]);
+  }, [gameState, actions]);
 
   const handleChipsToWinner = useCallback(() => {
     if (!gameState?.winners || gameState.winners.length === 0) {
@@ -358,41 +358,41 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Показываем анимацию сброса карт даже для неактивных игроков (которые только что сбросили)
     if (!player.isActive && !player.hasFolded) return;
     
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const tableWidth = 315 * scale;
-    const tableHeight = 493 * scale;
-    const verticalOffset = 100;
+    // const centerX = window.innerWidth / 2;
+    // const centerY = window.innerHeight / 2;
+    // const tableWidth = 315 * scale;
+    // const tableHeight = 493 * scale;
+    // const verticalOffset = 100;
     
-    const isCurrentPlayer = player.id === currentUserId;
-    const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+    // const isCurrentPlayer = player.id === currentUserId;
+    // const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
     
     // Вычисляем позицию игрока
-    let playerX = 0;
-    let playerY = 0;
+    // let playerX = 0;
+    // let playerY = 0;
     
-    switch (relativePosition) {
-      case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
-      case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
-      case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
-      case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
-      case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
-    }
+    // switch (relativePosition) {
+    //   case 1: playerX = centerX; playerY = centerY - tableHeight * 0.4 - verticalOffset; break;
+    //   case 2: playerX = centerX + tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+    //   case 3: playerX = centerX + tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+    //   case 4: playerX = centerX; playerY = centerY + tableHeight * 0.4 - verticalOffset; break;
+    //   case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.25 - verticalOffset; break;
+    //   case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.25; break;
+    // }
     
     // Создаем 3 карты для сброса
     for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
-      const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
-      setCardAnimations(prev => [...prev, {
-        id: cardId,
-        fromX: playerX,
-        fromY: playerY,
-        toX: centerX,
-        toY: centerY,
-        delay: cardIndex * 100 // Небольшая задержка между картами
-      }]);
+      // const cardId = `fold-${playerId}-${cardIndex}-${Date.now()}`;
+      // setCardAnimations(prev => [...prev, {
+      //   id: cardId,
+      //   fromX: playerX,
+      //   fromY: playerY,
+      //   toX: centerX,
+      //   toY: centerY,
+      //   delay: cardIndex * 100 // Небольшая задержка между картами
+      // }]);
     }
-  }, [gameState, scale, currentUserId, getScreenPosition, setCardAnimations]);
+  }, [gameState]);
 
   // TODO: fix svara animation
 
@@ -678,12 +678,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     });
   }, []);
 
-  const handleCardAnimationComplete = useCallback((cardId: string) => {
-    setCardAnimations(prev => {
-      const newAnimations = prev.filter(card => card.id !== cardId);
-      return newAnimations;
-    });
-  }, []);
+  // const handleCardAnimationComplete = useCallback((cardId: string) => {
+  //   setCardAnimations(prev => {
+  //     const newAnimations = prev.filter(card => card.id !== cardId);
+  //     return newAnimations;
+  //   });
+  // }, []);
 
   
 

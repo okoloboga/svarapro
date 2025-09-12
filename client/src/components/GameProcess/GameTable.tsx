@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameState } from '@/types/game';
 import tableImage from '../../assets/game/table.jpg';
-import ChipsStack from './ChipsStack';
+// import ChipsStack from './ChipsStack';
 import { useTranslation } from 'react-i18next';
 
 const formatAmount = (amount: number): string => {
@@ -32,8 +32,8 @@ interface GameTableProps {
 const GameTable: React.FC<GameTableProps> = ({ 
   gameState, 
   scale = 1, 
-  showChipStack = true,
-  savedChipCount = 0
+  // showChipStack = true,
+  // savedChipCount = 0
 }) => {
   const { t } = useTranslation('common');
   const baseWidth = 315;
@@ -42,16 +42,16 @@ const GameTable: React.FC<GameTableProps> = ({
   const formattedPot = formatAmount(gameState.pot);
   
   // Считаем количество фишек на основе лога действий
-  const totalChips = React.useMemo(() => {
-    if (gameState.status === 'finished') {
-      return savedChipCount;
-    }
-    if (!gameState.log) {
-      return 0;
-    }
-    const bettingActions = ['ante', 'blind_bet', 'bet', 'call', 'raise'];
-    return gameState.log.filter(action => bettingActions.includes(action.type)).length;
-  }, [gameState.status, gameState.log, savedChipCount]);
+  // const totalChips = React.useMemo(() => {
+  //   if (gameState.status === 'finished') {
+  //     return savedChipCount;
+  //   }
+  //   if (!gameState.log) {
+  //     return 0;
+  //   }
+  //   const bettingActions = ['ante', 'blind_bet', 'bet', 'call', 'raise'];
+  //   return gameState.log.filter(action => bettingActions.includes(action.type)).length;
+  // }, [gameState.status, gameState.log, savedChipCount]);
   
   
 

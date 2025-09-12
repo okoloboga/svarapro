@@ -260,9 +260,12 @@ export class AdminHandlers {
       const user = await this.usersService.getUserById(telegramId);
 
       if (!user) {
-        await ctx.reply(`❌ Пользователь с ID \`${telegramId}\` не найден в системе.`, {
-          parse_mode: "Markdown"
-        });
+        await ctx.reply(
+          `❌ Пользователь с ID \`${telegramId}\` не найден в системе.`,
+          {
+            parse_mode: "Markdown",
+          },
+        );
         return;
       }
 
@@ -448,14 +451,17 @@ export class AdminHandlers {
       );
 
       const user = await this.usersService.getUserById(balanceState.telegramId);
-      
+
       if (!user) {
-        await ctx.reply(`❌ Пользователь с ID \`${balanceState.telegramId}\` не найден в системе.`, {
-          parse_mode: "Markdown"
-        });
+        await ctx.reply(
+          `❌ Пользователь с ID \`${balanceState.telegramId}\` не найден в системе.`,
+          {
+            parse_mode: "Markdown",
+          },
+        );
         return;
       }
-      
+
       const actionText =
         balanceState.action === "add" ? "добавлено" : "списано";
 
