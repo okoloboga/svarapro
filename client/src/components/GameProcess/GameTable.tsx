@@ -62,7 +62,7 @@ const GameTable: React.FC<GameTableProps> = ({
     border: `${16 * scale}px solid #333238`,
     position: 'relative',
     overflow: 'hidden', // This is important to contain the rotated background
-    filter: 'drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.6))',
+    boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25), 0px 5.5px 10px 0px rgba(0, 0, 0, 0.25), 0px 0px 4px 11px rgba(0, 0, 0, 0.05), 0px -1px 4px 3px rgba(0, 0, 0, 0.25), 0px 0px 5.5px 10px rgba(0, 0, 0, 0.05)',
   };
 
   const backgroundStyle: React.CSSProperties = {
@@ -91,7 +91,6 @@ const GameTable: React.FC<GameTableProps> = ({
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none', // Чтобы рамка не мешала взаимодействию
     zIndex: 2,
-    filter: 'drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.6))',
   };
 
   const potContainerStyle: React.CSSProperties = {
