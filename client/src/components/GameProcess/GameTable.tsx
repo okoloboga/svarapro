@@ -169,13 +169,13 @@ const GameTable: React.FC<GameTableProps> = ({
       
       {/* Стоп
       ки фишек */}
-      {showChipStack && (
+      {/* {showChipStack && (
         <ChipsStack 
           totalChips={totalChips} 
           gameStatus={gameState.status}
           pot={gameState.pot}
         />
-      )}
+      )} */}
       
       
       
