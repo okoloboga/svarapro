@@ -763,8 +763,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Карты показываются только после затемнения экрана
   const showCards = winSequenceStep === 'showdown';
   const canAllIn = !!(isCurrentUserTurn && currentPlayer && 
-    ((effectiveGameStatus === 'betting') || 
-    (effectiveGameStatus === 'blind_betting' && postLookActions)) 
+    ((effectiveGameStatus === 'betting' && (currentPlayer.balance < callAmount || currentPlayer.balance < minRaiseAmount)) || 
+    (effectiveGameStatus === 'blind_betting' && (currentPlayer.balance < blindBetAmount || (postLookActions && (currentPlayer.balance < postLookCallAmount || currentPlayer.balance < minRaiseAmount))))) 
     && currentPlayer.balance > 0);
 
   const handleAllInClick = () => {
