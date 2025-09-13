@@ -1448,8 +1448,13 @@ export class GameService {
     // Игроки с деньгами для дальнейших действий
     const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: activePlayers.length=${activePlayers.length}, allInPlayers.length=${allInPlayers.length}`);
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: activePlayers.length=${activePlayers.length}, allInPlayers.length=${allInPlayers.length}, playersWithMoney.length=${playersWithMoney.length}`);
     this.logger.log(`[${roomId}] ALL-IN DEBUG: currentPlayerIndex=${gameState.currentPlayerIndex}, lastRaiseIndex=${gameState.lastRaiseIndex}`);
+    
+    // Логируем балансы всех игроков для отладки
+    gameState.players.forEach((p, index) => {
+      this.logger.log(`[${roomId}] ALL-IN DEBUG: Player ${index} (${p.username}): balance=${p.balance}, isActive=${p.isActive}, hasFolded=${p.hasFolded}, isAllIn=${p.isAllIn}`);
+    });
 
     // Игра заканчивается только когда все игроки с деньгами сделали all-in
     if (playersWithMoney.length === 0) {

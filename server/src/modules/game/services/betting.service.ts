@@ -66,7 +66,7 @@ export class BettingService {
     // Игроки с деньгами для дальнейших действий
     const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
-    console.log(`[BETTING] isBettingRoundComplete: activePlayers.length=${activePlayers.length}`);
+    console.log(`[BETTING] isBettingRoundComplete: activePlayers.length=${activePlayers.length}, playersWithMoney.length=${playersWithMoney.length}`);
     console.log(`[BETTING] isBettingRoundComplete: currentPlayerIndex=${gameState.currentPlayerIndex}`);
     console.log(`[BETTING] isBettingRoundComplete: lastRaiseIndex=${gameState.lastRaiseIndex}`);
     console.log(`[BETTING] isBettingRoundComplete: lastBlindBettorIndex=${gameState.lastBlindBettorIndex}`);
