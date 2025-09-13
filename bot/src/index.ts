@@ -46,7 +46,15 @@ bot.start(async (ctx) => {
 
     const payload = ctx.message?.text.split(' ')[1]; // Получаем telegramId из /start
 
-    let messageText = 'Welcome!';
+    let messageText = `🎉 Добро пожаловать в Svara! 🃏
+Готов к игре? Здесь тебя ждёт азарт, увлекательный геймплей и шанс зарабатывать реальные деньги!
+
+👥 Зови друзей и собирайтесь в одной комнате.
+🔐 Создавай приватные игры с паролем.
+💰 Побеждай — получай награды!
+
+Собери колоду, брось вызов и докажи, кто главный!
+🎮 Играй. Общайся. Зарабатывай.`;
     if (payload && payload.startsWith('join_')) {
       messageText = 'Приглашение в игру от Друга!';
     }
@@ -55,18 +63,22 @@ bot.start(async (ctx) => {
       webAppUrl.searchParams.set('startPayload', payload); // Передаём как startPayload
     }
 
-    await ctx.reply(messageText, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'Launch App',
-              web_app: { url: webAppUrl.toString() },
-            },
+    await ctx.replyWithPhoto(
+      { source: './src/assets/welcome.png' },
+      {
+        caption: messageText,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: 'ИГРАТЬ',
+                web_app: { url: webAppUrl.toString() },
+              },
+            ],
           ],
-        ],
-      },
-    });
+        },
+      }
+    );
   } catch (error) {
     console.error('Start command error:', error);
     await ctx.reply('Error occurred. Please try later.');
