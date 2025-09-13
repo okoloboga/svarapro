@@ -1373,19 +1373,30 @@ export class GameService {
       return { success: false, error: 'Недостаточно средств' };
     }
 
+    // Определяем, является ли all-in вынужденным call или добровольным raise
+    const isForcedCall = gameState.lastActionAmount > 0 && player.balance < gameState.lastActionAmount;
+    const isVoluntaryRaise = !isForcedCall && (allInAmount > gameState.lastActionAmount || gameState.lastActionAmount === 0);
+
     const { updatedPlayer, action: allInAction } =
       this.playerService.processPlayerBet(player, allInAmount, 'all_in');
 
+    // Устанавливаем правильный lastAction в зависимости от типа all-in
+    const lastAction = isForcedCall ? 'call' : 'raise';
+    
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       updatedPlayer,
       {
         isAllIn: true,
-        lastAction: 'raise',
+        lastAction: lastAction,
       },
     );
 
     gameState.lastActionAmount = allInAmount;
-    gameState.lastRaiseIndex = playerIndex;
+    
+    // Устанавливаем якорь только для добровольного raise all-in
+    if (isVoluntaryRaise) {
+      gameState.lastRaiseIndex = playerIndex;
+    }
     // Обновляем банк
     gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
     // gameState.chipCount += 1; // Увеличиваем счетчик фишек
