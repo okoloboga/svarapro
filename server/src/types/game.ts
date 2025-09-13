@@ -11,6 +11,7 @@ export interface Room {
   finishedAt?: Date;
   password?: string;
   winner?: string; // telegramId победителя
+  isSystem?: boolean; // флаг системной комнаты
 }
 
 // Новые типы для игры

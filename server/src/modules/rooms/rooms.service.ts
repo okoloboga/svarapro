@@ -6,6 +6,7 @@ import { GameStateService } from '../game/services/game-state.service';
 import { User } from '../../entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { TelegramService } from '../../services/telegram.service';
+import { SystemRoomsService } from '../system-rooms/system-rooms.service';
 
 @Injectable()
 export class RoomsService {
@@ -14,18 +15,31 @@ export class RoomsService {
     private readonly gameStateService: GameStateService,
     private readonly usersService: UsersService,
     private readonly telegramService: TelegramService,
+    private readonly systemRoomsService: SystemRoomsService,
   ) {}
 
   async getRooms(): Promise<Room[]> {
+    // Получаем системные комнаты (они всегда показываются первыми)
+    const systemRooms = await this.systemRoomsService.getSystemRooms();
+    
+    // Получаем пользовательские комнаты
     const roomIds = await this.redisService.getActiveRooms();
-    const rooms: Room[] = [];
+    const userRooms: Room[] = [];
+    
     for (const roomId of roomIds) {
+      // Пропускаем системные комнаты, так как они уже получены выше
+      if (this.systemRoomsService.isSystemRoom(roomId)) {
+        continue;
+      }
+      
       const room = await this.redisService.getRoom(roomId);
       if (room) {
-        rooms.push(room);
+        userRooms.push(room);
       }
     }
-    return rooms;
+    
+    // Объединяем: сначала системные комнаты, потом пользовательские
+    return [...systemRooms, ...userRooms];
   }
 
   async getRoomDetails(

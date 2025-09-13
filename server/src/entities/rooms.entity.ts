@@ -23,4 +23,7 @@ export class Room {
 
   @Column({ nullable: true })
   winner?: string; // telegramId победителя
+
+  @Column({ default: false })
+  isSystem: boolean; // флаг системной комнаты
 }

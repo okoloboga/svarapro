@@ -8,6 +8,7 @@ import { UsersModule } from './modules/users/users.module';
 import { FinancesModule } from './modules/finances/finances.module';
 import { GameModule } from './modules/game/game.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { SystemRoomsModule } from './modules/system-rooms/system-rooms.module';
 import { AdminsModule } from './modules/admins/admins.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
@@ -76,6 +77,7 @@ import * as Joi from 'joi';
     UsersModule,
     FinancesModule,
     RoomsModule,
+    SystemRoomsModule,
     GameModule,
     AdminsModule,
     AdminModule,
