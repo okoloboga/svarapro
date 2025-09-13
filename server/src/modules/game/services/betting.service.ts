@@ -72,8 +72,8 @@ export class BettingService {
     console.log(`[BETTING] isBettingRoundComplete: lastBlindBettorIndex=${gameState.lastBlindBettorIndex}`);
     console.log(`[BETTING] isBettingRoundComplete: dealerIndex=${gameState.dealerIndex}`);
 
-    if (playersWithMoney.length <= 1) {
-      console.log(`[BETTING] isBettingRoundComplete: returning true (playersWithMoney <= 1)`);
+    if (playersWithMoney.length === 0) {
+      console.log(`[BETTING] isBettingRoundComplete: returning true (no players with money)`);
       return true;
     }
 
