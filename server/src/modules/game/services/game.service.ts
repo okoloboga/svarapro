@@ -99,7 +99,7 @@ export class GameService {
         gameState.log.push(action);
 
         const activePlayers = gameState.players.filter(
-          (p) => p.isActive && !p.hasFolded,
+          (p) => p.isActive && !p.hasFolded && p.balance > 0,
         );
         const activeStatuses = ['ante', 'blind_betting', 'betting', 'showdown'];
 
@@ -1423,7 +1423,7 @@ export class GameService {
     }
 
     const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded,
+      (p) => p.isActive && !p.hasFolded && p.balance > 0,
     );
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 

@@ -420,7 +420,7 @@ export function PlayerSpot({
           // For the current user, total bet is now shown above avatar
           return null;
         })()} */}
-        {score !== undefined && !hasFolded && ((gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
+        {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div className="absolute z-50 flex items-center justify-center" style={{ 
             width: `${22 * scale}px`, 
             height: `${22 * scale}px`, 

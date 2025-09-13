@@ -147,13 +147,14 @@ export class PlayerService {
   findNextActivePlayer(players: Player[], currentIndex: number): number {
     let nextPlayerIndex = (currentIndex + 1) % players.length;
 
-    // Пропускаем неактивных игроков и тех, кто сбросил карты
+    // Пропускаем неактивных игроков, тех кто сбросил карты, и тех у кого нет денег
     const startIndex = nextPlayerIndex;
 
     do {
       if (
         players[nextPlayerIndex].isActive &&
-        !players[nextPlayerIndex].hasFolded
+        !players[nextPlayerIndex].hasFolded &&
+        players[nextPlayerIndex].balance > 0
       ) {
         return nextPlayerIndex;
       }

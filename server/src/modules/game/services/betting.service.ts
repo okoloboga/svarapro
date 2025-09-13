@@ -60,7 +60,7 @@ export class BettingService {
   // Проверка, завершился ли круг ставок
   isBettingRoundComplete(gameState: GameState): boolean {
     const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded,
+      (p) => p.isActive && !p.hasFolded && p.balance > 0,
     );
 
     if (activePlayers.length <= 1) {
