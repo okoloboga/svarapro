@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc",
+    "build": "tsc && cp -r src/assets dist/",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write ."
   },

@@ -66,8 +66,10 @@ bot.start(async (ctx) => {
     }
 
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    // Путь к assets относительно src (не dist)
+    const assetsPath = path.join(__dirname, '..', 'src', 'assets', 'welcome.png');
     await ctx.replyWithPhoto(
-      { source: path.join(__dirname, 'assets', 'welcome.png') },
+      { source: assetsPath },
       {
         caption: messageText,
         reply_markup: {
