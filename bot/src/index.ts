@@ -1,5 +1,6 @@
 import { Telegraf, Context } from 'telegraf';
 import rateLimit from 'telegraf-ratelimit';
+import path from 'path';
 
 // Расширяем тип Context для startPayload
 interface MyContext extends Context {
@@ -64,7 +65,7 @@ bot.start(async (ctx) => {
     }
 
     await ctx.replyWithPhoto(
-      { source: './src/assets/welcome.png' },
+      { source: path.join(__dirname, 'assets', 'welcome.png') },
       {
         caption: messageText,
         reply_markup: {
