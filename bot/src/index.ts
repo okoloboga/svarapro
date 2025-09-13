@@ -66,8 +66,16 @@ bot.start(async (ctx) => {
     }
 
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    // Путь к assets относительно src (не dist)
-    const assetsPath = path.join(__dirname, '..', 'src', 'assets', 'welcome.png');
+    // Пробуем найти assets в dist (runtime) или src (development)
+    let assetsPath = path.join(__dirname, 'assets', 'welcome.png');
+    
+    // Если файл не найден в dist, пробуем src (для development)
+    try {
+      await import('fs').then(fs => fs.promises.access(assetsPath));
+    } catch {
+      assetsPath = path.join(__dirname, '..', 'src', 'assets', 'welcome.png');
+    }
+    
     await ctx.replyWithPhoto(
       { source: assetsPath },
       {
