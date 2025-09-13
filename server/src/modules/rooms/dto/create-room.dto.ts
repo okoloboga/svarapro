@@ -6,10 +6,12 @@ import {
   MinLength,
   MaxLength,
   Matches,
+  Min,
 } from 'class-validator';
 
 export class CreateRoomDto {
   @IsNumber()
+  @Min(1, { message: 'Minimum bet must be at least $1' })
   minBet: number;
 
   @IsIn(['public', 'private'])

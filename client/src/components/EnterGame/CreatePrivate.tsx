@@ -29,7 +29,7 @@ export const CreatePrivate: React.FC<CreatePrivateProps> = ({ onClose, openModal
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       setStake(value);
       const numValue = parseFloat(value);
-      setIsStakeValid(!isNaN(numValue) && numValue >= 0.01);
+      setIsStakeValid(!isNaN(numValue) && numValue >= 1);
     }
   };
 

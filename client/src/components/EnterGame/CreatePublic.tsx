@@ -17,7 +17,7 @@ export const CreatePublic: React.FC<CreatePublicProps> = ({ onClose, openModal, 
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       setInputValue(value);
       const numValue = parseFloat(value);
-      setIsValid(!isNaN(numValue) && numValue >= 0.01);
+      setIsValid(!isNaN(numValue) && numValue >= 1);
     }
   };
 
