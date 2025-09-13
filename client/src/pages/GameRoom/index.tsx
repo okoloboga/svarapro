@@ -285,9 +285,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         // }]);
         
         // Проигрываем звук fold.mp3 для каждой карты с задержкой
-        setTimeout(() => {
-          actions.playSound('fold');
-        }, (playerIndex * 3 + cardIndex) * 200);
+        // setTimeout(() => {
+        //   actions.playSound('fold');
+        // }, (playerIndex * 3 + cardIndex) * 200);
       }
     });
   }, [gameState, actions]);
@@ -576,7 +576,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
 
     
     if (lastAction && lastAction.type === 'fold') {
-      actions.playSound('fold');
+      // actions.playSound('fold');
     }
   }, [gameState?.log, actions]);
 
