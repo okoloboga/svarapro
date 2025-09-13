@@ -1369,11 +1369,6 @@ export class GameService {
     const player = gameState.players[playerIndex];
     const allInAmount = amount ?? player.balance;
 
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: Player ${player.username} (index ${playerIndex})`);
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: allInAmount=${allInAmount}, player.balance=${player.balance}`);
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: gameState.lastActionAmount=${gameState.lastActionAmount}`);
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: gameState.lastRaiseIndex=${gameState.lastRaiseIndex}`);
-
     if (allInAmount > player.balance) {
       return { success: false, error: 'Недостаточно средств' };
     }
@@ -1381,8 +1376,6 @@ export class GameService {
     // Определяем, является ли all-in вынужденным call или добровольным raise
     const isForcedCall = gameState.lastActionAmount > 0 && player.balance < gameState.lastActionAmount;
     const isVoluntaryRaise = !isForcedCall && (allInAmount > gameState.lastActionAmount || gameState.lastActionAmount === 0);
-
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: isForcedCall=${isForcedCall}, isVoluntaryRaise=${isVoluntaryRaise}`);
 
     const { updatedPlayer, action: allInAction } =
       this.playerService.processPlayerBet(player, allInAmount, 'all_in');
@@ -1448,13 +1441,6 @@ export class GameService {
     // Игроки с деньгами для дальнейших действий
     const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: activePlayers.length=${activePlayers.length}, allInPlayers.length=${allInPlayers.length}, playersWithMoney.length=${playersWithMoney.length}`);
-    this.logger.log(`[${roomId}] ALL-IN DEBUG: currentPlayerIndex=${gameState.currentPlayerIndex}, lastRaiseIndex=${gameState.lastRaiseIndex}`);
-    
-    // Логируем балансы всех игроков для отладки
-    gameState.players.forEach((p, index) => {
-      this.logger.log(`[${roomId}] ALL-IN DEBUG: Player ${index} (${p.username}): balance=${p.balance}, isActive=${p.isActive}, hasFolded=${p.hasFolded}, isAllIn=${p.isAllIn}`);
-    });
 
     // Игра заканчивается только когда все игроки с деньгами сделали all-in
     if (playersWithMoney.length === 0) {
@@ -1467,18 +1453,14 @@ export class GameService {
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      this.logger.log(`[${roomId}] ALL-IN DEBUG: nextPlayerIndex=${nextPlayerIndex}`);
       
       gameState.currentPlayerIndex = nextPlayerIndex;
       
       const isBettingComplete = this.bettingService.isBettingRoundComplete(gameState);
-      this.logger.log(`[${roomId}] ALL-IN DEBUG: isBettingRoundComplete=${isBettingComplete}`);
       
       if (isBettingComplete) {
-        this.logger.log(`[${roomId}] ALL-IN DEBUG: Ending betting round due to completion`);
         await this.endBettingRound(roomId, gameState);
       } else {
-        this.logger.log(`[${roomId}] ALL-IN DEBUG: Continuing game, publishing update`);
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
       }
