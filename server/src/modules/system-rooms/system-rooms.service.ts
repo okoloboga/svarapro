@@ -39,7 +39,9 @@ export class SystemRoomsService {
    * Создает системную комнату с указанной минимальной ставкой
    */
   private async createSystemRoom(minBet: number): Promise<void> {
-    const roomId = `system_${minBet}`;
+    // Находим индекс ставки в массиве для генерации ID
+    const betIndex = this.SYSTEM_BETS.indexOf(minBet);
+    const roomId = String(betIndex + 1).padStart(4, '0'); // 0001, 0002, 0003, 0004, 0005, 0006
     
     const systemRoom: Room = {
       roomId,
@@ -76,7 +78,8 @@ export class SystemRoomsService {
     const activeRooms = await this.redisService.getActiveRooms();
     
     for (const roomId of activeRooms) {
-      if (roomId.startsWith('system_')) {
+      // Удаляем старые системные комнаты (как со старым форматом system_, так и с новым 0001-0006)
+      if (roomId.startsWith('system_') || /^000[1-6]$/.test(roomId)) {
         await this.redisService.removeRoom(roomId);
         this.logger.log(`Removed old system room: ${roomId}`);
       }
@@ -90,7 +93,8 @@ export class SystemRoomsService {
     const systemRooms: Room[] = [];
     
     for (const minBet of this.SYSTEM_BETS) {
-      const roomId = `system_${minBet}`;
+      const betIndex = this.SYSTEM_BETS.indexOf(minBet);
+      const roomId = String(betIndex + 1).padStart(4, '0'); // 0001, 0002, 0003, 0004, 0005, 0006
       const room = await this.redisService.getRoom(roomId);
       
       if (room) {
@@ -113,7 +117,8 @@ export class SystemRoomsService {
    * Проверяет, является ли комната системной
    */
   isSystemRoom(roomId: string): boolean {
-    return roomId.startsWith('system_');
+    // Проверяем, является ли ID одним из системных: 0001, 0002, 0003, 0004, 0005, 0006
+    return /^000[1-6]$/.test(roomId);
   }
 
   /**
