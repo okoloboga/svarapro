@@ -1440,17 +1440,21 @@ export class GameService {
       gameState.log.push(...scoreResult.actions);
     }
 
+    // Для логики завершения игры считаем активными всех игроков, включая all-in
     const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded && p.balance > 0,
+      (p) => p.isActive && !p.hasFolded,
     );
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
+    // Игроки с деньгами для дальнейших действий
+    const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
     this.logger.log(`[${roomId}] ALL-IN DEBUG: activePlayers.length=${activePlayers.length}, allInPlayers.length=${allInPlayers.length}`);
     this.logger.log(`[${roomId}] ALL-IN DEBUG: currentPlayerIndex=${gameState.currentPlayerIndex}, lastRaiseIndex=${gameState.lastRaiseIndex}`);
 
-    if (allInPlayers.length === activePlayers.length) {
+    // Игра заканчивается только когда все игроки с деньгами сделали all-in
+    if (playersWithMoney.length === 0) {
       this.logger.log(
-        `[${roomId}] All players are all-in. Ending betting round.`,
+        `[${roomId}] All players with money are all-in. Ending betting round.`,
       );
       await this.endBettingRound(roomId, gameState);
     } else {

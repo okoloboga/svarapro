@@ -59,9 +59,12 @@ export class BettingService {
 
   // Проверка, завершился ли круг ставок
   isBettingRoundComplete(gameState: GameState): boolean {
+    // Для проверки завершения круга считаем активными всех игроков, включая all-in
     const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded && p.balance > 0,
+      (p) => p.isActive && !p.hasFolded,
     );
+    // Игроки с деньгами для дальнейших действий
+    const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
     console.log(`[BETTING] isBettingRoundComplete: activePlayers.length=${activePlayers.length}`);
     console.log(`[BETTING] isBettingRoundComplete: currentPlayerIndex=${gameState.currentPlayerIndex}`);
@@ -69,8 +72,8 @@ export class BettingService {
     console.log(`[BETTING] isBettingRoundComplete: lastBlindBettorIndex=${gameState.lastBlindBettorIndex}`);
     console.log(`[BETTING] isBettingRoundComplete: dealerIndex=${gameState.dealerIndex}`);
 
-    if (activePlayers.length <= 1) {
-      console.log(`[BETTING] isBettingRoundComplete: returning true (activePlayers <= 1)`);
+    if (playersWithMoney.length <= 1) {
+      console.log(`[BETTING] isBettingRoundComplete: returning true (playersWithMoney <= 1)`);
       return true;
     }
 
@@ -95,16 +98,16 @@ export class BettingService {
     }
 
     // Круг завершен, если ход должен перейти к "якорному" игроку
-    // и при этом все активные игроки уравняли ставки.
+    // и при этом все игроки с деньгами уравняли ставки.
     // ИСПРАВЛЕНИЕ: Круг должен завершиться ПЕРЕД якорем, а не НА якоре
     if (gameState.currentPlayerIndex === anchorPlayerIndex) {
-      const firstPlayerBet = activePlayers[0]?.totalBet;
+      const firstPlayerBet = playersWithMoney[0]?.totalBet;
       if (firstPlayerBet === undefined) {
         console.log(`[BETTING] isBettingRoundComplete: returning false (no first player bet)`);
-        return false; // Нет активных игроков
+        return false; // Нет игроков с деньгами
       }
 
-      const allBetsEqual = activePlayers.every(
+      const allBetsEqual = playersWithMoney.every(
         (p) => p.totalBet === firstPlayerBet,
       );
       
