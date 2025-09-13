@@ -249,7 +249,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // const verticalOffset = 100;
     
     // Раздаем по 3 карты каждому активному игроку
-    gameState.players.forEach((player, playerIndex) => {
+    gameState.players.forEach((player, /* playerIndex */) => {
       if (!player.isActive) return;
       
       // const isCurrentPlayer = player.id === currentUserId;
