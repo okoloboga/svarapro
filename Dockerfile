@@ -63,6 +63,9 @@ COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./server/dist
 COPY --from=builder --chown=nodejs:nodejs /app/bot/dist ./bot/dist
 COPY --from=builder --chown=nodejs:nodejs /app/service-bot/dist ./service-bot/dist
 
+# Copy bot assets
+COPY --from=builder --chown=nodejs:nodejs /app/bot/dist/assets ./bot/dist/assets
+
 # Copy configuration files
 COPY --chown=nodejs:nodejs package.json ecosystem.config.js ./
 COPY --chown=nodejs:nodejs server/package.json ./server/package.json
