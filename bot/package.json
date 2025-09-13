@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc && cp -r src/assets dist/",
+    "build": "tsc && [ -d src/assets ] && cp -r src/assets dist/ || echo 'Assets directory not found, skipping copy'",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write ."
   },
