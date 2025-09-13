@@ -63,7 +63,14 @@ export class BettingService {
       (p) => p.isActive && !p.hasFolded && p.balance > 0,
     );
 
+    console.log(`[BETTING] isBettingRoundComplete: activePlayers.length=${activePlayers.length}`);
+    console.log(`[BETTING] isBettingRoundComplete: currentPlayerIndex=${gameState.currentPlayerIndex}`);
+    console.log(`[BETTING] isBettingRoundComplete: lastRaiseIndex=${gameState.lastRaiseIndex}`);
+    console.log(`[BETTING] isBettingRoundComplete: lastBlindBettorIndex=${gameState.lastBlindBettorIndex}`);
+    console.log(`[BETTING] isBettingRoundComplete: dealerIndex=${gameState.dealerIndex}`);
+
     if (activePlayers.length <= 1) {
+      console.log(`[BETTING] isBettingRoundComplete: returning true (activePlayers <= 1)`);
       return true;
     }
 
@@ -79,8 +86,11 @@ export class BettingService {
       anchorPlayerIndex = gameState.dealerIndex;
     }
 
+    console.log(`[BETTING] isBettingRoundComplete: anchorPlayerIndex=${anchorPlayerIndex}`);
+
     // Если якорь не определен, не можем завершить круг (не должно происходить в активной игре)
     if (anchorPlayerIndex === undefined) {
+      console.log(`[BETTING] isBettingRoundComplete: returning false (no anchor)`);
       return false;
     }
 
@@ -89,14 +99,21 @@ export class BettingService {
     // ИСПРАВЛЕНИЕ: Круг должен завершиться ПЕРЕД якорем, а не НА якоре
     if (gameState.currentPlayerIndex === anchorPlayerIndex) {
       const firstPlayerBet = activePlayers[0]?.totalBet;
-      if (firstPlayerBet === undefined) return false; // Нет активных игроков
+      if (firstPlayerBet === undefined) {
+        console.log(`[BETTING] isBettingRoundComplete: returning false (no first player bet)`);
+        return false; // Нет активных игроков
+      }
 
       const allBetsEqual = activePlayers.every(
         (p) => p.totalBet === firstPlayerBet,
       );
+      
+      console.log(`[BETTING] isBettingRoundComplete: firstPlayerBet=${firstPlayerBet}, allBetsEqual=${allBetsEqual}`);
+      console.log(`[BETTING] isBettingRoundComplete: returning ${allBetsEqual} (currentPlayerIndex === anchorPlayerIndex)`);
       return allBetsEqual;
     }
 
+    console.log(`[BETTING] isBettingRoundComplete: returning false (currentPlayerIndex !== anchorPlayerIndex)`);
     return false;
   }
 

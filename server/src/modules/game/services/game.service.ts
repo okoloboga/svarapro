@@ -1369,6 +1369,11 @@ export class GameService {
     const player = gameState.players[playerIndex];
     const allInAmount = amount ?? player.balance;
 
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: Player ${player.username} (index ${playerIndex})`);
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: allInAmount=${allInAmount}, player.balance=${player.balance}`);
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: gameState.lastActionAmount=${gameState.lastActionAmount}`);
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: gameState.lastRaiseIndex=${gameState.lastRaiseIndex}`);
+
     if (allInAmount > player.balance) {
       return { success: false, error: 'Недостаточно средств' };
     }
@@ -1376,6 +1381,8 @@ export class GameService {
     // Определяем, является ли all-in вынужденным call или добровольным raise
     const isForcedCall = gameState.lastActionAmount > 0 && player.balance < gameState.lastActionAmount;
     const isVoluntaryRaise = !isForcedCall && (allInAmount > gameState.lastActionAmount || gameState.lastActionAmount === 0);
+
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: isForcedCall=${isForcedCall}, isVoluntaryRaise=${isVoluntaryRaise}`);
 
     const { updatedPlayer, action: allInAction } =
       this.playerService.processPlayerBet(player, allInAmount, 'all_in');
@@ -1438,19 +1445,31 @@ export class GameService {
     );
     const allInPlayers = activePlayers.filter((p) => p.isAllIn);
 
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: activePlayers.length=${activePlayers.length}, allInPlayers.length=${allInPlayers.length}`);
+    this.logger.log(`[${roomId}] ALL-IN DEBUG: currentPlayerIndex=${gameState.currentPlayerIndex}, lastRaiseIndex=${gameState.lastRaiseIndex}`);
+
     if (allInPlayers.length === activePlayers.length) {
       this.logger.log(
         `[${roomId}] All players are all-in. Ending betting round.`,
       );
       await this.endBettingRound(roomId, gameState);
     } else {
-      gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
+      const nextPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      if (this.bettingService.isBettingRoundComplete(gameState)) {
+      this.logger.log(`[${roomId}] ALL-IN DEBUG: nextPlayerIndex=${nextPlayerIndex}`);
+      
+      gameState.currentPlayerIndex = nextPlayerIndex;
+      
+      const isBettingComplete = this.bettingService.isBettingRoundComplete(gameState);
+      this.logger.log(`[${roomId}] ALL-IN DEBUG: isBettingRoundComplete=${isBettingComplete}`);
+      
+      if (isBettingComplete) {
+        this.logger.log(`[${roomId}] ALL-IN DEBUG: Ending betting round due to completion`);
         await this.endBettingRound(roomId, gameState);
       } else {
+        this.logger.log(`[${roomId}] ALL-IN DEBUG: Continuing game, publishing update`);
         await this.redisService.setGameState(roomId, gameState);
         await this.redisService.publishGameUpdate(roomId, gameState);
       }
