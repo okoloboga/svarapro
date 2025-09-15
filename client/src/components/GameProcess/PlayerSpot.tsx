@@ -19,6 +19,13 @@ const formatAmount = (amount: number): string => {
   return fixed;
 };
 
+const formatUsername = (username: string): string => {
+  if (username.length <= 11) {
+    return username;
+  }
+  return username.slice(0, 8) + '...';
+};
+
 interface PlayerSpotProps {
   player: Player;
   isCurrentUser: boolean;
@@ -220,7 +227,7 @@ export function PlayerSpot({
                   <div className="absolute inset-0" style={{ borderRadius: `${8 * scale}px`, background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)' }}></div>
                   <div className="absolute flex flex-col items-center justify-center" style={{ top: `${1 * scale}px`, left: `${1 * scale}px`, right: `${1 * scale}px`, bottom: `${1 * scale}px`, borderRadius: `${7 * scale}px`, background: 'linear-gradient(to top, #000000, #36333B)' }}>
                     <div className="font-bold" style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: `${10 * scale}px`, borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)` }}>
-                      {username}
+                      {formatUsername(username)}
                     </div>
                     <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
                       {`$${formatAmount(balance)}`}
@@ -328,7 +335,7 @@ export function PlayerSpot({
                 <div className="absolute inset-0" style={{ borderRadius: `${8 * scale}px`, background: 'linear-gradient(180deg, #48454D 0%, rgba(255, 255, 255, 0.3) 50%, #2D2B31 100%)' }}></div>
                 <div className="absolute flex flex-col items-center justify-center" style={{ top: `${1 * scale}px`, left: `${1 * scale}px`, right: `${1 * scale}px`, bottom: `${1 * scale}px`, borderRadius: `${7 * scale}px`, background: 'linear-gradient(to top, #000000, #36333B)' }}>
                   <div className="font-bold" style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: `${10 * scale}px`, borderBottom: `${1 * scale}px solid rgba(255, 255, 255, 0.07)` }}>
-                    {username}
+                    {formatUsername(username)}
                   </div>
                   <div className="font-bold" style={{ color: '#D2A21B', fontSize: `${10 * scale}px` }}>
                     {`$${formatAmount(balance)}`}

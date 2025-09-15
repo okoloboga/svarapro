@@ -26,6 +26,7 @@ export class PlayerService {
       totalBet: 0,
       position,
       lastAction: undefined,
+      inactivityCount: 0,
     };
   }
 
@@ -40,6 +41,7 @@ export class PlayerService {
       lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look';
       hasLookedAndMustAct?: boolean;
       isAllIn?: boolean;
+      inactivityCount?: number;
     },
   ): Player {
     return {

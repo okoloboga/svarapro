@@ -38,6 +38,7 @@ export interface Player {
   lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
   lastWinAmount?: number;
+  inactivityCount?: number; // счетчик бездействия (fold по таймеру)
 }
 
 export interface GameState {

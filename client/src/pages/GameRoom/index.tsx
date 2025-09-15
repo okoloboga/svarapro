@@ -556,7 +556,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {
     if (turnTimer === 0 && isCurrentUserTurn) {
-      actions.fold();
+      actions.autoFold();
     }
   }, [turnTimer, isCurrentUserTurn, actions]);
 

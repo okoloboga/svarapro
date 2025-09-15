@@ -18,17 +18,19 @@ export class SystemRoomsService {
    */
   async initializeSystemRooms(): Promise<void> {
     this.logger.log('Initializing system rooms...');
-    
+
     try {
       // Очищаем старые системные комнаты
       await this.cleanupSystemRooms();
-      
+
       // Создаем новые системные комнаты
       for (const minBet of this.SYSTEM_BETS) {
         await this.createSystemRoom(minBet);
       }
-      
-      this.logger.log(`Successfully initialized ${this.SYSTEM_BETS.length} system rooms`);
+
+      this.logger.log(
+        `Successfully initialized ${this.SYSTEM_BETS.length} system rooms`,
+      );
     } catch (error) {
       this.logger.error('Failed to initialize system rooms:', error);
       throw error;
@@ -42,7 +44,7 @@ export class SystemRoomsService {
     // Находим индекс ставки в массиве для генерации ID
     const betIndex = this.SYSTEM_BETS.indexOf(minBet);
     const roomId = String(betIndex + 1).padStart(4, '0'); // 0001, 0002, 0003, 0004, 0005, 0006
-    
+
     const systemRoom: Room = {
       roomId,
       minBet,
@@ -74,9 +76,9 @@ export class SystemRoomsService {
    */
   private async cleanupSystemRooms(): Promise<void> {
     this.logger.log('Cleaning up existing system rooms...');
-    
+
     const activeRooms = await this.redisService.getActiveRooms();
-    
+
     for (const roomId of activeRooms) {
       // Удаляем старые системные комнаты (как со старым форматом system_, так и с новым 0001-0006)
       if (roomId.startsWith('system_') || /^000[1-6]$/.test(roomId)) {
@@ -91,12 +93,12 @@ export class SystemRoomsService {
    */
   async getSystemRooms(): Promise<Room[]> {
     const systemRooms: Room[] = [];
-    
+
     for (const minBet of this.SYSTEM_BETS) {
       const betIndex = this.SYSTEM_BETS.indexOf(minBet);
       const roomId = String(betIndex + 1).padStart(4, '0'); // 0001, 0002, 0003, 0004, 0005, 0006
       const room = await this.redisService.getRoom(roomId);
-      
+
       if (room) {
         systemRooms.push(room);
       } else {
@@ -109,7 +111,7 @@ export class SystemRoomsService {
         }
       }
     }
-    
+
     return systemRooms;
   }
 

@@ -241,7 +241,7 @@ export class GameService {
     const gameState = await this.redisService.getGameState(roomId);
 
     if (room.status === 'finished' && gameState) {
-      const minBalance = room.minBet * 10;
+      const minBalance = room.minBet;
       gameState.players = gameState.players.filter(
         (p) => p.balance >= minBalance,
       );
@@ -532,6 +532,79 @@ export class GameService {
     return { success: true, gameState };
   }
 
+  // Обработка автоматического fold по таймеру
+  async handleAutoFold(
+    roomId: string,
+    telegramId: string,
+  ): Promise<GameActionResult> {
+    let gameState: GameState | null;
+    try {
+      gameState = await this.redisService.getGameState(roomId);
+      if (!gameState) {
+        return { success: false, error: 'Игра не найдена' };
+      }
+    } catch (error) {
+      console.error(`[handleAutoFold] Redis error for room ${roomId}:`, error);
+      return { success: false, error: 'Ошибка подключения к серверу' };
+    }
+
+    const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
+    const player = gameState.players[playerIndex];
+
+    if (!player) {
+      return { success: false, error: 'Игрок не найден в этой игре' };
+    }
+
+    // Проверяем, что это действительно ход этого игрока
+    if (gameState.currentPlayerIndex !== playerIndex) {
+      return { success: false, error: 'Сейчас не ваш ход' };
+    }
+
+    // Увеличиваем счетчик бездействия
+    const newInactivityCount = (player.inactivityCount || 0) + 1;
+
+    // Проверяем, нужно ли исключить игрока (3 раза подряд)
+    if (newInactivityCount >= 3) {
+      // Исключаем игрока из комнаты
+      await this.leaveRoom(roomId, telegramId);
+
+      const kickAction: GameAction = {
+        type: 'fold',
+        telegramId: 'system',
+        timestamp: Date.now(),
+        message: `Игрок ${player.username} исключен за бездействие (3 раза подряд)`,
+      };
+      gameState.log.push(kickAction);
+
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+
+      return { success: true };
+    }
+
+    // Выполняем fold с обновленным счетчиком
+    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+      player,
+      {
+        hasFolded: true,
+        lastAction: 'fold',
+        hasLookedAndMustAct: false,
+        inactivityCount: newInactivityCount,
+      },
+    );
+
+    const foldAction: GameAction = {
+      type: 'fold',
+      telegramId: player.id,
+      timestamp: Date.now(),
+      message: `Игрок ${player.username} сбросил карты (автоматически, ${newInactivityCount}/3)`,
+    };
+    gameState.log.push(foldAction);
+
+    // Обрабатываем fold как обычно
+    return this.handleFold(roomId, gameState, playerIndex);
+  }
+
   async processAction(
     roomId: string,
     telegramId: string,
@@ -570,6 +643,14 @@ export class GameService {
 
     if (!player) {
       return { success: false, error: 'Игрок не найден в этой игре' };
+    }
+
+    // Сбрасываем счетчик бездействия при любом активном действии
+    if (player.inactivityCount && player.inactivityCount > 0) {
+      gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+        player,
+        { inactivityCount: 0 },
+      );
     }
 
     if (action === 'fold') {
@@ -676,6 +757,7 @@ export class GameService {
         hasFolded: true,
         lastAction: 'fold',
         hasLookedAndMustAct: false,
+        inactivityCount: 0, // Сбрасываем счетчик при активном fold
       },
     );
 
@@ -968,7 +1050,83 @@ export class GameService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    await this.endGameWithWinner(roomId, gameState);
+    // Проверяем количество активных игроков
+    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+
+    if (activePlayers.length === 1) {
+      // Если остался только 1 активный игрок - игра заканчивается
+      await this.endGameWithWinner(roomId, gameState);
+    } else {
+      // Если активных игроков больше 1 - переходим к showdown
+      const phaseResult = this.gameStateService.moveToNextPhase(
+        gameState,
+        'showdown',
+      );
+      gameState = phaseResult.updatedGameState;
+      gameState.log.push(...phaseResult.actions);
+
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+
+      // После showdown определяем победителей
+      setTimeout(() => {
+        this.determineWinnersAfterShowdown(roomId, gameState).catch((error) => {
+          console.error(`Error determining winners for room ${roomId}:`, error);
+        });
+      }, 3000); // Ждем 3 секунды для показа карт в showdown
+    }
+  }
+
+  private async determineWinnersAfterShowdown(
+    roomId: string,
+    gameState: GameState,
+  ): Promise<void> {
+    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+    const overallWinners = this.playerService.determineWinners(activePlayers);
+
+    // Рассчитываем выигрыш для каждого победителя
+    const rake = Number((gameState.pot * 0.05).toFixed(2));
+    const winAmount = gameState.pot - rake;
+    const winPerPlayer = Number((winAmount / overallWinners.length).toFixed(2));
+
+    // Устанавливаем lastWinAmount для победителей
+    for (const winner of overallWinners) {
+      const playerInState = gameState.players.find((p) => p.id === winner.id);
+      if (playerInState) {
+        playerInState.lastWinAmount = winPerPlayer;
+      }
+    }
+
+    gameState.winners = overallWinners;
+
+    console.log(
+      `[${roomId}] Winners determined after showdown:`,
+      overallWinners.map((w) => ({
+        id: w.id,
+        username: w.username,
+        lastWinAmount: gameState.players.find((p) => p.id === w.id)
+          ?.lastWinAmount,
+      })),
+    );
+
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
+
+    // После showdown проверяем, нужна ли свара
+    if (overallWinners.length > 1) {
+      // Если несколько победителей - объявляем свару
+      this.declareSvara(roomId, gameState, overallWinners).catch((error) => {
+        console.error(`Error declaring svara for room ${roomId}:`, error);
+      });
+    } else {
+      // Если один победитель - распределяем выигрыш
+      this.distributeWinnings(roomId).catch((error) => {
+        console.error(
+          `Failed to distribute winnings for room ${roomId}:`,
+          error,
+        );
+      });
+    }
   }
 
   private async _checkSvaraCompletion(
@@ -1256,33 +1414,108 @@ export class GameService {
 
     // 2. Process Winnings from each pot
     let totalRake = 0;
-    for (const potResult of potWinnersList) {
+
+    for (let i = 0; i < potWinnersList.length; i++) {
+      const potResult = potWinnersList[i];
       const { winners: potWinnerPlayers, amount } = potResult;
+
       if (amount <= 0 || potWinnerPlayers.length === 0) {
         continue;
       }
 
-      const rake = Number((amount * 0.05).toFixed(2));
-      totalRake += rake;
-      const winAmount = amount - rake;
-      const winPerPlayer = Number(
-        (winAmount / potWinnerPlayers.length).toFixed(2),
-      );
+      // Проверяем, является ли это основным банком (последний банк)
+      const isMainPot = i === potWinnersList.length - 1;
 
-      for (const winner of potWinnerPlayers) {
-        const playerInState = gameState.players.find((p) => p.id === winner.id);
-        if (playerInState) {
-          playerInState.balance += winPerPlayer;
-          // lastWinAmount уже установлен в endGameWithWinner, не перезаписываем
+      if (isMainPot) {
+        // Основной банк - проверяем на ничью
+        if (potWinnerPlayers.length > 1) {
+          // Ничья в основном банке - объявляем свару
 
-          const winAction: GameAction = {
-            type: 'win',
-            telegramId: winner.id,
-            amount: winPerPlayer,
+          const svaraAction: GameAction = {
+            type: 'svara',
+            telegramId: 'system',
             timestamp: Date.now(),
-            message: `Игрок ${playerInState.username} выиграл ${winPerPlayer}`,
+            message: `Объявлена "Свара"! Банк ${amount} переходит в следующий раунд.`,
           };
-          gameState.log.push(winAction);
+          gameState.log.push(svaraAction);
+
+          // Переходим в фазу свары
+          const phaseResult = this.gameStateService.moveToNextPhase(
+            gameState,
+            'svara_pending',
+          );
+          gameState = phaseResult.updatedGameState;
+          gameState.log.push(...phaseResult.actions);
+
+          gameState.isSvara = true;
+          gameState.svaraParticipants = potWinnerPlayers.map((w) => w.id);
+          gameState.winners = potWinnerPlayers;
+          gameState.svaraConfirmed = [];
+          gameState.svaraDeclined = [];
+
+          // Сохраняем банк для свары
+          gameState.pot = amount;
+
+          await this.redisService.setGameState(roomId, gameState);
+          await this.redisService.publishGameUpdate(roomId, gameState);
+
+          // Запускаем таймер свары
+          const timer = setTimeout(() => {
+            this.resolveSvara(roomId).catch((error) => {
+              console.error(`Error resolving svara for room ${roomId}:`, error);
+            });
+          }, 30000); // 30 секунд на решение
+          this.svaraTimers.set(roomId, timer);
+
+          return; // Выходим из метода, свара объявлена
+        } else {
+          // Один победитель в основном банке - разыгрываем как обычно
+          const rake = Number((amount * 0.05).toFixed(2));
+          totalRake += rake;
+          const winAmount = amount - rake;
+
+          const winner = potWinnerPlayers[0];
+          const playerInState = gameState.players.find(
+            (p) => p.id === winner.id,
+          );
+          if (playerInState) {
+            playerInState.balance += winAmount;
+
+            const winAction: GameAction = {
+              type: 'win',
+              telegramId: winner.id,
+              amount: winAmount,
+              timestamp: Date.now(),
+              message: `Игрок ${playerInState.username} выиграл ${winAmount}`,
+            };
+            gameState.log.push(winAction);
+          }
+        }
+      } else {
+        // Боковой банк - разыгрываем сразу
+        const rake = Number((amount * 0.05).toFixed(2));
+        totalRake += rake;
+        const winAmount = amount - rake;
+        const winPerPlayer = Number(
+          (winAmount / potWinnerPlayers.length).toFixed(2),
+        );
+
+        for (const winner of potWinnerPlayers) {
+          const playerInState = gameState.players.find(
+            (p) => p.id === winner.id,
+          );
+          if (playerInState) {
+            playerInState.balance += winPerPlayer;
+
+            const winAction: GameAction = {
+              type: 'win',
+              telegramId: winner.id,
+              amount: winPerPlayer,
+              timestamp: Date.now(),
+              message: `Игрок ${playerInState.username} выиграл боковой банк ${winPerPlayer}`,
+            };
+            gameState.log.push(winAction);
+          }
         }
       }
     }
@@ -1298,7 +1531,7 @@ export class GameService {
       gameState.log.push(rakeAction);
     }
 
-    // 3. Finalize state
+    // 3. Finalize state (только если свара не объявлена)
     gameState.pot = 0;
     gameState.rake = totalRake;
     // gameState.chipCount = 0;
@@ -1374,15 +1607,20 @@ export class GameService {
     }
 
     // Определяем, является ли all-in вынужденным call или добровольным raise
-    const isForcedCall = gameState.lastActionAmount > 0 && player.balance < gameState.lastActionAmount;
-    const isVoluntaryRaise = !isForcedCall && (allInAmount > gameState.lastActionAmount || gameState.lastActionAmount === 0);
+    const isForcedCall =
+      gameState.lastActionAmount > 0 &&
+      player.balance < gameState.lastActionAmount;
+    const isVoluntaryRaise =
+      !isForcedCall &&
+      (allInAmount > gameState.lastActionAmount ||
+        gameState.lastActionAmount === 0);
 
     const { updatedPlayer, action: allInAction } =
       this.playerService.processPlayerBet(player, allInAmount, 'all_in');
 
     // Устанавливаем правильный lastAction в зависимости от типа all-in
     const lastAction = isForcedCall ? 'call' : 'raise';
-    
+
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       updatedPlayer,
       {
@@ -1392,7 +1630,7 @@ export class GameService {
     );
 
     gameState.lastActionAmount = allInAmount;
-    
+
     // Устанавливаем якорь только для добровольного raise all-in
     if (isVoluntaryRaise) {
       gameState.lastRaiseIndex = playerIndex;
@@ -1437,10 +1675,8 @@ export class GameService {
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
-    const allInPlayers = activePlayers.filter((p) => p.isAllIn);
     // Игроки с деньгами для дальнейших действий
     const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
-
 
     // Игра заканчивается только когда все игроки с деньгами сделали all-in
     if (playersWithMoney.length === 0) {
@@ -1453,11 +1689,12 @@ export class GameService {
         gameState.players,
         gameState.currentPlayerIndex,
       );
-      
+
       gameState.currentPlayerIndex = nextPlayerIndex;
-      
-      const isBettingComplete = this.bettingService.isBettingRoundComplete(gameState);
-      
+
+      const isBettingComplete =
+        this.bettingService.isBettingRoundComplete(gameState);
+
       if (isBettingComplete) {
         await this.endBettingRound(roomId, gameState);
       } else {

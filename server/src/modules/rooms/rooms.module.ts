@@ -11,7 +11,12 @@ import { UsersModule } from '../users/users.module';
 import { SystemRoomsModule } from '../system-rooms/system-rooms.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Room]), GameModule, UsersModule, SystemRoomsModule],
+  imports: [
+    TypeOrmModule.forFeature([Room]),
+    GameModule,
+    UsersModule,
+    SystemRoomsModule,
+  ],
   controllers: [RoomsController],
   providers: [RoomsService, RoomsGateway, RedisService, TelegramService],
 })

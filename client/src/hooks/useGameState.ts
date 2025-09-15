@@ -161,13 +161,19 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     raise: (amount: number) => performAction('raise', amount),
     allIn: (amount: number) => performAction('all_in', amount),
     fold: () => performAction('fold'),
+    autoFold: () => {
+      if (socket) {
+        socket.emit('auto_fold', { roomId });
+        setIsProcessing(true);
+      }
+    },
     joinSvara: () => performAction('join_svara'),
     skipSvara: () => performAction('skip_svara'),
     sitDown,
     invitePlayer,
     leaveRoom,
     playSound,
-  }), [performAction, sitDown, invitePlayer, leaveRoom, playSound]);
+  }), [performAction, sitDown, invitePlayer, leaveRoom, playSound, socket, roomId]);
 
   return {
     gameState,

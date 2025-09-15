@@ -99,7 +99,7 @@ export class BettingService {
       const allBetsEqual = playersWithMoney.every(
         (p) => p.totalBet === firstPlayerBet,
       );
-      
+
       return allBetsEqual;
     }
 

@@ -153,6 +153,37 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     }
   }
 
+  @SubscribeMessage('auto_fold')
+  async handleAutoFold(
+    client: Socket,
+    payload: { roomId: string },
+  ): Promise<void> {
+    const { roomId } = payload;
+    const telegramId = this.getTelegramId(client);
+
+    if (telegramId) {
+      const result = await this.gameService.handleAutoFold(roomId, telegramId);
+
+      if (result.events) {
+        result.events.forEach((event) => {
+          if (event.to) {
+            this.server.to(event.to).emit(event.name, event.payload);
+          } else {
+            this.server.to(roomId).emit(event.name, event.payload);
+          }
+        });
+      }
+
+      if (!result.success) {
+        console.error(`Error in auto_fold for ${telegramId}:`, result.error);
+        client.emit('error', { message: result.error });
+      }
+    } else {
+      console.error('No telegramId provided for auto_fold');
+      client.emit('error', { message: 'Требуется авторизация (telegramId)' });
+    }
+  }
+
   @SubscribeMessage('chat_message')
   handleChatMessage(
     client: Socket,

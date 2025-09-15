@@ -21,23 +21,23 @@ export class RoomsService {
   async getRooms(): Promise<Room[]> {
     // Получаем системные комнаты (они всегда показываются первыми)
     const systemRooms = await this.systemRoomsService.getSystemRooms();
-    
+
     // Получаем пользовательские комнаты
     const roomIds = await this.redisService.getActiveRooms();
     const userRooms: Room[] = [];
-    
+
     for (const roomId of roomIds) {
       // Пропускаем системные комнаты, так как они уже получены выше
       if (this.systemRoomsService.isSystemRoom(roomId)) {
         continue;
       }
-      
+
       const room = await this.redisService.getRoom(roomId);
       if (room) {
         userRooms.push(room);
       }
     }
-    
+
     // Объединяем: сначала системные комнаты, потом пользовательские
     return [...systemRooms, ...userRooms];
   }

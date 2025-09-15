@@ -1,1 +1,1 @@
-export const TURN_DURATION_SECONDS = 20;
+export const TURN_DURATION_SECONDS = 15;
