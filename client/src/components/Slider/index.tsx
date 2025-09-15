@@ -14,6 +14,7 @@ export function Slider({ isOpen, onClose, children, height = '25vh', zIndex = 50
   const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
+    console.log('Slider useEffect - isOpen:', isOpen);
     if (isOpen) {
       setShouldRender(true);
       // Устанавливаем isVisible в false сначала, чтобы панель была внизу

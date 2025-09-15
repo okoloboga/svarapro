@@ -14,6 +14,8 @@ interface EnterGameMenuProps {
 
 const EnterGameMenu: React.FC<EnterGameMenuProps> = ({ isOpen, onClose, openModal }) => {
   const { t } = useTranslation('common');
+  
+  console.log('EnterGameMenu render - isOpen:', isOpen);
 
   return (
     <Slider isOpen={isOpen} onClose={onClose} height="250px">

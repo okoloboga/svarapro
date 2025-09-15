@@ -28,6 +28,10 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   const [notification, setNotification] = useState<NotificationType | null>(null);
   const [isEnterGameMenuVisible, setIsEnterGameMenuVisible] = useState(false);
   const [activeModal, setActiveModal] = useState<'createPublic' | 'createPrivate' | 'connectRoom' | null>(null);
+  
+  // Отладочные логи
+  console.log('Dashboard render - isEnterGameMenuVisible:', isEnterGameMenuVisible);
+  console.log('Dashboard render - activeModal:', activeModal);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   const handleWithdrawClick = () => {
@@ -43,10 +47,12 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   };
 
   const handleCreateRoomClick = () => {
+    console.log('handleCreateRoomClick called');
     setIsEnterGameMenuVisible(true);
   };
 
   const handleCloseEnterGameMenu = () => {
+    console.log('handleCloseEnterGameMenu called');
     setIsEnterGameMenuVisible(false);
   };
 
@@ -56,6 +62,7 @@ export function Dashboard({ onMoreClick, setCurrentPage, balance, walletAddress,
   };
 
   const openEnterGameMenu = () => {
+    console.log('openEnterGameMenu called');
     setActiveModal(null);
     setIsEnterGameMenuVisible(true);
   };
