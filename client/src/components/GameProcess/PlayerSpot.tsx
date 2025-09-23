@@ -140,7 +140,18 @@ export function PlayerSpot({
   // Выбираем размеры в зависимости от того, текущий ли это пользователь
   const cardHeight = isCurrentUser ? currentUserCardHeight : otherPlayersCardHeight;
   const cardWidth = isCurrentUser ? currentUserCardWidth : otherPlayersCardWidth;
-  const step = isCurrentUser ? currentUserStep : otherPlayersStep;
+  const baseFanStep = isCurrentUser ? currentUserStep : otherPlayersStep;
+  const cardsCount = cards?.length ?? 0;
+  const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
+  const spacingMultiplier = cardsCount > 1
+    ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
+    : 0;
+  const fanStep = cardsCount > 1 ? Math.max(baseFanStep, cardWidth * spacingMultiplier) : 0;
+  const rotationStep = cardsCount <= 2 ? 8 : cardsCount === 3 ? 12 : cardsCount === 4 ? 10 : 8;
+  const arcStep = cardsCount <= 3 ? 4 : cardsCount === 4 ? 5 : 6;
+  const fanWidth = cardsCount > 1 ? cardWidth + fanStep * (cardsCount - 1) : cardWidth;
+  const fanHeight = cardHeight + arcStep * Math.max(0, cardsCount - 1);
+  const fanCenterOffset = cardsCount > 1 ? (fanWidth - cardWidth) / 2 : 0;
 
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
@@ -165,6 +176,41 @@ export function PlayerSpot({
   } else {
     cardDeckStyle.left = '40px'; // было 50px, стало 40px (на 10px ближе)
   }
+
+  const badgeSize = 26 * scale;
+  const scoreBadgeBaseStyle: React.CSSProperties = {
+    width: `${badgeSize}px`,
+    height: `${badgeSize}px`,
+    backgroundColor: '#FF443A',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
+  };
+
+  const scoreBadgePositionStyle: React.CSSProperties = (() => {
+    if (openCardsPosition === 'bottom') {
+      return {
+        left: '50%',
+        bottom: `${-22 * scale}px`,
+        transform: 'translateX(-50%)',
+      } as React.CSSProperties;
+    }
+
+    const offsets: React.CSSProperties = {
+      top: `${6 * scale}px`,
+      transform: 'none',
+    };
+
+    if (cardSide === 'left') {
+      offsets.left = `${-20 * scale}px`;
+    } else {
+      offsets.right = `${-20 * scale}px`;
+    }
+
+    return offsets;
+  })();
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div 
@@ -366,8 +412,8 @@ export function PlayerSpot({
           !hasFolded && (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')))
         ) && (
           <div className="absolute z-50" style={{ 
-            width: `${cardWidth}px`, 
-            height: `${cardHeight}px`,
+            width: `${fanWidth}px`, 
+            height: `${fanHeight}px`,
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
@@ -393,11 +439,24 @@ export function PlayerSpot({
               {cards.map((card, index) => {
                 const midIndex = (cards.length - 1) / 2;
                 const offsetIndex = index - midIndex;
-                const left = offsetIndex * step;
-                const rotation = offsetIndex * 8;
-                const topOffset = Math.abs(offsetIndex) * 2;
+                const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
+                const left = fanCenterOffset + offsetIndex * fanStep;
+                const rotation = offsetIndex * rotationStep;
+                const topOffset = depthFactor * arcStep;
                 return (
-                  <div key={index} className="absolute" style={{ left: `${left}px`, top: `${topOffset}px`, width: `${cardWidth}px`, height: `${cardHeight}px`, transform: `rotate(${rotation}deg)`, zIndex: index + 1 }}>
+                  <div
+                    key={index}
+                    className="absolute"
+                    style={{
+                      left: `${left}px`,
+                      top: `${topOffset}px`,
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`,
+                      transform: `rotate(${rotation}deg)`,
+                      transformOrigin: '50% 85%',
+                      zIndex: index + 1,
+                    }}
+                  >
                     <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
                   </div>
                 );
@@ -429,30 +488,24 @@ export function PlayerSpot({
           return null;
         })()} */}
         {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
-          <div className="absolute z-50 flex items-center justify-center" style={{ 
-            width: `${22 * scale}px`, 
-            height: `${22 * scale}px`, 
-            backgroundColor: '#FF443A', 
-            borderRadius: '50%',
-            ...(openCardsPosition === 'bottom' && {
-              left: '50%',
-              bottom: `${-20 * scale}px`,
-              transform: 'translateX(-50%)',
-            }),
-            ...(openCardsPosition === 'top' && {
-              left: `${-45 * scale}px`,
-              top: `${40 * scale}px`
-            }),
-            ...(openCardsPosition === 'left' && {
-              right: `${70 * scale}px`,
-              top: `${-10 * scale}px`
-            }),
-            ...(openCardsPosition === 'right' && {
-              left: `${70 * scale}px`,
-              top: `${-10 * scale}px`
-            })
-          }}>
-            <span style={{ fontWeight: 500, fontStyle: 'normal', fontSize: `${14 * scale}px`, lineHeight: '100%', letterSpacing: '0%', textAlign: 'center', verticalAlign: 'middle', color: '#FFFFFF' }}>
+          <div
+            className="absolute z-50 flex items-center justify-center"
+            style={{
+              ...scoreBadgeBaseStyle,
+              ...scoreBadgePositionStyle,
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 700,
+                fontStyle: 'normal',
+                fontSize: `${15 * scale}px`,
+                lineHeight: '100%',
+                letterSpacing: '0.01em',
+                textAlign: 'center',
+                color: '#FFFFFF',
+              }}
+            >
               {score}
             </span>
           </div>

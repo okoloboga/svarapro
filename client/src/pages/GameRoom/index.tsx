@@ -273,68 +273,79 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       const animations: CardAnimation[] = [];
       const timestamp = Date.now();
 
-      playersToDeal.forEach((player, playerIndex) => {
+      const sourceX = deckCenterX - cardWidth / 2;
+      const sourceY = deckCenterY - cardHeight / 2;
+
+      const targets = playersToDeal.map(player => {
         const cardsToDeal = player.cards?.length ?? 0;
-        if (cardsToDeal === 0) {
-          return;
-        }
-
-        const playerSlotId = String(player.id).replace(/["\\]/g, '\\$&');
-        const slotElement = document.querySelector(
-          `[data-player-card-slot="${playerSlotId}"]`
-        ) as HTMLElement | null;
-
         let targetCenterX = deckCenterX;
         let targetCenterY = deckCenterY;
 
-        if (slotElement) {
-          const rect = slotElement.getBoundingClientRect();
-          targetCenterX = rect.left + rect.width / 2;
-          targetCenterY = rect.top + rect.height / 2;
-        } else {
-          const tableWidth = 315 * scale;
-          const tableHeight = 493 * scale;
-          const verticalOffset = 100;
-          const isCurrent = player.id === currentUserId;
-          const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
+        if (cardsToDeal > 0) {
+          const playerSlotId = String(player.id).replace(/["\\]/g, '\\$&');
+          const slotElement = document.querySelector(
+            `[data-player-card-slot="${playerSlotId}"]`
+          ) as HTMLElement | null;
 
-          switch (relativePosition) {
-            case 1:
-              targetCenterX = deckCenterX;
-              targetCenterY = deckCenterY - tableHeight * 0.4 - verticalOffset;
-              break;
-            case 2:
-              targetCenterX = deckCenterX + tableWidth * 0.4;
-              targetCenterY = deckCenterY - tableHeight * 0.25;
-              break;
-            case 3:
-              targetCenterX = deckCenterX + tableWidth * 0.4;
-              targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
-              break;
-            case 4:
-              targetCenterX = deckCenterX;
-              targetCenterY = deckCenterY + tableHeight * 0.4 - verticalOffset;
-              break;
-            case 5:
-              targetCenterX = deckCenterX - tableWidth * 0.4;
-              targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
-              break;
-            default:
-              targetCenterX = deckCenterX - tableWidth * 0.4;
-              targetCenterY = deckCenterY - tableHeight * 0.25;
-              break;
+          if (slotElement) {
+            const rect = slotElement.getBoundingClientRect();
+            targetCenterX = rect.left + rect.width / 2;
+            targetCenterY = rect.top + rect.height / 2;
+          } else {
+            const tableWidth = 315 * scale;
+            const tableHeight = 493 * scale;
+            const verticalOffset = 100;
+            const isCurrent = player.id === currentUserId;
+            const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
+
+            switch (relativePosition) {
+              case 1:
+                targetCenterX = deckCenterX;
+                targetCenterY = deckCenterY - tableHeight * 0.4 - verticalOffset;
+                break;
+              case 2:
+                targetCenterX = deckCenterX + tableWidth * 0.4;
+                targetCenterY = deckCenterY - tableHeight * 0.25;
+                break;
+              case 3:
+                targetCenterX = deckCenterX + tableWidth * 0.4;
+                targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
+                break;
+              case 4:
+                targetCenterX = deckCenterX;
+                targetCenterY = deckCenterY + tableHeight * 0.4 - verticalOffset;
+                break;
+              case 5:
+                targetCenterX = deckCenterX - tableWidth * 0.4;
+                targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
+                break;
+              default:
+                targetCenterX = deckCenterX - tableWidth * 0.4;
+                targetCenterY = deckCenterY - tableHeight * 0.25;
+                break;
+            }
           }
+
+          pendingDealCountsRef.current[player.id] = cardsToDeal;
         }
 
-        const sourceX = deckCenterX - cardWidth / 2;
-        const sourceY = deckCenterY - cardHeight / 2;
-        const targetX = targetCenterX - cardWidth / 2;
-        const targetY = targetCenterY - cardHeight / 2;
+        return {
+          player,
+          cardsToDeal,
+          targetX: targetCenterX - cardWidth / 2,
+          targetY: targetCenterY - cardHeight / 2,
+        };
+      });
 
-        pendingDealCountsRef.current[player.id] = cardsToDeal;
+      let animationIndex = 0;
+      const maxCardsToDeal = targets.reduce((max, target) => Math.max(max, target.cardsToDeal), 0);
 
-        for (let cardIndex = 0; cardIndex < cardsToDeal; cardIndex++) {
-          const dealIndex = cardIndex * playersToDeal.length + playerIndex;
+      for (let cardIndex = 0; cardIndex < maxCardsToDeal; cardIndex++) {
+        targets.forEach(({ player, cardsToDeal, targetX, targetY }) => {
+          if (cardIndex >= cardsToDeal) {
+            return;
+          }
+
           animations.push({
             id: `deal-${timestamp}-${player.id}-${cardIndex}`,
             playerId: player.id,
@@ -342,10 +353,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             fromY: sourceY,
             toX: targetX,
             toY: targetY,
-            delay: dealIndex * 150,
+            delay: animationIndex * 150,
           });
-        }
-      });
+
+          animationIndex++;
+        });
+      }
 
       if (animations.length === 0) {
         const dealt: Record<string, boolean> = {};
