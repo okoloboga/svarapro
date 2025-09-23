@@ -24,17 +24,23 @@ export function ActionNotification({ action, visible }: ActionNotificationProps)
   const config = actionConfig[action];
 
   return (
-    <div 
+    <div
       className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center"
-      style={{ 
-        width: '62px',
-        height: '18px',
-        borderRadius: '4px',
+      style={{
+        width: '68px',
+        height: '20px',
+        borderRadius: '6px',
         backgroundColor: config.color,
-        bottom: '38px', 
+        bottom: '40px',
+        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.35)',
       }}
     >
-      <span className="text-white text-[10px] font-extrabold leading-none text-center">{config.text}</span>
+      <span
+        className="text-white leading-none text-center uppercase"
+        style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.05em' }}
+      >
+        {config.text}
+      </span>
     </div>
   );
 }
