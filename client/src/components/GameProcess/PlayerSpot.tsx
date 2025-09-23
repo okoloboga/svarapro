@@ -119,7 +119,7 @@ export function PlayerSpot({
     setLastTotalBet(player.totalBet);
   }, [player.totalBet, lastTotalBet, player.id, onPlayerBet]);
 
-  const baseAvatarSize = 71;
+  const baseAvatarSize = 62;
   const baseNameWidth = 70;
   const baseNameHeight = 32;
   
@@ -128,14 +128,14 @@ export function PlayerSpot({
   const nameHeight = baseNameHeight * scale;
 
   // Размеры карт для текущего пользователя (больше)
-  const currentUserCardHeight = Math.round(avatarSize * 1.2);
+  const currentUserCardHeight = Math.round(avatarSize * 1.05);
   const currentUserCardWidth = Math.round(currentUserCardHeight * (65/90));
-  const currentUserStep = Math.round(currentUserCardWidth * 0.46);
+  const currentUserStep = Math.round(currentUserCardWidth * 0.7);
   
   // Размеры карт для других игроков (меньше)
-  const otherPlayersCardHeight = Math.round(avatarSize);
+  const otherPlayersCardHeight = Math.round(avatarSize * 0.9);
   const otherPlayersCardWidth = Math.round(otherPlayersCardHeight * (65/90));
-  const otherPlayersStep = Math.round(otherPlayersCardWidth * 0.46);
+  const otherPlayersStep = Math.round(otherPlayersCardWidth * 0.7);
   
   // Выбираем размеры в зависимости от того, текущий ли это пользователь
   const cardHeight = isCurrentUser ? currentUserCardHeight : otherPlayersCardHeight;
@@ -161,9 +161,9 @@ export function PlayerSpot({
   };
 
   if (cardSide === 'left') {
-    cardDeckStyle.right = '45px'; // было 50px, стало 45px (на 5px ближе)
+    cardDeckStyle.right = '40px'; // было 50px, стало 40px (на 10px ближе)
   } else {
-    cardDeckStyle.left = '45px'; // было 50px, стало 45px (на 5px ближе)
+    cardDeckStyle.left = '40px'; // было 50px, стало 40px (на 10px ближе)
   }
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
@@ -190,10 +190,10 @@ export function PlayerSpot({
 
   const CardDeckComponent = (
     <div className="flex flex-col items-center space-y-1">
-      <div className="relative" style={{ width: '42px', height: '42px' }}>
-        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 3, top: '0', left: '0' }} />
-        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 2, top: '0', left: '4px' }} />
-        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '30px', height: '42px', zIndex: 1, top: '0', left: '8px' }} />
+      <div className="relative" data-player-card-slot={player.id} style={{ width: '42px', height: '42px' }}>
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 3, top: '0', left: '0' }} />
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 2, top: '0', left: '4px' }} />
+        <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 1, top: '0', left: '8px' }} />
       </div>
     </div>
   );
@@ -391,10 +391,11 @@ export function PlayerSpot({
           }}>
             <div className="relative w-full h-full">
               {cards.map((card, index) => {
-                const centerOffset = (cards.length - 1) * step / 2;
-                const left = index * step - centerOffset;
-                const rotation = index === 0 ? -12 : index === 1 ? 0 : 12;
-                const topOffset = index === 1 ? 0 : 4;
+                const midIndex = (cards.length - 1) / 2;
+                const offsetIndex = index - midIndex;
+                const left = offsetIndex * step;
+                const rotation = offsetIndex * 8;
+                const topOffset = Math.abs(offsetIndex) * 2;
                 return (
                   <div key={index} className="absolute" style={{ left: `${left}px`, top: `${topOffset}px`, width: `${cardWidth}px`, height: `${cardHeight}px`, transform: `rotate(${rotation}deg)`, zIndex: index + 1 }}>
                     <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />

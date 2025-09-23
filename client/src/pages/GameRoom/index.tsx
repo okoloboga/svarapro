@@ -13,7 +13,7 @@ import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 import { UserData, PageData } from '@/types/entities';
 import FlyingChip from '../../components/GameProcess/FlyingChip';
-// import FlyingCard from '../../components/GameProcess/FlyingCard';
+import FlyingCard from '../../components/GameProcess/FlyingCard';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
@@ -31,6 +31,16 @@ import WebApp from '@twa-dev/sdk';
 
 interface ChipAnimation {
   id: string;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  delay: number;
+}
+
+interface CardAnimation {
+  id: string;
+  playerId: string;
   fromX: number;
   fromY: number;
   toX: number;
@@ -152,7 +162,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentUserPosition = currentPlayer?.position;
 
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
-  // const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
+  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
+  const [isDealingCards, setIsDealingCards] = useState(false);
+  const [dealtPlayers, setDealtPlayers] = useState<Record<string, boolean>>({});
+  const [dealingPlayerIds, setDealingPlayerIds] = useState<string[]>([]);
+  const pendingDealCountsRef = useRef<Record<string, number>>({});
+  const dealingPlayersSet = useMemo(() => new Set(dealingPlayerIds), [dealingPlayerIds]);
 
   const getScreenPosition = useCallback((absolutePosition: number) => {
     if (!currentUserPosition || !isSeated) {
@@ -239,57 +254,113 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     handlePlayerBet(playerId);
   }, [handlePlayerBet]);
 
-  const handleDealCards = useCallback(() => {
-    if (!gameState) return;
-    // const centerX = window.innerWidth / 2;
-    // const centerY = window.innerHeight / 2;
-    // const tableWidth = 315 * scale;
-    // const tableHeight = 493 * scale;
-    // const verticalOffset = 100;
-    
-    // Раздаем по 3 карты каждому активному игроку
-    gameState.players.forEach((player, /* playerIndex */) => {
-      if (!player.isActive) return;
-      
-      // const isCurrentPlayer = player.id === currentUserId;
-      // const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
-      
-      // Вычисляем позицию игрока
-      // let playerX = 0;
-      // let playerY = 0;
-      
-      // switch (relativePosition) {
-      //   case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
-      //   case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
-      //   case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
-      //   case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
-      //   case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
-      //   case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
-      // }
-      
-      // Карты летят в центр компонента игрока
-      // const cardDeckX = playerX;
-      // const cardDeckY = playerY;
-      
-      // Создаем 3 карты для каждого игрока
-      for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
-        // const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
-        // setCardAnimations(prev => [...prev, {
-        //   id: cardId,
-        //   fromX: centerX,
-        //   fromY: centerY,
-        //   toX: cardDeckX,
-        //   toY: cardDeckY,
-        //   delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
-        // }]);
-        
-        // Проигрываем звук fold.mp3 для каждой карты с задержкой
-        // setTimeout(() => {
-        //   actions.playSound('fold');
-        // }, (playerIndex * 3 + cardIndex) * 200);
+  const handleDealCards = useCallback((playersToDeal: Player[]) => {
+    if (!gameState || playersToDeal.length === 0) {
+      return;
+    }
+
+    const cardWidth = 32;
+    const cardHeight = 44;
+    const deckCenterX = window.innerWidth / 2;
+    const deckCenterY = window.innerHeight / 2;
+
+    setIsDealingCards(true);
+    setDealtPlayers({});
+    setDealingPlayerIds(playersToDeal.map(player => player.id));
+    pendingDealCountsRef.current = {};
+
+    requestAnimationFrame(() => {
+      const animations: CardAnimation[] = [];
+      const timestamp = Date.now();
+
+      playersToDeal.forEach((player, playerIndex) => {
+        const cardsToDeal = player.cards?.length ?? 0;
+        if (cardsToDeal === 0) {
+          return;
+        }
+
+        const playerSlotId = String(player.id).replace(/["\\]/g, '\\$&');
+        const slotElement = document.querySelector(
+          `[data-player-card-slot="${playerSlotId}"]`
+        ) as HTMLElement | null;
+
+        let targetCenterX = deckCenterX;
+        let targetCenterY = deckCenterY;
+
+        if (slotElement) {
+          const rect = slotElement.getBoundingClientRect();
+          targetCenterX = rect.left + rect.width / 2;
+          targetCenterY = rect.top + rect.height / 2;
+        } else {
+          const tableWidth = 315 * scale;
+          const tableHeight = 493 * scale;
+          const verticalOffset = 100;
+          const isCurrent = player.id === currentUserId;
+          const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
+
+          switch (relativePosition) {
+            case 1:
+              targetCenterX = deckCenterX;
+              targetCenterY = deckCenterY - tableHeight * 0.4 - verticalOffset;
+              break;
+            case 2:
+              targetCenterX = deckCenterX + tableWidth * 0.4;
+              targetCenterY = deckCenterY - tableHeight * 0.25;
+              break;
+            case 3:
+              targetCenterX = deckCenterX + tableWidth * 0.4;
+              targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
+              break;
+            case 4:
+              targetCenterX = deckCenterX;
+              targetCenterY = deckCenterY + tableHeight * 0.4 - verticalOffset;
+              break;
+            case 5:
+              targetCenterX = deckCenterX - tableWidth * 0.4;
+              targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
+              break;
+            default:
+              targetCenterX = deckCenterX - tableWidth * 0.4;
+              targetCenterY = deckCenterY - tableHeight * 0.25;
+              break;
+          }
+        }
+
+        const sourceX = deckCenterX - cardWidth / 2;
+        const sourceY = deckCenterY - cardHeight / 2;
+        const targetX = targetCenterX - cardWidth / 2;
+        const targetY = targetCenterY - cardHeight / 2;
+
+        pendingDealCountsRef.current[player.id] = cardsToDeal;
+
+        for (let cardIndex = 0; cardIndex < cardsToDeal; cardIndex++) {
+          const dealIndex = cardIndex * playersToDeal.length + playerIndex;
+          animations.push({
+            id: `deal-${timestamp}-${player.id}-${cardIndex}`,
+            playerId: player.id,
+            fromX: sourceX,
+            fromY: sourceY,
+            toX: targetX,
+            toY: targetY,
+            delay: dealIndex * 150,
+          });
+        }
+      });
+
+      if (animations.length === 0) {
+        const dealt: Record<string, boolean> = {};
+        playersToDeal.forEach(player => {
+          dealt[player.id] = true;
+        });
+        setDealtPlayers(dealt);
+        setDealingPlayerIds([]);
+        setIsDealingCards(false);
+        return;
       }
+
+      setCardAnimations(animations);
     });
-  }, [gameState, actions]);
+  }, [gameState, scale, currentUserId, getScreenPosition]);
 
   const handleChipsToWinner = useCallback(() => {
     if (!gameState?.winners || gameState.winners.length === 0) {
@@ -617,29 +688,34 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, [gameState?.log?.length, currentUserId, gameState?.status, handleOtherPlayerAction, handleFoldCards, handlePlayerBet, gameState?.log]);
   
   // Отслеживаем изменения в игроках для автоматического запуска анимации раздачи карт
-  const prevPlayersRef = useRef<Player[]>([]);
+  const prevPlayersRef = useRef<Map<string, Player>>(new Map());
   
   useEffect(() => {
     if (!gameState?.players) return;
-    
+
     const prevPlayers = prevPlayersRef.current;
     const currentPlayers = gameState.players;
-    
-    // Проверяем, появились ли карты у игроков (раздача карт)
-    const cardsAppeared = currentPlayers.some((player, index) => {
-      const prevPlayer = prevPlayers[index];
-      return prevPlayer && 
-             (!prevPlayer.cards || prevPlayer.cards.length === 0) && 
-             player.cards && 
-             player.cards.length > 0;
-    });
-    
-    if (cardsAppeared && gameState.status === 'ante') {
-      // Запускаем анимацию раздачи карт
-      handleDealCards();
+
+    const playersToDeal = currentPlayers
+      .filter(player => player.isActive && player.cards && player.cards.length > 0)
+      .filter(player => {
+        const prev = prevPlayers.get(player.id);
+        return !prev || !prev.cards || prev.cards.length === 0;
+      })
+      .sort((a, b) => a.position - b.position);
+
+    if (playersToDeal.length > 0 && gameState.status === 'ante') {
+      handleDealCards(playersToDeal);
     }
-    
-    prevPlayersRef.current = currentPlayers;
+
+    const snapshot = new Map<string, Player>();
+    currentPlayers.forEach(player => {
+      snapshot.set(player.id, {
+        ...player,
+        cards: player.cards ? [...player.cards] : [],
+      });
+    });
+    prevPlayersRef.current = snapshot;
   }, [gameState?.players, gameState?.status, handleDealCards]);
 
   // Функция для сброса карт при fold
@@ -677,12 +753,25 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     });
   }, []);
 
-  // const handleCardAnimationComplete = useCallback((cardId: string) => {
-  //   setCardAnimations(prev => {
-  //     const newAnimations = prev.filter(card => card.id !== cardId);
-  //     return newAnimations;
-  //   });
-  // }, []);
+  const handleCardAnimationComplete = useCallback((cardId: string, playerId: string) => {
+    setCardAnimations(prev => prev.filter(card => card.id !== cardId));
+
+    const remaining = pendingDealCountsRef.current[playerId] ?? 0;
+    const nextCount = Math.max(0, remaining - 1);
+
+    if (nextCount === 0) {
+      delete pendingDealCountsRef.current[playerId];
+      setDealtPlayers(prev => ({ ...prev, [playerId]: true }));
+    } else {
+      pendingDealCountsRef.current[playerId] = nextCount;
+    }
+
+    const hasPending = Object.values(pendingDealCountsRef.current).some(count => count > 0);
+    if (!hasPending) {
+      setIsDealingCards(false);
+      setDealingPlayerIds([]);
+    }
+  }, []);
 
   
 
@@ -727,7 +816,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }
 
   const callAmount = gameState.lastActionAmount;
-  const isAnimating = !!(gameState.isAnimating);
+  const isAnimating = !!(gameState.isAnimating || isDealingCards || cardAnimations.length > 0);
   const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
   const postLookCallAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
     
@@ -913,6 +1002,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
 
+                        const isDealingForPlayer = isDealingCards && dealingPlayersSet.has(player.id) && !dealtPlayers[player.id];
+                        const playerForRender = isDealingForPlayer ? { ...player, cards: [] } : player;
+
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
                         if (!isCurrentUser) {
                           if (showWinIndicator) {
@@ -929,7 +1021,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         }
                         
                         if (isCurrentUser) {
-                          const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
+                          const mergedPlayer = { ...playerForRender, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
                           return <PlayerSpot 
                             player={mergedPlayer} 
                             isCurrentUser={true} 
@@ -948,7 +1040,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           />;
                         }
                         return <PlayerSpot 
-                          player={player} 
+                          player={playerForRender} 
                           isCurrentUser={false} 
                           showCards={showCards} 
                           scale={scale} 
@@ -1052,10 +1144,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             onComplete={handleChipAnimationComplete}
           />
         ))}
-        {/* {cardAnimations.map(card => (
+        {cardAnimations.map(card => (
           <FlyingCard
             key={card.id}
             cardId={card.id}
+            playerId={card.playerId}
             fromX={card.fromX}
             fromY={card.fromY}
             toX={card.toX}
@@ -1063,7 +1156,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             delay={card.delay}
             onComplete={handleCardAnimationComplete}
           />
-        ))} */}
+        ))}
       </div>
       
       {/* NoConnect компонент для проблем с подключением */}
