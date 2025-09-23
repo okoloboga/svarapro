@@ -151,7 +151,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentPlayer = gameState?.players.find(p => p.id === currentUserId);
   const currentUserPosition = currentPlayer?.position;
 
-  // Объявляем состояния для useCallback
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
   // const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
 
