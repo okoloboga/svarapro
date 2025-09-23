@@ -166,18 +166,18 @@ export function PlayerSpot({
 
   const cardDeckStyle: React.CSSProperties = {
     position: 'absolute',
-    top: '40%',
+    top: '45%',
     transform: 'translateY(-50%)',
     zIndex: 30,
   };
 
   if (cardSide === 'left') {
-    cardDeckStyle.right = '40px'; // было 50px, стало 40px (на 10px ближе)
+    cardDeckStyle.right = '52px';
   } else {
-    cardDeckStyle.left = '40px'; // было 50px, стало 40px (на 10px ближе)
+    cardDeckStyle.left = '52px';
   }
 
-  const badgeSize = 26 * scale;
+  const badgeSize = 28 * scale;
   const scoreBadgeBaseStyle: React.CSSProperties = {
     width: `${badgeSize}px`,
     height: `${badgeSize}px`,
@@ -190,26 +190,28 @@ export function PlayerSpot({
   };
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
+    const horizontalOffset = `${-badgeSize * 0.35}px`;
+    const verticalOffset = `${-badgeSize * 0.4}px`;
+
     if (openCardsPosition === 'bottom') {
       return {
+        bottom: `${-badgeSize * 0.6}px`,
         left: '50%',
-        bottom: `${-22 * scale}px`,
         transform: 'translateX(-50%)',
       } as React.CSSProperties;
     }
 
-    const offsets: React.CSSProperties = {
-      top: `${6 * scale}px`,
-      transform: 'none',
-    };
-
     if (cardSide === 'left') {
-      offsets.left = `${-20 * scale}px`;
-    } else {
-      offsets.right = `${-20 * scale}px`;
+      return {
+        bottom: verticalOffset,
+        right: horizontalOffset,
+      } as React.CSSProperties;
     }
 
-    return offsets;
+    return {
+      bottom: verticalOffset,
+      left: horizontalOffset,
+    } as React.CSSProperties;
   })();
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
@@ -315,22 +317,22 @@ export function PlayerSpot({
             {/* Win amount container */}
             {showWinIndicator && (
               <div 
-                className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full mb-2 flex items-center justify-center transition-opacity duration-500"
+                className="absolute left-1/2 z-30 flex items-center justify-center transition-opacity duration-500"
                 style={{ 
-                  top: '18px',
-                  width: `${55 * scale}px`, 
-                  height: `${21 * scale}px`,
-                  borderRadius: `${12 * scale}px`,
+                  bottom: `${-nameHeight * 0.25}px`,
+                  transform: 'translate(-50%, 100%)',
+                  minWidth: `${68 * scale}px`, 
+                  height: `${20 * scale}px`,
+                  borderRadius: `${14 * scale}px`,
                   background: '#212027',
                   boxShadow: '0px 0px 4px 2px #EC8800',
-                  zIndex: 50,
-                  marginBottom: `${8 * scale}px`
+                  zIndex: 50
                 }}
               >
                 <span style={{
                   fontWeight: 600,
                   fontStyle: 'normal',
-                  fontSize: `${15 * scale}px`,
+                  fontSize: `${12 * scale}px`,
                   lineHeight: '100%',
                   letterSpacing: '0%',
                   textAlign: 'center',
@@ -425,12 +427,12 @@ export function PlayerSpot({
               top: `${40 * scale}px`
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${95 * scale}px`,
+              right: `${112 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${95 * scale}px`,
+              left: `${112 * scale}px`,
               top: '40%',
               transform: 'translateY(-50%)'
             })
