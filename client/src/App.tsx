@@ -22,6 +22,7 @@ import { SoundProvider } from './context/SoundContext';
 import { Notification } from './components/Notification';
 import { NotificationType } from './types/components';
 
+// тест
 interface LaunchParams {
   initData?: string;
   tgWebAppData?: Record<string, string | Record<string, unknown>>;
