@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
@@ -142,6 +142,22 @@ export function PlayerSpot({
   const cardWidth = isCurrentUser ? currentUserCardWidth : otherPlayersCardWidth;
   const baseFanStep = isCurrentUser ? currentUserStep : otherPlayersStep;
   const cardsCount = cards?.length ?? 0;
+  const cardsSignature = useMemo(() => {
+    if (!cardsCount) {
+      return '';
+    }
+    return (cards ?? []).map((card, index) => `${index}-${card.suit}-${card.rank}-${card.value}`).join('|');
+  }, [cards, cardsCount]);
+
+  const shouldAnimateFan = useMemo(() => {
+    if (hasFolded || !cardsCount) {
+      return false;
+    }
+    if (showCards) {
+      return true;
+    }
+    return isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting');
+  }, [hasFolded, cardsCount, showCards, isCurrentUser, hasLooked, gameState?.status]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
@@ -197,8 +213,8 @@ export function PlayerSpot({
 
 
   const sideGap = 10 * scale;
-  const DEAL_DURATION_MS = 1000;   // длительность перелёта одной карты
-  const DEAL_STAGGER_MS  = 350;   // задержка между картами
+  const DEAL_DURATION_MS = 800;   // длительность перелёта одной карты
+  const DEAL_STAGGER_MS  = 250;   // задержка между картами
   const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 
   type FlyingCard = {
@@ -218,9 +234,14 @@ export function PlayerSpot({
   const [fanVisible, setFanVisible] = useState(false); // включаем настоящий веер, когда всё долетело
 
 // рефы
-const cardElsRef = useRef<HTMLDivElement[]>([]);
-const anchorRef  = useRef<HTMLDivElement | null>(null); // центр веера (для измерений)
-const dealerRef  = useRef<HTMLDivElement | null>(null); // колода
+  const cardElsRef = useRef<Array<HTMLDivElement | null>>([]);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const dealerRef = useRef<HTMLDivElement | null>(null);
+
+  const animationFrameRef = useRef<number | null>(null);
+  const animationTimerRef = useRef<number | null>(null);
+  const animationRunningRef = useRef(false);
+  const lastAnimationSignatureRef = useRef<string | null>(null);
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
     let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
@@ -239,68 +260,105 @@ const dealerRef  = useRef<HTMLDivElement | null>(null); // колода
   })();
 
 useEffect(() => {
-  const shouldDeal =
-    !hasFolded &&
-    (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')));
+  if (!shouldAnimateFan) {
+    animationRunningRef.current = false;
+    lastAnimationSignatureRef.current = null;
+    setFanVisible(true);
+    setFlying(prev => (prev.length ? [] : prev));
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    return;
+  }
 
-  if (!shouldDeal) return;
-  if (!dealerRef.current || !cards?.length) return;
+  if (!dealerRef.current || !cardsCount || !cardsSignature) {
+    return;
+  }
 
-  // Сначала прячем реальный веер, чтобы клоны были единственными видимыми
-  setFanVisible(false);
+  if (lastAnimationSignatureRef.current === cardsSignature && animationRunningRef.current) {
+    return;
+  }
 
-  // Снимаем метрики цели (итоговые карточки из невидимого веера)
-  const dealerRect = dealerRef.current.getBoundingClientRect();
+  animationRunningRef.current = true;
+  lastAnimationSignatureRef.current = cardsSignature;
 
-  // ВАЖНО: рефы карточек могли ещё не проставиться при первом тике рендера.
-  // Дадим кадр дорисоваться:
-  requestAnimationFrame(() => {
-    const targets = cardElsRef.current.slice(0, cards.length).map((el, i) => {
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      // угол берём из inline стиля (rotate(...) в transform)
-      // const style = getComputedStyle(el);
-      // const transform = style.transform;
-      // выдирать rotate из matrix не нужно — мы знаем «логический» угол:
-      const mid = (cards.length - 1) / 2;
-      const angle = (i - mid) * rotationStep; // ровно как в веере
-      return {
-        left: r.left + r.width / 2,
-        top:  r.top  + r.height / 2,
-        width: r.width,
-        height: r.height,
-        rotate: angle,
-      };
-    }).filter(Boolean) as Array<{left:number; top:number; width:number; height:number; rotate:number}>;
+  if (animationTimerRef.current) {
+    clearTimeout(animationTimerRef.current);
+    animationTimerRef.current = null;
+  }
+  if (animationFrameRef.current) {
+    cancelAnimationFrame(animationFrameRef.current);
+    animationFrameRef.current = null;
+  }
 
-    // Стартовая точка — центр колоды
-    const startX = dealerRect.left + dealerRect.width / 2;
-    const startY = dealerRect.top  + dealerRect.height / 2;
-
-    const payload: FlyingCard[] = targets.map((t, i) => ({
-      id: `${player.id}-${i}-${Date.now()}`,
-      left: startX,
-      top: startY,
-      width: t.width,
-      height: t.height,
-      rotate: t.rotate,
-      dx: t.left - startX,
-      dy: t.top  - startY,
-      delay: i * DEAL_STAGGER_MS,
-    }));
-
-    setFlying(payload);
-
-    // Когда все анимации гарантированно закончатся — показываем настоящий веер и убираем клоны.
-    const totalMs = DEAL_DURATION_MS + DEAL_STAGGER_MS * (cards.length - 1);
-    const timer = setTimeout(() => {
+  const beginAnimation = () => {
+    if (!dealerRef.current) {
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
       setFanVisible(true);
-      setFlying([]);
-    }, totalMs + 30); // небольшой запас
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  });
-}, [showCards, hasLooked, gameState?.status, hasFolded, isCurrentUser, cards?.length, player.id]);
+    const deckRect = dealerRef.current.getBoundingClientRect();
+    const startX = deckRect.left + deckRect.width / 2;
+    const startY = deckRect.top + deckRect.height / 2;
+    const mid = (cardsCount - 1) / 2;
+    const timestamp = Date.now();
+
+    const clones = cardElsRef.current.slice(0, cardsCount).map((el, index) => {
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        id: `${player.id}-${timestamp}-${index}`,
+        left: startX,
+        top: startY,
+        width: rect.width,
+        height: rect.height,
+        rotate: (index - mid) * rotationStep,
+        dx: rect.left + rect.width / 2 - startX,
+        dy: rect.top + rect.height / 2 - startY,
+        delay: index * DEAL_STAGGER_MS,
+      };
+    }).filter(Boolean) as FlyingCard[];
+
+    if (!clones.length) {
+      setFanVisible(true);
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
+      return;
+    }
+
+    setFanVisible(false);
+    setFlying(clones);
+
+    const totalDuration = DEAL_DURATION_MS + DEAL_STAGGER_MS * (clones.length - 1);
+    animationTimerRef.current = window.setTimeout(() => {
+      setFanVisible(true);
+      setFlying(prev => (prev.length ? [] : prev));
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
+      animationTimerRef.current = null;
+    }, totalDuration + 50);
+  };
+
+  animationFrameRef.current = requestAnimationFrame(beginAnimation);
+
+  return () => {
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  };
+}, [shouldAnimateFan, cardsSignature, cardsCount, rotationStep, player.id]);
 
 
 
@@ -592,7 +650,7 @@ useEffect(() => {
       <div
         key={index}
         className="absolute"
-        ref={(el) => { if (el) cardElsRef.current[index] = el!; }}
+        ref={(el) => { cardElsRef.current[index] = el; }}
         style={{
           left: `${left}px`,
           top: `${topOffset}px`,
