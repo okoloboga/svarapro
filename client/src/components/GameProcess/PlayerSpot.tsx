@@ -197,6 +197,8 @@ export function PlayerSpot({
 
 };
 
+
+  const NUM_DY = 0.6 * scale; // 0.5–0.8 под свои глаза
   const sideGap = 10 * scale;
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
@@ -311,7 +313,12 @@ export function PlayerSpot({
           {chatPhrase}
         </div>
       )}
-      <ActionNotification action={notificationType} visible={!!notificationType && (notificationType === 'pass' || !hasFolded)} />
+      <ActionNotification
+        action={notificationType}
+        visible={!!notificationType && (notificationType === 'pass' || !hasFolded)}
+        maxWidth={nameWidth}   // <- ограничение по ширине блока имени/баланса
+        scale={scale}          // <- для размеров шрифта/высоты
+      />
       <div className="relative">
         <div className="relative flex justify-center items-start" style={{ width: `${avatarSize}px`, height: `${avatarSize + nameHeight / 1.5}px` }}>
           <div className="relative z-10" style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}>
@@ -509,7 +516,8 @@ export function PlayerSpot({
                 fontSize: `${13 * scale}px`,
                 lineHeight: '1',
                 letterSpacing: '0.01em',
-                fontVariantNumeric: 'tabular-nums',
+                fontVariantNumeric: 'tabular-nums lining-nums',
+                transform: `translateY(${NUM_DY}px)`,
                 textAlign: 'center',
                 color: '#FFFFFF',
               }}
