@@ -184,17 +184,16 @@ export function PlayerSpot({
     cardDeckStyle.left = '52px';
   }
 
-  const badgeSize = 22 * scale;
-  const scoreBadgeBaseStyle: React.CSSProperties = {
+  const badgeSize = Math.round(22 * scale);
+ const scoreBadgeBaseStyle: React.CSSProperties = {
   width: `${badgeSize}px`,
   height: `${badgeSize}px`,
   backgroundColor: '#FF443A',
   borderRadius: '50%',
-  display: 'grid',
-  placeItems: 'center',
+  position: 'relative',    // важно для абсолютного SVG внутри
+  display: 'block',
   border: '0.5px solid rgba(101, 101, 101, 0.91)',
-  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
-
+  boxShadow: '0px 4px 10px rgba(0,0,0,.35)',
 };
 
 
@@ -503,28 +502,35 @@ export function PlayerSpot({
         })()} */}
         {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div
-            className="absolute z-50 flex items-center justify-start"
-            style={{
-              ...scoreBadgeBaseStyle,
-              ...scoreBadgePositionStyle,
-            }}
-          >
-            <span
-              style={{
-                fontWeight: 600,
-                fontStyle: 'normal',
-                fontSize: `${13 * scale}px`,
-                lineHeight: '1',
-                letterSpacing: '0.01em',
-                fontVariantNumeric: 'tabular-nums lining-nums',
-                transform: `translateY(${NUM_DY}px)`,
-                textAlign: 'center',
-                color: '#FFFFFF',
-              }}
-            >
-              {score}
-            </span>
-          </div>
+    className="absolute"
+    style={{
+      ...scoreBadgeBaseStyle,
+      ...scoreBadgePositionStyle,
+      zIndex: 60,
+      pointerEvents: 'none',
+    }}
+  >
+    {/* ТЕКСТ СВЕРХУ КРУГА — идеальный центр */}
+    <svg
+      viewBox="0 0 100 100"
+      width="100%"
+      height="100%"
+      style={{ position: 'absolute', inset: 0, display: 'block' }}
+    >
+      <text
+        x="50"
+        y="50"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontWeight={700}
+        fontSize={62}         // ~0.62 от viewBox; можно 60–64
+        fill="#FFFFFF"
+        style={{ fontVariantNumeric: 'tabular-nums lining-nums' }}
+      >
+        {score}
+      </text>
+    </svg>
+  </div>
         )}
       </div>
     </div>
