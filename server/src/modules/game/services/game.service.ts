@@ -769,21 +769,34 @@ export class GameService {
     };
     gameState.log.push(foldAction);
 
-    const activePlayers = gameState.players.filter((p) => !p.hasFolded);
+    const playersInGame = gameState.players.filter((p) => !p.hasFolded);
 
-    if (activePlayers.length === 1) {
+    if (playersInGame.length <= 1) {
+      // Only one player left, or none. End the game.
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
       await this.endGameWithWinner(roomId, gameState);
       return { success: true };
+    }
+
+    // Check players who can still make a move
+    const playersWhoCanAct = playersInGame.filter(
+      (p) => !p.isAllIn && p.balance > 0,
+    );
+
+    if (playersWhoCanAct.length < 2) {
+      // If 0 or 1 players can still act, the betting part of the round is over.
+      // This covers cases where remaining players are all-in.
+      await this.endBettingRound(roomId, gameState);
+      return { success: true };
     } else {
+      // More than one player can still act, so the game continues.
       const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
 
-      // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
-      // Если следующий игрок будет якорем, то круг завершается
+      // This check might still be needed for when the round completes normally
       let anchorPlayerIndex: number | undefined = undefined;
       if (gameState.lastRaiseIndex !== undefined) {
         anchorPlayerIndex = gameState.lastRaiseIndex;
@@ -793,7 +806,6 @@ export class GameService {
         anchorPlayerIndex = gameState.dealerIndex;
       }
 
-      // Если следующий игрок - якорь, то круг завершается
       if (aboutToActPlayerIndex === anchorPlayerIndex) {
         await this.endBettingRound(roomId, gameState);
         return { success: true };
