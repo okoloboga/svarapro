@@ -190,11 +190,11 @@ export function PlayerSpot({
   height: `${badgeSize}px`,
   backgroundColor: '#FF443A',
   borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: 'grid',
+  placeItems: 'center',
   border: '0.5px solid rgba(101, 101, 101, 0.91)',
   boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
+
 };
 
   const sideGap = 10 * scale;
@@ -204,8 +204,8 @@ export function PlayerSpot({
 
     if (openCardsPosition === 'top') {
       // ещё левее: увеличим k и добавим небольшой dx
-      const k = 0.75;           // было 0.60
-      const dx = 2 * scale;     // тонкая подстройка в пикселях
+      const k = 0.80;           // было 0.60
+      const dx = 3 * scale;     // тонкая подстройка в пикселях
       style = {
         top: `${-10 * scale + fanHeight * 0.40}px`,
         left: `calc(50% - ${fanWidth / 2 + badgeSize * k + dx}px)`,
@@ -509,7 +509,7 @@ export function PlayerSpot({
                 fontSize: `${13 * scale}px`,
                 lineHeight: '1',
                 letterSpacing: '0.01em',
-                transform: 'translateY(-0.5px)',
+                fontVariantNumeric: 'tabular-nums',
                 textAlign: 'center',
                 color: '#FFFFFF',
               }}
