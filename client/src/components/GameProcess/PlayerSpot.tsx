@@ -197,7 +197,6 @@ export function PlayerSpot({
 };
 
 
-  const NUM_DY = 0.6 * scale; // 0.5–0.8 под свои глаза
   const sideGap = 10 * scale;
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
