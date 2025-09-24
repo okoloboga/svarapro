@@ -147,12 +147,12 @@ export function PlayerSpot({
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
     : 0;
   const fanStep =
-  cardsCount > 1
-    ? Math.max(baseFanStep, cardWidth * spacingMultiplier) * 0.75
-    : 0;
+    cardsCount > 1
+      ? Math.max(baseFanStep, cardWidth * spacingMultiplier) * 0.55
+      : 0;
 
   const rotationStep =
-    cardsCount <= 2 ? 6 : cardsCount === 3 ? 8 : cardsCount === 4 ? 7 : 6;
+    cardsCount <= 2 ? 8 : cardsCount === 3 ? 12 : cardsCount === 4 ? 10 : 8;
 
   const arcStep =
     cardsCount <= 3 ? 2 : cardsCount === 4 ? 3 : 4;
@@ -184,7 +184,7 @@ export function PlayerSpot({
     cardDeckStyle.left = '52px';
   }
 
-  const badgeSize = 25 * scale;
+  const badgeSize = 22 * scale;
   const scoreBadgeBaseStyle: React.CSSProperties = {
     width: `${badgeSize}px`,
     height: `${badgeSize}px`,
@@ -198,29 +198,19 @@ export function PlayerSpot({
   };
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
-    const horizontalOffset = `${-badgeSize * 0.35}px`;
-    const verticalOffset = `${-badgeSize * 0.35}px`;
+  let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
 
-    if (openCardsPosition === 'bottom') {
-      return {
-        bottom: `${-badgeSize * 0.6}px`,
-        left: '50%',
-        transform: 'translateX(-50%)',
-      } as React.CSSProperties;
-    }
+  if (openCardsPosition === 'top') {
+    const k = 0.60; 
+    style = {
+      top: `${-10 * scale + fanHeight * 0.40}px`,
+      left: `calc(50% - ${fanWidth / 2 + badgeSize * k}px)`,
+      transform: 'none',
+    };
+  }
 
-    if (cardSide === 'left') {
-      return {
-        bottom: verticalOffset,
-        right: horizontalOffset,
-      } as React.CSSProperties;
-    }
-
-    return {
-      bottom: verticalOffset,
-      left: horizontalOffset,
-    } as React.CSSProperties;
-  })();
+  return style;
+})();
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div 
