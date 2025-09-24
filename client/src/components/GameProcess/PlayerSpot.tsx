@@ -186,31 +186,35 @@ export function PlayerSpot({
 
   const badgeSize = 22 * scale;
   const scoreBadgeBaseStyle: React.CSSProperties = {
-    width: `${badgeSize}px`,
-    height: `${badgeSize}px`,
-    backgroundColor: '#FF443A',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: '0.5px solid rgba(101, 101, 101, 0.91)',
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
-  };
+  width: `${badgeSize}px`,
+  height: `${badgeSize}px`,
+  backgroundColor: '#FF443A',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '0.5px solid rgba(101, 101, 101, 0.91)',
+  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
+};
+
+  const sideGap = 10 * scale;
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
-  let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
+    let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
 
-  if (openCardsPosition === 'top') {
-    const k = 0.60; 
-    style = {
-      top: `${-10 * scale + fanHeight * 0.40}px`,
-      left: `calc(50% - ${fanWidth / 2 + badgeSize * k}px)`,
-      transform: 'none',
-    };
-  }
+    if (openCardsPosition === 'top') {
+      // ещё левее: увеличим k и добавим небольшой dx
+      const k = 0.75;           // было 0.60
+      const dx = 2 * scale;     // тонкая подстройка в пикселях
+      style = {
+        top: `${-10 * scale + fanHeight * 0.40}px`,
+        left: `calc(50% - ${fanWidth / 2 + badgeSize * k + dx}px)`,
+        transform: 'none',
+      };
+    }
+    return style;
+  })();
 
-  return style;
-})();
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div 
@@ -417,22 +421,25 @@ export function PlayerSpot({
             ...(openCardsPosition === 'top' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${-10 * scale}px`
+              // ближе к аватару: поднимем сильнее (карты почти «лежaт» на имени)
+              top: `${- (avatarSize / 2) - sideGap}px`,
             }),
             ...(openCardsPosition === 'bottom' && {
               left: '50%',
               transform: 'translateX(-50%)',
-              top: `${40 * scale}px`
+              top: `${(avatarSize / 2) - sideGap}px`,
             }),
             ...(openCardsPosition === 'left' && {
-              right: `${112 * scale}px`,
-              top: '40%',
-              transform: 'translateY(-50%)'
+              // ближе к аватару слева
+              right: `${avatarSize + sideGap}px`, // было 112*scale
+              top: '50%',
+              transform: 'translateY(-50%)',
             }),
             ...(openCardsPosition === 'right' && {
-              left: `${112 * scale}px`,
-              top: '40%',
-              transform: 'translateY(-50%)'
+              // ближе к аватару справа
+              left: `${avatarSize + sideGap}px`,  // было 112*scale
+              top: '50%',
+              transform: 'translateY(-50%)',
             })
           }}>
             <div className="relative w-full h-full">
@@ -500,8 +507,9 @@ export function PlayerSpot({
                 fontWeight: 600,
                 fontStyle: 'normal',
                 fontSize: `${13 * scale}px`,
-                lineHeight: '100%',
+                lineHeight: '1',
                 letterSpacing: '0.01em',
+                transform: 'translateY(-0.5px)',
                 textAlign: 'center',
                 color: '#FFFFFF',
               }}
