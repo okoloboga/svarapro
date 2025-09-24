@@ -53,6 +53,7 @@ export class GameStateService {
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
     updatedGameState.lastBlindBettorIndex = undefined;
+    updatedGameState.lastRaiseIndex = undefined; // ИСПРАВЛЕНИЕ: сбрасываем якорь рейза
     updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
@@ -122,11 +123,13 @@ export class GameStateService {
     updatedGameState.round += 1;
     updatedGameState.currentBet = 0;
     updatedGameState.lastBlindBet = 0;
+    updatedGameState.lastBlindBettorIndex = undefined; // ИСПРАВЛЕНИЕ: сброс якоря blind
+    updatedGameState.lastRaiseIndex = undefined; // ИСПРАВЛЕНИЕ: сброс якоря raise
     updatedGameState.lastActionAmount = 0;
     updatedGameState.winners = [];
     updatedGameState.isSvara = true; // Флаг, что это раунд свары
     updatedGameState.svaraParticipants = []; // Очищаем после использования
-
+    
     // Дилер не меняется при сваре
 
     // Сбрасываем состояние игроков

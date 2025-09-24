@@ -62,6 +62,9 @@ export class PlayerService {
       score: undefined,
       lastAction: undefined, // ИСПРАВЛЕНИЕ: Очищаем lastAction для сброса уведомлений
       hasLookedAndMustAct: false, // ИСПРАВЛЕНИЕ: Также очищаем флаг для свары
+      isAllIn: false, // ИСПРАВЛЕНИЕ: Сбрасываем флаг all-in между раундами
+      tableBalance: 0, // ИСПРАВЛЕНИЕ: Обнуляем баланс на столе
+      inactivityCount: 0, // ИСПРАВЛЕНИЕ: Сбрасываем счетчик бездействия
     };
   }
 
