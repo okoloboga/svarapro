@@ -239,7 +239,7 @@ export function PlayerSpot({
 
   const CardDeckComponent = (
     <div className="flex flex-col items-center space-y-1">
-      <div className="relative" data-player-card-slot={player.id} style={{ width: '42px', height: '42px' }}>
+      <div className="relative" style={{ width: '42px', height: '42px' }}>
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 3, top: '0', left: '0' }} />
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 2, top: '0', left: '4px' }} />
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 1, top: '0', left: '8px' }} />
@@ -464,7 +464,8 @@ export function PlayerSpot({
                       width: `${cardWidth}px`,
                       height: `${cardHeight}px`,
                       transform: `rotate(${rotation}deg)`,
-                      transformOrigin: '50% 85%',
+                      transformOrigin: '50% 80%',
+                      willChange: 'transform',
                       zIndex: index + 1,
                     }}
                   >
@@ -473,6 +474,19 @@ export function PlayerSpot({
                 );
               })}
             </div>
+            <div
+              data-player-card-slot={player.id}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                width: '1px',
+                height: '1px',
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                zIndex: 49, // ниже самих карт веера (которые у тебя z= index+1 / 50+)
+              }}
+            />
           </div>
         )}
         {!hasFolded && (
@@ -520,6 +534,7 @@ export function PlayerSpot({
         y="50"
         textAnchor="middle"
         dominantBaseline="middle"
+        dy="0.08em"
         fontWeight={700}
         fontSize={62}         // ~0.62 от viewBox; можно 60–64
         fill="#FFFFFF"
