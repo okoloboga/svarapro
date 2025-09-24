@@ -190,7 +190,6 @@ export function PlayerSpot({
   height: `${badgeSize}px`,
   backgroundColor: '#FF443A',
   borderRadius: '50%',
-  position: 'relative',    // важно для абсолютного SVG внутри
   display: 'block',
   border: '0.5px solid rgba(101, 101, 101, 0.91)',
   boxShadow: '0px 4px 10px rgba(0,0,0,.35)',
