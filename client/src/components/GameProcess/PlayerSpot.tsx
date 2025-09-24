@@ -146,12 +146,19 @@ export function PlayerSpot({
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
     : 0;
-  const fanStep = cardsCount > 1 ? Math.max(baseFanStep, cardWidth * spacingMultiplier) : 0;
-  const rotationStep = cardsCount <= 2 ? 8 : cardsCount === 3 ? 12 : cardsCount === 4 ? 10 : 8;
-  const arcStep = cardsCount <= 3 ? 4 : cardsCount === 4 ? 5 : 6;
-  const fanWidth = cardsCount > 1 ? cardWidth + fanStep * (cardsCount - 1) : cardWidth;
-  const fanHeight = cardHeight + arcStep * Math.max(0, cardsCount - 1);
-  const fanCenterOffset = cardsCount > 1 ? (fanWidth - cardWidth) / 2 : 0;
+  const fanStep =
+  cardsCount > 1
+    ? Math.max(baseFanStep, cardWidth * spacingMultiplier) * 0.75
+    : 0;
+
+  const rotationStep =
+    cardsCount <= 2 ? 6 : cardsCount === 3 ? 8 : cardsCount === 4 ? 7 : 6;
+
+  const arcStep =
+    cardsCount <= 3 ? 2 : cardsCount === 4 ? 3 : 4;
+    const fanWidth = cardsCount > 1 ? cardWidth + fanStep * (cardsCount - 1) : cardWidth;
+    const fanHeight = cardHeight + arcStep * Math.max(0, cardsCount - 1);
+    const fanCenterOffset = cardsCount > 1 ? (fanWidth - cardWidth) / 2 : 0;
 
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
@@ -177,7 +184,7 @@ export function PlayerSpot({
     cardDeckStyle.left = '52px';
   }
 
-  const badgeSize = 28 * scale;
+  const badgeSize = 25 * scale;
   const scoreBadgeBaseStyle: React.CSSProperties = {
     width: `${badgeSize}px`,
     height: `${badgeSize}px`,
@@ -186,12 +193,13 @@ export function PlayerSpot({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    border: '0.5px solid rgba(101, 101, 101, 0.91)',
     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.35)',
   };
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
     const horizontalOffset = `${-badgeSize * 0.35}px`;
-    const verticalOffset = `${-badgeSize * 0.4}px`;
+    const verticalOffset = `${-badgeSize * 0.35}px`;
 
     if (openCardsPosition === 'bottom') {
       return {
@@ -491,7 +499,7 @@ export function PlayerSpot({
         })()} */}
         {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div
-            className="absolute z-50 flex items-center justify-center"
+            className="absolute z-50 flex items-center justify-start"
             style={{
               ...scoreBadgeBaseStyle,
               ...scoreBadgePositionStyle,
@@ -499,9 +507,9 @@ export function PlayerSpot({
           >
             <span
               style={{
-                fontWeight: 700,
+                fontWeight: 600,
                 fontStyle: 'normal',
-                fontSize: `${15 * scale}px`,
+                fontSize: `${13 * scale}px`,
                 lineHeight: '100%',
                 letterSpacing: '0.01em',
                 textAlign: 'center',
