@@ -197,13 +197,30 @@ export function PlayerSpot({
 
 
   const sideGap = 10 * scale;
-  const DEAL_DURATION_MS = 260;   // длительность перелёта одной карты
-  const DEAL_STAGGER_MS  = 140;   // задержка между картами
+  const DEAL_DURATION_MS = 1000;   // длительность перелёта одной карты
+  const DEAL_STAGGER_MS  = 350;   // задержка между картами
   const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 
-  const cardElsRef = useRef<HTMLDivElement[]>([]);        // элементы-обёртки для карт
-  const anchorRef  = useRef<HTMLDivElement | null>(null); // якорь-цель (data-player-card-slot)
-  const dealerRef  = useRef<HTMLDivElement | null>(null);
+  type FlyingCard = {
+  id: string;                // уникальный ключ
+  left: number;              // стартовая позиция (центр колоды)
+  top: number;
+  width: number;
+  height: number;
+  rotate: number;            // конечный угол
+  dx: number;                // смещение до цели
+  dy: number;
+  delay: number;
+};
+
+
+  const [flying, setFlying] = useState<FlyingCard[]>([]);
+  const [fanVisible, setFanVisible] = useState(false); // включаем настоящий веер, когда всё долетело
+
+// рефы
+const cardElsRef = useRef<HTMLDivElement[]>([]);
+const anchorRef  = useRef<HTMLDivElement | null>(null); // центр веера (для измерений)
+const dealerRef  = useRef<HTMLDivElement | null>(null); // колода
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
     let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
@@ -221,63 +238,70 @@ export function PlayerSpot({
     return style;
   })();
 
-  useEffect(() => {
-  // когда нужно запускать раздачу:
-  // - показываем карты впервые
-  // - или игрок "взглянул" (hasLooked) в подходящих стадиях
+useEffect(() => {
   const shouldDeal =
     !hasFolded &&
     (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')));
 
   if (!shouldDeal) return;
-  if (!anchorRef.current) return;
+  if (!dealerRef.current || !cards?.length) return;
 
-  const anchorRect = anchorRef.current.getBoundingClientRect();
-  const dealerRect = (dealerRef.current?.getBoundingClientRect()) ?? anchorRect; // fallback в якорь
+  // Сначала прячем реальный веер, чтобы клоны были единственными видимыми
+  setFanVisible(false);
 
-  // Защита: если карт нет или уже видимы — пропустим
-  if (!cards?.length) return;
+  // Снимаем метрики цели (итоговые карточки из невидимого веера)
+  const dealerRect = dealerRef.current.getBoundingClientRect();
 
-  // Пройдёмся по картам и анимируем по очереди
-  cardElsRef.current.forEach((el, i) => {
-    if (!el) return;
-    
-    const finalTransform = getComputedStyle(el).transform;
-    // финальные метрики (где карта уже стоит)
-    const finalRect = el.getBoundingClientRect();
+  // ВАЖНО: рефы карточек могли ещё не проставиться при первом тике рендера.
+  // Дадим кадр дорисоваться:
+  requestAnimationFrame(() => {
+    const targets = cardElsRef.current.slice(0, cards.length).map((el, i) => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      // угол берём из inline стиля (rotate(...) в transform)
+      const style = getComputedStyle(el);
+      const transform = style.transform;
+      // выдирать rotate из matrix не нужно — мы знаем «логический» угол:
+      const mid = (cards.length - 1) / 2;
+      const angle = (i - mid) * rotationStep; // ровно как в веере
+      return {
+        left: r.left + r.width / 2,
+        top:  r.top  + r.height / 2,
+        width: r.width,
+        height: r.height,
+        rotate: angle,
+      };
+    }).filter(Boolean) as Array<{left:number; top:number; width:number; height:number; rotate:number}>;
 
-    // вектор от dealer -> final
-    const dx = finalRect.left + finalRect.width / 2  - (dealerRect.left + dealerRect.width / 2);
-    const dy = finalRect.top  + finalRect.height / 2 - (dealerRect.top  + dealerRect.height / 2);
+    // Стартовая точка — центр колоды
+    const startX = dealerRect.left + dealerRect.width / 2;
+    const startY = dealerRect.top  + dealerRect.height / 2;
 
-    // Устанавливаем старт: переносим карту в позицию колоды и делаем невидимой
-    el.style.transition = 'none';
-    el.style.transform  = `translate(${-dx}px, ${-dy}px) ${finalTransform === 'none' ? '' : finalTransform}`;
-    el.style.opacity    = '0';
+    const payload: FlyingCard[] = targets.map((t, i) => ({
+      id: `${player.id}-${i}-${Date.now()}`,
+      left: startX,
+      top: startY,
+      width: t.width,
+      height: t.height,
+      rotate: t.rotate,
+      dx: t.left - startX,
+      dy: t.top  - startY,
+      delay: i * DEAL_STAGGER_MS,
+    }));
 
-    // Двойной rAF, чтобы браузер применил стартовые стили
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const delay = i * DEAL_STAGGER_MS;
+    setFlying(payload);
 
-        el.style.transition = `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${delay}ms, opacity ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${delay}ms`;
+    // Когда все анимации гарантированно закончатся — показываем настоящий веер и убираем клоны.
+    const totalMs = DEAL_DURATION_MS + DEAL_STAGGER_MS * (cards.length - 1);
+    const timer = setTimeout(() => {
+      setFanVisible(true);
+      setFlying([]);
+    }, totalMs + 30); // небольшой запас
 
-        // целевое: убираем смещение, возвращаем твой поворот/позицию и делаем видимой
-        el.style.transform = finalTransform; // вернётся к твоему rotate(...) из style
-        el.style.opacity   = '1';
-      });
-    });
+    return () => clearTimeout(timer);
   });
+}, [showCards, hasLooked, gameState?.status, hasFolded, isCurrentUser, cards?.length, player.id]);
 
-  // Чистка: если компонент демонтируется посреди анимации
-  return () => {
-    cardElsRef.current.forEach((el) => {
-      if (!el) return;
-      el.style.transition = '';
-    });
-  };
-  // ВАЖНО: зависимость — когда реально нужно перезапустить раздачу
-}, [showCards, hasLooked, gameState?.status, hasFolded, isCurrentUser, cards?.length]);
 
 
 
@@ -512,36 +536,78 @@ export function PlayerSpot({
               transform: 'translateY(-50%)',
             })
           }}>
-            <div className="relative w-full h-full">
-              {cards.map((card, index) => {
-                const midIndex = (cards.length - 1) / 2;
-                const offsetIndex = index - midIndex;
-                const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
-                const left = fanCenterOffset + offsetIndex * fanStep;
-                const rotation = offsetIndex * rotationStep;
-                const topOffset = depthFactor * arcStep;
-                return (
-                  <div
-                    key={index}
-                    className="absolute"
-                    ref={(el) => { if (el) cardElsRef.current[index] = el; }}
-                    style={{
-                      left: `${left}px`,
-                      top: `${topOffset}px`,
-                      width: `${cardWidth}px`,
-                      height: `${cardHeight}px`,
-                      transform: `rotate(${rotation}deg)`,
-                      transformOrigin: '50% 80%',
-                      willChange: 'transform, opacity',
-                      zIndex: index + 1,
-                      opacity: 0,
-                    }}
-                  >
-                    <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
-                  </div>
-                );
-              })}
-            </div>
+            {flying.length > 0 && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      pointerEvents: 'none',
+      zIndex: 9999, // поверх всего
+    }}
+  >
+    {flying.map(fc => (
+      <div
+        key={fc.id}
+        style={{
+          position: 'absolute',
+          left: fc.left - fc.width / 2,
+          top: fc.top - fc.height / 2,
+          width: fc.width,
+          height: fc.height,
+          transform: 'translate(0px, 0px) rotate(0deg)',
+          transition: `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${fc.delay}ms`,
+          willChange: 'transform',
+        }}
+        // запускаем целевой transform на следующем тике
+        ref={(el) => {
+          if (!el) return;
+          requestAnimationFrame(() => {
+            // фикс: форс-рефлоу
+            void el.offsetHeight;
+            el.style.transform = `translate(${fc.dx}px, ${fc.dy}px) rotate(${fc.rotate}deg)`;
+          });
+        }}
+        onTransitionEnd={() => {
+          // последний пришедший не скрывает клон — ждём всех по таймеру ниже
+        }}
+      >
+        <img
+          src={cardBack}
+          alt=""
+          style={{ width: '100%', height: '100%', borderRadius: 4, display: 'block' }}
+        />
+      </div>
+    ))}
+  </div>
+)}
+            <div className="relative w-full h-full" style={{ visibility: fanVisible ? 'visible' : 'hidden' }}>
+  {cards.map((card, index) => {
+    const midIndex = (cards.length - 1) / 2;
+    const offsetIndex = index - midIndex;
+    const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
+    const left = fanCenterOffset + offsetIndex * fanStep;
+    const rotation = offsetIndex * rotationStep;
+    const topOffset = depthFactor * arcStep;
+    return (
+      <div
+        key={index}
+        className="absolute"
+        ref={(el) => { if (el) cardElsRef.current[index] = el!; }}
+        style={{
+          left: `${left}px`,
+          top: `${topOffset}px`,
+          width: `${cardWidth}px`,
+          height: `${cardHeight}px`,
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: '50% 80%',
+          zIndex: index + 1,
+        }}
+      >
+        <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
+      </div>
+    );
+  })}
+</div>
             <div
               data-player-card-slot={player.id}
               ref={anchorRef}
@@ -561,7 +627,7 @@ export function PlayerSpot({
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            <div style={{ visibility: (isCurrentUser && hasLooked) ? 'hidden' : 'visible' }}>
+            <div style={{ visibility: flying.length > 0 ? 'visible' : ((isCurrentUser && hasLooked) ? 'hidden' : 'visible') }}>
               {CardDeckComponent}
             </div>
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
