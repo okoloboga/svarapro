@@ -796,33 +796,15 @@ export class GameService {
         gameState.currentPlayerIndex,
       );
 
-      // This check might still be needed for when the round completes normally
-      let anchorPlayerIndex: number | undefined = undefined;
-      if (gameState.lastRaiseIndex !== undefined) {
-        anchorPlayerIndex = gameState.lastRaiseIndex;
-      } else if (gameState.lastBlindBettorIndex !== undefined) {
-        anchorPlayerIndex = gameState.lastBlindBettorIndex;
-      } else {
-        anchorPlayerIndex = gameState.dealerIndex;
-      }
+      // Check if the round is complete using the more robust betting service method
+      const isComplete = this.bettingService.isBettingRoundComplete({
+        ...gameState,
+        currentPlayerIndex: aboutToActPlayerIndex,
+      });
 
-      if (aboutToActPlayerIndex === anchorPlayerIndex) {
-        // Before ending the round, ensure all active players have matching bets
-        const activePlayersWithMoney = playersInGame.filter(
-          (p) => p.balance > 0 && !p.isAllIn,
-        );
-        const firstBet = activePlayersWithMoney[0]?.totalBet;
-        const allBetsEqual = activePlayersWithMoney.every(
-          (p) => p.totalBet === firstBet,
-        );
-
-        if (allBetsEqual) {
-          await this.endBettingRound(roomId, gameState);
-          return { success: true };
-        } else {
-          // Bets are not equal, round is not over.
-          gameState.currentPlayerIndex = aboutToActPlayerIndex;
-        }
+      if (isComplete) {
+        await this.endBettingRound(roomId, gameState);
+        return { success: true };
       } else {
         gameState.currentPlayerIndex = aboutToActPlayerIndex;
       }
