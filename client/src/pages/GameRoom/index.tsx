@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { GameRoomProps, GameState, Player } from '@/types/game';
+import { Card, GameRoomProps, GameState, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
@@ -41,12 +41,26 @@ interface ChipAnimation {
 interface CardAnimation {
   id: string;
   playerId: string;
+  cardIndex: number;
   fromX: number;
   fromY: number;
   toX: number;
   toY: number;
+  width: number;
+  height: number;
+  rotation: number;
+  transformOrigin: string;
+  zIndex: number;
   delay: number;
+  card?: Card;
+  hidden: boolean;
+  landed?: boolean;
 }
+
+const CARD_DEAL_DURATION_MS = 2200;
+const CARD_DEAL_STAGGER_MS = 450;
+const DEFAULT_CARD_WIDTH = 32;
+const DEFAULT_CARD_HEIGHT = 44;
 
 // interface CardAnimation {
 //   id: string;
@@ -167,6 +181,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const [dealtPlayers, setDealtPlayers] = useState<Record<string, boolean>>({});
   const [dealingPlayerIds, setDealingPlayerIds] = useState<string[]>([]);
   const pendingDealCountsRef = useRef<Record<string, number>>({});
+  const completedDealPlayersRef = useRef<Set<string>>(new Set());
   const dealingPlayersSet = useMemo(() => new Set(dealingPlayerIds), [dealingPlayerIds]);
 
   const getScreenPosition = useCallback((absolutePosition: number) => {
@@ -259,8 +274,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       return;
     }
 
-    const cardWidth = 32;
-    const cardHeight = 44;
     const deckCenterX = window.innerWidth / 2;
     const deckCenterY = window.innerHeight / 2;
 
@@ -268,92 +281,149 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     setDealtPlayers({});
     setDealingPlayerIds(playersToDeal.map(player => player.id));
     pendingDealCountsRef.current = {};
+    completedDealPlayersRef.current = new Set();
 
     requestAnimationFrame(() => {
       const animations: CardAnimation[] = [];
       const timestamp = Date.now();
 
-      const sourceX = deckCenterX - cardWidth / 2;
-      const sourceY = deckCenterY - cardHeight / 2;
+      type CardTarget = {
+        cardIndex: number;
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+        rotation: number;
+        transformOrigin: string;
+        zIndex: number;
+        card?: Card;
+        hidden: boolean;
+      };
 
-      const targets = playersToDeal.map(player => {
+      const fallbackPositionForPlayer = (player: Player) => {
+        const tableWidth = 315 * scale;
+        const tableHeight = 493 * scale;
+        const verticalOffset = 100;
+        const isCurrent = player.id === currentUserId;
+        const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
+
+        switch (relativePosition) {
+          case 1:
+            return {
+              centerX: deckCenterX,
+              centerY: deckCenterY - tableHeight * 0.4 - verticalOffset,
+            };
+          case 2:
+            return {
+              centerX: deckCenterX + tableWidth * 0.4,
+              centerY: deckCenterY - tableHeight * 0.25,
+            };
+          case 3:
+            return {
+              centerX: deckCenterX + tableWidth * 0.4,
+              centerY: deckCenterY + tableHeight * 0.25 - verticalOffset,
+            };
+          case 4:
+            return {
+              centerX: deckCenterX,
+              centerY: deckCenterY + tableHeight * 0.4 - verticalOffset,
+            };
+          case 5:
+            return {
+              centerX: deckCenterX - tableWidth * 0.4,
+              centerY: deckCenterY + tableHeight * 0.25 - verticalOffset,
+            };
+          default:
+            return {
+              centerX: deckCenterX - tableWidth * 0.4,
+              centerY: deckCenterY - tableHeight * 0.25,
+            };
+        }
+      };
+
+      const playerTargets = playersToDeal.map(player => {
         const cardsToDeal = player.cards?.length ?? 0;
-        let targetCenterX = deckCenterX;
-        let targetCenterY = deckCenterY;
-
-        if (cardsToDeal > 0) {
-          const playerSlotId = String(player.id).replace(/["\\]/g, '\\$&');
-          const slotElement = document.querySelector(
-            `[data-player-card-slot="${playerSlotId}"]`
-          ) as HTMLElement | null;
-
-          if (slotElement) {
-            const rect = slotElement.getBoundingClientRect();
-            targetCenterX = rect.left + rect.width / 2;
-            targetCenterY = rect.top + rect.height / 2;
-          } else {
-            const tableWidth = 315 * scale;
-            const tableHeight = 493 * scale;
-            const verticalOffset = 100;
-            const isCurrent = player.id === currentUserId;
-            const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
-
-            switch (relativePosition) {
-              case 1:
-                targetCenterX = deckCenterX;
-                targetCenterY = deckCenterY - tableHeight * 0.4 - verticalOffset;
-                break;
-              case 2:
-                targetCenterX = deckCenterX + tableWidth * 0.4;
-                targetCenterY = deckCenterY - tableHeight * 0.25;
-                break;
-              case 3:
-                targetCenterX = deckCenterX + tableWidth * 0.4;
-                targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
-                break;
-              case 4:
-                targetCenterX = deckCenterX;
-                targetCenterY = deckCenterY + tableHeight * 0.4 - verticalOffset;
-                break;
-              case 5:
-                targetCenterX = deckCenterX - tableWidth * 0.4;
-                targetCenterY = deckCenterY + tableHeight * 0.25 - verticalOffset;
-                break;
-              default:
-                targetCenterX = deckCenterX - tableWidth * 0.4;
-                targetCenterY = deckCenterY - tableHeight * 0.25;
-                break;
-            }
-          }
-
-          pendingDealCountsRef.current[player.id] = cardsToDeal;
+        if (!cardsToDeal) {
+          return { player, cardsToDeal, targets: [] as CardTarget[] };
         }
 
-        return {
-          player,
-          cardsToDeal,
-          targetX: targetCenterX - cardWidth / 2,
-          targetY: targetCenterY - cardHeight / 2,
-        };
+        pendingDealCountsRef.current[player.id] = cardsToDeal;
+
+        const sanitizedPlayerId = String(player.id).replace(/["\\]/g, '\\$&');
+        const shouldHideCard = player.id !== currentUserId && gameState.status !== 'showdown';
+
+        const targets: CardTarget[] = Array.from({ length: cardsToDeal }, (_, cardIndex) => {
+          const selector = `[data-player-card="${sanitizedPlayerId}-${cardIndex}"]`;
+          const element = document.querySelector(selector) as HTMLElement | null;
+
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            const rotation = Number(element.dataset.cardRotation ?? '0');
+            const transformOrigin = element.dataset.cardTransformOrigin ?? '50% 80%';
+            const zIndex = Number(element.dataset.cardZindex ?? cardIndex + 1);
+
+            return {
+              cardIndex,
+              left: rect.left,
+              top: rect.top,
+              width: rect.width || DEFAULT_CARD_WIDTH,
+              height: rect.height || DEFAULT_CARD_HEIGHT,
+              rotation,
+              transformOrigin,
+              zIndex,
+              card: player.cards?.[cardIndex],
+              hidden: shouldHideCard,
+            };
+          }
+
+          const fallbackCenter = fallbackPositionForPlayer(player);
+          return {
+            cardIndex,
+            left: fallbackCenter.centerX - DEFAULT_CARD_WIDTH / 2,
+            top: fallbackCenter.centerY - DEFAULT_CARD_HEIGHT / 2,
+            width: DEFAULT_CARD_WIDTH,
+            height: DEFAULT_CARD_HEIGHT,
+            rotation: 0,
+            transformOrigin: '50% 50%',
+            zIndex: cardIndex + 1,
+            card: player.cards?.[cardIndex],
+            hidden: shouldHideCard,
+          };
+        });
+
+        return { player, cardsToDeal, targets };
       });
 
+      const maxCardsToDeal = playerTargets.reduce((max, entry) => Math.max(max, entry.cardsToDeal), 0);
       let animationIndex = 0;
-      const maxCardsToDeal = targets.reduce((max, target) => Math.max(max, target.cardsToDeal), 0);
 
       for (let cardIndex = 0; cardIndex < maxCardsToDeal; cardIndex++) {
-        targets.forEach(({ player, cardsToDeal, targetX, targetY }) => {
-          if (cardIndex >= cardsToDeal) {
+        playerTargets.forEach(({ player, targets }) => {
+          const target = targets[cardIndex];
+          if (!target) {
             return;
           }
+
+          const width = target.width || DEFAULT_CARD_WIDTH;
+          const height = target.height || DEFAULT_CARD_HEIGHT;
 
           animations.push({
             id: `deal-${timestamp}-${player.id}-${cardIndex}`,
             playerId: player.id,
-            fromX: sourceX,
-            fromY: sourceY,
-            toX: targetX,
-            toY: targetY,
-            delay: animationIndex * 150,
+            cardIndex,
+            fromX: deckCenterX - width / 2,
+            fromY: deckCenterY - height / 2,
+            toX: target.left,
+            toY: target.top,
+            width,
+            height,
+            rotation: target.rotation,
+            transformOrigin: target.transformOrigin,
+            zIndex: target.zIndex,
+            delay: animationIndex * CARD_DEAL_STAGGER_MS,
+            card: target.card,
+            hidden: target.hidden,
+            landed: false,
           });
 
           animationIndex++;
@@ -368,6 +438,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setDealtPlayers(dealt);
         setDealingPlayerIds([]);
         setIsDealingCards(false);
+        pendingDealCountsRef.current = {};
+        completedDealPlayersRef.current.clear();
         return;
       }
 
@@ -767,22 +839,36 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, []);
 
   const handleCardAnimationComplete = useCallback((cardId: string, playerId: string) => {
-    setCardAnimations(prev => prev.filter(card => card.id !== cardId));
+    setCardAnimations(prev => prev.map(card => card.id === cardId ? { ...card, landed: true } : card));
 
-    const remaining = pendingDealCountsRef.current[playerId] ?? 0;
-    const nextCount = Math.max(0, remaining - 1);
+    const remaining = (pendingDealCountsRef.current[playerId] ?? 0) - 1;
 
-    if (nextCount === 0) {
+    if (remaining <= 0) {
       delete pendingDealCountsRef.current[playerId];
-      setDealtPlayers(prev => ({ ...prev, [playerId]: true }));
+      completedDealPlayersRef.current.add(playerId);
     } else {
-      pendingDealCountsRef.current[playerId] = nextCount;
+      pendingDealCountsRef.current[playerId] = remaining;
     }
 
-    const hasPending = Object.values(pendingDealCountsRef.current).some(count => count > 0);
-    if (!hasPending) {
+    if (Object.keys(pendingDealCountsRef.current).length === 0) {
+      const completedIds = Array.from(completedDealPlayersRef.current);
+      if (completedIds.length) {
+        setDealtPlayers(prev => {
+          const next = { ...prev };
+          completedIds.forEach(id => {
+            next[id] = true;
+          });
+          return next;
+        });
+      }
+
+      completedDealPlayersRef.current.clear();
       setIsDealingCards(false);
       setDealingPlayerIds([]);
+
+      requestAnimationFrame(() => {
+        setCardAnimations(prev => prev.filter(card => !card.landed));
+      });
     }
   }, []);
 
@@ -1015,8 +1101,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
 
-                        const isDealingForPlayer = isDealingCards && dealingPlayersSet.has(player.id) && !dealtPlayers[player.id];
-                        const playerForRender = isDealingForPlayer ? { ...player, cards: [] } : player;
+                        const hidePlayerCards = isDealingCards && dealingPlayersSet.has(player.id) && !dealtPlayers[player.id];
 
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
                         if (!isCurrentUser) {
@@ -1034,7 +1119,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         }
                         
                         if (isCurrentUser) {
-                          const mergedPlayer = { ...playerForRender, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
+                          const mergedPlayer = { ...player, username: userData.username || userData.first_name || player.username, avatar: userData.photo_url || player.avatar };
                           return <PlayerSpot 
                             player={mergedPlayer} 
                             isCurrentUser={true} 
@@ -1050,10 +1135,11 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             gameState={gameState}
                             notificationType={notificationType}
                             showWinIndicator={showWinIndicator}
+                            hideCards={hidePlayerCards}
                           />;
                         }
                         return <PlayerSpot 
-                          player={playerForRender} 
+                          player={player} 
                           isCurrentUser={false} 
                           showCards={showCards} 
                           scale={scale} 
@@ -1067,6 +1153,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           gameState={gameState}
                           notificationType={notificationType}
                           showWinIndicator={showWinIndicator}
+                          hideCards={hidePlayerCards}
                         />;
                       })()
                     ) : (
@@ -1166,7 +1253,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             fromY={card.fromY}
             toX={card.toX}
             toY={card.toY}
+            width={card.width}
+            height={card.height}
+            rotation={card.rotation}
+            transformOrigin={card.transformOrigin}
+            zIndex={card.zIndex}
             delay={card.delay}
+            duration={CARD_DEAL_DURATION_MS}
+            card={card.card}
+            hidden={card.hidden}
             onComplete={handleCardAnimationComplete}
           />
         ))}

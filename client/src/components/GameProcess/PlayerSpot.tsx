@@ -52,6 +52,7 @@ interface PlayerSpotProps {
   };
   notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
   showWinIndicator: boolean;
+  hideCards?: boolean;
 }
 
 export function PlayerSpot({ 
@@ -68,7 +69,8 @@ export function PlayerSpot({
   onPlayerBet, 
   gameState,
   notificationType,
-  showWinIndicator
+  showWinIndicator,
+  hideCards = false
 }: PlayerSpotProps) {
   
   const { username, avatar, balance, cards, hasFolded, hasLooked, score } = player;
@@ -638,7 +640,11 @@ useEffect(() => {
     ))}
   </div>
 )}
-            <div className="relative w-full h-full" style={{ visibility: fanVisible ? 'visible' : 'hidden' }}>
+            <div
+              className="relative w-full h-full"
+              style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
+              data-player-card-container={player.id}
+            >
   {cards.map((card, index) => {
     const midIndex = (cards.length - 1) / 2;
     const offsetIndex = index - midIndex;
@@ -660,6 +666,10 @@ useEffect(() => {
           transformOrigin: '50% 80%',
           zIndex: index + 1,
         }}
+        data-player-card={`${player.id}-${index}`}
+        data-card-rotation={rotation}
+        data-card-zindex={index + 1}
+        data-card-transform-origin="50% 80%"
       >
         <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
       </div>
