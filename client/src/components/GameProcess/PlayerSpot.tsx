@@ -259,8 +259,8 @@ useEffect(() => {
       if (!el) return null;
       const r = el.getBoundingClientRect();
       // угол берём из inline стиля (rotate(...) в transform)
-      const style = getComputedStyle(el);
-      const transform = style.transform;
+      // const style = getComputedStyle(el);
+      // const transform = style.transform;
       // выдирать rotate из matrix не нужно — мы знаем «логический» угол:
       const mid = (cards.length - 1) / 2;
       const angle = (i - mid) * rotationStep; // ровно как в веере
