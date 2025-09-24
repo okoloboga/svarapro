@@ -807,8 +807,22 @@ export class GameService {
       }
 
       if (aboutToActPlayerIndex === anchorPlayerIndex) {
-        await this.endBettingRound(roomId, gameState);
-        return { success: true };
+        // Before ending the round, ensure all active players have matching bets
+        const activePlayersWithMoney = playersInGame.filter(
+          (p) => p.balance > 0 && !p.isAllIn,
+        );
+        const firstBet = activePlayersWithMoney[0]?.totalBet;
+        const allBetsEqual = activePlayersWithMoney.every(
+          (p) => p.totalBet === firstBet,
+        );
+
+        if (allBetsEqual) {
+          await this.endBettingRound(roomId, gameState);
+          return { success: true };
+        } else {
+          // Bets are not equal, round is not over.
+          gameState.currentPlayerIndex = aboutToActPlayerIndex;
+        }
       } else {
         gameState.currentPlayerIndex = aboutToActPlayerIndex;
       }
