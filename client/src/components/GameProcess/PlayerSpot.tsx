@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
@@ -197,6 +197,13 @@ export function PlayerSpot({
 
 
   const sideGap = 10 * scale;
+  const DEAL_DURATION_MS = 260;   // длительность перелёта одной карты
+  const DEAL_STAGGER_MS  = 140;   // задержка между картами
+  const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
+
+  const cardElsRef = useRef<HTMLDivElement[]>([]);        // элементы-обёртки для карт
+  const anchorRef  = useRef<HTMLDivElement | null>(null); // якорь-цель (data-player-card-slot)
+  const dealerRef  = useRef<HTMLDivElement | null>(null);
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
     let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
@@ -213,6 +220,65 @@ export function PlayerSpot({
     }
     return style;
   })();
+
+  useEffect(() => {
+  // когда нужно запускать раздачу:
+  // - показываем карты впервые
+  // - или игрок "взглянул" (hasLooked) в подходящих стадиях
+  const shouldDeal =
+    !hasFolded &&
+    (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')));
+
+  if (!shouldDeal) return;
+  if (!anchorRef.current) return;
+
+  const anchorRect = anchorRef.current.getBoundingClientRect();
+  const dealerRect = (dealerRef.current?.getBoundingClientRect()) ?? anchorRect; // fallback в якорь
+
+  // Защита: если карт нет или уже видимы — пропустим
+  if (!cards?.length) return;
+
+  // Пройдёмся по картам и анимируем по очереди
+  cardElsRef.current.forEach((el, i) => {
+    if (!el) return;
+    
+    const finalTransform = getComputedStyle(el).transform;
+    // финальные метрики (где карта уже стоит)
+    const finalRect = el.getBoundingClientRect();
+
+    // вектор от dealer -> final
+    const dx = finalRect.left + finalRect.width / 2  - (dealerRect.left + dealerRect.width / 2);
+    const dy = finalRect.top  + finalRect.height / 2 - (dealerRect.top  + dealerRect.height / 2);
+
+    // Устанавливаем старт: переносим карту в позицию колоды и делаем невидимой
+    el.style.transition = 'none';
+    el.style.transform  = `translate(${-dx}px, ${-dy}px) ${finalTransform === 'none' ? '' : finalTransform}`;
+    el.style.opacity    = '0';
+
+    // Двойной rAF, чтобы браузер применил стартовые стили
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const delay = i * DEAL_STAGGER_MS;
+
+        el.style.transition = `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${delay}ms, opacity ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${delay}ms`;
+
+        // целевое: убираем смещение, возвращаем твой поворот/позицию и делаем видимой
+        el.style.transform = finalTransform; // вернётся к твоему rotate(...) из style
+        el.style.opacity   = '1';
+      });
+    });
+  });
+
+  // Чистка: если компонент демонтируется посреди анимации
+  return () => {
+    cardElsRef.current.forEach((el) => {
+      if (!el) return;
+      el.style.transition = '';
+    });
+  };
+  // ВАЖНО: зависимость — когда реально нужно перезапустить раздачу
+}, [showCards, hasLooked, gameState?.status, hasFolded, isCurrentUser, cards?.length]);
+
 
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
@@ -238,8 +304,8 @@ export function PlayerSpot({
   );
 
   const CardDeckComponent = (
-    <div className="flex flex-col items-center space-y-1">
-      <div className="relative" style={{ width: '42px', height: '42px' }}>
+   <div className="flex flex-col items-center space-y-1" ref={dealerRef}>
+     <div className="relative" style={{ width: '42px', height: '42px' }}>
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 3, top: '0', left: '0' }} />
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 2, top: '0', left: '4px' }} />
         <img src={cardBack} alt="card back" className="absolute rounded-sm" style={{ width: '28px', height: '40px', zIndex: 1, top: '0', left: '8px' }} />
@@ -458,6 +524,7 @@ export function PlayerSpot({
                   <div
                     key={index}
                     className="absolute"
+                    ref={(el) => { if (el) cardElsRef.current[index] = el; }}
                     style={{
                       left: `${left}px`,
                       top: `${topOffset}px`,
@@ -465,8 +532,9 @@ export function PlayerSpot({
                       height: `${cardHeight}px`,
                       transform: `rotate(${rotation}deg)`,
                       transformOrigin: '50% 80%',
-                      willChange: 'transform',
+                      willChange: 'transform, opacity',
                       zIndex: index + 1,
+                      opacity: 0,
                     }}
                   >
                     <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
@@ -476,6 +544,7 @@ export function PlayerSpot({
             </div>
             <div
               data-player-card-slot={player.id}
+              ref={anchorRef}
               style={{
                 position: 'absolute',
                 left: '50%',
@@ -492,7 +561,9 @@ export function PlayerSpot({
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            {!(isCurrentUser && hasLooked) && gameState?.status !== 'finished' && gameState?.status !== 'waiting' && gameState?.status !== 'ante' && gameState?.status !== 'showdown' && CardDeckComponent}
+            <div style={{ visibility: (isCurrentUser && hasLooked) ? 'hidden' : 'visible' }}>
+              {CardDeckComponent}
+            </div>
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
           </div>
         )}
