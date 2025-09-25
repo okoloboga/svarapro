@@ -151,15 +151,27 @@ export function PlayerSpot({
     return (cards ?? []).map((card, index) => `${index}-${card.suit}-${card.rank}-${card.value}`).join('|');
   }, [cards, cardsCount]);
 
+  const gameStatus = gameState?.status;
+  const canRevealDuringRound = gameStatus === 'blind_betting' || gameStatus === 'betting';
+  const canRevealAfterRound = gameStatus === 'showdown' || gameStatus === 'finished';
+  const shouldRevealCardFaces = !hideCards && (
+    showCards ||
+    (isCurrentUser && hasLooked && (canRevealDuringRound || canRevealAfterRound))
+  );
+  const shouldRenderCardFan = cardsCount > 0 && !hasFolded;
+
   const shouldAnimateFan = useMemo(() => {
     if (hasFolded || !cardsCount) {
       return false;
     }
+    if (hideCards) {
+      return true;
+    }
     if (showCards) {
       return true;
     }
-    return isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting');
-  }, [hasFolded, cardsCount, showCards, isCurrentUser, hasLooked, gameState?.status]);
+    return isCurrentUser && hasLooked && canRevealDuringRound;
+  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, canRevealDuringRound]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
@@ -169,6 +181,7 @@ export function PlayerSpot({
       ? Math.max(baseFanStep, cardWidth * spacingMultiplier) * 0.55
       : 0;
 
+  const sideGap = 10 * scale;
   const rotationStep =
     cardsCount <= 2 ? 8 : cardsCount === 3 ? 12 : cardsCount === 4 ? 10 : 8;
 
@@ -177,6 +190,31 @@ export function PlayerSpot({
     const fanWidth = cardsCount > 1 ? cardWidth + fanStep * (cardsCount - 1) : cardWidth;
     const fanHeight = cardHeight + arcStep * Math.max(0, cardsCount - 1);
     const fanCenterOffset = cardsCount > 1 ? (fanWidth - cardWidth) / 2 : 0;
+    const fanHorizontalOffset = (avatarSize / 2) + (fanWidth / 2) + sideGap;
+    const fanVerticalOffset = (avatarSize / 2) + (fanHeight / 2) + sideGap;
+
+    const cardFanOffset = useMemo(() => {
+      switch (openCardsPosition) {
+        case 'bottom':
+          return { x: 0, y: fanVerticalOffset };
+        case 'left':
+          return { x: -fanHorizontalOffset, y: 0 };
+        case 'right':
+          return { x: fanHorizontalOffset, y: 0 };
+        default:
+          return { x: 0, y: -fanVerticalOffset };
+      }
+    }, [openCardsPosition, fanHorizontalOffset, fanVerticalOffset]);
+
+    const cardFanWrapperStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${fanWidth}px`,
+      height: `${fanHeight}px`,
+      transform: `translate(-50%, -50%) translate(${cardFanOffset.x}px, ${cardFanOffset.y}px)`,
+      zIndex: 50,
+    };
 
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
@@ -566,36 +604,8 @@ useEffect(() => {
             </div>
           </div>
         </div>
-        {(
-          !hasFolded && (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')))
-        ) && (
-          <div className="absolute z-50" style={{ 
-            width: `${fanWidth}px`, 
-            height: `${fanHeight}px`,
-            ...(openCardsPosition === 'top' && {
-              left: '50%',
-              transform: 'translateX(-50%)',
-              // ближе к аватару: поднимем сильнее (карты почти «лежaт» на имени)
-              top: `${- (avatarSize / 2) - sideGap}px`,
-            }),
-            ...(openCardsPosition === 'bottom' && {
-              left: '50%',
-              transform: 'translateX(-50%)',
-              top: `${(avatarSize / 2) - sideGap}px`,
-            }),
-            ...(openCardsPosition === 'left' && {
-              // ближе к аватару слева
-              right: `${avatarSize + sideGap}px`, // было 112*scale
-              top: '50%',
-              transform: 'translateY(-50%)',
-            }),
-            ...(openCardsPosition === 'right' && {
-              // ближе к аватару справа
-              left: `${avatarSize + sideGap}px`,  // было 112*scale
-              top: '50%',
-              transform: 'translateY(-50%)',
-            })
-          }}>
+        {shouldRenderCardFan && (
+          <div className="absolute z-50" style={cardFanWrapperStyle}>
             {flying.length > 0 && (
   <div
     style={{
@@ -671,7 +681,7 @@ useEffect(() => {
         data-card-zindex={index + 1}
         data-card-transform-origin="50% 80%"
       >
-        <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
+        <CardComponent card={card} hidden={!shouldRevealCardFaces} customWidth={cardWidth} customHeight={cardHeight} />
       </div>
     );
   })}
