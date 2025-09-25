@@ -183,6 +183,8 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const pendingDealCountsRef = useRef<Record<string, number>>({});
   const completedDealPlayersRef = useRef<Set<string>>(new Set());
   const dealingPlayersSet = useMemo(() => new Set(dealingPlayerIds), [dealingPlayerIds]);
+  const [localLookedPlayers, setLocalLookedPlayers] = useState<Record<string, boolean>>({});
+  const lastRoundRef = useRef<number | null>(null);
 
   const getScreenPosition = useCallback((absolutePosition: number) => {
     if (!currentUserPosition || !isSeated) {
@@ -190,7 +192,47 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     const offset = 4 - currentUserPosition;
     return ((absolutePosition + offset - 1 + 6) % 6) + 1;
+
   }, [currentUserPosition, isSeated]);
+
+  useEffect(() => {
+    if (!gameState) {
+      lastRoundRef.current = null;
+      setLocalLookedPlayers({});
+      return;
+    }
+
+    const currentRound = gameState.round ?? 0;
+
+    if (lastRoundRef.current !== currentRound) {
+      lastRoundRef.current = currentRound;
+      const reset: Record<string, boolean> = {};
+      gameState.players.forEach(player => {
+        if (player.hasLooked) {
+          reset[player.id] = true;
+        }
+      });
+      setLocalLookedPlayers(reset);
+      return;
+    }
+
+    setLocalLookedPlayers(prev => {
+      const next: Record<string, boolean> = {};
+      gameState.players.forEach(player => {
+        if (player.hasLooked || prev[player.id]) {
+          next[player.id] = true;
+        }
+      });
+
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (prevKeys.length === nextKeys.length && nextKeys.every(key => prev[key])) {
+        return prev;
+      }
+
+      return next;
+    });
+  }, [gameState]);
 
   const handlePlayerBet = useCallback((playerId: string) => {
     if (!gameState) return;
@@ -350,7 +392,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         pendingDealCountsRef.current[player.id] = cardsToDeal;
 
         const sanitizedPlayerId = String(player.id).replace(/["\\]/g, '\\$&');
-        const shouldHideCard = player.id !== currentUserId && gameState.status !== 'showdown';
+        const shouldHideCard = gameState.status !== 'showdown' && gameState.status !== 'finished';
 
         const targets: CardTarget[] = Array.from({ length: cardsToDeal }, (_, cardIndex) => {
           const selector = `[data-player-card="${sanitizedPlayerId}-${cardIndex}"]`;
@@ -1000,6 +1042,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     handlePlayerBet(currentPlayer.id);
     actions.call();
   };
+  const handleLookClick = () => {
+    if (currentUserId) {
+      setLocalLookedPlayers(prev => {
+        if (prev[currentUserId]) {
+          return prev;
+        }
+        return { ...prev, [currentUserId]: true };
+      });
+    }
+    actions.lookCards();
+  };
   const handleInvite = () => {
     const referrerId = currentUserId;
     if (!referrerId) {
@@ -1135,6 +1188,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             gameState={gameState}
                             notificationType={notificationType}
                             showWinIndicator={showWinIndicator}
+                            forceShowCards={!!localLookedPlayers[player.id]}
                             hideCards={hidePlayerCards}
                           />;
                         }
@@ -1153,6 +1207,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           gameState={gameState}
                           notificationType={notificationType}
                           showWinIndicator={showWinIndicator}
+                          forceShowCards={!!localLookedPlayers[player.id]}
                           hideCards={hidePlayerCards}
                         />;
                       })()
@@ -1189,7 +1244,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onFold={actions.fold}
                   onCall={handleCallClick}
                   onRaise={handleRaiseClick}
-                  onLook={actions.lookCards}
+                  onLook={handleLookClick}
                   onBlindBet={handleBlindBetClick}
                   onAllIn={handleAllInClick}
                   blindButtonsDisabled={blindButtonsDisabled || isProcessing}

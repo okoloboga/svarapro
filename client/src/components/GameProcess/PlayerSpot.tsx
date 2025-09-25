@@ -53,6 +53,7 @@ interface PlayerSpotProps {
   notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
   showWinIndicator: boolean;
   hideCards?: boolean;
+  forceShowCards?: boolean;
 }
 
 export function PlayerSpot({ 
@@ -70,10 +71,12 @@ export function PlayerSpot({
   gameState,
   notificationType,
   showWinIndicator,
-  hideCards = false
+  hideCards = false,
+  forceShowCards = false
 }: PlayerSpotProps) {
   
   const { username, avatar, balance, cards, hasFolded, hasLooked, score } = player;
+  const effectiveHasLooked = isCurrentUser ? (hasLooked || forceShowCards) : hasLooked;
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
 
   const buttonTextStyle: React.CSSProperties = {
@@ -156,7 +159,7 @@ export function PlayerSpot({
   const canRevealAfterRound = gameStatus === 'showdown' || gameStatus === 'finished';
   const shouldRevealCardFaces = !hideCards && (
     showCards ||
-    (isCurrentUser && hasLooked && (canRevealDuringRound || canRevealAfterRound))
+    (isCurrentUser && effectiveHasLooked && (canRevealDuringRound || canRevealAfterRound))
   );
   const shouldRenderCardFan = cardsCount > 0 && !hasFolded;
   const useDeckLayout = !shouldRevealCardFaces;
@@ -176,8 +179,8 @@ export function PlayerSpot({
     if (showCards) {
       return true;
     }
-    return isCurrentUser && hasLooked && canRevealDuringRound;
-  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, canRevealDuringRound]);
+    return isCurrentUser && effectiveHasLooked && canRevealDuringRound;
+  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, forceShowCards, canRevealDuringRound]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
@@ -781,7 +784,7 @@ useEffect(() => {
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            <div style={{ visibility: flying.length > 0 ? 'visible' : ((isCurrentUser && hasLooked) ? 'hidden' : 'visible') }}>
+            <div style={{ visibility: flying.length > 0 ? 'visible' : ((isCurrentUser && effectiveHasLooked) ? 'hidden' : 'visible') }}>
               {CardDeckComponent}
             </div>
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
@@ -803,7 +806,7 @@ useEffect(() => {
           // For the current user, total bet is now shown above avatar
           return null;
         })()} */}
-        {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
+        {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && effectiveHasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div
     className="absolute"
     style={{
