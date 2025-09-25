@@ -454,7 +454,8 @@ useEffect(() => {
     </div>
   );
 
-  const shouldShowCardDeck = !hasFolded && cardsCount > 0
+  const shouldShowCardDeck = !hasFolded && cardsCount >= 3
+    && fanVisible
     && !shouldRevealCardFaces
     && flying.length === 0
     && !(isCurrentUser && effectiveHasLooked);
