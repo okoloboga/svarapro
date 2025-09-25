@@ -173,6 +173,10 @@ export function PlayerSpot({
     if (hasFolded || !cardsCount) {
       return false;
     }
+    if (showCards && canRevealAfterRound) {
+      // Reveal instantly after round ends to avoid showdown delay
+      return false;
+    }
     if (hideCards) {
       return true;
     }
@@ -183,7 +187,7 @@ export function PlayerSpot({
       return false;
     }
     return isCurrentUser && effectiveHasLooked && canRevealDuringRound;
-  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, forceShowCards, canRevealDuringRound]);
+  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, forceShowCards, canRevealDuringRound, canRevealAfterRound]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
