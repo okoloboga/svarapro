@@ -454,6 +454,13 @@ useEffect(() => {
     </div>
   );
 
+  const shouldShowCardDeck = !hasFolded && cardsCount > 0
+    && !shouldRevealCardFaces
+    && flying.length === 0
+    && !(isCurrentUser && effectiveHasLooked);
+
+  const cardDeckVisibility: React.CSSProperties['visibility'] = shouldShowCardDeck ? 'visible' : 'hidden';
+
   const CardDeckComponent = (
    <div className="flex flex-col items-center space-y-1" ref={dealerRef}>
      <div className="relative" style={{ width: '42px', height: '42px' }}>
@@ -791,7 +798,7 @@ useEffect(() => {
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            <div style={{ visibility: flying.length > 0 ? 'visible' : ((isCurrentUser && effectiveHasLooked) ? 'hidden' : 'visible') }}>
+            <div style={{ visibility: cardDeckVisibility }}>
               {CardDeckComponent}
             </div>
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
