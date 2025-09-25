@@ -251,8 +251,6 @@ export function PlayerSpot({
   boxShadow: '0px 4px 10px rgba(0,0,0,.35)',
 };
 
-
-  const sideGap = 10 * scale;
   const DEAL_DURATION_MS = 800;   // длительность перелёта одной карты
   const DEAL_STAGGER_MS  = 250;   // задержка между картами
   const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
