@@ -159,6 +159,12 @@ export function PlayerSpot({
     (isCurrentUser && hasLooked && (canRevealDuringRound || canRevealAfterRound))
   );
   const shouldRenderCardFan = cardsCount > 0 && !hasFolded;
+  const useDeckLayout = !shouldRevealCardFaces;
+  const deckCardWidth = 28;
+  const deckCardHeight = 40;
+  const deckCardOffset = 4;
+  const deckContainerSize = 42;
+  const deckHorizontalOffset = '52px';
 
   const shouldAnimateFan = useMemo(() => {
     if (hasFolded || !cardsCount) {
@@ -235,10 +241,21 @@ export function PlayerSpot({
   };
 
   if (cardSide === 'left') {
-    cardDeckStyle.right = '52px';
+    cardDeckStyle.right = deckHorizontalOffset;
   } else {
-    cardDeckStyle.left = '52px';
+    cardDeckStyle.left = deckHorizontalOffset;
   }
+
+  const hiddenCardStackStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '45%',
+    transform: 'translateY(-50%)',
+    zIndex: 50,
+    pointerEvents: 'none',
+    width: `${deckContainerSize}px`,
+    height: `${deckContainerSize}px`,
+    ...(cardSide === 'left' ? { right: deckHorizontalOffset } : { left: deckHorizontalOffset }),
+  };
 
   const badgeSize = Math.round(22 * scale);
  const scoreBadgeBaseStyle: React.CSSProperties = {
@@ -251,7 +268,7 @@ export function PlayerSpot({
   boxShadow: '0px 4px 10px rgba(0,0,0,.35)',
 };
 
-  const DEAL_DURATION_MS = 800;   // длительность перелёта одной карты
+  const DEAL_DURATION_MS = 900;   // длительность перелёта одной карты
   const DEAL_STAGGER_MS  = 250;   // задержка между картами
   const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 
@@ -345,22 +362,23 @@ useEffect(() => {
     const deckRect = dealerRef.current.getBoundingClientRect();
     const startX = deckRect.left + deckRect.width / 2;
     const startY = deckRect.top + deckRect.height / 2;
-    const mid = (cardsCount - 1) / 2;
     const timestamp = Date.now();
 
     const clones = cardElsRef.current.slice(0, cardsCount).map((el, index) => {
       if (!el) return null;
       const rect = el.getBoundingClientRect();
+      const rotationAttr = el.dataset.cardRotation;
+      const delayAttr = el.dataset.cardDelay;
       return {
         id: `${player.id}-${timestamp}-${index}`,
         left: startX,
         top: startY,
         width: rect.width,
         height: rect.height,
-        rotate: (index - mid) * rotationStep,
+        rotate: rotationAttr ? Number(rotationAttr) : 0,
         dx: rect.left + rect.width / 2 - startX,
         dy: rect.top + rect.height / 2 - startY,
-        delay: index * DEAL_STAGGER_MS,
+        delay: delayAttr ? Number(delayAttr) : index * DEAL_STAGGER_MS,
       };
     }).filter(Boolean) as FlyingCard[];
 
@@ -398,6 +416,9 @@ useEffect(() => {
   };
 }, [shouldAnimateFan, cardsSignature, cardsCount, rotationStep, player.id]);
 
+  useEffect(() => {
+    cardElsRef.current = cardElsRef.current.slice(0, cardsCount);
+  }, [cardsCount]);
 
 
 
@@ -603,102 +624,159 @@ useEffect(() => {
           </div>
         </div>
         {shouldRenderCardFan && (
-          <div className="absolute z-50" style={cardFanWrapperStyle}>
+          <>
             {flying.length > 0 && (
-  <div
-    style={{
-      position: 'fixed',
-      inset: 0,
-      pointerEvents: 'none',
-      zIndex: 9999, // поверх всего
-    }}
-  >
-    {flying.map(fc => (
-      <div
-        key={fc.id}
-        style={{
-          position: 'absolute',
-          left: fc.left - fc.width / 2,
-          top: fc.top - fc.height / 2,
-          width: fc.width,
-          height: fc.height,
-          transform: 'translate(0px, 0px) rotate(0deg)',
-          transition: `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${fc.delay}ms`,
-          willChange: 'transform',
-        }}
-        // запускаем целевой transform на следующем тике
-        ref={(el) => {
-          if (!el) return;
-          requestAnimationFrame(() => {
-            // фикс: форс-рефлоу
-            void el.offsetHeight;
-            el.style.transform = `translate(${fc.dx}px, ${fc.dy}px) rotate(${fc.rotate}deg)`;
-          });
-        }}
-        onTransitionEnd={() => {
-          // последний пришедший не скрывает клон — ждём всех по таймеру ниже
-        }}
-      >
-        <img
-          src={cardBack}
-          alt=""
-          style={{ width: '100%', height: '100%', borderRadius: 4, display: 'block' }}
-        />
-      </div>
-    ))}
-  </div>
-)}
-            <div
-              className="relative w-full h-full"
-              style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
-              data-player-card-container={player.id}
-            >
-  {cards.map((card, index) => {
-    const midIndex = (cards.length - 1) / 2;
-    const offsetIndex = index - midIndex;
-    const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
-    const left = fanCenterOffset + offsetIndex * fanStep;
-    const rotation = offsetIndex * rotationStep;
-    const topOffset = depthFactor * arcStep;
-    return (
-      <div
-        key={index}
-        className="absolute"
-        ref={(el) => { cardElsRef.current[index] = el; }}
-        style={{
-          left: `${left}px`,
-          top: `${topOffset}px`,
-          width: `${cardWidth}px`,
-          height: `${cardHeight}px`,
-          transform: `rotate(${rotation}deg)`,
-          transformOrigin: '50% 80%',
-          zIndex: index + 1,
-        }}
-        data-player-card={`${player.id}-${index}`}
-        data-card-rotation={rotation}
-        data-card-zindex={index + 1}
-        data-card-transform-origin="50% 80%"
-      >
-        <CardComponent card={card} hidden={!shouldRevealCardFaces} customWidth={cardWidth} customHeight={cardHeight} />
-      </div>
-    );
-  })}
-</div>
-            <div
-              data-player-card-slot={player.id}
-              ref={anchorRef}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: '1px',
-                height: '1px',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                zIndex: 49, // ниже самих карт веера (которые у тебя z= index+1 / 50+)
-              }}
-            />
-          </div>
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  zIndex: 9999, // ??????????: ?????????
+                }}
+              >
+                {flying.map(fc => (
+                  <div
+                    key={fc.id}
+                    style={{
+                      position: 'absolute',
+                      left: fc.left - fc.width / 2,
+                      top: fc.top - fc.height / 2,
+                      width: fc.width,
+                      height: fc.height,
+                      transform: 'translate(0px, 0px) rotate(0deg)',
+                      transition: `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${fc.delay}ms`,
+                      willChange: 'transform',
+                    }}
+                    ref={(el) => {
+                      if (!el) return;
+                      requestAnimationFrame(() => {
+                        void el.offsetHeight;
+                        el.style.transform = `translate(${fc.dx}px, ${fc.dy}px) rotate(${fc.rotate}deg)`;
+                      });
+                    }}
+                    onTransitionEnd={() => {
+                      // ???????>???????? ??????????????? ???? ??????<??????' ??>???? ??" ????'?? ??????: ???? ?'??????????? ??????
+                    }}
+                  >
+                    <img
+                      src={cardBack}
+                      alt=""
+                      style={{ width: '100%', height: '100%', borderRadius: 4, display: 'block' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {useDeckLayout ? (
+              <div className="absolute" style={hiddenCardStackStyle}>
+                <div
+                  className="relative w-full h-full"
+                  style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
+                  data-player-card-container={player.id}
+                >
+                  {cards.map((card, index) => {
+                    const offsetX = deckCardOffset * index;
+                    return (
+                      <div
+                        key={index}
+                        className="absolute"
+                        ref={(el) => { cardElsRef.current[index] = el; }}
+                        style={{
+                          left: `${offsetX}px`,
+                          top: '0px',
+                          width: `${deckCardWidth}px`,
+                          height: `${deckCardHeight}px`,
+                          transform: 'rotate(0deg)',
+                          transformOrigin: '50% 50%',
+                          zIndex: 10 + index,
+                        }}
+                        data-player-card={`${player.id}-${index}`}
+                        data-card-rotation={0}
+                        data-card-zindex={10 + index}
+                        data-card-transform-origin="50% 50%"
+                        data-card-delay={index * DEAL_STAGGER_MS}
+                      >
+                        <CardComponent
+                          card={card}
+                          hidden={!shouldRevealCardFaces}
+                          customWidth={deckCardWidth}
+                          customHeight={deckCardHeight}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div
+                  data-player-card-slot={player.id}
+                  ref={anchorRef}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: '1px',
+                    height: '1px',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    zIndex: 49, // ?????? ????????: ??????' ???????? (????'?????<?? ?? ?'??+?? z= index+1 / 50+)
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="absolute z-50" style={cardFanWrapperStyle}>
+                <div
+                  className="relative w-full h-full"
+                  style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
+                  data-player-card-container={player.id}
+                >
+                  {cards.map((card, index) => {
+                    const midIndex = (cards.length - 1) / 2;
+                    const offsetIndex = index - midIndex;
+                    const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
+                    const left = fanCenterOffset + offsetIndex * fanStep;
+                    const rotation = offsetIndex * rotationStep;
+                    const topOffset = depthFactor * arcStep;
+                    return (
+                      <div
+                        key={index}
+                        className="absolute"
+                        ref={(el) => { cardElsRef.current[index] = el; }}
+                        style={{
+                          left: `${left}px`,
+                          top: `${topOffset}px`,
+                          width: `${cardWidth}px`,
+                          height: `${cardHeight}px`,
+                          transform: `rotate(${rotation}deg)`,
+                          transformOrigin: '50% 80%',
+                          zIndex: index + 1,
+                        }}
+                        data-player-card={`${player.id}-${index}`}
+                        data-card-rotation={rotation}
+                        data-card-zindex={index + 1}
+                        data-card-transform-origin="50% 80%"
+                        data-card-delay={index * DEAL_STAGGER_MS}
+                      >
+                        <CardComponent card={card} hidden={!shouldRevealCardFaces} customWidth={cardWidth} customHeight={cardHeight} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div
+                  data-player-card-slot={player.id}
+                  ref={anchorRef}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: '1px',
+                    height: '1px',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    zIndex: 49, // ?????? ????????: ??????' ???????? (????'?????<?? ?? ?'??+?? z= index+1 / 50+)
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
