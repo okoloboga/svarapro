@@ -179,6 +179,9 @@ export function PlayerSpot({
     if (showCards) {
       return true;
     }
+    if (!showCards && isCurrentUser && forceShowCards) {
+      return false;
+    }
     return isCurrentUser && effectiveHasLooked && canRevealDuringRound;
   }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, forceShowCards, canRevealDuringRound]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
@@ -843,3 +846,4 @@ useEffect(() => {
     </div>
   );
 }
+
