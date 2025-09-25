@@ -57,8 +57,8 @@ interface CardAnimation {
   landed?: boolean;
 }
 
-const CARD_DEAL_DURATION_MS = 2200;
-const CARD_DEAL_STAGGER_MS = 450;
+const CARD_DEAL_DURATION_MS = 3000;
+const CARD_DEAL_STAGGER_MS = 750;
 const DEFAULT_CARD_WIDTH = 32;
 const DEFAULT_CARD_HEIGHT = 44;
 
