@@ -129,7 +129,7 @@ export class GameStateService {
     updatedGameState.winners = [];
     updatedGameState.isSvara = true; // Флаг, что это раунд свары
     updatedGameState.svaraParticipants = []; // Очищаем после использования
-    
+
     // Дилер не меняется при сваре
 
     // Сбрасываем состояние игроков

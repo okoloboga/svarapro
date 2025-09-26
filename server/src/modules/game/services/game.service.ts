@@ -1679,30 +1679,31 @@ export class GameService {
       gameState.log.push(...scoreResult.actions);
     }
 
-    // Для логики завершения игры считаем активными всех игроков, включая all-in
+    // Новая логика проверки завершения раунда после all-in
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
-    // Игроки с деньгами для дальнейших действий
-    const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
 
-    // Игра заканчивается только когда все игроки с деньгами сделали all-in
-    if (playersWithMoney.length === 0) {
+    // Игроки, которые все еще могут делать ставки (не all-in и не fold)
+    const playersWhoCanStillBet = activePlayers.filter((p) => !p.isAllIn);
+
+    if (playersWhoCanStillBet.length < 2) {
+      // Если остался 1 или 0 игроков, которые могут делать ставки, раунд торгов окончен.
       this.logger.log(
-        `[${roomId}] All players with money are all-in. Ending betting round.`,
+        `[${roomId}] Меньше двух игроков могут продолжать ставки. Завершение раунда.`,
       );
       await this.endBettingRound(roomId, gameState);
     } else {
+      // В противном случае игра продолжается
       const nextPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
-
       gameState.currentPlayerIndex = nextPlayerIndex;
 
+      // Дополнительно проверяем, не завершился ли круг по правилам (дошли до якоря)
       const isBettingComplete =
         this.bettingService.isBettingRoundComplete(gameState);
-
       if (isBettingComplete) {
         await this.endBettingRound(roomId, gameState);
       } else {
