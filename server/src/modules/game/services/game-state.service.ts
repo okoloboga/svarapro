@@ -142,6 +142,11 @@ export class GameStateService {
         isParticipant, // Активен только если участник свары
       );
       updatedGameState.players[i].isDealer = i === updatedGameState.dealerIndex;
+
+      // ИСПРАВЛЕНИЕ: Если участник свары имеет 0 баланс, он считается all-in
+      if (isParticipant && updatedGameState.players[i].balance === 0) {
+        updatedGameState.players[i].isAllIn = true;
+      }
     }
 
     // Создаем и перемешиваем новую колоду
