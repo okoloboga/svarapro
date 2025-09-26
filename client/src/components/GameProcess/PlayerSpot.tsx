@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Player } from '@/types/game';
 import { CardComponent } from './CardComponent';
 import { ActionNotification } from './ActionNotification';
@@ -52,6 +52,8 @@ interface PlayerSpotProps {
   };
   notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null;
   showWinIndicator: boolean;
+  hideCards?: boolean;
+  forceShowCards?: boolean;
 }
 
 export function PlayerSpot({ 
@@ -68,10 +70,13 @@ export function PlayerSpot({
   onPlayerBet, 
   gameState,
   notificationType,
-  showWinIndicator
+  showWinIndicator,
+  hideCards = false,
+  forceShowCards = false
 }: PlayerSpotProps) {
   
   const { username, avatar, balance, cards, hasFolded, hasLooked, score } = player;
+  const effectiveHasLooked = isCurrentUser ? (hasLooked || forceShowCards) : hasLooked;
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
 
   const buttonTextStyle: React.CSSProperties = {
@@ -142,6 +147,47 @@ export function PlayerSpot({
   const cardWidth = isCurrentUser ? currentUserCardWidth : otherPlayersCardWidth;
   const baseFanStep = isCurrentUser ? currentUserStep : otherPlayersStep;
   const cardsCount = cards?.length ?? 0;
+  const cardsSignature = useMemo(() => {
+    if (!cardsCount) {
+      return '';
+    }
+    return (cards ?? []).map((card, index) => `${index}-${card.suit}-${card.rank}-${card.value}`).join('|');
+  }, [cards, cardsCount]);
+
+  const gameStatus = gameState?.status;
+  const canRevealDuringRound = gameStatus === 'blind_betting' || gameStatus === 'betting';
+  const canRevealAfterRound = gameStatus === 'showdown' || gameStatus === 'finished';
+  const shouldRevealCardFaces = !hideCards && (
+    showCards ||
+    (isCurrentUser && effectiveHasLooked && (canRevealDuringRound || canRevealAfterRound))
+  );
+  const shouldRenderCardFan = cardsCount > 0 && !hasFolded;
+  const useDeckLayout = !shouldRevealCardFaces;
+  const deckCardWidth = 28;
+  const deckCardHeight = 40;
+  const deckCardOffset = 4;
+  const deckContainerSize = 42;
+  const deckHorizontalOffset = '52px';
+
+  const shouldAnimateFan = useMemo(() => {
+    if (hasFolded || !cardsCount) {
+      return false;
+    }
+    if (showCards && canRevealAfterRound) {
+      // Reveal instantly after round ends to avoid showdown delay
+      return false;
+    }
+    if (hideCards) {
+      return true;
+    }
+    if (showCards) {
+      return true;
+    }
+    if (!showCards && isCurrentUser && forceShowCards) {
+      return false;
+    }
+    return isCurrentUser && effectiveHasLooked && canRevealDuringRound;
+  }, [hasFolded, cardsCount, hideCards, showCards, isCurrentUser, hasLooked, forceShowCards, canRevealDuringRound, canRevealAfterRound]);
   const spacingMultiplierBase = isCurrentUser ? 0.74 : 0.7;
   const spacingMultiplier = cardsCount > 1
     ? Math.min(0.9, spacingMultiplierBase + Math.max(0, cardsCount - 3) * 0.05)
@@ -151,6 +197,7 @@ export function PlayerSpot({
       ? Math.max(baseFanStep, cardWidth * spacingMultiplier) * 0.55
       : 0;
 
+  const sideGap = 10 * scale;
   const rotationStep =
     cardsCount <= 2 ? 8 : cardsCount === 3 ? 12 : cardsCount === 4 ? 10 : 8;
 
@@ -159,6 +206,31 @@ export function PlayerSpot({
     const fanWidth = cardsCount > 1 ? cardWidth + fanStep * (cardsCount - 1) : cardWidth;
     const fanHeight = cardHeight + arcStep * Math.max(0, cardsCount - 1);
     const fanCenterOffset = cardsCount > 1 ? (fanWidth - cardWidth) / 2 : 0;
+    const fanHorizontalOffset = (avatarSize / 2) + (fanWidth / 2) + sideGap;
+    const fanVerticalOffset = (avatarSize / 2) + (fanHeight / 2) + sideGap;
+
+    const cardFanOffset = useMemo(() => {
+      switch (openCardsPosition) {
+        case 'bottom':
+          return { x: 0, y: fanVerticalOffset };
+        case 'left':
+          return { x: -fanHorizontalOffset, y: 0 };
+        case 'right':
+          return { x: fanHorizontalOffset, y: 0 };
+        default:
+          return { x: 0, y: -fanVerticalOffset };
+      }
+    }, [openCardsPosition, fanHorizontalOffset, fanVerticalOffset]);
+
+    const cardFanWrapperStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      width: `${fanWidth}px`,
+      height: `${fanHeight}px`,
+      transform: `translate(-50%, -50%) translate(${cardFanOffset.x}px, ${cardFanOffset.y}px)`,
+      zIndex: 50,
+    };
 
   const spotClasses = `
     relative rounded-lg p-3 flex items-center
@@ -179,10 +251,21 @@ export function PlayerSpot({
   };
 
   if (cardSide === 'left') {
-    cardDeckStyle.right = '52px';
+    cardDeckStyle.right = deckHorizontalOffset;
   } else {
-    cardDeckStyle.left = '52px';
+    cardDeckStyle.left = deckHorizontalOffset;
   }
+
+  const hiddenCardStackStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '45%',
+    transform: 'translateY(-50%)',
+    zIndex: 50,
+    pointerEvents: 'none',
+    width: `${deckContainerSize}px`,
+    height: `${deckContainerSize}px`,
+    ...(cardSide === 'left' ? { right: deckHorizontalOffset } : { left: deckHorizontalOffset }),
+  };
 
   const badgeSize = Math.round(22 * scale);
  const scoreBadgeBaseStyle: React.CSSProperties = {
@@ -195,10 +278,8 @@ export function PlayerSpot({
   boxShadow: '0px 4px 10px rgba(0,0,0,.35)',
 };
 
-
-  const sideGap = 10 * scale;
-  const DEAL_DURATION_MS = 1000;   // длительность перелёта одной карты
-  const DEAL_STAGGER_MS  = 350;   // задержка между картами
+  const DEAL_DURATION_MS = 900;   // длительность перелёта одной карты
+  const DEAL_STAGGER_MS  = 250;   // задержка между картами
   const DEAL_EASE        = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 
   type FlyingCard = {
@@ -218,9 +299,14 @@ export function PlayerSpot({
   const [fanVisible, setFanVisible] = useState(false); // включаем настоящий веер, когда всё долетело
 
 // рефы
-const cardElsRef = useRef<HTMLDivElement[]>([]);
-const anchorRef  = useRef<HTMLDivElement | null>(null); // центр веера (для измерений)
-const dealerRef  = useRef<HTMLDivElement | null>(null); // колода
+  const cardElsRef = useRef<Array<HTMLDivElement | null>>([]);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const dealerRef = useRef<HTMLDivElement | null>(null);
+
+  const animationFrameRef = useRef<number | null>(null);
+  const animationTimerRef = useRef<number | null>(null);
+  const animationRunningRef = useRef(false);
+  const lastAnimationSignatureRef = useRef<string | null>(null);
 
   const scoreBadgePositionStyle: React.CSSProperties = (() => {
     let style: React.CSSProperties = { bottom: `${-badgeSize * 0.35}px`, left: `${-badgeSize * 0.35}px` };
@@ -239,69 +325,110 @@ const dealerRef  = useRef<HTMLDivElement | null>(null); // колода
   })();
 
 useEffect(() => {
-  const shouldDeal =
-    !hasFolded &&
-    (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')));
+  if (!shouldAnimateFan) {
+    animationRunningRef.current = false;
+    lastAnimationSignatureRef.current = null;
+    setFanVisible(true);
+    setFlying(prev => (prev.length ? [] : prev));
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    return;
+  }
 
-  if (!shouldDeal) return;
-  if (!dealerRef.current || !cards?.length) return;
+  if (!dealerRef.current || !cardsCount || !cardsSignature) {
+    return;
+  }
 
-  // Сначала прячем реальный веер, чтобы клоны были единственными видимыми
-  setFanVisible(false);
+  if (lastAnimationSignatureRef.current === cardsSignature && animationRunningRef.current) {
+    return;
+  }
 
-  // Снимаем метрики цели (итоговые карточки из невидимого веера)
-  const dealerRect = dealerRef.current.getBoundingClientRect();
+  animationRunningRef.current = true;
+  lastAnimationSignatureRef.current = cardsSignature;
 
-  // ВАЖНО: рефы карточек могли ещё не проставиться при первом тике рендера.
-  // Дадим кадр дорисоваться:
-  requestAnimationFrame(() => {
-    const targets = cardElsRef.current.slice(0, cards.length).map((el, i) => {
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      // угол берём из inline стиля (rotate(...) в transform)
-      // const style = getComputedStyle(el);
-      // const transform = style.transform;
-      // выдирать rotate из matrix не нужно — мы знаем «логический» угол:
-      const mid = (cards.length - 1) / 2;
-      const angle = (i - mid) * rotationStep; // ровно как в веере
-      return {
-        left: r.left + r.width / 2,
-        top:  r.top  + r.height / 2,
-        width: r.width,
-        height: r.height,
-        rotate: angle,
-      };
-    }).filter(Boolean) as Array<{left:number; top:number; width:number; height:number; rotate:number}>;
+  if (animationTimerRef.current) {
+    clearTimeout(animationTimerRef.current);
+    animationTimerRef.current = null;
+  }
+  if (animationFrameRef.current) {
+    cancelAnimationFrame(animationFrameRef.current);
+    animationFrameRef.current = null;
+  }
 
-    // Стартовая точка — центр колоды
-    const startX = dealerRect.left + dealerRect.width / 2;
-    const startY = dealerRect.top  + dealerRect.height / 2;
-
-    const payload: FlyingCard[] = targets.map((t, i) => ({
-      id: `${player.id}-${i}-${Date.now()}`,
-      left: startX,
-      top: startY,
-      width: t.width,
-      height: t.height,
-      rotate: t.rotate,
-      dx: t.left - startX,
-      dy: t.top  - startY,
-      delay: i * DEAL_STAGGER_MS,
-    }));
-
-    setFlying(payload);
-
-    // Когда все анимации гарантированно закончатся — показываем настоящий веер и убираем клоны.
-    const totalMs = DEAL_DURATION_MS + DEAL_STAGGER_MS * (cards.length - 1);
-    const timer = setTimeout(() => {
+  const beginAnimation = () => {
+    if (!dealerRef.current) {
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
       setFanVisible(true);
-      setFlying([]);
-    }, totalMs + 30); // небольшой запас
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  });
-}, [showCards, hasLooked, gameState?.status, hasFolded, isCurrentUser, cards?.length, player.id]);
+    const deckRect = dealerRef.current.getBoundingClientRect();
+    const startX = deckRect.left + deckRect.width / 2;
+    const startY = deckRect.top + deckRect.height / 2;
+    const timestamp = Date.now();
 
+    const clones = cardElsRef.current.slice(0, cardsCount).map((el, index) => {
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      const rotationAttr = el.dataset.cardRotation;
+      const delayAttr = el.dataset.cardDelay;
+      return {
+        id: `${player.id}-${timestamp}-${index}`,
+        left: startX,
+        top: startY,
+        width: rect.width,
+        height: rect.height,
+        rotate: rotationAttr ? Number(rotationAttr) : 0,
+        dx: rect.left + rect.width / 2 - startX,
+        dy: rect.top + rect.height / 2 - startY,
+        delay: delayAttr ? Number(delayAttr) : index * DEAL_STAGGER_MS,
+      };
+    }).filter(Boolean) as FlyingCard[];
+
+    if (!clones.length) {
+      setFanVisible(true);
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
+      return;
+    }
+
+    setFanVisible(false);
+    setFlying(clones);
+
+    const totalDuration = DEAL_DURATION_MS + DEAL_STAGGER_MS * (clones.length - 1);
+    animationTimerRef.current = window.setTimeout(() => {
+      setFanVisible(true);
+      setFlying(prev => (prev.length ? [] : prev));
+      animationRunningRef.current = false;
+      lastAnimationSignatureRef.current = null;
+      animationTimerRef.current = null;
+    }, totalDuration + 50);
+  };
+
+  animationFrameRef.current = requestAnimationFrame(beginAnimation);
+
+  return () => {
+    if (animationTimerRef.current) {
+      clearTimeout(animationTimerRef.current);
+      animationTimerRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  };
+}, [shouldAnimateFan, cardsSignature, cardsCount, rotationStep, player.id]);
+
+  useEffect(() => {
+    cardElsRef.current = cardElsRef.current.slice(0, cardsCount);
+  }, [cardsCount]);
 
 
 
@@ -326,6 +453,15 @@ useEffect(() => {
       D
     </div>
   );
+
+  const shouldShowCardDeck = !hasFolded && cardsCount >= 3
+    && fanVisible
+    && !hideCards
+    && !shouldRevealCardFaces
+    && flying.length === 0
+    && !(isCurrentUser && effectiveHasLooked);
+
+  const cardDeckVisibility: React.CSSProperties['visibility'] = shouldShowCardDeck ? 'visible' : 'hidden';
 
   const CardDeckComponent = (
    <div className="flex flex-col items-center space-y-1" ref={dealerRef}>
@@ -506,128 +642,165 @@ useEffect(() => {
             </div>
           </div>
         </div>
-        {(
-          !hasFolded && (showCards || (isCurrentUser && hasLooked && (gameState?.status === 'blind_betting' || gameState?.status === 'betting')))
-        ) && (
-          <div className="absolute z-50" style={{ 
-            width: `${fanWidth}px`, 
-            height: `${fanHeight}px`,
-            ...(openCardsPosition === 'top' && {
-              left: '50%',
-              transform: 'translateX(-50%)',
-              // ближе к аватару: поднимем сильнее (карты почти «лежaт» на имени)
-              top: `${- (avatarSize / 2) - sideGap}px`,
-            }),
-            ...(openCardsPosition === 'bottom' && {
-              left: '50%',
-              transform: 'translateX(-50%)',
-              top: `${(avatarSize / 2) - sideGap}px`,
-            }),
-            ...(openCardsPosition === 'left' && {
-              // ближе к аватару слева
-              right: `${avatarSize + sideGap}px`, // было 112*scale
-              top: '50%',
-              transform: 'translateY(-50%)',
-            }),
-            ...(openCardsPosition === 'right' && {
-              // ближе к аватару справа
-              left: `${avatarSize + sideGap}px`,  // было 112*scale
-              top: '50%',
-              transform: 'translateY(-50%)',
-            })
-          }}>
+        {shouldRenderCardFan && (
+          <>
             {flying.length > 0 && (
-  <div
-    style={{
-      position: 'fixed',
-      inset: 0,
-      pointerEvents: 'none',
-      zIndex: 9999, // поверх всего
-    }}
-  >
-    {flying.map(fc => (
-      <div
-        key={fc.id}
-        style={{
-          position: 'absolute',
-          left: fc.left - fc.width / 2,
-          top: fc.top - fc.height / 2,
-          width: fc.width,
-          height: fc.height,
-          transform: 'translate(0px, 0px) rotate(0deg)',
-          transition: `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${fc.delay}ms`,
-          willChange: 'transform',
-        }}
-        // запускаем целевой transform на следующем тике
-        ref={(el) => {
-          if (!el) return;
-          requestAnimationFrame(() => {
-            // фикс: форс-рефлоу
-            void el.offsetHeight;
-            el.style.transform = `translate(${fc.dx}px, ${fc.dy}px) rotate(${fc.rotate}deg)`;
-          });
-        }}
-        onTransitionEnd={() => {
-          // последний пришедший не скрывает клон — ждём всех по таймеру ниже
-        }}
-      >
-        <img
-          src={cardBack}
-          alt=""
-          style={{ width: '100%', height: '100%', borderRadius: 4, display: 'block' }}
-        />
-      </div>
-    ))}
-  </div>
-)}
-            <div className="relative w-full h-full" style={{ visibility: fanVisible ? 'visible' : 'hidden' }}>
-  {cards.map((card, index) => {
-    const midIndex = (cards.length - 1) / 2;
-    const offsetIndex = index - midIndex;
-    const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
-    const left = fanCenterOffset + offsetIndex * fanStep;
-    const rotation = offsetIndex * rotationStep;
-    const topOffset = depthFactor * arcStep;
-    return (
-      <div
-        key={index}
-        className="absolute"
-        ref={(el) => { if (el) cardElsRef.current[index] = el!; }}
-        style={{
-          left: `${left}px`,
-          top: `${topOffset}px`,
-          width: `${cardWidth}px`,
-          height: `${cardHeight}px`,
-          transform: `rotate(${rotation}deg)`,
-          transformOrigin: '50% 80%',
-          zIndex: index + 1,
-        }}
-      >
-        <CardComponent card={card} hidden={false} customWidth={cardWidth} customHeight={cardHeight} />
-      </div>
-    );
-  })}
-</div>
-            <div
-              data-player-card-slot={player.id}
-              ref={anchorRef}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: '1px',
-                height: '1px',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                zIndex: 49, // ниже самих карт веера (которые у тебя z= index+1 / 50+)
-              }}
-            />
-          </div>
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  zIndex: 9999, // ??????????: ?????????
+                }}
+              >
+                {flying.map(fc => (
+                  <div
+                    key={fc.id}
+                    style={{
+                      position: 'absolute',
+                      left: fc.left - fc.width / 2,
+                      top: fc.top - fc.height / 2,
+                      width: fc.width,
+                      height: fc.height,
+                      transform: 'translate(0px, 0px) rotate(0deg)',
+                      transition: `transform ${DEAL_DURATION_MS}ms ${DEAL_EASE} ${fc.delay}ms`,
+                      willChange: 'transform',
+                    }}
+                    ref={(el) => {
+                      if (!el) return;
+                      requestAnimationFrame(() => {
+                        void el.offsetHeight;
+                        el.style.transform = `translate(${fc.dx}px, ${fc.dy}px) rotate(${fc.rotate}deg)`;
+                      });
+                    }}
+                    onTransitionEnd={() => {
+                      // ???????>???????? ??????????????? ???? ??????<??????' ??>???? ??" ????'?? ??????: ???? ?'??????????? ??????
+                    }}
+                  >
+                    <img
+                      src={cardBack}
+                      alt=""
+                      style={{ width: '100%', height: '100%', borderRadius: 4, display: 'block' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {useDeckLayout ? (
+              <div className="absolute" style={hiddenCardStackStyle}>
+                <div
+                  className="relative w-full h-full"
+                  style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
+                  data-player-card-container={player.id}
+                >
+                  {cards.map((card, index) => {
+                    const offsetX = deckCardOffset * index;
+                    return (
+                      <div
+                        key={index}
+                        className="absolute"
+                        ref={(el) => { cardElsRef.current[index] = el; }}
+                        style={{
+                          left: `${offsetX}px`,
+                          top: '0px',
+                          width: `${deckCardWidth}px`,
+                          height: `${deckCardHeight}px`,
+                          transform: 'rotate(0deg)',
+                          transformOrigin: '50% 50%',
+                          zIndex: 10 + index,
+                        }}
+                        data-player-card={`${player.id}-${index}`}
+                        data-card-rotation={0}
+                        data-card-zindex={10 + index}
+                        data-card-transform-origin="50% 50%"
+                        data-card-delay={index * DEAL_STAGGER_MS}
+                      >
+                        <CardComponent
+                          card={card}
+                          hidden={!shouldRevealCardFaces}
+                          customWidth={deckCardWidth}
+                          customHeight={deckCardHeight}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div
+                  data-player-card-slot={player.id}
+                  ref={anchorRef}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: '1px',
+                    height: '1px',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    zIndex: 49, // ?????? ????????: ??????' ???????? (????'?????<?? ?? ?'??+?? z= index+1 / 50+)
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="absolute z-50" style={cardFanWrapperStyle}>
+                <div
+                  className="relative w-full h-full"
+                  style={{ visibility: hideCards || !fanVisible ? 'hidden' : 'visible' }}
+                  data-player-card-container={player.id}
+                >
+                  {cards.map((card, index) => {
+                    const midIndex = (cards.length - 1) / 2;
+                    const offsetIndex = index - midIndex;
+                    const depthFactor = Math.pow(Math.abs(offsetIndex), 1.25);
+                    const left = fanCenterOffset + offsetIndex * fanStep;
+                    const rotation = offsetIndex * rotationStep;
+                    const topOffset = depthFactor * arcStep;
+                    return (
+                      <div
+                        key={index}
+                        className="absolute"
+                        ref={(el) => { cardElsRef.current[index] = el; }}
+                        style={{
+                          left: `${left}px`,
+                          top: `${topOffset}px`,
+                          width: `${cardWidth}px`,
+                          height: `${cardHeight}px`,
+                          transform: `rotate(${rotation}deg)`,
+                          transformOrigin: '50% 80%',
+                          zIndex: index + 1,
+                        }}
+                        data-player-card={`${player.id}-${index}`}
+                        data-card-rotation={rotation}
+                        data-card-zindex={index + 1}
+                        data-card-transform-origin="50% 80%"
+                        data-card-delay={index * DEAL_STAGGER_MS}
+                      >
+                        <CardComponent card={card} hidden={!shouldRevealCardFaces} customWidth={cardWidth} customHeight={cardHeight} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div
+                  data-player-card-slot={player.id}
+                  ref={anchorRef}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: '1px',
+                    height: '1px',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    zIndex: 49, // ?????? ????????: ??????' ???????? (????'?????<?? ?? ?'??+?? z= index+1 / 50+)
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
         {!hasFolded && (
           <div style={cardDeckStyle} className="flex items-center space-x-2">
             {cardSide === 'left' && !isCurrentUser && TotalBetComponent}
-            <div style={{ visibility: flying.length > 0 ? 'visible' : ((isCurrentUser && hasLooked) ? 'hidden' : 'visible') }}>
+            <div style={{ visibility: cardDeckVisibility }}>
               {CardDeckComponent}
             </div>
             {cardSide === 'right' && !isCurrentUser && TotalBetComponent}
@@ -649,7 +822,7 @@ useEffect(() => {
           // For the current user, total bet is now shown above avatar
           return null;
         })()} */}
-        {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && hasLooked)) || (gameState?.status === 'finished' && showCards)) && (
+        {score !== undefined && !hasFolded && ((gameState?.status === 'showdown') || (gameState?.status !== 'finished' && (isCurrentUser && effectiveHasLooked)) || (gameState?.status === 'finished' && showCards)) && (
           <div
     className="absolute"
     style={{
@@ -686,3 +859,4 @@ useEffect(() => {
     </div>
   );
 }
+
