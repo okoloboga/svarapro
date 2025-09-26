@@ -1679,37 +1679,32 @@ export class GameService {
       gameState.log.push(...scoreResult.actions);
     }
 
-    // Новая логика проверки завершения раунда после all-in
+    // Усовершенствованная логика завершения раунда для all-in
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
-
-    // Игроки, которые все еще могут делать ставки (не all-in и не fold)
+    // Игроки, которые еще могут действовать (не all-in)
     const playersWhoCanStillBet = activePlayers.filter((p) => !p.isAllIn);
 
-    if (playersWhoCanStillBet.length < 2) {
-      // Если остался 1 или 0 игроков, которые могут делать ставки, раунд торгов окончен.
+    // Если all-in был рейзом, и есть кому на него отвечать, игра продолжается.
+    // `isVoluntaryRaise` был определен ранее в методе.
+    if (isVoluntaryRaise && playersWhoCanStillBet.length > 0) {
       this.logger.log(
-        `[${roomId}] Меньше двух игроков могут продолжать ставки. Завершение раунда.`,
+        `[${roomId}] All-in был рейзом, передаем ход следующему игроку.`,
       );
-      await this.endBettingRound(roomId, gameState);
-    } else {
-      // В противном случае игра продолжается
       const nextPlayerIndex = this.playerService.findNextActivePlayer(
         gameState.players,
         gameState.currentPlayerIndex,
       );
       gameState.currentPlayerIndex = nextPlayerIndex;
-
-      // Дополнительно проверяем, не завершился ли круг по правилам (дошли до якоря)
-      const isBettingComplete =
-        this.bettingService.isBettingRoundComplete(gameState);
-      if (isBettingComplete) {
-        await this.endBettingRound(roomId, gameState);
-      } else {
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-      }
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+    } else {
+      // All-in был коллом, или на рейз некому отвечать. Раунд завершается.
+      this.logger.log(
+        `[${roomId}] All-in не требует ответа или отвечать некому. Завершение раунда.`,
+      );
+      await this.endBettingRound(roomId, gameState);
     }
 
     return { success: true, gameState };
