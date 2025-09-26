@@ -175,7 +175,8 @@ export class AdminHandlers {
 
     try {
       const response = await this.usersService.getUsers(page, 10);
-      const { users, total, page: currentPage } = response;
+      const { users, total } = response;
+      const currentPage = parseInt(response.page as any, 10);
 
       if (users.length === 0) {
         await ctx.reply(getMessage(locale, "admin.noUsers"), {

@@ -90,7 +90,6 @@ bot.action(/admin_(.+)/, async (ctx) => {
     const pageStr = parts[1];
     if (pageStr) {
       const page = parseInt(pageStr);
-      console.log(`[Admin Bot] Handling users pagination. Requested page: ${page}`);
       if (!isNaN(page)) {
         await adminHandlers.showUsers(ctx, page);
       }
