@@ -1,129 +1,80 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card } from '@/types/game';
-import { CardComponent } from './CardComponent';
+import React, { useState, useEffect, useRef } from 'react';
+import cardBackImage from '../../assets/game/back.png';
 
 interface FlyingCardProps {
   fromX: number;
   fromY: number;
   toX: number;
   toY: number;
-  width?: number;
-  height?: number;
-  rotation?: number;
-  transformOrigin?: string;
-  zIndex?: number;
-  delay?: number;
-  duration?: number;
+  onComplete: (cardId: string) => void;
   cardId: string;
-  playerId: string;
-  card?: Card;
-  hidden?: boolean;
-  onComplete: (cardId: string, playerId: string) => void;
+  delay?: number;
 }
 
-const DEFAULT_WIDTH = 32;
-const DEFAULT_HEIGHT = 44;
-
-const FlyingCard: React.FC<FlyingCardProps> = ({
-  fromX,
-  fromY,
-  toX,
-  toY,
-  width = DEFAULT_WIDTH,
-  height = DEFAULT_HEIGHT,
-  rotation = 0,
-  transformOrigin = '50% 50%',
-  zIndex = 2000,
-  delay = 0,
-  duration = 1000,
-  cardId,
-  playerId,
-  card,
-  hidden = false,
-  onComplete,
-}) => {
+const FlyingCard: React.FC<FlyingCardProps> = ({ fromX, fromY, toX, toY, onComplete, cardId, delay = 0 }) => {
+  const [position, setPosition] = useState({ x: fromX, y: fromY });
   const [isAnimating, setIsAnimating] = useState(false);
-  const [position, setPosition] = useState({ x: fromX, y: fromY, rotation: 0 });
-  const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const hasCompletedRef = useRef(false);
+  const animationRef = useRef<number | undefined>(undefined);
+  const startTimeRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    setPosition({ x: fromX, y: fromY, rotation: 0 });
-    hasCompletedRef.current = false;
-
-    const timer = window.setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsAnimating(true);
-      startTimeRef.current = performance.now();
-
+      startTimeRef.current = Date.now();
+      
       const animate = () => {
-        if (startTimeRef.current === null) {
-          return;
-        }
-
-        const elapsed = performance.now() - startTimeRef.current;
+        if (!startTimeRef.current) return;
+        
+        const elapsed = Date.now() - startTimeRef.current;
+        const duration = 1000; // 1 секунда
         const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function для более естественного движения
         const easeOut = 1 - Math.pow(1 - progress, 3);
-
+        
         const newX = fromX + (toX - fromX) * easeOut;
         const newY = fromY + (toY - fromY) * easeOut;
-        const newRotation = rotation * easeOut;
-
-        setPosition({ x: newX, y: newY, rotation: newRotation });
-
+        
+        setPosition({ x: newX, y: newY });
+        
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
-        } else if (!hasCompletedRef.current) {
-          hasCompletedRef.current = true;
-          setPosition({ x: toX, y: toY, rotation });
-          onComplete(cardId, playerId);
+        } else {
+          onComplete(cardId);
         }
       };
-
+      
       animationRef.current = requestAnimationFrame(animate);
     }, delay);
 
     return () => {
-      window.clearTimeout(timer);
+      clearTimeout(timer);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
       }
     };
-  }, [delay, duration, fromX, fromY, toX, toY, rotation, cardId, playerId, onComplete]);
+  }, [delay, onComplete, cardId, fromX, fromY, toX, toY]);
 
-  useEffect(() => () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-  }, []);
-
-  if (!isAnimating) {
-    return null;
-  }
+  if (!isAnimating) return null;
 
   return (
     <div
-      className="absolute pointer-events-none will-change-transform"
+      className="absolute pointer-events-none"
       style={{
-        left: position.x,
-        top: position.y,
-        width,
-        height,
-        zIndex,
-        transform: `rotate(${position.rotation}deg)`,
-        transformOrigin,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: '32px',
+        height: '44px',
+        zIndex: 1000,
       }}
     >
-      <CardComponent
-        card={card}
-        hidden={hidden}
-        customWidth={width}
-        customHeight={height}
+      <img 
+        src={cardBackImage} 
+        alt="flying card" 
+        className="w-full h-full object-contain"
       />
     </div>
   );
 };
 
-export default FlyingCard;
+export default FlyingCard; 

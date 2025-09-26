@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Card, GameRoomProps, GameState, Player } from '@/types/game';
+import { GameRoomProps, GameState, Player } from '@/types/game';
 import { NotificationType } from '@/types/components';
 import { Notification } from '@/components/Notification';
 import { useGameState } from '@/hooks/useGameState';
@@ -13,7 +13,7 @@ import { PlayerSpot } from '../../components/GameProcess/PlayerSpot';
 import { SeatButton } from '../../components/GameProcess/SeatButton';
 import { UserData, PageData } from '@/types/entities';
 import FlyingChip from '../../components/GameProcess/FlyingChip';
-import FlyingCard from '../../components/GameProcess/FlyingCard';
+// import FlyingCard from '../../components/GameProcess/FlyingCard';
 import { Page } from '@/types/page';
 import backgroundImage from '../../assets/game/background.jpg';
 import menuIcon from '../../assets/game/menu.svg';
@@ -37,30 +37,6 @@ interface ChipAnimation {
   toY: number;
   delay: number;
 }
-
-interface CardAnimation {
-  id: string;
-  playerId: string;
-  cardIndex: number;
-  fromX: number;
-  fromY: number;
-  toX: number;
-  toY: number;
-  width: number;
-  height: number;
-  rotation: number;
-  transformOrigin: string;
-  zIndex: number;
-  delay: number;
-  card?: Card;
-  hidden: boolean;
-  landed?: boolean;
-}
-
-const CARD_DEAL_DURATION_MS = 3000;
-const CARD_DEAL_STAGGER_MS = 750;
-const DEFAULT_CARD_WIDTH = 32;
-const DEFAULT_CARD_HEIGHT = 44;
 
 // interface CardAnimation {
 //   id: string;
@@ -175,16 +151,9 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const currentPlayer = gameState?.players.find(p => p.id === currentUserId);
   const currentUserPosition = currentPlayer?.position;
 
+  // Объявляем состояния для useCallback
   const [chipAnimations, setChipAnimations] = useState<Array<ChipAnimation>>([]);
-  const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
-  const [isDealingCards, setIsDealingCards] = useState(false);
-  const [dealtPlayers, setDealtPlayers] = useState<Record<string, boolean>>({});
-  const [dealingPlayerIds, setDealingPlayerIds] = useState<string[]>([]);
-  const pendingDealCountsRef = useRef<Record<string, number>>({});
-  const completedDealPlayersRef = useRef<Set<string>>(new Set());
-  const dealingPlayersSet = useMemo(() => new Set(dealingPlayerIds), [dealingPlayerIds]);
-  const [localLookedPlayers, setLocalLookedPlayers] = useState<Record<string, boolean>>({});
-  const lastRoundRef = useRef<number | null>(null);
+  // const [cardAnimations, setCardAnimations] = useState<Array<CardAnimation>>([]);
 
   const getScreenPosition = useCallback((absolutePosition: number) => {
     if (!currentUserPosition || !isSeated) {
@@ -192,47 +161,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
     const offset = 4 - currentUserPosition;
     return ((absolutePosition + offset - 1 + 6) % 6) + 1;
-
   }, [currentUserPosition, isSeated]);
-
-  useEffect(() => {
-    if (!gameState) {
-      lastRoundRef.current = null;
-      setLocalLookedPlayers({});
-      return;
-    }
-
-    const currentRound = gameState.round ?? 0;
-
-    if (lastRoundRef.current !== currentRound) {
-      lastRoundRef.current = currentRound;
-      const reset: Record<string, boolean> = {};
-      gameState.players.forEach(player => {
-        if (player.hasLooked) {
-          reset[player.id] = true;
-        }
-      });
-      setLocalLookedPlayers(reset);
-      return;
-    }
-
-    setLocalLookedPlayers(prev => {
-      const next: Record<string, boolean> = {};
-      gameState.players.forEach(player => {
-        if (player.hasLooked || prev[player.id]) {
-          next[player.id] = true;
-        }
-      });
-
-      const prevKeys = Object.keys(prev);
-      const nextKeys = Object.keys(next);
-      if (prevKeys.length === nextKeys.length && nextKeys.every(key => prev[key])) {
-        return prev;
-      }
-
-      return next;
-    });
-  }, [gameState]);
 
   const handlePlayerBet = useCallback((playerId: string) => {
     if (!gameState) return;
@@ -311,183 +240,57 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     handlePlayerBet(playerId);
   }, [handlePlayerBet]);
 
-  const handleDealCards = useCallback((playersToDeal: Player[]) => {
-    if (!gameState || playersToDeal.length === 0) {
-      return;
-    }
-
-    const deckCenterX = window.innerWidth / 2;
-    const deckCenterY = window.innerHeight / 2;
-
-    setIsDealingCards(true);
-    setDealtPlayers({});
-    setDealingPlayerIds(playersToDeal.map(player => player.id));
-    pendingDealCountsRef.current = {};
-    completedDealPlayersRef.current = new Set();
-
-    requestAnimationFrame(() => {
-      const animations: CardAnimation[] = [];
-      const timestamp = Date.now();
-
-      type CardTarget = {
-        cardIndex: number;
-        left: number;
-        top: number;
-        width: number;
-        height: number;
-        rotation: number;
-        transformOrigin: string;
-        zIndex: number;
-        card?: Card;
-        hidden: boolean;
-      };
-
-      const fallbackPositionForPlayer = (player: Player) => {
-        const tableWidth = 315 * scale;
-        const tableHeight = 493 * scale;
-        const verticalOffset = 100;
-        const isCurrent = player.id === currentUserId;
-        const relativePosition = isCurrent ? 4 : getScreenPosition(player.position);
-
-        switch (relativePosition) {
-          case 1:
-            return {
-              centerX: deckCenterX,
-              centerY: deckCenterY - tableHeight * 0.4 - verticalOffset,
-            };
-          case 2:
-            return {
-              centerX: deckCenterX + tableWidth * 0.4,
-              centerY: deckCenterY - tableHeight * 0.25,
-            };
-          case 3:
-            return {
-              centerX: deckCenterX + tableWidth * 0.4,
-              centerY: deckCenterY + tableHeight * 0.25 - verticalOffset,
-            };
-          case 4:
-            return {
-              centerX: deckCenterX,
-              centerY: deckCenterY + tableHeight * 0.4 - verticalOffset,
-            };
-          case 5:
-            return {
-              centerX: deckCenterX - tableWidth * 0.4,
-              centerY: deckCenterY + tableHeight * 0.25 - verticalOffset,
-            };
-          default:
-            return {
-              centerX: deckCenterX - tableWidth * 0.4,
-              centerY: deckCenterY - tableHeight * 0.25,
-            };
-        }
-      };
-
-      const playerTargets = playersToDeal.map(player => {
-        const cardsToDeal = player.cards?.length ?? 0;
-        if (!cardsToDeal) {
-          return { player, cardsToDeal, targets: [] as CardTarget[] };
-        }
-
-        pendingDealCountsRef.current[player.id] = cardsToDeal;
-
-        const sanitizedPlayerId = String(player.id).replace(/["\\]/g, '\\$&');
-        const shouldHideCard = gameState.status !== 'showdown' && gameState.status !== 'finished';
-
-        const targets: CardTarget[] = Array.from({ length: cardsToDeal }, (_, cardIndex) => {
-          const selector = `[data-player-card="${sanitizedPlayerId}-${cardIndex}"]`;
-          const element = document.querySelector(selector) as HTMLElement | null;
-
-          if (element) {
-            const rect = element.getBoundingClientRect();
-            const rotation = Number(element.dataset.cardRotation ?? '0');
-            const transformOrigin = element.dataset.cardTransformOrigin ?? '50% 80%';
-            const zIndex = Number(element.dataset.cardZindex ?? cardIndex + 1);
-
-            return {
-              cardIndex,
-              left: rect.left,
-              top: rect.top,
-              width: rect.width || DEFAULT_CARD_WIDTH,
-              height: rect.height || DEFAULT_CARD_HEIGHT,
-              rotation,
-              transformOrigin,
-              zIndex,
-              card: player.cards?.[cardIndex],
-              hidden: shouldHideCard,
-            };
-          }
-
-          const fallbackCenter = fallbackPositionForPlayer(player);
-          return {
-            cardIndex,
-            left: fallbackCenter.centerX - DEFAULT_CARD_WIDTH / 2,
-            top: fallbackCenter.centerY - DEFAULT_CARD_HEIGHT / 2,
-            width: DEFAULT_CARD_WIDTH,
-            height: DEFAULT_CARD_HEIGHT,
-            rotation: 0,
-            transformOrigin: '50% 50%',
-            zIndex: cardIndex + 1,
-            card: player.cards?.[cardIndex],
-            hidden: shouldHideCard,
-          };
-        });
-
-        return { player, cardsToDeal, targets };
-      });
-
-      const maxCardsToDeal = playerTargets.reduce((max, entry) => Math.max(max, entry.cardsToDeal), 0);
-      let animationIndex = 0;
-
-      for (let cardIndex = 0; cardIndex < maxCardsToDeal; cardIndex++) {
-        playerTargets.forEach(({ player, targets }) => {
-          const target = targets[cardIndex];
-          if (!target) {
-            return;
-          }
-
-          const width = target.width || DEFAULT_CARD_WIDTH;
-          const height = target.height || DEFAULT_CARD_HEIGHT;
-
-          animations.push({
-            id: `deal-${timestamp}-${player.id}-${cardIndex}`,
-            playerId: player.id,
-            cardIndex,
-            fromX: deckCenterX - width / 2,
-            fromY: deckCenterY - height / 2,
-            toX: target.left,
-            toY: target.top,
-            width,
-            height,
-            rotation: target.rotation,
-            transformOrigin: target.transformOrigin,
-            zIndex: target.zIndex,
-            delay: animationIndex * CARD_DEAL_STAGGER_MS,
-            card: target.card,
-            hidden: target.hidden,
-            landed: false,
-          });
-
-          animationIndex++;
-        });
+  const handleDealCards = useCallback(() => {
+    if (!gameState) return;
+    // const centerX = window.innerWidth / 2;
+    // const centerY = window.innerHeight / 2;
+    // const tableWidth = 315 * scale;
+    // const tableHeight = 493 * scale;
+    // const verticalOffset = 100;
+    
+    // Раздаем по 3 карты каждому активному игроку
+    gameState.players.forEach((player, /* playerIndex */) => {
+      if (!player.isActive) return;
+      
+      // const isCurrentPlayer = player.id === currentUserId;
+      // const relativePosition = isCurrentPlayer ? 4 : getScreenPosition(player.position);
+      
+      // Вычисляем позицию игрока
+      // let playerX = 0;
+      // let playerY = 0;
+      
+      // switch (relativePosition) {
+      //   case 1: playerX = centerX; playerY = centerY - tableHeight * 0.5 - verticalOffset; break; // Поднимаем выше
+      //   case 2: playerX = centerX + tableWidth * 0.3; playerY = centerY - tableHeight * 0.3; break; // Левее и выше
+      //   case 3: playerX = centerX + tableWidth * 0.3; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Левее и выше
+      //   case 4: playerX = centerX + tableWidth * 0.1; playerY = centerY + tableHeight * 0.5 - verticalOffset; break; // Правее и ниже
+      //   case 5: playerX = centerX - tableWidth * 0.4; playerY = centerY + tableHeight * 0.2 - verticalOffset; break; // Поднимаем выше
+      //   case 6: playerX = centerX - tableWidth * 0.4; playerY = centerY - tableHeight * 0.3; break; // Поднимаем выше
+      // }
+      
+      // Карты летят в центр компонента игрока
+      // const cardDeckX = playerX;
+      // const cardDeckY = playerY;
+      
+      // Создаем 3 карты для каждого игрока
+      for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+        // const cardId = `deal-${player.id}-${cardIndex}-${Date.now()}`;
+        // setCardAnimations(prev => [...prev, {
+        //   id: cardId,
+        //   fromX: centerX,
+        //   fromY: centerY,
+        //   toX: cardDeckX,
+        //   toY: cardDeckY,
+        //   delay: (playerIndex * 3 + cardIndex) * 200 // Задержка для последовательной раздачи
+        // }]);
+        
+        // Проигрываем звук fold.mp3 для каждой карты с задержкой
+        // setTimeout(() => {
+        //   actions.playSound('fold');
+        // }, (playerIndex * 3 + cardIndex) * 200);
       }
-
-      if (animations.length === 0) {
-        const dealt: Record<string, boolean> = {};
-        playersToDeal.forEach(player => {
-          dealt[player.id] = true;
-        });
-        setDealtPlayers(dealt);
-        setDealingPlayerIds([]);
-        setIsDealingCards(false);
-        pendingDealCountsRef.current = {};
-        completedDealPlayersRef.current.clear();
-        return;
-      }
-
-      setCardAnimations(animations);
     });
-  }, [gameState, scale, currentUserId, getScreenPosition]);
+  }, [gameState, actions]);
 
   const handleChipsToWinner = useCallback(() => {
     if (!gameState?.winners || gameState.winners.length === 0) {
@@ -815,34 +618,29 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }, [gameState?.log?.length, currentUserId, gameState?.status, handleOtherPlayerAction, handleFoldCards, handlePlayerBet, gameState?.log]);
   
   // Отслеживаем изменения в игроках для автоматического запуска анимации раздачи карт
-  const prevPlayersRef = useRef<Map<string, Player>>(new Map());
+  const prevPlayersRef = useRef<Player[]>([]);
   
   useEffect(() => {
     if (!gameState?.players) return;
-
+    
     const prevPlayers = prevPlayersRef.current;
     const currentPlayers = gameState.players;
-
-    const playersToDeal = currentPlayers
-      .filter(player => player.isActive && player.cards && player.cards.length > 0)
-      .filter(player => {
-        const prev = prevPlayers.get(player.id);
-        return !prev || !prev.cards || prev.cards.length === 0;
-      })
-      .sort((a, b) => a.position - b.position);
-
-    if (playersToDeal.length > 0 && gameState.status === 'ante') {
-      handleDealCards(playersToDeal);
-    }
-
-    const snapshot = new Map<string, Player>();
-    currentPlayers.forEach(player => {
-      snapshot.set(player.id, {
-        ...player,
-        cards: player.cards ? [...player.cards] : [],
-      });
+    
+    // Проверяем, появились ли карты у игроков (раздача карт)
+    const cardsAppeared = currentPlayers.some((player, index) => {
+      const prevPlayer = prevPlayers[index];
+      return prevPlayer && 
+             (!prevPlayer.cards || prevPlayer.cards.length === 0) && 
+             player.cards && 
+             player.cards.length > 0;
     });
-    prevPlayersRef.current = snapshot;
+    
+    if (cardsAppeared && gameState.status === 'ante') {
+      // Запускаем анимацию раздачи карт
+      handleDealCards();
+    }
+    
+    prevPlayersRef.current = currentPlayers;
   }, [gameState?.players, gameState?.status, handleDealCards]);
 
   // Функция для сброса карт при fold
@@ -880,39 +678,12 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     });
   }, []);
 
-  const handleCardAnimationComplete = useCallback((cardId: string, playerId: string) => {
-    setCardAnimations(prev => prev.map(card => card.id === cardId ? { ...card, landed: true } : card));
-
-    const remaining = (pendingDealCountsRef.current[playerId] ?? 0) - 1;
-
-    if (remaining <= 0) {
-      delete pendingDealCountsRef.current[playerId];
-      completedDealPlayersRef.current.add(playerId);
-    } else {
-      pendingDealCountsRef.current[playerId] = remaining;
-    }
-
-    if (Object.keys(pendingDealCountsRef.current).length === 0) {
-      const completedIds = Array.from(completedDealPlayersRef.current);
-      if (completedIds.length) {
-        setDealtPlayers(prev => {
-          const next = { ...prev };
-          completedIds.forEach(id => {
-            next[id] = true;
-          });
-          return next;
-        });
-      }
-
-      completedDealPlayersRef.current.clear();
-      setIsDealingCards(false);
-      setDealingPlayerIds([]);
-
-      requestAnimationFrame(() => {
-        setCardAnimations(prev => prev.filter(card => !card.landed));
-      });
-    }
-  }, []);
+  // const handleCardAnimationComplete = useCallback((cardId: string) => {
+  //   setCardAnimations(prev => {
+  //     const newAnimations = prev.filter(card => card.id !== cardId);
+  //     return newAnimations;
+  //   });
+  // }, []);
 
   
 
@@ -957,7 +728,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   }
 
   const callAmount = gameState.lastActionAmount;
-  const isAnimating = !!(gameState.isAnimating || isDealingCards || cardAnimations.length > 0);
+  const isAnimating = !!(gameState.isAnimating);
   const postLookActions = isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
   const postLookCallAmount = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
     
@@ -1041,17 +812,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     // Запускаем анимацию фишки для текущего игрока
     handlePlayerBet(currentPlayer.id);
     actions.call();
-  };
-  const handleLookClick = () => {
-    if (currentUserId) {
-      setLocalLookedPlayers(prev => {
-        if (prev[currentUserId]) {
-          return prev;
-        }
-        return { ...prev, [currentUserId]: true };
-      });
-    }
-    actions.lookCards();
   };
   const handleInvite = () => {
     const referrerId = currentUserId;
@@ -1154,8 +914,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                         const winAmount = isWinner ? (player.lastWinAmount || 0) : 0;
                         const showWinIndicator = winSequenceStep === 'winner' && isWinner;
 
-                        const hidePlayerCards = isDealingCards && dealingPlayersSet.has(player.id) && !dealtPlayers[player.id];
-
                         let notificationType: 'blind' | 'paid' | 'pass' | 'rais' | 'win' | 'look' | null = null;
                         if (!isCurrentUser) {
                           if (showWinIndicator) {
@@ -1188,8 +946,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                             gameState={gameState}
                             notificationType={notificationType}
                             showWinIndicator={showWinIndicator}
-                            forceShowCards={!!localLookedPlayers[player.id]}
-                            hideCards={hidePlayerCards}
                           />;
                         }
                         return <PlayerSpot 
@@ -1207,8 +963,6 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                           gameState={gameState}
                           notificationType={notificationType}
                           showWinIndicator={showWinIndicator}
-                          forceShowCards={!!localLookedPlayers[player.id]}
-                          hideCards={hidePlayerCards}
                         />;
                       })()
                     ) : (
@@ -1244,7 +998,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
                   onFold={actions.fold}
                   onCall={handleCallClick}
                   onRaise={handleRaiseClick}
-                  onLook={handleLookClick}
+                  onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
                   onAllIn={handleAllInClick}
                   blindButtonsDisabled={blindButtonsDisabled || isProcessing}
@@ -1299,27 +1053,18 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
             onComplete={handleChipAnimationComplete}
           />
         ))}
-        {cardAnimations.map(card => (
+        {/* {cardAnimations.map(card => (
           <FlyingCard
             key={card.id}
             cardId={card.id}
-            playerId={card.playerId}
             fromX={card.fromX}
             fromY={card.fromY}
             toX={card.toX}
             toY={card.toY}
-            width={card.width}
-            height={card.height}
-            rotation={card.rotation}
-            transformOrigin={card.transformOrigin}
-            zIndex={card.zIndex}
             delay={card.delay}
-            duration={CARD_DEAL_DURATION_MS}
-            card={card.card}
-            hidden={card.hidden}
             onComplete={handleCardAnimationComplete}
           />
-        ))}
+        ))} */}
       </div>
       
       {/* NoConnect компонент для проблем с подключением */}
