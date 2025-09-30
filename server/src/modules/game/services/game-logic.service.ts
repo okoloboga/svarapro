@@ -591,6 +591,7 @@ export class GameLogicService {
             break;
           case 'betting':
             player.availableActions = getBettingActions(gameState, player.id);
+            console.log(`[DEBUG] Actions for ${player.id}:`, JSON.stringify(player.availableActions));
             break;
           case 'finished':
             player.availableActions = getFinishedActions(gameState, player.id);
