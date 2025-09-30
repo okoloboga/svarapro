@@ -1016,10 +1016,14 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Check for round completion
+    const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
+    const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
 
-    // gameState.isAnimating = false;
-    // gameState.animationType = undefined;
+    if (playersWhoCanAct.length < 2) {
+        await this.endBettingRound(roomId, gameState);
+        return { success: true, gameState };
+    }
 
     // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
     // Если следующий игрок будет якорем, то круг завершается
