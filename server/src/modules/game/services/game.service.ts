@@ -1044,6 +1044,7 @@ export class GameService {
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
       await this.redisService.setGameState(roomId, gameState);
+      console.log('[DIAGNOSTIC_LOG] State before passing turn:', JSON.stringify(gameState, null, 2));
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
     return { success: true, gameState };
