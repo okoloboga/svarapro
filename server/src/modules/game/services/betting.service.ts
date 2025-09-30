@@ -63,10 +63,13 @@ export class BettingService {
     const activePlayers = gameState.players.filter(
       (p) => p.isActive && !p.hasFolded,
     );
-    // Игроки с деньгами для дальнейших действий
-    const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
+    // Игроки, которые еще могут действовать (не all-in и есть деньги)
+    const playersWhoCanAct = activePlayers.filter(
+      (p) => !p.isAllIn && p.balance > 0,
+    );
 
-    if (playersWithMoney.length === 0) {
+    // Если действовать может меньше 2-х игроков, раунд ставок окончен.
+    if (playersWhoCanAct.length < 2) {
       return true;
     }
 
@@ -91,6 +94,7 @@ export class BettingService {
     // и при этом все игроки с деньгами уравняли ставки.
     // ИСПРАВЛЕНИЕ: Круг должен завершиться ПЕРЕД якорем, а не НА якоре
     if (gameState.currentPlayerIndex === anchorPlayerIndex) {
+      const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
       const firstPlayerBet = playersWithMoney[0]?.totalBet;
       if (firstPlayerBet === undefined) {
         return false; // Нет игроков с деньгами
