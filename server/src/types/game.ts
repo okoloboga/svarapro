@@ -22,6 +22,11 @@ export interface Card {
   value: number; // числовое значение карты
 }
 
+export interface Pot {
+  amount: number;
+  eligiblePlayers: string[];
+}
+
 export interface Player {
   id: string; // telegramId
   username: string;
@@ -41,6 +46,7 @@ export interface Player {
   lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
   lastWinAmount?: number;
   inactivityCount?: number; // счетчик бездействия (fold по таймеру)
+  availableActions?: any[]; // Dynamically added for the client
 }
 
 export interface GameState {
@@ -57,6 +63,7 @@ export interface GameState {
   players: Player[];
   deck: Card[]; // колода
   pot: number; // банк
+  pots?: Pot[]; // For side pots
   currentPlayerIndex: number; // индекс текущего игрока
   dealerIndex: number; // индекс дилера
   lastRaiseIndex?: number; // индекс последнего повысившего ставку
