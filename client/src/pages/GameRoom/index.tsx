@@ -534,7 +534,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Сбрасываем таймер только если это новый ход
       if (turnKey !== currentTurnRef.current) {
         currentTurnRef.current = turnKey;
-        setTurnTimer(TURN_DURATION_SECONDS);
+        
+        // Используем turnStartTime для синхронизации, если доступно
+        if (gameState.turnStartTime) {
+          const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+          const remaining = Math.max(0, TURN_DURATION_SECONDS - elapsed);
+          setTurnTimer(remaining);
+        } else {
+          setTurnTimer(TURN_DURATION_SECONDS);
+        }
       }
       
       const interval = setInterval(() => {
@@ -551,7 +559,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Если ход не активен, сбрасываем таймер в начальное значение
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, gameState?.turnStartTime, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState]);
 
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {

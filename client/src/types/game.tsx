@@ -61,6 +61,7 @@ export interface GameState {
   svaraConfirmed?: string[]; // игроки, подтвердившие участие в сваре
   round: number; // номер раунда
   timer?: number; // таймер для хода
+  turnStartTime?: number; // время начала текущего хода (timestamp)
   log: GameAction[]; // лог действий
   isAnimating?: boolean; // флаг анимации
   animationType?: 'chip_fly' | 'win_animation'; // тип анимации

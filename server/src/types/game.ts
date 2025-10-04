@@ -80,6 +80,7 @@ export interface GameState {
   svaraDeclined?: string[]; // Игроки, отказавшиеся от свары
   round: number; // номер раунда
   timer?: number; // таймер для хода
+  turnStartTime?: number; // время начала текущего хода (timestamp)
   log: GameAction[]; // лог действий
   isAnimating?: boolean; // флаг анимации (блокирует действия)
   animationType?: 'chip_fly' | 'win_animation'; // тип текущей анимации

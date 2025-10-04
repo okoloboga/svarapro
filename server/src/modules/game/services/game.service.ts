@@ -19,6 +19,8 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
+  private turnTimers = new Map<string, NodeJS.Timeout>(); // Таймеры для ходов игроков
+  
   constructor(
     private readonly redisService: RedisService,
     private readonly cardService: CardService,
@@ -387,6 +389,12 @@ export class GameService {
       gameState.players,
       gameState.dealerIndex,
     );
+    // Устанавливаем время начала хода и запускаем таймер
+    gameState.turnStartTime = Date.now();
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer) {
+      this.startTurnTimer(roomId, currentPlayer.id);
+    }
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
@@ -532,6 +540,32 @@ export class GameService {
     return { success: true, gameState };
   }
 
+  // Управление таймерами ходов
+  private startTurnTimer(roomId: string, playerId: string): void {
+    // Очищаем предыдущий таймер для этой комнаты
+    this.clearTurnTimer(roomId);
+    
+    const timer = setTimeout(async () => {
+      try {
+        await this.handleAutoFold(roomId, playerId);
+        this.turnTimers.delete(roomId);
+      } catch (error) {
+        console.error(`Error in turn timer for room ${roomId}:`, error);
+        this.turnTimers.delete(roomId);
+      }
+    }, TURN_DURATION_SECONDS * 1000);
+    
+    this.turnTimers.set(roomId, timer);
+  }
+
+  private clearTurnTimer(roomId: string): void {
+    const timer = this.turnTimers.get(roomId);
+    if (timer) {
+      clearTimeout(timer);
+      this.turnTimers.delete(roomId);
+    }
+  }
+
   // Обработка автоматического fold по таймеру
   async handleAutoFold(
     roomId: string,
@@ -644,6 +678,9 @@ export class GameService {
     if (!player) {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
+
+    // Очищаем таймер при любом действии игрока
+    this.clearTurnTimer(roomId);
 
     // Сбрасываем счетчик бездействия при любом активном действии
     if (player.inactivityCount && player.inactivityCount > 0) {
@@ -807,6 +844,12 @@ export class GameService {
         return { success: true };
       } else {
         gameState.currentPlayerIndex = aboutToActPlayerIndex;
+        // Устанавливаем время начала хода и запускаем таймер
+        gameState.turnStartTime = Date.now();
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.startTurnTimer(roomId, currentPlayer.id);
+        }
       }
     }
 
@@ -863,6 +906,12 @@ export class GameService {
           gameState.players,
           gameState.currentPlayerIndex,
         );
+        // Устанавливаем время начала хода и запускаем таймер
+        gameState.turnStartTime = Date.now();
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.startTurnTimer(roomId, currentPlayer.id);
+        }
         break;
       }
       case 'look': {
@@ -1263,6 +1312,12 @@ export class GameService {
       gameState.players,
       gameState.dealerIndex,
     );
+    // Устанавливаем время начала хода и запускаем таймер
+    gameState.turnStartTime = Date.now();
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer) {
+      this.startTurnTimer(roomId, currentPlayer.id);
+    }
 
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -1275,6 +1330,9 @@ export class GameService {
     gameState: GameState,
   ): Promise<void> {
     if (!gameState) return;
+    
+    // Очищаем таймер при завершении игры
+    this.clearTurnTimer(roomId);
 
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
