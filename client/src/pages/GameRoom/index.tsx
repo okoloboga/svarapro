@@ -525,6 +525,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   const activeGamePhases: GameState['status'][] = useMemo(() => ['blind_betting', 'betting'], []);
   const isCurrentUserTurn = !!(isSeated && gameState && activeGamePhases.includes(effectiveGameStatus) && gameState.players[gameState.currentPlayerIndex]?.id === currentUserId && !gameState.isAnimating && !isProcessing);
 
+  // Функция для вычисления оставшегося времени на основе turnStartTime
+  const calculateRemainingTime = useCallback(() => {
+    if (!gameState?.turnStartTime) return TURN_DURATION_SECONDS;
+    const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+    return Math.max(0, TURN_DURATION_SECONDS - elapsed);
+  }, [gameState?.turnStartTime]);
+
   useEffect(() => {
     const activeTurn = gameState && activeGamePhases.includes(effectiveGameStatus) && !gameState.isAnimating;
     const currentPlayerId = gameState?.players[gameState?.currentPlayerIndex]?.id;
@@ -534,32 +541,22 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       // Сбрасываем таймер только если это новый ход
       if (turnKey !== currentTurnRef.current) {
         currentTurnRef.current = turnKey;
-        
-        // Используем turnStartTime для синхронизации, если доступно
-        if (gameState.turnStartTime) {
-          const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
-          const remaining = Math.max(0, TURN_DURATION_SECONDS - elapsed);
-          setTurnTimer(remaining);
-        } else {
-          setTurnTimer(TURN_DURATION_SECONDS);
-        }
+        setTurnTimer(calculateRemainingTime());
       }
       
       const interval = setInterval(() => {
-        setTurnTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        const remaining = calculateRemainingTime();
+        setTurnTimer(remaining);
+        if (remaining <= 0) {
+          clearInterval(interval);
+        }
+      }, 100); // Обновляем каждые 100мс для плавности
       return () => clearInterval(interval);
     } else {
       // Если ход не активен, сбрасываем таймер в начальное значение
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, gameState?.turnStartTime, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, gameState?.turnStartTime, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState, calculateRemainingTime]);
 
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {
@@ -567,6 +564,17 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
       actions.autoFold();
     }
   }, [turnTimer, isCurrentUserTurn, actions]);
+
+  // Очищаем таймер при любом действии игрока
+  useEffect(() => {
+    if (!gameState?.log) return;
+    
+    const lastAction = gameState.log[gameState.log.length - 1];
+    if (lastAction && lastAction.telegramId === currentUserId) {
+      // Если это действие текущего игрока, очищаем таймер
+      setTurnTimer(0);
+    }
+  }, [gameState?.log, currentUserId]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
