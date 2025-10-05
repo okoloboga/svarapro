@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "pm2": "^5.4.2"
+  },
+  "dependencies": {
+    "tailwind-merge": "^3.3.1"
   }
 }
