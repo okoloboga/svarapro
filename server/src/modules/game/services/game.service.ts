@@ -2065,6 +2065,8 @@ export class GameService {
       await this.endBettingRound(roomId, gameState);
     } else {
       console.log(`[BLIND_BETTING_RAISE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
+      // Очищаем старый таймер перед сменой игрока
+      this.clearTurnTimer(roomId);
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
       // Устанавливаем время начала хода и запускаем таймер
       gameState.turnStartTime = Date.now();
