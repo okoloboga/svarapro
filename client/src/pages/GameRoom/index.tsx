@@ -565,14 +565,16 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [turnTimer, isCurrentUserTurn, actions]);
 
-  // Очищаем таймер при любом действии игрока
+  // Очищаем таймер при ставках игрока (но не при look)
   useEffect(() => {
     if (!gameState?.log) return;
     
     const lastAction = gameState.log[gameState.log.length - 1];
     if (lastAction && lastAction.telegramId === currentUserId) {
-      // Если это действие текущего игрока, очищаем таймер
-      setTurnTimer(0);
+      // Очищаем таймер только при ставках, но не при look
+      if (lastAction.type !== 'look') {
+        setTurnTimer(0);
+      }
     }
   }, [gameState?.log, currentUserId]);
 
