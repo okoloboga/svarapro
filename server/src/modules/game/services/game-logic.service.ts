@@ -353,8 +353,20 @@ export class GameLogicService {
         case 'ante':
           break;
         case 'blind_betting':
-          const allLooked = activePlayers.every((p) => p.hasLooked);
-          if (allLooked) {
+          // Переходим в betting только если все игроки либо:
+          // 1. Посмотрели карты И сделали ставку (call/raise), ИЛИ
+          // 2. Не посмотрели карты (играют вслепую)
+          const allPlayersReady = activePlayers.every((p) => {
+            if (p.hasLooked) {
+              // Если посмотрел карты, должен был сделать ставку
+              return p.hasLookedAndMustAct === false; // hasLookedAndMustAct сбрасывается после ставки
+            } else {
+              // Если не посмотрел, может продолжать играть вслепую
+              return true;
+            }
+          });
+          
+          if (allPlayersReady) {
             gameState.status = 'betting';
             gameState.currentPlayerIndex = getNextTurnIndex(
               gameState.players,
