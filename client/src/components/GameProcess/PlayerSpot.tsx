@@ -6,7 +6,9 @@ import defaultAvatar from "@/assets/main_logo.png";
 import cardBack from "@/assets/game/back.png";
 import chatButtonBg from "@/assets/game/chat.png";
 import { TURN_DURATION_SECONDS } from "@/constants";
-import { PositionsContext } from "@/context/PositionsContext";
+import { PositionElement, PositionsContext } from "@/context/PositionsContext";
+import { PlayerBetAnimation } from "./PlayerBetAnimation";
+import { WithNull } from "@/types/mainTypes";
 
 const formatAmount = (amount: number): string => {
   const num = Number(amount);
@@ -76,6 +78,8 @@ export function PlayerSpot({
   const [lastTotalBet, setLastTotalBet] = useState(player.totalBet);
   const { addPlayerPosition } = useContext(PositionsContext);
   const ref = useRef<HTMLDivElement>(null);
+  const [playerPosition, setPlayerPosition] =
+    useState<WithNull<PositionElement>>(null);
 
   const buttonTextStyle: React.CSSProperties = {
     fontWeight: 700,
@@ -180,6 +184,11 @@ export function PlayerSpot({
       const playerPosition = ref.current.getBoundingClientRect();
 
       addPlayerPosition({
+        x: playerPosition.x,
+        y: playerPosition.y,
+      });
+
+      setPlayerPosition({
         x: playerPosition.x,
         y: playerPosition.y,
       });
@@ -726,6 +735,8 @@ export function PlayerSpot({
             </div>
           )}
       </div>
+
+      {playerPosition && <PlayerBetAnimation bet={player.currentBet} playerPosition={playerPosition} />}
     </div>
   );
 }

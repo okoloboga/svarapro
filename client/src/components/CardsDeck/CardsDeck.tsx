@@ -77,7 +77,6 @@ export function CardsDeck({ className }: Props) {
 
     setAnimatedCards(cards);
 
-    // на следующий кадр включаем анимацию
     requestAnimationFrame(() => {
       setAnimatedCards(cards.map((c) => ({ ...c, animate: true })));
     });

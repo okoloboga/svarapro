@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import WebApp from "@twa-dev/sdk";
 import { gameStateMocks } from "@/mocks/gameMocks";
 import { CardsDeck } from "@/components/CardsDeck/CardsDeck";
+import { Bids } from "@/components/Bids/Bids";
 
 interface ChipAnimation {
   id: string;
@@ -1059,6 +1060,7 @@ export function GameRoom({
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
             <CardsDeck />
+            <Bids />
 
             <div className="flex-shrink-0 relative z-10">
               <GameTable
