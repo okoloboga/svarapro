@@ -578,6 +578,14 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState?.log, currentUserId]);
 
+  // Сбрасываем таймер при смене игрока
+  useEffect(() => {
+    if (gameState?.currentPlayerIndex !== undefined) {
+      // Сбрасываем таймер при смене игрока
+      setTurnTimer(calculateRemainingTime());
+    }
+  }, [gameState?.currentPlayerIndex, calculateRemainingTime]);
+
   useEffect(() => {
     if (isCurrentUserTurn) {
       triggerImpact('medium');
