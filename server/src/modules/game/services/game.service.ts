@@ -543,10 +543,12 @@ export class GameService {
   // Управление таймерами ходов
   private startTurnTimer(roomId: string, playerId: string): void {
     // Очищаем предыдущий таймер для этой комнаты
+    console.log(`[TIMER_DEBUG] Starting timer for room: ${roomId}, player: ${playerId}`);
     this.clearTurnTimer(roomId);
     
     const timer = setTimeout(async () => {
       try {
+        console.log(`[TIMER_DEBUG] Timer expired for room: ${roomId}, player: ${playerId}`);
         await this.handleAutoFold(roomId, playerId);
         this.turnTimers.delete(roomId);
       } catch (error) {
@@ -590,7 +592,9 @@ export class GameService {
     }
 
     // Проверяем, что это действительно ход этого игрока
+    console.log(`[AUTO_FOLD_DEBUG] Auto fold for player: ${telegramId}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
     if (gameState.currentPlayerIndex !== playerIndex) {
+      console.log(`[AUTO_FOLD_DEBUG] Not player's turn, skipping auto fold`);
       return { success: false, error: 'Сейчас не ваш ход' };
     }
 
