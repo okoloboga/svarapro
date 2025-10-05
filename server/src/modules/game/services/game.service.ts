@@ -2061,9 +2061,18 @@ export class GameService {
 
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      console.log(`[BLIND_BETTING_RAISE_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
       await this.endBettingRound(roomId, gameState);
     } else {
+      console.log(`[BLIND_BETTING_RAISE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      // Устанавливаем время начала хода и запускаем таймер
+      gameState.turnStartTime = Date.now();
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (currentPlayer) {
+        console.log(`[BLIND_BETTING_RAISE_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
