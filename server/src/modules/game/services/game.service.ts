@@ -1486,6 +1486,11 @@ export class GameService {
     // 2. Process Winnings from each pot
     let totalRake = 0;
 
+    // Находим основной банк - самый большой по размеру
+    const mainPotIndex = potWinnersList.reduce((maxIndex, pot, index) => {
+      return pot.amount > potWinnersList[maxIndex].amount ? index : maxIndex;
+    }, 0);
+
     for (let i = 0; i < potWinnersList.length; i++) {
       const potResult = potWinnersList[i];
       const { winners: potWinnerPlayers, amount } = potResult;
@@ -1494,13 +1499,13 @@ export class GameService {
         continue;
       }
 
-      // Проверяем, является ли это основным банком (последний банк)
-      const isMainPot = i === potWinnersList.length - 1;
+      // Проверяем, является ли это основным банком (самый большой по размеру)
+      const isMainPot = i === mainPotIndex;
 
       if (isMainPot) {
         // Основной банк - проверяем на ничью
-        if (potWinnerPlayers.length > 1) {
-          // Ничья в основном банке - объявляем свару
+        if (potWinnerPlayers.length > 1 && amount > 0) {
+          // Ничья в основном банке - объявляем свару (только если банк не пустой)
 
           const svaraAction: GameAction = {
             type: 'svara',
@@ -1539,7 +1544,7 @@ export class GameService {
           this.svaraTimers.set(roomId, timer);
 
           return; // Выходим из метода, свара объявлена
-        } else {
+        } else if (amount > 0) {
           // Один победитель в основном банке - разыгрываем как обычно
           const rake = Number((amount * 0.05).toFixed(2));
           totalRake += rake;
@@ -1561,6 +1566,15 @@ export class GameService {
             };
             gameState.log.push(winAction);
           }
+        } else {
+          // Основной банк пустой - завершаем игру без выигрыша
+          const noWinAction: GameAction = {
+            type: 'join',
+            telegramId: 'system',
+            timestamp: Date.now(),
+            message: 'Основной банк пустой - игра завершена без выигрыша',
+          };
+          gameState.log.push(noWinAction);
         }
       } else {
         // Боковой банк - разыгрываем сразу
