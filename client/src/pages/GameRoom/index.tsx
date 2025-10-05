@@ -578,19 +578,10 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     }
   }, [gameState?.log, currentUserId]);
 
-  // Сбрасываем таймер при смене игрока (но НЕ при look)
+  // Сбрасываем таймер при смене игрока
   useEffect(() => {
     if (gameState?.currentPlayerIndex !== undefined) {
       console.log(`[CLIENT_TIMER_DEBUG] Player change detected. currentPlayerIndex: ${gameState.currentPlayerIndex}, turnStartTime: ${gameState.turnStartTime}`);
-      
-      // Проверяем, было ли последнее действие look
-      const lastAction = gameState.log[gameState.log.length - 1];
-      const isLookAction = lastAction && lastAction.type === 'look' && lastAction.telegramId === currentUserId;
-      
-      if (isLookAction) {
-        console.log(`[CLIENT_TIMER_DEBUG] Last action was look by current user, NOT resetting timer`);
-        return; // НЕ сбрасываем таймер при look
-      }
       
       // Если turnStartTime установлен - используем его
       if (gameState.turnStartTime) {
@@ -603,7 +594,7 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
         setTurnTimer(TURN_DURATION_SECONDS);
       }
     }
-  }, [gameState?.currentPlayerIndex, gameState?.turnStartTime, calculateRemainingTime, gameState?.log, currentUserId]);
+  }, [gameState?.currentPlayerIndex, gameState?.turnStartTime, calculateRemainingTime]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
