@@ -594,8 +594,8 @@ export class GameService {
     // Проверяем, что это действительно ход этого игрока
     console.log(`[AUTO_FOLD_DEBUG] Auto fold for player: ${telegramId}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
     if (gameState.currentPlayerIndex !== playerIndex) {
-      console.log(`[AUTO_FOLD_DEBUG] Not player's turn, skipping auto fold`);
-      return { success: false, error: 'Сейчас не ваш ход' };
+      console.log(`[AUTO_FOLD_DEBUG] Not player's turn, silently skipping auto fold`);
+      return { success: true }; // Молча игнорируем, не возвращаем ошибку
     }
 
     // Увеличиваем счетчик бездействия
