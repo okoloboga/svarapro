@@ -544,7 +544,12 @@ export class GameService {
   private startTurnTimer(roomId: string, playerId: string): void {
     // Очищаем предыдущий таймер для этой комнаты
     console.log(`[TIMER_DEBUG] Starting timer for room: ${roomId}, player: ${playerId}`);
-    this.clearTurnTimer(roomId);
+    const existingTimer = this.turnTimers.get(roomId);
+    if (existingTimer) {
+      console.log(`[TIMER_DEBUG] Clearing existing timer for room: ${roomId}`);
+      clearTimeout(existingTimer);
+    }
+    this.turnTimers.delete(roomId);
     
     const timer = setTimeout(async () => {
       try {
@@ -558,6 +563,7 @@ export class GameService {
     }, TURN_DURATION_SECONDS * 1000);
     
     this.turnTimers.set(roomId, timer);
+    console.log(`[TIMER_DEBUG] Timer set for room: ${roomId}, player: ${playerId}`);
   }
 
   private clearTurnTimer(roomId: string): void {
