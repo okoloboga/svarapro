@@ -940,16 +940,8 @@ export class GameService {
         };
         gameState.log.push(lookAction);
 
-        // Устанавливаем время начала хода и запускаем таймер
-        console.log(`[LOOK_DEBUG] Setting turnStartTime for look action, player: ${player.id}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
-        gameState.turnStartTime = Date.now();
-        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-        if (currentPlayer) {
-          console.log(`[LOOK_DEBUG] Starting timer for player: ${currentPlayer.id}`);
-          this.startTurnTimer(roomId, currentPlayer.id);
-        } else {
-          console.log(`[LOOK_DEBUG] ERROR: No current player found at index ${gameState.currentPlayerIndex}`);
-        }
+        // НЕ устанавливаем turnStartTime для look - это НЕ смена хода!
+        console.log(`[LOOK_DEBUG] Look action completed, player: ${player.id}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
         break;
       }
     }
@@ -1119,7 +1111,6 @@ export class GameService {
         this.startTurnTimer(roomId, currentPlayer.id);
       }
       await this.redisService.setGameState(roomId, gameState);
-      console.log('[DIAGNOSTIC_LOG] State before passing turn:', JSON.stringify(gameState, null, 2));
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
     return { success: true, gameState };
