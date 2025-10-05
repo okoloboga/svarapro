@@ -679,8 +679,10 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
-    // Очищаем таймер при любом действии игрока
-    this.clearTurnTimer(roomId);
+    // Очищаем таймер при любом действии игрока (кроме look)
+    if (action !== 'look') {
+      this.clearTurnTimer(roomId);
+    }
 
     // Сбрасываем счетчик бездействия при любом активном действии
     if (player.inactivityCount && player.inactivityCount > 0) {
@@ -690,10 +692,12 @@ export class GameService {
       );
     }
 
+    // Проверяем, что это действительно ход игрока
+    if (gameState.currentPlayerIndex !== playerIndex) {
+      return { success: false, error: 'Сейчас не ваш ход' };
+    }
+
     if (action === 'fold') {
-      if (gameState.currentPlayerIndex !== playerIndex) {
-        return { success: false, error: 'Сейчас не ваш ход' };
-      }
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
@@ -706,10 +710,6 @@ export class GameService {
         error:
           'После просмотра карт вы можете только повысить ставку, уравнять или сбросить карты',
       };
-    }
-
-    if (gameState.currentPlayerIndex !== playerIndex) {
-      return { success: false, error: 'Сейчас не ваш ход' };
     }
 
     const { canPerform, error } = this.bettingService.canPerformAction(
@@ -934,6 +934,13 @@ export class GameService {
           message: `Игрок ${player.username} посмотрел карты и имеет ${calculatedScore} очков`,
         };
         gameState.log.push(lookAction);
+
+        // Устанавливаем время начала хода и запускаем таймер
+        gameState.turnStartTime = Date.now();
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.startTurnTimer(roomId, currentPlayer.id);
+        }
         break;
       }
     }

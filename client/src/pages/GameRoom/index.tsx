@@ -581,10 +581,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Сбрасываем таймер при смене игрока
   useEffect(() => {
     if (gameState?.currentPlayerIndex !== undefined) {
-      // Сбрасываем таймер при смене игрока
-      setTurnTimer(calculateRemainingTime());
+      // Если turnStartTime установлен - используем его
+      if (gameState.turnStartTime) {
+        setTurnTimer(calculateRemainingTime());
+      } else {
+        // Если не установлен - устанавливаем полное время
+        setTurnTimer(TURN_DURATION_SECONDS);
+      }
     }
-  }, [gameState?.currentPlayerIndex, calculateRemainingTime]);
+  }, [gameState?.currentPlayerIndex, gameState?.turnStartTime, calculateRemainingTime]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
