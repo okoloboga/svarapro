@@ -1073,6 +1073,40 @@ export class GameService {
           updatedPlayer,
           { hasLookedAndMustAct: false },
         );
+
+        // Добавляем логику смены игрока для raise в blind_betting
+        console.log(`[BLIND_BETTING_DEBUG] Raise action completed, changing turn`);
+        const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
+          gameState.players,
+          gameState.currentPlayerIndex,
+        );
+
+        // Проверяем, будет ли следующий игрок якорем
+        let anchorPlayerIndex: number | undefined = undefined;
+        if (gameState.lastRaiseIndex !== undefined) {
+          anchorPlayerIndex = gameState.lastRaiseIndex;
+        } else if (gameState.lastBlindBettorIndex !== undefined) {
+          anchorPlayerIndex = gameState.lastBlindBettorIndex;
+        } else {
+          anchorPlayerIndex = gameState.dealerIndex;
+        }
+
+        // Если следующий игрок - якорь, то круг завершается
+        if (aboutToActPlayerIndex === anchorPlayerIndex) {
+          console.log(`[BLIND_BETTING_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
+          await this.endBettingRound(roomId, gameState);
+          return { success: true, gameState };
+        } else {
+          console.log(`[BLIND_BETTING_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
+          gameState.currentPlayerIndex = aboutToActPlayerIndex;
+          // Устанавливаем время начала хода и запускаем таймер
+          gameState.turnStartTime = Date.now();
+          const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+          if (currentPlayer) {
+            console.log(`[BLIND_BETTING_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
+            this.startTurnTimer(roomId, currentPlayer.id);
+          }
+        }
         break;
       }
     }
