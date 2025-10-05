@@ -1096,6 +1096,12 @@ export class GameService {
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      // Устанавливаем время начала хода и запускаем таймер
+      gameState.turnStartTime = Date.now();
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (currentPlayer) {
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
       await this.redisService.setGameState(roomId, gameState);
       console.log('[DIAGNOSTIC_LOG] State before passing turn:', JSON.stringify(gameState, null, 2));
       await this.redisService.publishGameUpdate(roomId, gameState);
