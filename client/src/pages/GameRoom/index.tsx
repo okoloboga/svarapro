@@ -581,11 +581,15 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
   // Сбрасываем таймер при смене игрока
   useEffect(() => {
     if (gameState?.currentPlayerIndex !== undefined) {
+      console.log(`[CLIENT_TIMER_DEBUG] Player change detected. currentPlayerIndex: ${gameState.currentPlayerIndex}, turnStartTime: ${gameState.turnStartTime}`);
       // Если turnStartTime установлен - используем его
       if (gameState.turnStartTime) {
-        setTurnTimer(calculateRemainingTime());
+        const remaining = calculateRemainingTime();
+        console.log(`[CLIENT_TIMER_DEBUG] Using turnStartTime, remaining: ${remaining}`);
+        setTurnTimer(remaining);
       } else {
         // Если не установлен - устанавливаем полное время
+        console.log(`[CLIENT_TIMER_DEBUG] No turnStartTime, setting full duration: ${TURN_DURATION_SECONDS}`);
         setTurnTimer(TURN_DURATION_SECONDS);
       }
     }

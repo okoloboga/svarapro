@@ -681,7 +681,10 @@ export class GameService {
 
     // Очищаем таймер при любом действии игрока (кроме look)
     if (action !== 'look') {
+      console.log(`[TIMER_DEBUG] Clearing timer for action: ${action}, player: ${telegramId}`);
       this.clearTurnTimer(roomId);
+    } else {
+      console.log(`[TIMER_DEBUG] NOT clearing timer for look action, player: ${telegramId}`);
     }
 
     // Сбрасываем счетчик бездействия при любом активном действии
@@ -693,7 +696,9 @@ export class GameService {
     }
 
     // Проверяем, что это действительно ход игрока
+    console.log(`[TURN_DEBUG] Action: ${action}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}, playerId: ${telegramId}`);
     if (gameState.currentPlayerIndex !== playerIndex) {
+      console.log(`[TURN_DEBUG] ERROR: Not player's turn. Expected: ${gameState.currentPlayerIndex}, got: ${playerIndex}`);
       return { success: false, error: 'Сейчас не ваш ход' };
     }
 
@@ -936,10 +941,14 @@ export class GameService {
         gameState.log.push(lookAction);
 
         // Устанавливаем время начала хода и запускаем таймер
+        console.log(`[LOOK_DEBUG] Setting turnStartTime for look action, player: ${player.id}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
         gameState.turnStartTime = Date.now();
         const currentPlayer = gameState.players[gameState.currentPlayerIndex];
         if (currentPlayer) {
+          console.log(`[LOOK_DEBUG] Starting timer for player: ${currentPlayer.id}`);
           this.startTurnTimer(roomId, currentPlayer.id);
+        } else {
+          console.log(`[LOOK_DEBUG] ERROR: No current player found at index ${gameState.currentPlayerIndex}`);
         }
         break;
       }
