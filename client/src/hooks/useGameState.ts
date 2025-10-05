@@ -37,6 +37,11 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     });
     
     socket.on('game_update', (state: GameState) => {
+      console.log(`[GAME_UPDATE_DEBUG] Received game update, log length: ${state.log.length}`);
+      if (state.log.length > 0) {
+        const lastAction = state.log[state.log.length - 1];
+        console.log(`[GAME_UPDATE_DEBUG] Last action: ${lastAction.type} by ${lastAction.telegramId}`);
+      }
       setGameState(state);
       setLoading(false);
       setIsProcessing(false);
