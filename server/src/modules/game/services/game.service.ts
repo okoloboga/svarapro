@@ -1087,7 +1087,12 @@ export class GameService {
     const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
     const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
 
+    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.length}, playersWhoCanAct: ${playersWhoCanAct.length}`);
+    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.map(p => `${p.username}(${p.id})`).join(', ')}`);
+    console.log(`[ROUND_DEBUG] Players who can act: ${playersWhoCanAct.map(p => `${p.username}(${p.id})`).join(', ')}`);
+
     if (playersWhoCanAct.length < 2) {
+        console.log(`[ROUND_DEBUG] Ending betting round - not enough players who can act`);
         await this.endBettingRound(roomId, gameState);
         return { success: true, gameState };
     }
