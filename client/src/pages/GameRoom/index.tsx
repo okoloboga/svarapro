@@ -571,9 +571,13 @@ export function GameRoom({ roomId, balance, socket, setCurrentPage, userData, pa
     
     const lastAction = gameState.log[gameState.log.length - 1];
     if (lastAction && lastAction.telegramId === currentUserId) {
+      console.log(`[CLIENT_TIMER_DEBUG] Last action by current user: ${lastAction.type}`);
       // Очищаем таймер только при ставках, но не при look
       if (lastAction.type !== 'look') {
+        console.log(`[CLIENT_TIMER_DEBUG] Clearing timer for action: ${lastAction.type}`);
         setTurnTimer(0);
+      } else {
+        console.log(`[CLIENT_TIMER_DEBUG] NOT clearing timer for look action`);
       }
     }
   }, [gameState?.log, currentUserId]);
