@@ -405,9 +405,16 @@ export class GameLogicService {
         true,
       );
       if (gameState.currentPlayerIndex === expectedTurnAfterDealer) {
-        const allActed = activePlayers.every(
-          (p) => getPlayerTotalBet(gameState, p.id) > 0 || p.hasLooked,
-        );
+        // В фазе blind_betting игрок должен либо играть вслепую, либо посмотреть И сделать ставку
+        const allActed = activePlayers.every((p) => {
+          if (gameState.status === 'blind_betting') {
+            // В blind_betting: либо не смотрел карты, либо смотрел И сделал ставку
+            return !p.hasLooked || (p.hasLooked && p.hasLookedAndMustAct === false);
+          } else {
+            // В других фазах: либо сделал ставку, либо посмотрел карты
+            return getPlayerTotalBet(gameState, p.id) > 0 || p.hasLooked;
+          }
+        });
         if (allActed) return true;
       }
     }
