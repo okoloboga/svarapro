@@ -15,6 +15,8 @@ interface AnimatedCard {
 
 interface Props extends HTMLAttributes<HTMLDivElement> {}
 
+const MAX_ROUNDS = 3;
+
 export function CardsDeck({ className }: Props) {
   const { changeDeckPosition, playersPositions, deckPosition } =
     useContext(PositionsContext);
@@ -43,6 +45,8 @@ export function CardsDeck({ className }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!isStartDistribution) return;
+
     const cards: AnimatedCard[] = [];
 
     let counter = 0;
@@ -50,7 +54,7 @@ export function CardsDeck({ className }: Props) {
     const CARD_WIDTH = 32;
     const CARD_HEIGHT = 44;
 
-    for (let round = 0; round < 4; round++) {
+    for (let round = 0; round < MAX_ROUNDS; round++) {
       for (
         let playerIndex = 0;
         playerIndex < playersPositions.length;
@@ -58,14 +62,15 @@ export function CardsDeck({ className }: Props) {
       ) {
         const pos = playersPositions[playerIndex];
 
-        const offsetX = round * 4;
+        const offsetX = round * MAX_ROUNDS;
 
-        const targetX = pos.x + CARD_WIDTH - 30 + offsetX;
-        const targetY = pos.y - CARD_HEIGHT + 85 / 2;
+        const targetXLeft = pos.x + CARD_WIDTH - 30 + offsetX;
+        const targetXRight = pos.x + CARD_WIDTH + 60 + offsetX;
+        const targetY = pos.y - CARD_HEIGHT + 85;
 
         cards.push({
           id: counter,
-          x: targetX,
+          x: pos.cardSide === "left" ? targetXLeft : targetXRight,
           y: targetY,
           delay: counter * 300,
           animate: false,
@@ -80,11 +85,7 @@ export function CardsDeck({ className }: Props) {
     requestAnimationFrame(() => {
       setAnimatedCards(cards.map((c) => ({ ...c, animate: true })));
     });
-  }, [playersPositions, deckPosition]);
-
-  useEffect(() => {
-    if (!isStartDistribution) return;
-  }, [isStartDistribution]);
+  }, [playersPositions, deckPosition, isStartDistribution]);
 
   return (
     <div

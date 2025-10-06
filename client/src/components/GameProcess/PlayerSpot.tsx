@@ -182,10 +182,11 @@ export function PlayerSpot({
       if (!ref.current) return;
 
       const playerPosition = ref.current.getBoundingClientRect();
-
       addPlayerPosition({
         x: playerPosition.x,
         y: playerPosition.y,
+        cardSide, 
+        openCardsPosition
       });
 
       setPlayerPosition({

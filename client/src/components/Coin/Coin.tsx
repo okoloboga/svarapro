@@ -9,7 +9,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 export const Coin = ({className, classNameImage, ...props}: Props) => {
     return(
         <div className={cn(className)} {...props}>
-            <img className={cn('min-w-[15px] w-[15px] h-[13px]', classNameImage)} src={coinImage} alt="Coin" />
+            <img className={cn('min-w-[20px] w-[20px] h-[16px]', classNameImage)} src={coinImage} alt="Coin" />
         </div>
     )
 }

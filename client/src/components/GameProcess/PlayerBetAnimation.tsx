@@ -30,40 +30,48 @@ export const PlayerBetAnimation = ({
   const [isPlayAnimation, setIsPlayAnimation] = useState(false);
   const chipsCount = getChipsCountFromBet(bet || 0);
   const [animatedChips, setAnimatedChips] = useState<AnimatedChip[]>([]);
+  const [isStartAnimation, setIsStartAnimation] = useState(Boolean(bet) || false);
 
   const playAnimation = () => setIsPlayAnimation(true);
   const stopAnimation = () => setIsPlayAnimation(false);
 
   useEffect(() => {
-    if (!bet) return;
+    if(!bet) return;
+
+    setIsStartAnimation(true);
+  }, [bet])
+
+  useEffect(() => {
+    if (!isStartAnimation) return;
 
     playAnimation();
 
     const timeout = setTimeout(() => {
       stopAnimation();
-    }, 5000); // чуть дольше, чтобы успели исчезнуть
+    }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [bet]);
+  }, [isStartAnimation]);
 
   useEffect(() => {
     if (!bidsPosition || !chipsCount) return;
 
     const chips: AnimatedChip[] = [];
-    const CARD_WIDTH = 32;
-    const CARD_HEIGHT = 44;
+    const CHIP_WIDTH = 15;
+    const CHIP_HEIGHT = 13;
 
     for (let i = 0; i < chipsCount; i++) {
-      const offsetX = i * 4;
-      const offsetY = -i * 3;
+      const randomOffsetX = (Math.random() - 0.5) * 30;
+      const randomOffsetY = (Math.random() - 0.5) * 30;
+      const randomDelay = Math.random() * 80;
 
       chips.push({
         id: i,
         startX: playerPosition.x,
         startY: playerPosition.y,
-        targetX: bidsPosition.x + CARD_WIDTH - 30 + offsetX,
-        targetY: bidsPosition.y - CARD_HEIGHT + 85 / 2 + offsetY,
-        delay: i * 50,
+        targetX: bidsPosition.x + CHIP_WIDTH + randomOffsetX,
+        targetY: bidsPosition.y - CHIP_HEIGHT / 2 + randomOffsetY,
+        delay: randomDelay,
         animate: false,
         faded: false,
       });
@@ -71,14 +79,14 @@ export const PlayerBetAnimation = ({
 
     setAnimatedChips(chips);
 
-    // Старт анимации движения
+    // Запускаем анимацию
     requestAnimationFrame(() => {
       setAnimatedChips((prev) => prev.map((c) => ({ ...c, animate: true })));
     });
 
     const fadeTimeout = setTimeout(() => {
       setAnimatedChips((prev) => prev.map((c) => ({ ...c, faded: true })));
-    }, 700);
+    }, 800);
 
     return () => clearTimeout(fadeTimeout);
   }, [bidsPosition, chipsCount, playerPosition]);
@@ -103,9 +111,9 @@ export const PlayerBetAnimation = ({
                 : "translate(0, 0)",
               opacity: chip.faded ? 0 : 1,
               transition: `
-                transform 0.8s cubic-bezier(0.25, 1, 0.5, 1),
-                opacity 0.8s ease ${chip.delay + 3200}ms
-              `,
+  transform 2s cubic-bezier(0.25, 1, 0.5, 1),
+  opacity 0.5s ease ${chip.delay + 3000}ms
+`,
               transitionDelay: `${chip.delay}ms`,
             }}
           />,

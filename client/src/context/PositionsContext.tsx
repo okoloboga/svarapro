@@ -6,13 +6,18 @@ export interface PositionElement {
   y: number;
 }
 
+export interface PlayerPosition extends PositionElement {
+  cardSide?: "left" | "right";
+  openCardsPosition?: "top" | "bottom" | "left" | "right";
+}
+
 interface PositionsContextState {
   deckPosition: WithNull<PositionElement>;
-  playersPositions: PositionElement[];
+  playersPositions: PlayerPosition[];
   bidsPosition: WithNull<PositionElement>;
   changeDeckPosition: (position: WithNull<PositionElement>) => void;
-  changePlayersPositions: (positions: PositionElement[]) => void;
-  addPlayerPosition: (position: PositionElement) => void;
+  changePlayersPositions: (positions: PlayerPosition[]) => void;
+  addPlayerPosition: (position: PlayerPosition) => void;
   changeBidsPosition: (position: WithNull<PositionElement>) => void;
 }
 
@@ -33,26 +38,27 @@ interface Props {
 export function PositionsProvider({ children }: Props) {
   const [deckPosition, setDeckPosition] =
     useState<WithNull<PositionElement>>(null);
-  const [playersPositions, setPlayersPositions] = useState<PositionElement[]>(
+  const [playersPositions, setPlayersPositions] = useState<PlayerPosition[]>(
     []
   );
-  const [bidsPosition, setBidsPosition] = useState<WithNull<PositionElement>>(null)
+  const [bidsPosition, setBidsPosition] =
+    useState<WithNull<PositionElement>>(null);
 
   const changeDeckPosition = (position: WithNull<PositionElement>) => {
     setDeckPosition(position);
   };
 
-  const changePlayersPositions = (positions: PositionElement[]) => {
+  const changePlayersPositions = (positions: PlayerPosition[]) => {
     setPlayersPositions(positions);
   };
 
-  const addPlayerPosition = (position: PositionElement) => {
+  const addPlayerPosition = (position: PlayerPosition) => {
     setPlayersPositions((prev) => [...prev, position]);
   };
 
   const changeBidsPosition = (position: WithNull<PositionElement>) => {
     setBidsPosition(position);
-  }
+  };
 
   return (
     <PositionsContext.Provider
@@ -62,8 +68,8 @@ export function PositionsProvider({ children }: Props) {
         changeDeckPosition,
         changePlayersPositions,
         addPlayerPosition,
-        bidsPosition, 
-        changeBidsPosition
+        bidsPosition,
+        changeBidsPosition,
       }}
     >
       {children}
