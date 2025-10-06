@@ -8,6 +8,7 @@ import { Coin } from "../Coin/Coin";
 interface Props extends HTMLAttributes<HTMLDivElement> {
   bet?: number;
   playerPosition: PositionElement;
+  reverse?: boolean;
 }
 
 interface AnimatedChip {
@@ -25,21 +26,24 @@ export const PlayerBetAnimation = ({
   className,
   bet,
   playerPosition,
+  reverse = false,
 }: Props) => {
   const { bidsPosition } = useContext(PositionsContext);
   const [isPlayAnimation, setIsPlayAnimation] = useState(false);
   const chipsCount = getChipsCountFromBet(bet || 0);
   const [animatedChips, setAnimatedChips] = useState<AnimatedChip[]>([]);
-  const [isStartAnimation, setIsStartAnimation] = useState(Boolean(bet) || false);
+  const [isStartAnimation, setIsStartAnimation] = useState(
+    Boolean(bet) || false
+  );
 
   const playAnimation = () => setIsPlayAnimation(true);
   const stopAnimation = () => setIsPlayAnimation(false);
 
   useEffect(() => {
-    if(!bet) return;
+    if (!bet) return;
 
     setIsStartAnimation(true);
-  }, [bet])
+  }, [bet]);
 
   useEffect(() => {
     if (!isStartAnimation) return;
@@ -65,12 +69,26 @@ export const PlayerBetAnimation = ({
       const randomOffsetY = (Math.random() - 0.5) * 30;
       const randomDelay = Math.random() * 80;
 
+      // меняем старт и цель в зависимости от reverse
+      const startX = reverse
+        ? bidsPosition.x + CHIP_WIDTH + randomOffsetX
+        : playerPosition.x + 60;
+      const startY = reverse
+        ? bidsPosition.y - CHIP_HEIGHT / 2 + randomOffsetY
+        : playerPosition.y + 60;
+      const targetX = reverse
+        ? playerPosition.x + 60
+        : bidsPosition.x + CHIP_WIDTH + randomOffsetX;
+      const targetY = reverse
+        ? playerPosition.y + 60
+        : bidsPosition.y - CHIP_HEIGHT / 2 + randomOffsetY;
+
       chips.push({
         id: i,
-        startX: playerPosition.x,
-        startY: playerPosition.y,
-        targetX: bidsPosition.x + CHIP_WIDTH + randomOffsetX,
-        targetY: bidsPosition.y - CHIP_HEIGHT / 2 + randomOffsetY,
+        startX,
+        startY,
+        targetX,
+        targetY,
         delay: randomDelay,
         animate: false,
         faded: false,
@@ -79,7 +97,6 @@ export const PlayerBetAnimation = ({
 
     setAnimatedChips(chips);
 
-    // Запускаем анимацию
     requestAnimationFrame(() => {
       setAnimatedChips((prev) => prev.map((c) => ({ ...c, animate: true })));
     });
@@ -89,7 +106,7 @@ export const PlayerBetAnimation = ({
     }, 800);
 
     return () => clearTimeout(fadeTimeout);
-  }, [bidsPosition, chipsCount, playerPosition]);
+  }, [bidsPosition, chipsCount, playerPosition, reverse]);
 
   if (!isPlayAnimation) return null;
 

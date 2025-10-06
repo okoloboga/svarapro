@@ -655,7 +655,7 @@ export function PlayerSpot({
               {
                 "-right-[60px]": cardSide === "right",
                 "-left-[60px]": cardSide === "left",
-                "left-1/2 -translate-x-[22%]":
+                "left-[53%] -translate-x-[22%]":
                   openCardsPosition === "bottom" || openCardsPosition === "top",
                 "-bottom-16 top-auto": openCardsPosition === "bottom",
                 "-top-11": openCardsPosition === "top",

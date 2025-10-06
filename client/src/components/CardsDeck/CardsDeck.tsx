@@ -66,7 +66,7 @@ export function CardsDeck({ className }: Props) {
 
         const targetXLeft = pos.x + CARD_WIDTH - 30 + offsetX;
         const targetXRight = pos.x + CARD_WIDTH + 60 + offsetX;
-        const targetY = pos.y - CARD_HEIGHT + 85;
+        const targetY = pos.y - CARD_HEIGHT + 92;
 
         cards.push({
           id: counter,
@@ -113,7 +113,7 @@ export function CardsDeck({ className }: Props) {
               style={{
                 zIndex: 30,
                 left: deckPosition?.x + "px",
-                top: deckPosition?.y + "px",
+                top: deckPosition?.y - 6 + "px",
                 transform: card.animate
                   ? `translate(${card.x - (deckPosition?.x || 0)}px, ${
                       card.y - (deckPosition?.y || 0)
