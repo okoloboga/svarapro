@@ -9,6 +9,7 @@ import { TURN_DURATION_SECONDS } from "@/constants";
 import { PositionElement, PositionsContext } from "@/context/PositionsContext";
 import { PlayerBetAnimation } from "./PlayerBetAnimation";
 import { WithNull } from "@/types/mainTypes";
+import { cn } from "@/utils/cn";
 
 const formatAmount = (amount: number): string => {
   const num = Number(amount);
@@ -164,19 +165,6 @@ export function PlayerSpot({
     transformOrigin: "center center",
   };
 
-  const cardDeckStyle: React.CSSProperties = {
-    position: "absolute",
-    top: "40%",
-    transform: "translateY(-50%)",
-    zIndex: 30,
-  };
-
-  if (cardSide === "left") {
-    cardDeckStyle.right = "45px"; // было 50px, стало 45px (на 5px ближе)
-  } else {
-    cardDeckStyle.left = "45px"; // было 50px, стало 45px (на 5px ближе)
-  }
-
   useEffect(() => {
     const onResizeHandler = () => {
       if (!ref.current) return;
@@ -185,8 +173,8 @@ export function PlayerSpot({
       addPlayerPosition({
         x: playerPosition.x,
         y: playerPosition.y,
-        cardSide, 
-        openCardsPosition
+        cardSide,
+        openCardsPosition,
       });
 
       setPlayerPosition({
@@ -661,7 +649,19 @@ export function PlayerSpot({
             </div>
           )}
         {!hasFolded && (
-          <div style={cardDeckStyle} className="flex items-center space-x-2">
+          <div
+            className={cn(
+              "absolute z-30 top-10 -translate-y-1/2 flex items-center space-x-2",
+              {
+                "-right-[60px]": cardSide === "right",
+                "-left-[60px]": cardSide === "left",
+                "left-1/2 -translate-x-[22%]":
+                  openCardsPosition === "bottom" || openCardsPosition === "top",
+                "-bottom-16 top-auto": openCardsPosition === "bottom",
+                "-top-11": openCardsPosition === "top",
+              }
+            )}
+          >
             {cardSide === "left" && !isCurrentUser && TotalBetComponent}
             {!(isCurrentUser && hasLooked) &&
               gameState?.status !== "finished" &&
@@ -737,7 +737,12 @@ export function PlayerSpot({
           )}
       </div>
 
-      {playerPosition && <PlayerBetAnimation bet={player.currentBet} playerPosition={playerPosition} />}
+      {playerPosition && (
+        <PlayerBetAnimation
+          bet={player.currentBet}
+          playerPosition={playerPosition}
+        />
+      )}
     </div>
   );
 }

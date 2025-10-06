@@ -90,7 +90,7 @@ export function CardsDeck({ className }: Props) {
   return (
     <div
       className={cn(
-        "absolute bottom-24 left-1/2 -translate-x-1/2 z-30",
+        "absolute bottom-40 left-1/2 -translate-x-1/2 z-30",
         className
       )}
       ref={ref}
