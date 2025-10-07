@@ -255,23 +255,35 @@ export function PlayerSpot({
   );
 
   useEffect(() => {
-    if (!playerPosition) return;
-    if (!gameState?.status) return;
+    if (!playerPosition || !gameState?.status) return;
 
     const bettingStatuses: GameStatuses[] = ["blind_betting", "betting"];
 
+    // Если игрок делает ставку
     if (
       player.currentBet > lastBet &&
       bettingStatuses.includes(gameState.status as GameStatuses)
     ) {
       setShowBetAnimation(true);
-
       const timeout = setTimeout(() => setShowBetAnimation(false), 2000);
       return () => clearTimeout(timeout);
     }
 
+    // Если игрок выиграл и нужно вернуть фишки
+    if (gameState.status === "finished" && winAmount > 0) {
+      setShowBetAnimation(true);
+      const timeout = setTimeout(() => setShowBetAnimation(false), 2500);
+      return () => clearTimeout(timeout);
+    }
+
     setLastBet(player.currentBet);
-  }, [player.currentBet, lastBet, gameState?.status, playerPosition]);
+  }, [
+    player.currentBet,
+    lastBet,
+    gameState?.status,
+    playerPosition,
+    winAmount,
+  ]);
 
   const hue = progress * 1.2;
   const progressBarColor = `hsl(${hue}, 100%, 50%)`;
@@ -760,9 +772,11 @@ export function PlayerSpot({
 
       {playerPosition && gameState?.status && (
         <PlayerBetAnimation
-          bet={player.currentBet}
+          key={player.currentBet + winAmount + gameState.status}
+          bet={player.currentBet || winAmount}
           playerPosition={playerPosition}
           showAnimation={showBetAnimation}
+          reverse={gameState.status === "finished" && winAmount > 0}
         />
       )}
     </div>
