@@ -1115,9 +1115,7 @@ export function GameRoom({
       <div className="flex-grow relative p-4">
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
-            {gameState.status && (
-              <CardsDeck gameStatus={gameState.status} />
-            )}
+            {gameState.status && <CardsDeck gameStatus={gameState.status} />}
             <Bids />
 
             <div className="flex-shrink-0 relative z-10">

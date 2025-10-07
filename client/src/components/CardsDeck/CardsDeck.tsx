@@ -26,38 +26,36 @@ export function CardsDeck({ className, gameStatus }: Props) {
     useContext(PositionsContext);
   const cardsDeckArray = new Array(6).fill(1);
   const ref = useRef<HTMLDivElement>(null);
-  const [isStartDistribution, setIsStartDistribution] = useState(false);
   const [animatedCards, setAnimatedCards] = useState<AnimatedCard[]>([]);
   const [isDeckVisible, setIsDeckVisible] = useState(false);
-
+  const [isStartDistribution, setIsStartDistribution] = useState(false);
+  const distributionTriggered = useRef(false);
   const { playSound } = useSoundContext();
 
   useEffect(() => {
     const onResizeHandler = () => {
       if (!ref.current) return;
-
-      const refPosition = ref.current.getBoundingClientRect();
-
-      changeDeckPosition({
-        x: refPosition.x,
-        y: refPosition.y,
-      });
+      const rect = ref.current.getBoundingClientRect();
+      changeDeckPosition({ x: rect.x, y: rect.y });
     };
-
     onResizeHandler();
-
     window.addEventListener("resize", onResizeHandler);
-
     return () => window.removeEventListener("resize", onResizeHandler);
   }, []);
+
+  useEffect(() => {
+    if (gameStatus === "ante" && !distributionTriggered.current) {
+      setIsDeckVisible(true);
+      setIsStartDistribution(true);
+      distributionTriggered.current = true;
+    }
+  }, [gameStatus]);
 
   useEffect(() => {
     if (!isStartDistribution || !isDeckVisible) return;
 
     const cards: AnimatedCard[] = [];
-
     let counter = 0;
-
     const CARD_WIDTH = 32;
     const CARD_HEIGHT = 44;
 
@@ -68,9 +66,7 @@ export function CardsDeck({ className, gameStatus }: Props) {
         playerIndex++
       ) {
         const pos = playersPositions[playerIndex];
-
         const offsetX = round * MAX_ROUNDS;
-
         const targetXLeft = pos.x + CARD_WIDTH - 30 + offsetX;
         const targetXRight = pos.x + CARD_WIDTH + 60 + offsetX;
         const targetY = pos.y - CARD_HEIGHT + 92;
@@ -82,21 +78,17 @@ export function CardsDeck({ className, gameStatus }: Props) {
           delay: counter * 300,
           animate: false,
         });
-
         counter++;
       }
     }
 
     setAnimatedCards(cards);
-
-    requestAnimationFrame(() => {
-      setAnimatedCards(cards.map((c) => ({ ...c, animate: true })));
-    });
+    requestAnimationFrame(() =>
+      setAnimatedCards(cards.map((c) => ({ ...c, animate: true })))
+    );
 
     cards.forEach((card) => {
-      setTimeout(() => {
-        playSound("deal");
-      }, card.delay);
+      setTimeout(() => playSound("deal"), card.delay);
     });
 
     const lastCard = cards[cards.length - 1];

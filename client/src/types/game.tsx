@@ -1,10 +1,12 @@
+export type RoomStatuses = 'waiting' | 'playing' | 'finished'
+
 // Существующий тип Room
 export interface Room {
   roomId: string;
   minBet: number;
   type: 'public' | 'private';
   players: string[];
-  status: 'waiting' | 'playing' | 'finished';
+  status: RoomStatuses;
   maxPlayers: number;
   createdAt: Date;
   finishedAt?: Date;
