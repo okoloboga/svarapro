@@ -81,6 +81,8 @@ export function PlayerSpot({
   const ref = useRef<HTMLDivElement>(null);
   const [playerPosition, setPlayerPosition] =
     useState<WithNull<PositionElement>>(null);
+  const [showBetAnimation, setShowBetAnimation] = useState(false);
+  const [lastBet, setLastBet] = useState(player.currentBet);
 
   const buttonTextStyle: React.CSSProperties = {
     fontWeight: 700,
@@ -251,6 +253,25 @@ export function PlayerSpot({
       </div>
     </div>
   );
+
+  useEffect(() => {
+    if (!playerPosition) return;
+    if (!gameState?.status) return;
+
+    const bettingStatuses: GameStatuses[] = ["blind_betting", "betting"];
+
+    if (
+      player.currentBet > lastBet &&
+      bettingStatuses.includes(gameState.status as GameStatuses)
+    ) {
+      setShowBetAnimation(true);
+
+      const timeout = setTimeout(() => setShowBetAnimation(false), 2000);
+      return () => clearTimeout(timeout);
+    }
+
+    setLastBet(player.currentBet);
+  }, [player.currentBet, lastBet, gameState?.status, playerPosition]);
 
   const hue = progress * 1.2;
   const progressBarColor = `hsl(${hue}, 100%, 50%)`;
@@ -741,7 +762,7 @@ export function PlayerSpot({
         <PlayerBetAnimation
           bet={player.currentBet}
           playerPosition={playerPosition}
-          gameStatus={gameState.status as GameStatuses}
+          showAnimation={showBetAnimation}
         />
       )}
     </div>
