@@ -28,7 +28,6 @@ import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useAppBackButton } from "@/hooks/useAppBackButton";
 import { useTranslation } from "react-i18next";
 import WebApp from "@twa-dev/sdk";
-import { gameStateMocks } from "@/mocks/gameMocks";
 import { CardsDeck } from "@/components/CardsDeck/CardsDeck";
 import { Bids } from "@/components/Bids/Bids";
 
@@ -150,6 +149,7 @@ export function GameRoom({
 }: GameRoomPropsExtended) {
   const { t } = useTranslation("common");
   const {
+    gameState,
     loading,
     error,
     isSeated,
@@ -158,7 +158,6 @@ export function GameRoom({
     retryConnection,
     actions,
   } = useGameState(roomId, socket);
-  const gameState = gameStateMocks;
   const { isLoading: assetsLoading } = useAssetPreloader();
   const [showBetSlider, setShowBetSlider] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -652,6 +651,13 @@ export function GameRoom({
     !isProcessing
   );
 
+  // Функция для вычисления оставшегося времени на основе turnStartTime
+  const calculateRemainingTime = useCallback(() => {
+    if (!gameState?.turnStartTime) return TURN_DURATION_SECONDS;
+    const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+    return Math.max(0, TURN_DURATION_SECONDS - elapsed);
+  }, [gameState?.turnStartTime]);
+
   useEffect(() => {
     const activeTurn =
       gameState &&
@@ -665,18 +671,16 @@ export function GameRoom({
       // Сбрасываем таймер только если это новый ход
       if (turnKey !== currentTurnRef.current) {
         currentTurnRef.current = turnKey;
-        setTurnTimer(TURN_DURATION_SECONDS);
+        setTurnTimer(calculateRemainingTime());
       }
 
       const interval = setInterval(() => {
-        setTurnTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        const remaining = calculateRemainingTime();
+        setTurnTimer(remaining);
+        if (remaining <= 0) {
+          clearInterval(interval);
+        }
+      }, 100); // Обновляем каждые 100мс для плавности
       return () => clearInterval(interval);
     } else {
       // Если ход не активен, сбрасываем таймер в начальное значение
@@ -686,11 +690,13 @@ export function GameRoom({
     gameState?.status,
     gameState?.currentPlayerIndex,
     gameState?.isAnimating,
+    gameState?.turnStartTime,
     isCurrentUserTurn,
     currentUserId,
     activeGamePhases,
     effectiveGameStatus,
     gameState,
+    calculateRemainingTime,
   ]);
 
   // Separate effect for auto-fold when timer reaches 0
@@ -699,6 +705,55 @@ export function GameRoom({
       actions.autoFold();
     }
   }, [turnTimer, isCurrentUserTurn, actions]);
+
+  // Очищаем таймер при ставках игрока (но не при look)
+  useEffect(() => {
+    if (!gameState?.log) return;
+
+    const lastAction = gameState.log[gameState.log.length - 1];
+    if (lastAction && lastAction.telegramId === currentUserId) {
+      console.log(
+        `[CLIENT_TIMER_DEBUG] Last action by current user: ${lastAction.type}`
+      );
+      // Очищаем таймер только при ставках, но не при look
+      if (lastAction.type !== "look") {
+        console.log(
+          `[CLIENT_TIMER_DEBUG] Clearing timer for action: ${lastAction.type}`
+        );
+        setTurnTimer(0);
+      } else {
+        console.log(`[CLIENT_TIMER_DEBUG] NOT clearing timer for look action`);
+      }
+    }
+  }, [gameState?.log, currentUserId]);
+
+  // Сбрасываем таймер при смене игрока
+  useEffect(() => {
+    if (gameState?.currentPlayerIndex !== undefined) {
+      console.log(
+        `[CLIENT_TIMER_DEBUG] Player change detected. currentPlayerIndex: ${gameState.currentPlayerIndex}, turnStartTime: ${gameState.turnStartTime}`
+      );
+
+      // Если turnStartTime установлен - используем его
+      if (gameState.turnStartTime) {
+        const remaining = calculateRemainingTime();
+        console.log(
+          `[CLIENT_TIMER_DEBUG] Using turnStartTime, remaining: ${remaining}`
+        );
+        setTurnTimer(remaining);
+      } else {
+        // Если не установлен - устанавливаем полное время
+        console.log(
+          `[CLIENT_TIMER_DEBUG] No turnStartTime, setting full duration: ${TURN_DURATION_SECONDS}`
+        );
+        setTurnTimer(TURN_DURATION_SECONDS);
+      }
+    }
+  }, [
+    gameState?.currentPlayerIndex,
+    gameState?.turnStartTime,
+    calculateRemainingTime,
+  ]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
@@ -859,7 +914,8 @@ export function GameRoom({
     }
   }, [pageData, isSeated, gameState, actions, userData, isSittingDown]);
 
-  // if (loading || assetsLoading) return <LoadingPage isLoading={loading || assetsLoading} />;
+  if (loading || assetsLoading)
+    return <LoadingPage isLoading={loading || assetsLoading} />;
 
   if (error) {
     return (
@@ -1059,7 +1115,9 @@ export function GameRoom({
       <div className="flex-grow relative p-4">
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
-            <CardsDeck />
+            {gameState.status && (
+              <CardsDeck gameStatus={gameState.status} />
+            )}
             <Bids />
 
             <div className="flex-shrink-0 relative z-10">
@@ -1374,10 +1432,7 @@ export function GameRoom({
       </div>
 
       {/* NoConnect компонент для проблем с подключением */}
-      {/* <NoConnect 
-        isVisible={showNoConnect} 
-        onRetry={retryConnection}
-      /> */}
+      <NoConnect isVisible={showNoConnect} onRetry={retryConnection} />
     </div>
   );
 }

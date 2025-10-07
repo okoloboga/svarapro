@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from "react";
-import { Player } from "@/types/game";
+import { GameStatuses, Player } from "@/types/game";
 import { CardComponent } from "./CardComponent";
 import { ActionNotification } from "./ActionNotification";
 import defaultAvatar from "@/assets/main_logo.png";
@@ -737,10 +737,11 @@ export function PlayerSpot({
           )}
       </div>
 
-      {playerPosition && (
+      {playerPosition && gameState?.status && (
         <PlayerBetAnimation
           bet={player.currentBet}
           playerPosition={playerPosition}
+          gameStatus={gameState.status as GameStatuses}
         />
       )}
     </div>

@@ -4,6 +4,8 @@ import { BackCard } from "../BackCard/BackCard";
 import { cn } from "@/utils/cn";
 import { PositionsContext } from "@/context/PositionsContext";
 import { createPortal } from "react-dom";
+import { GameStatuses } from "@/types/game";
+import { useSoundContext } from "@/context/SoundContext";
 
 interface AnimatedCard {
   id: number;
@@ -13,17 +15,22 @@ interface AnimatedCard {
   animate: boolean;
 }
 
-interface Props extends HTMLAttributes<HTMLDivElement> {}
+interface Props extends HTMLAttributes<HTMLDivElement> {
+  gameStatus: GameStatuses;
+}
 
 const MAX_ROUNDS = 3;
 
-export function CardsDeck({ className }: Props) {
+export function CardsDeck({ className, gameStatus }: Props) {
   const { changeDeckPosition, playersPositions, deckPosition } =
     useContext(PositionsContext);
   const cardsDeckArray = new Array(6).fill(1);
   const ref = useRef<HTMLDivElement>(null);
-  const [isStartDistribution, setIsStartDistribution] = useState(true);
+  const [isStartDistribution, setIsStartDistribution] = useState(false);
   const [animatedCards, setAnimatedCards] = useState<AnimatedCard[]>([]);
+  const [isDeckVisible, setIsDeckVisible] = useState(false);
+
+  const { playSound } = useSoundContext();
 
   useEffect(() => {
     const onResizeHandler = () => {
@@ -39,13 +46,13 @@ export function CardsDeck({ className }: Props) {
 
     onResizeHandler();
 
-    document.addEventListener("resize", onResizeHandler);
+    window.addEventListener("resize", onResizeHandler);
 
-    return () => document.removeEventListener("resize", onResizeHandler);
+    return () => window.removeEventListener("resize", onResizeHandler);
   }, []);
 
   useEffect(() => {
-    if (!isStartDistribution) return;
+    if (!isStartDistribution || !isDeckVisible) return;
 
     const cards: AnimatedCard[] = [];
 
@@ -85,7 +92,24 @@ export function CardsDeck({ className }: Props) {
     requestAnimationFrame(() => {
       setAnimatedCards(cards.map((c) => ({ ...c, animate: true })));
     });
-  }, [playersPositions, deckPosition, isStartDistribution]);
+
+    cards.forEach((card) => {
+      setTimeout(() => {
+        playSound("deal");
+      }, card.delay);
+    });
+
+    const lastCard = cards[cards.length - 1];
+    const totalTime = lastCard.delay + 500;
+    const timeout = setTimeout(() => {
+      setIsDeckVisible(false);
+      setIsStartDistribution(false);
+    }, totalTime + 200);
+
+    return () => clearTimeout(timeout);
+  }, [playersPositions, deckPosition, isStartDistribution, isDeckVisible]);
+
+  if (!isDeckVisible) return null;
 
   return (
     <div
@@ -104,28 +128,29 @@ export function CardsDeck({ className }: Props) {
           />
         ))}
 
-        {animatedCards.map((card) => {
-          return createPortal(
-            <BackCard
-              key={card.id}
-              className="fixed w-8 h-11"
-              data-name="animate-card"
-              style={{
-                zIndex: 30,
-                left: deckPosition?.x + "px",
-                top: deckPosition?.y - 6 + "px",
-                transform: card.animate
-                  ? `translate(${card.x - (deckPosition?.x || 0)}px, ${
-                      card.y - (deckPosition?.y || 0)
-                    }px)`
-                  : "translate(0, 0)",
-                transition: "transform 0.5s ease",
-                transitionDelay: `${card.delay}ms`,
-              }}
-            />,
-            document.body
-          );
-        })}
+        {deckPosition &&
+          animatedCards.map((card) => {
+            return createPortal(
+              <BackCard
+                key={card.id}
+                className="fixed w-8 h-11"
+                data-name="animate-card"
+                style={{
+                  zIndex: 30,
+                  left: deckPosition.x + "px",
+                  top: deckPosition.y - 6 + "px",
+                  transform: card.animate
+                    ? `translate(${card.x - (deckPosition?.x || 0)}px, ${
+                        card.y - (deckPosition?.y || 0)
+                      }px)`
+                    : "translate(0, 0)",
+                  transition: "transform 0.5s ease",
+                  transitionDelay: `${card.delay}ms`,
+                }}
+              />,
+              document.body
+            );
+          })}
       </div>
     </div>
   );

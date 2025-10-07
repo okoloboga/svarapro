@@ -4,11 +4,13 @@ import { getChipsCountFromBet } from "@/utils/getChipsCountFromBet";
 import { HTMLAttributes, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Coin } from "../Coin/Coin";
+import { GameStatuses } from "@/types/game";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   bet?: number;
   playerPosition: PositionElement;
   reverse?: boolean;
+  gameStatus: GameStatuses;
 }
 
 interface AnimatedChip {
@@ -27,23 +29,16 @@ export const PlayerBetAnimation = ({
   bet,
   playerPosition,
   reverse = false,
+  gameStatus,
 }: Props) => {
   const { bidsPosition } = useContext(PositionsContext);
   const [isPlayAnimation, setIsPlayAnimation] = useState(false);
   const chipsCount = getChipsCountFromBet(bet || 0);
   const [animatedChips, setAnimatedChips] = useState<AnimatedChip[]>([]);
-  const [isStartAnimation, setIsStartAnimation] = useState(
-    Boolean(bet) || false
-  );
+  const [isStartAnimation, setIsStartAnimation] = useState(false);
 
   const playAnimation = () => setIsPlayAnimation(true);
   const stopAnimation = () => setIsPlayAnimation(false);
-
-  useEffect(() => {
-    if (!bet) return;
-
-    setIsStartAnimation(true);
-  }, [bet]);
 
   useEffect(() => {
     if (!isStartAnimation) return;

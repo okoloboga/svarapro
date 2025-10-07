@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 
 import './index.css';
 import '@/utils/i18n';
-import AppTest from './AppTest';
+import App from './App';
 
 const root = createRoot(document.getElementById('root')!);
-root.render(<AppTest />);
+root.render(<App />);
