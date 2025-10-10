@@ -353,8 +353,20 @@ export class GameLogicService {
         case 'ante':
           break;
         case 'blind_betting':
-          const allLooked = activePlayers.every((p) => p.hasLooked);
-          if (allLooked) {
+          // Переходим в betting только если все игроки либо:
+          // 1. Посмотрели карты И сделали ставку (call/raise), ИЛИ
+          // 2. Не посмотрели карты (играют вслепую)
+          const allPlayersReady = activePlayers.every((p) => {
+            if (p.hasLooked) {
+              // Если посмотрел карты, должен был сделать ставку
+              return p.hasLookedAndMustAct === false; // hasLookedAndMustAct сбрасывается после ставки
+            } else {
+              // Если не посмотрел, может продолжать играть вслепую
+              return true;
+            }
+          });
+          
+          if (allPlayersReady) {
             gameState.status = 'betting';
             gameState.currentPlayerIndex = getNextTurnIndex(
               gameState.players,
@@ -393,9 +405,16 @@ export class GameLogicService {
         true,
       );
       if (gameState.currentPlayerIndex === expectedTurnAfterDealer) {
-        const allActed = activePlayers.every(
-          (p) => getPlayerTotalBet(gameState, p.id) > 0 || p.hasLooked,
-        );
+        // В фазе blind_betting игрок должен либо играть вслепую, либо посмотреть И сделать ставку
+        const allActed = activePlayers.every((p) => {
+          if (gameState.status === 'blind_betting') {
+            // В blind_betting: либо не смотрел карты, либо смотрел И сделал ставку
+            return !p.hasLooked || (p.hasLooked && p.hasLookedAndMustAct === false);
+          } else {
+            // В других фазах: либо сделал ставку, либо посмотрел карты
+            return getPlayerTotalBet(gameState, p.id) > 0 || p.hasLooked;
+          }
+        });
         if (allActed) return true;
       }
     }

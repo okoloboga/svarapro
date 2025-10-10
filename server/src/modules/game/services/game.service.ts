@@ -19,6 +19,8 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
+  private turnTimers = new Map<string, NodeJS.Timeout>(); // Таймеры для ходов игроков
+  
   constructor(
     private readonly redisService: RedisService,
     private readonly cardService: CardService,
@@ -387,6 +389,12 @@ export class GameService {
       gameState.players,
       gameState.dealerIndex,
     );
+    // Устанавливаем время начала хода и запускаем таймер
+    gameState.turnStartTime = Date.now();
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer) {
+      this.startTurnTimer(roomId, currentPlayer.id);
+    }
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
@@ -532,6 +540,40 @@ export class GameService {
     return { success: true, gameState };
   }
 
+  // Управление таймерами ходов
+  private startTurnTimer(roomId: string, playerId: string): void {
+    // Очищаем предыдущий таймер для этой комнаты
+    console.log(`[TIMER_DEBUG] Starting timer for room: ${roomId}, player: ${playerId}`);
+    const existingTimer = this.turnTimers.get(roomId);
+    if (existingTimer) {
+      console.log(`[TIMER_DEBUG] Clearing existing timer for room: ${roomId}`);
+      clearTimeout(existingTimer);
+    }
+    this.turnTimers.delete(roomId);
+    
+    const timer = setTimeout(async () => {
+      try {
+        console.log(`[TIMER_DEBUG] Timer expired for room: ${roomId}, player: ${playerId}`);
+        await this.handleAutoFold(roomId, playerId);
+        this.turnTimers.delete(roomId);
+      } catch (error) {
+        console.error(`Error in turn timer for room ${roomId}:`, error);
+        this.turnTimers.delete(roomId);
+      }
+    }, TURN_DURATION_SECONDS * 1000);
+    
+    this.turnTimers.set(roomId, timer);
+    console.log(`[TIMER_DEBUG] Timer set for room: ${roomId}, player: ${playerId}`);
+  }
+
+  private clearTurnTimer(roomId: string): void {
+    const timer = this.turnTimers.get(roomId);
+    if (timer) {
+      clearTimeout(timer);
+      this.turnTimers.delete(roomId);
+    }
+  }
+
   // Обработка автоматического fold по таймеру
   async handleAutoFold(
     roomId: string,
@@ -556,8 +598,10 @@ export class GameService {
     }
 
     // Проверяем, что это действительно ход этого игрока
+    console.log(`[AUTO_FOLD_DEBUG] Auto fold for player: ${telegramId}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
     if (gameState.currentPlayerIndex !== playerIndex) {
-      return { success: false, error: 'Сейчас не ваш ход' };
+      console.log(`[AUTO_FOLD_DEBUG] Not player's turn, silently skipping auto fold`);
+      return { success: true }; // Молча игнорируем, не возвращаем ошибку
     }
 
     // Увеличиваем счетчик бездействия
@@ -645,6 +689,14 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
+    // Очищаем таймер при любом действии игрока (кроме look)
+    if (action !== 'look') {
+      console.log(`[TIMER_DEBUG] Clearing timer for action: ${action}, player: ${telegramId}`);
+      this.clearTurnTimer(roomId);
+    } else {
+      console.log(`[TIMER_DEBUG] NOT clearing timer for look action, player: ${telegramId}`);
+    }
+
     // Сбрасываем счетчик бездействия при любом активном действии
     if (player.inactivityCount && player.inactivityCount > 0) {
       gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
@@ -653,10 +705,14 @@ export class GameService {
       );
     }
 
+    // Проверяем, что это действительно ход игрока
+    console.log(`[TURN_DEBUG] Action: ${action}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}, playerId: ${telegramId}`);
+    if (gameState.currentPlayerIndex !== playerIndex) {
+      console.log(`[TURN_DEBUG] ERROR: Not player's turn. Expected: ${gameState.currentPlayerIndex}, got: ${playerIndex}`);
+      return { success: false, error: 'Сейчас не ваш ход' };
+    }
+
     if (action === 'fold') {
-      if (gameState.currentPlayerIndex !== playerIndex) {
-        return { success: false, error: 'Сейчас не ваш ход' };
-      }
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
@@ -669,10 +725,6 @@ export class GameService {
         error:
           'После просмотра карт вы можете только повысить ставку, уравнять или сбросить карты',
       };
-    }
-
-    if (gameState.currentPlayerIndex !== playerIndex) {
-      return { success: false, error: 'Сейчас не ваш ход' };
     }
 
     const { canPerform, error } = this.bettingService.canPerformAction(
@@ -807,6 +859,12 @@ export class GameService {
         return { success: true };
       } else {
         gameState.currentPlayerIndex = aboutToActPlayerIndex;
+        // Устанавливаем время начала хода и запускаем таймер
+        gameState.turnStartTime = Date.now();
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.startTurnTimer(roomId, currentPlayer.id);
+        }
       }
     }
 
@@ -863,6 +921,12 @@ export class GameService {
           gameState.players,
           gameState.currentPlayerIndex,
         );
+        // Устанавливаем время начала хода и запускаем таймер
+        gameState.turnStartTime = Date.now();
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.startTurnTimer(roomId, currentPlayer.id);
+        }
         break;
       }
       case 'look': {
@@ -885,6 +949,9 @@ export class GameService {
           message: `Игрок ${player.username} посмотрел карты и имеет ${calculatedScore} очков`,
         };
         gameState.log.push(lookAction);
+
+        // НЕ устанавливаем turnStartTime для look - это НЕ смена хода!
+        console.log(`[LOOK_DEBUG] Look action completed, player: ${player.id}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
         break;
       }
     }
@@ -1006,6 +1073,40 @@ export class GameService {
           updatedPlayer,
           { hasLookedAndMustAct: false },
         );
+
+        // Добавляем логику смены игрока для raise в blind_betting
+        console.log(`[BLIND_BETTING_DEBUG] Raise action completed, changing turn`);
+        const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
+          gameState.players,
+          gameState.currentPlayerIndex,
+        );
+
+        // Проверяем, будет ли следующий игрок якорем
+        let anchorPlayerIndex: number | undefined = undefined;
+        if (gameState.lastRaiseIndex !== undefined) {
+          anchorPlayerIndex = gameState.lastRaiseIndex;
+        } else if (gameState.lastBlindBettorIndex !== undefined) {
+          anchorPlayerIndex = gameState.lastBlindBettorIndex;
+        } else {
+          anchorPlayerIndex = gameState.dealerIndex;
+        }
+
+        // Если следующий игрок - якорь, то круг завершается
+        if (aboutToActPlayerIndex === anchorPlayerIndex) {
+          console.log(`[BLIND_BETTING_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
+          await this.endBettingRound(roomId, gameState);
+          return { success: true, gameState };
+        } else {
+          console.log(`[BLIND_BETTING_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
+          gameState.currentPlayerIndex = aboutToActPlayerIndex;
+          // Устанавливаем время начала хода и запускаем таймер
+          gameState.turnStartTime = Date.now();
+          const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+          if (currentPlayer) {
+            console.log(`[BLIND_BETTING_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
+            this.startTurnTimer(roomId, currentPlayer.id);
+          }
+        }
         break;
       }
     }
@@ -1020,7 +1121,12 @@ export class GameService {
     const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
     const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
 
+    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.length}, playersWhoCanAct: ${playersWhoCanAct.length}`);
+    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.map(p => `${p.username}(${p.id})`).join(', ')}`);
+    console.log(`[ROUND_DEBUG] Players who can act: ${playersWhoCanAct.map(p => `${p.username}(${p.id})`).join(', ')}`);
+
     if (playersWhoCanAct.length < 2) {
+        console.log(`[ROUND_DEBUG] Ending betting round - not enough players who can act`);
         await this.endBettingRound(roomId, gameState);
         return { success: true, gameState };
     }
@@ -1044,11 +1150,19 @@ export class GameService {
 
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      console.log(`[TURN_CHANGE_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
       await this.endBettingRound(roomId, gameState);
     } else {
+      console.log(`[TURN_CHANGE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      // Устанавливаем время начала хода и запускаем таймер
+      gameState.turnStartTime = Date.now();
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (currentPlayer) {
+        console.log(`[TURN_CHANGE_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
       await this.redisService.setGameState(roomId, gameState);
-      console.log('[DIAGNOSTIC_LOG] State before passing turn:', JSON.stringify(gameState, null, 2));
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
     return { success: true, gameState };
@@ -1263,6 +1377,12 @@ export class GameService {
       gameState.players,
       gameState.dealerIndex,
     );
+    // Устанавливаем время начала хода и запускаем таймер
+    gameState.turnStartTime = Date.now();
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer) {
+      this.startTurnTimer(roomId, currentPlayer.id);
+    }
 
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -1275,6 +1395,9 @@ export class GameService {
     gameState: GameState,
   ): Promise<void> {
     if (!gameState) return;
+    
+    // Очищаем таймер при завершении игры
+    this.clearTurnTimer(roomId);
 
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
@@ -1428,6 +1551,11 @@ export class GameService {
     // 2. Process Winnings from each pot
     let totalRake = 0;
 
+    // Находим основной банк - самый большой по размеру
+    const mainPotIndex = potWinnersList.reduce((maxIndex, pot, index) => {
+      return pot.amount > potWinnersList[maxIndex].amount ? index : maxIndex;
+    }, 0);
+
     for (let i = 0; i < potWinnersList.length; i++) {
       const potResult = potWinnersList[i];
       const { winners: potWinnerPlayers, amount } = potResult;
@@ -1436,13 +1564,13 @@ export class GameService {
         continue;
       }
 
-      // Проверяем, является ли это основным банком (последний банк)
-      const isMainPot = i === potWinnersList.length - 1;
+      // Проверяем, является ли это основным банком (самый большой по размеру)
+      const isMainPot = i === mainPotIndex;
 
       if (isMainPot) {
         // Основной банк - проверяем на ничью
-        if (potWinnerPlayers.length > 1) {
-          // Ничья в основном банке - объявляем свару
+        if (potWinnerPlayers.length > 1 && amount > 0) {
+          // Ничья в основном банке - объявляем свару (только если банк не пустой)
 
           const svaraAction: GameAction = {
             type: 'svara',
@@ -1481,7 +1609,7 @@ export class GameService {
           this.svaraTimers.set(roomId, timer);
 
           return; // Выходим из метода, свара объявлена
-        } else {
+        } else if (amount > 0) {
           // Один победитель в основном банке - разыгрываем как обычно
           const rake = Number((amount * 0.05).toFixed(2));
           totalRake += rake;
@@ -1503,6 +1631,15 @@ export class GameService {
             };
             gameState.log.push(winAction);
           }
+        } else {
+          // Основной банк пустой - завершаем игру без выигрыша
+          const noWinAction: GameAction = {
+            type: 'join',
+            telegramId: 'system',
+            timestamp: Date.now(),
+            message: 'Основной банк пустой - игра завершена без выигрыша',
+          };
+          gameState.log.push(noWinAction);
         }
       } else {
         // Боковой банк - разыгрываем сразу
@@ -1924,9 +2061,20 @@ export class GameService {
 
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      console.log(`[BLIND_BETTING_RAISE_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
       await this.endBettingRound(roomId, gameState);
     } else {
+      console.log(`[BLIND_BETTING_RAISE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
+      // Очищаем старый таймер перед сменой игрока
+      this.clearTurnTimer(roomId);
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      // Устанавливаем время начала хода и запускаем таймер
+      gameState.turnStartTime = Date.now();
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (currentPlayer) {
+        console.log(`[BLIND_BETTING_RAISE_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }

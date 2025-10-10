@@ -658,6 +658,13 @@ export function GameRoom({
     return Math.max(0, TURN_DURATION_SECONDS - elapsed);
   }, [gameState?.turnStartTime]);
 
+  // Функция для вычисления оставшегося времени на основе turnStartTime
+  const calculateRemainingTime = useCallback(() => {
+    if (!gameState?.turnStartTime) return TURN_DURATION_SECONDS;
+    const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+    return Math.max(0, TURN_DURATION_SECONDS - elapsed);
+  }, [gameState?.turnStartTime]);
+
   useEffect(() => {
     const activeTurn =
       gameState &&
@@ -686,18 +693,8 @@ export function GameRoom({
       // Если ход не активен, сбрасываем таймер в начальное значение
       setTurnTimer(TURN_DURATION_SECONDS);
     }
-  }, [
-    gameState?.status,
-    gameState?.currentPlayerIndex,
-    gameState?.isAnimating,
-    gameState?.turnStartTime,
-    isCurrentUserTurn,
-    currentUserId,
-    activeGamePhases,
-    effectiveGameStatus,
-    gameState,
-    calculateRemainingTime,
-  ]);
+  }, [gameState?.status, gameState?.currentPlayerIndex, gameState?.isAnimating, gameState?.turnStartTime, isCurrentUserTurn, currentUserId, activeGamePhases, effectiveGameStatus, gameState, calculateRemainingTime]);
+
 
   // Separate effect for auto-fold when timer reaches 0
   useEffect(() => {
@@ -709,17 +706,13 @@ export function GameRoom({
   // Очищаем таймер при ставках игрока (но не при look)
   useEffect(() => {
     if (!gameState?.log) return;
-
     const lastAction = gameState.log[gameState.log.length - 1];
     if (lastAction && lastAction.telegramId === currentUserId) {
-      console.log(
-        `[CLIENT_TIMER_DEBUG] Last action by current user: ${lastAction.type}`
-      );
+      console.log(`[CLIENT_TIMER_DEBUG] Last action by current user: ${lastAction.type}`);
       // Очищаем таймер только при ставках, но не при look
-      if (lastAction.type !== "look") {
-        console.log(
-          `[CLIENT_TIMER_DEBUG] Clearing timer for action: ${lastAction.type}`
-        );
+      if (lastAction.type !== 'look') {
+        console.log(`[CLIENT_TIMER_DEBUG] Clearing timer for action: ${lastAction.type}`);
+
         setTurnTimer(0);
       } else {
         console.log(`[CLIENT_TIMER_DEBUG] NOT clearing timer for look action`);
@@ -730,30 +723,20 @@ export function GameRoom({
   // Сбрасываем таймер при смене игрока
   useEffect(() => {
     if (gameState?.currentPlayerIndex !== undefined) {
-      console.log(
-        `[CLIENT_TIMER_DEBUG] Player change detected. currentPlayerIndex: ${gameState.currentPlayerIndex}, turnStartTime: ${gameState.turnStartTime}`
-      );
-
+      console.log(`[CLIENT_TIMER_DEBUG] Player change detected. currentPlayerIndex: ${gameState.currentPlayerIndex}, turnStartTime: ${gameState.turnStartTime}`);
+      
       // Если turnStartTime установлен - используем его
       if (gameState.turnStartTime) {
         const remaining = calculateRemainingTime();
-        console.log(
-          `[CLIENT_TIMER_DEBUG] Using turnStartTime, remaining: ${remaining}`
-        );
+        console.log(`[CLIENT_TIMER_DEBUG] Using turnStartTime, remaining: ${remaining}`);
         setTurnTimer(remaining);
       } else {
         // Если не установлен - устанавливаем полное время
-        console.log(
-          `[CLIENT_TIMER_DEBUG] No turnStartTime, setting full duration: ${TURN_DURATION_SECONDS}`
-        );
+        console.log(`[CLIENT_TIMER_DEBUG] No turnStartTime, setting full duration: ${TURN_DURATION_SECONDS}`);
         setTurnTimer(TURN_DURATION_SECONDS);
       }
     }
-  }, [
-    gameState?.currentPlayerIndex,
-    gameState?.turnStartTime,
-    calculateRemainingTime,
-  ]);
+  }, [gameState?.currentPlayerIndex, gameState?.turnStartTime, calculateRemainingTime]);
 
   useEffect(() => {
     if (isCurrentUserTurn) {
