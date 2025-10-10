@@ -1,10 +1,12 @@
+export type RoomStatuses = 'waiting' | 'playing' | 'finished'
+
 // Существующий тип Room
 export interface Room {
   roomId: string;
   minBet: number;
   type: 'public' | 'private';
   players: string[];
-  status: 'waiting' | 'playing' | 'finished';
+  status: RoomStatuses;
   maxPlayers: number;
   createdAt: Date;
   finishedAt?: Date;
@@ -43,7 +45,7 @@ export interface Player {
 
 export interface GameState {
   roomId: string;
-  status: 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'svara_pending' | 'finished';
+  status: GameStatuses;
   players: Player[];
   deck?: Card[]; // колода (на клиенте не нужна полная колода)
   pot: number; // банк
@@ -67,6 +69,8 @@ export interface GameState {
   animationType?: 'chip_fly' | 'win_animation'; // тип анимации
   showWinnerAnimation?: boolean; // флаг показа анимации победы
 }
+
+export type GameStatuses = 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'svara_pending' | 'finished';
 
 export interface GameAction {
   type: 'join' | 'leave' | 'ante' | 'blind_bet' | 'look' | 'bet' | 'call' | 'raise' | 'fold' | 'win' | 'svara';

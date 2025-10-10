@@ -5,8 +5,9 @@ import foldSoundSrc from '@/assets/game/fold.mp3';
 import turnSoundSrc from '@/assets/game/turn.mp3';
 import winSoundSrc from '@/assets/game/win.mp3';
 import chipSoundSrc from '@/assets/game/chip.mp3';
+import dealSoundSrc from "@/assets/game/deal.mp3";
 
-export type SoundType = 'fold' | 'turn' | 'win' | 'chip';
+export type SoundType = 'fold' | 'turn' | 'win' | 'chip' | "deal";
 
 export const useSound = () => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
@@ -50,6 +51,7 @@ export const useSound = () => {
     turn: new Audio(turnSoundSrc),
     win: new Audio(winSoundSrc),
     chip: new Audio(chipSoundSrc),
+    deal: new Audio(dealSoundSrc)
   }), []);
 
   useEffect(() => {
