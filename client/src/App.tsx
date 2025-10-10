@@ -1,26 +1,27 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { isMiniAppDark, retrieveLaunchParams } from '@telegram-apps/sdk-react';
-import { AppRoot } from '@telegram-apps/telegram-ui';
-import { io, Socket } from 'socket.io-client';
-import { Dashboard } from './pages/Dashboard';
-import { Deposit } from './pages/Deposit';
-import { ConfirmDeposit } from './pages/ConfirmDeposit';
-import { Withdraw } from './pages/Withdraw';
-import { ConfirmWithdraw } from './pages/ConfirmWithdraw';
-import { AddWallet } from './pages/AddWallet';
-import { More } from './pages/More';
-import { DepositHistory } from './pages/DepositHistory';
-import { GameRoom } from './pages/GameRoom';
-import { PopSuccess } from './components/PopSuccess';
-import { initTelegramSdk } from './utils/init';
-import { apiService } from './services/api/api';
-import axios from 'axios';
-import { ErrorAlert } from './components/ErrorAlert';
-import { useAppBackButton } from './hooks/useAppBackButton';
-import { useAppUpdate } from './hooks/useAppUpdate';
-import { SoundProvider } from './context/SoundContext';
-import { Notification } from './components/Notification';
-import { NotificationType } from './types/components';
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { isMiniAppDark, retrieveLaunchParams } from "@telegram-apps/sdk-react";
+import { AppRoot } from "@telegram-apps/telegram-ui";
+import { io, Socket } from "socket.io-client";
+import { Dashboard } from "./pages/Dashboard";
+import { Deposit } from "./pages/Deposit";
+import { ConfirmDeposit } from "./pages/ConfirmDeposit";
+import { Withdraw } from "./pages/Withdraw";
+import { ConfirmWithdraw } from "./pages/ConfirmWithdraw";
+import { AddWallet } from "./pages/AddWallet";
+import { More } from "./pages/More";
+import { DepositHistory } from "./pages/DepositHistory";
+import { GameRoom } from "./pages/GameRoom";
+import { PopSuccess } from "./components/PopSuccess";
+import { initTelegramSdk } from "./utils/init";
+import { apiService } from "./services/api/api";
+import axios from "axios";
+import { ErrorAlert } from "./components/ErrorAlert";
+import { useAppBackButton } from "./hooks/useAppBackButton";
+import { useAppUpdate } from "./hooks/useAppUpdate";
+import { SoundProvider } from "./context/SoundContext";
+import { Notification } from "./components/Notification";
+import { NotificationType } from "./types/components";
+import { PositionsProvider } from "./context/PositionsContext";
 
 interface LaunchParams {
   initData?: string;
@@ -28,13 +29,15 @@ interface LaunchParams {
   startPayload?: string;
 }
 
-type ApiError = {
-  message?: string;
-  response?: {
-    data?: unknown;
-    status?: number;
-  };
-} | string;
+type ApiError =
+  | {
+      message?: string;
+      response?: {
+        data?: unknown;
+        status?: number;
+      };
+    }
+  | string;
 
 type PageData = {
   address?: string;
@@ -62,41 +65,59 @@ interface UserProfile {
 
 function isErrorResponse(data: unknown): data is { message: string } {
   return (
-    typeof data === 'object' &&
+    typeof data === "object" &&
     data !== null &&
-    'message' in data &&
-    typeof (data as { message: string }).message === 'string'
+    "message" in data &&
+    typeof (data as { message: string }).message === "string"
   );
 }
 
-type Page = 'dashboard' | 'more' | 'deposit' | 'confirmDeposit' | 'withdraw' | 'confirmWithdraw' | 'addWallet' | 'depositHistory' | 'gameRoom';
+type Page =
+  | "dashboard"
+  | "more"
+  | "deposit"
+  | "confirmDeposit"
+  | "withdraw"
+  | "confirmWithdraw"
+  | "addWallet"
+  | "depositHistory"
+  | "gameRoom";
 
 function App() {
   const isDark = isMiniAppDark();
   const [error, setError] = useState<string | null>(null);
   const [isSdkInitialized, setIsSdkInitialized] = useState(false);
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [pageData, setPageData] = useState<PageData | null>(null);
-  const [balance, setBalance] = useState('0.00');
+  const [balance, setBalance] = useState("0.00");
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [notification, setNotification] = useState<NotificationType | null>(null);
+  const [notification, setNotification] = useState<NotificationType | null>(
+    null
+  );
 
   const { updateAvailable, updateApp } = useAppUpdate();
 
   const handleBack = useCallback(() => {
-    if (currentPage === 'more' || currentPage === 'deposit' || currentPage === 'withdraw' || currentPage === 'addWallet' || currentPage === 'depositHistory' || currentPage === 'gameRoom') {
-      setCurrentPage('dashboard');
-    } else if (currentPage === 'confirmDeposit') {
-      setCurrentPage('deposit');
-    } else if (currentPage === 'confirmWithdraw') {
-      setCurrentPage('withdraw');
+    if (
+      currentPage === "more" ||
+      currentPage === "deposit" ||
+      currentPage === "withdraw" ||
+      currentPage === "addWallet" ||
+      currentPage === "depositHistory" ||
+      currentPage === "gameRoom"
+    ) {
+      setCurrentPage("dashboard");
+    } else if (currentPage === "confirmDeposit") {
+      setCurrentPage("deposit");
+    } else if (currentPage === "confirmWithdraw") {
+      setCurrentPage("withdraw");
     }
   }, [currentPage]);
 
-  useAppBackButton(isSdkInitialized && currentPage !== 'dashboard', handleBack);
+  useAppBackButton(isSdkInitialized && currentPage !== "dashboard", handleBack);
 
   const userData = useMemo(() => {
     const params = retrieveLaunchParams() as LaunchParams;
@@ -114,8 +135,8 @@ function App() {
         await initTelegramSdk();
         setIsSdkInitialized(true);
       } catch (e) {
-        console.error('Failed to initialize SDK:', e);
-        setError('Failed to initialize Telegram SDK');
+        console.error("Failed to initialize SDK:", e);
+        setError("Failed to initialize Telegram SDK");
       }
 
       const launchParams = retrieveLaunchParams() as LaunchParams;
@@ -124,9 +145,9 @@ function App() {
       if (!initData && launchParams.tgWebAppData) {
         initData = new URLSearchParams(
           Object.entries(launchParams.tgWebAppData)
-            .filter(([key]) => key !== 'hash' && key !== 'signature')
+            .filter(([key]) => key !== "hash" && key !== "signature")
             .map(([key, value]) => {
-              if (typeof value === 'object' && value !== null) {
+              if (typeof value === "object" && value !== null) {
                 return [key, JSON.stringify(value)];
               }
               return [key, value.toString()];
@@ -136,7 +157,7 @@ function App() {
 
       const loadData = async () => {
         if (!initData) {
-          setError('Telegram initialization data not found.');
+          setError("Telegram initialization data not found.");
           return;
         }
 
@@ -144,9 +165,13 @@ function App() {
           let roomIdFromPayload: string | undefined = undefined;
           let referrerIdFromPayload: string | undefined = undefined;
 
-          if (launchParams.startPayload && launchParams.startPayload.startsWith('join_')) {
-            const parts = launchParams.startPayload.split('_');
-            if (parts.length > 2) { // join_roomId_referrerId
+          if (
+            launchParams.startPayload &&
+            launchParams.startPayload.startsWith("join_")
+          ) {
+            const parts = launchParams.startPayload.split("_");
+            if (parts.length > 2) {
+              // join_roomId_referrerId
               roomIdFromPayload = parts[1];
               referrerIdFromPayload = parts[2];
             }
@@ -156,66 +181,87 @@ function App() {
 
           await apiService.login(initData, referrerIdFromPayload);
 
-          const profile = await apiService.getProfile() as UserProfile;
+          const profile = (await apiService.getProfile()) as UserProfile;
           setBalance(
             profile.balance !== undefined
-              ? typeof profile.balance === 'number'
+              ? typeof profile.balance === "number"
                 ? profile.balance.toFixed(2)
                 : parseFloat(profile.balance).toFixed(2)
-              : '0.00'
+              : "0.00"
           );
           setWalletAddress(profile.walletAddress || null);
 
           if (roomIdFromPayload) {
             try {
               await apiService.joinRoom(roomIdFromPayload);
-              handleSetCurrentPage('gameRoom', { roomId: roomIdFromPayload, autoSit: true });
+              handleSetCurrentPage("gameRoom", {
+                roomId: roomIdFromPayload,
+                autoSit: true,
+              });
             } catch (error) {
-              let errorMessage = '';
-              if (axios.isAxiosError(error) && isErrorResponse(error.response?.data)) {
+              let errorMessage = "";
+              if (
+                axios.isAxiosError(error) &&
+                isErrorResponse(error.response?.data)
+              ) {
                 errorMessage = error.response.data.message;
               }
 
-              if (errorMessage.toLowerCase().includes('insufficient') || errorMessage.toLowerCase().includes('funds')) {
-                handleSetCurrentPage('deposit');
+              if (
+                errorMessage.toLowerCase().includes("insufficient") ||
+                errorMessage.toLowerCase().includes("funds")
+              ) {
+                handleSetCurrentPage("deposit");
               } else {
-                console.error('Failed to join room:', error);
-                setCurrentPage('dashboard');
-                setNotification('gameJoinError');
+                console.error("Failed to join room:", error);
+                setCurrentPage("dashboard");
+                setNotification("gameJoinError");
               }
             }
           }
 
           if (!socket) {
-            const socketInstance = io('https://svarapro.com', {
-              transports: ['websocket'],
+            const socketInstance = io("https://svarapro.com", {
+              transports: ["websocket"],
               query: { telegramId: profile.telegramId },
             });
             setSocket(socketInstance);
 
-            socketInstance.on('connect', () => {
-              socketInstance.emit('join', profile.telegramId);
-              socketInstance.emit('subscribe_balance', profile.telegramId);
+            socketInstance.on("connect", () => {
+              socketInstance.emit("join", profile.telegramId);
+              socketInstance.emit("subscribe_balance", profile.telegramId);
             });
 
-            socketInstance.on('transactionConfirmed', (data: { balance: string; message: string; }) => {
+            socketInstance.on(
+              "transactionConfirmed",
+              (data: { balance: string; message: string }) => {
+                setBalance(data.balance);
+                setSuccessMessage(data.message);
+              }
+            );
+
+            socketInstance.on("balanceUpdated", (data: { balance: string }) => {
               setBalance(data.balance);
-              setSuccessMessage(data.message);
             });
 
-            socketInstance.on('balanceUpdated', (data: { balance: string }) => {
-              setBalance(data.balance);
-            });
-
-            socketInstance.on('disconnect', () => {
+            socketInstance.on("disconnect", () => {
               setSocket(null);
             });
           }
         } catch (error) {
           const apiError = error as ApiError;
-          const errorMessage = typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error';
-          console.error('Login error:', errorMessage, typeof apiError === 'object' && apiError.response ? apiError.response.data : 'No response data');
-          setError('Failed to load data. Please try again later.');
+          const errorMessage =
+            typeof apiError === "string"
+              ? apiError
+              : apiError.message || "Unknown error";
+          console.error(
+            "Login error:",
+            errorMessage,
+            typeof apiError === "object" && apiError.response
+              ? apiError.response.data
+              : "No response data"
+          );
+          setError("Failed to load data. Please try again later.");
         }
       };
 
@@ -232,13 +278,13 @@ function App() {
   }, [socket]);
 
   return (
-    <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base">
+    <AppRoot appearance={isDark ? "dark" : "light"} platform="base">
       <SoundProvider>
         {/* Уведомление об обновлении приложения */}
         {updateAvailable && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white p-3 text-center">
             <span className="mr-2">Доступно обновление приложения</span>
-            <button 
+            <button
               onClick={updateApp}
               className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium"
             >
@@ -246,30 +292,75 @@ function App() {
             </button>
           </div>
         )}
-        
+
         {error ? (
           <ErrorAlert code={undefined} customMessage={error} />
-        ) : currentPage === 'more' ? (
+        ) : currentPage === "more" ? (
           <More userData={userData} setCurrentPage={handleSetCurrentPage} />
-        ) : currentPage === 'deposit' ? (
+        ) : currentPage === "deposit" ? (
           <Deposit setCurrentPage={handleSetCurrentPage} />
-        ) : currentPage === 'confirmDeposit' && pageData && pageData.address && pageData.trackerId ? (
-          <ConfirmDeposit address={pageData.address} currency={pageData.currency ?? 'USDTTON'} trackerId={pageData.trackerId}/>
-        ) : currentPage === 'withdraw' ? (
-          <Withdraw balance={balance} setCurrentPage={handleSetCurrentPage} setWithdrawAmount={setWithdrawAmount} />
-        ) : currentPage === 'confirmWithdraw' ? (
-          <ConfirmWithdraw withdrawAmount={withdrawAmount} walletAddress={walletAddress || ''} />
-        ) : currentPage === 'addWallet' ? (
-          <AddWallet setCurrentPage={handleSetCurrentPage} setWalletAddress={setWalletAddress} />
-        ) : currentPage === 'depositHistory' ? (
-          <DepositHistory setCurrentPage={handleSetCurrentPage} userId={String(userData.id)} />
-        ) : currentPage === 'gameRoom' && pageData && pageData.roomId ? (
-          <GameRoom roomId={pageData.roomId} balance={balance} socket={socket} setCurrentPage={handleSetCurrentPage} userData={userData} pageData={pageData} />
+        ) : currentPage === "confirmDeposit" &&
+          pageData &&
+          pageData.address &&
+          pageData.trackerId ? (
+          <ConfirmDeposit
+            address={pageData.address}
+            currency={pageData.currency ?? "USDTTON"}
+            trackerId={pageData.trackerId}
+          />
+        ) : currentPage === "withdraw" ? (
+          <Withdraw
+            balance={balance}
+            setCurrentPage={handleSetCurrentPage}
+            setWithdrawAmount={setWithdrawAmount}
+          />
+        ) : currentPage === "confirmWithdraw" ? (
+          <ConfirmWithdraw
+            withdrawAmount={withdrawAmount}
+            walletAddress={walletAddress || ""}
+          />
+        ) : currentPage === "addWallet" ? (
+          <AddWallet
+            setCurrentPage={handleSetCurrentPage}
+            setWalletAddress={setWalletAddress}
+          />
+        ) : currentPage === "depositHistory" ? (
+          <DepositHistory
+            setCurrentPage={handleSetCurrentPage}
+            userId={String(userData.id)}
+          />
+        ) : currentPage === "gameRoom" && pageData && pageData.roomId ? (
+          <PositionsProvider>
+            <GameRoom
+              roomId={pageData.roomId}
+              balance={balance}
+              socket={socket}
+              setCurrentPage={handleSetCurrentPage}
+              userData={userData}
+              pageData={pageData}
+            />
+          </PositionsProvider>
         ) : (
-          <Dashboard onMoreClick={() => handleSetCurrentPage('more')} setCurrentPage={handleSetCurrentPage} balance={balance} walletAddress={walletAddress} socket={socket} />
+          <Dashboard
+            onMoreClick={() => handleSetCurrentPage("more")}
+            setCurrentPage={handleSetCurrentPage}
+            balance={balance}
+            walletAddress={walletAddress}
+            socket={socket}
+          />
         )}
-        {successMessage && <PopSuccess message={successMessage} onClose={() => setSuccessMessage(null)} />}
-        {notification && <Notification type={notification} onClose={() => setNotification(null)} />}
+        {successMessage && (
+          <PopSuccess
+            message={successMessage}
+            onClose={() => setSuccessMessage(null)}
+          />
+        )}
+        {notification && (
+          <Notification
+            type={notification}
+            onClose={() => setNotification(null)}
+          />
+        )}
       </SoundProvider>
     </AppRoot>
   );
