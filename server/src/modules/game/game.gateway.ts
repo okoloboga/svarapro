@@ -128,21 +128,24 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     const { roomId, action, amount } = payload;
     const telegramId = this.getTelegramId(client);
     
-    // 🔥 ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
-    const actionKey = `${roomId}-${telegramId}-${action}-${amount}-${Date.now()}`;
-    if (this.processingActions.has(actionKey)) {
-      console.log(`[DUPLICATE_ACTION_BLOCKED] Blocked duplicate action: ${actionKey}`);
+    // 🔥 ИСПРАВЛЕННАЯ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
+    // Используем client.id вместо telegramId для уникальности
+    const clientKey = `${client.id}-${action}-${amount || 'null'}`;
+    if (this.processingActions.has(clientKey)) {
+      console.log(`[DUPLICATE_ACTION_BLOCKED] Blocked duplicate action: ${clientKey}`);
       return;
     }
     
-    // Более простая защита - по ключу без timestamp
-    const simpleKey = `${roomId}-${telegramId}-${action}-${amount}`;
-    if (this.processingActions.has(simpleKey)) {
-      console.log(`[DUPLICATE_ACTION_BLOCKED] Blocked duplicate action: ${simpleKey}`);
-      return;
-    }
+    // Дополнительная защита с timestamp для критических действий
+    const timestampKey = `${client.id}-${action}-${Date.now()}`;
+    this.processingActions.set(clientKey, true);
+    this.processingActions.set(timestampKey, true);
     
-    this.processingActions.set(simpleKey, true);
+    // Очистка через 500ms для предотвращения накопления
+    setTimeout(() => {
+      this.processingActions.delete(clientKey);
+      this.processingActions.delete(timestampKey);
+    }, 500);
     
     console.log(`[WEBSOCKET_DEBUG] Received game_action from client ${client.id}, telegramId ${telegramId}, roomId ${roomId}, action ${action}, amount ${amount}`);
     console.log(`[WEBSOCKET_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
