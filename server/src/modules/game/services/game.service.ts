@@ -1279,6 +1279,9 @@ export class GameService {
     }, TURN_DURATION_SECONDS * 1000);
     
     this.turnTimers.set(roomId, timer);
+    
+    // Обновляем GameState с информацией о таймере
+    this.updateGameStateWithTimer(roomId, TURN_DURATION_SECONDS);
   }
 
   clearTurnTimer(roomId: string): void {
@@ -1287,6 +1290,9 @@ export class GameService {
       clearTimeout(timer);
       this.turnTimers.delete(roomId);
     }
+    
+    // Очищаем таймер в GameState
+    this.clearGameStateTimer(roomId);
   }
 
   hasActiveTimer(roomId: string): boolean {
@@ -1336,5 +1342,33 @@ export class GameService {
       clearTimeout(timer);
     }
     this.turnTimers.clear();
+  }
+
+  // Обновление GameState с информацией о таймере
+  private async updateGameStateWithTimer(roomId: string, duration: number): Promise<void> {
+    const gameState = await this.redisService.getGameState(roomId);
+    if (gameState) {
+      gameState.timer = duration;
+      gameState.turnStartTime = Date.now();
+      
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+      
+      console.log(`[TIMER_UPDATE_DEBUG] Updated game state with timer: ${duration}s for room ${roomId}`);
+    }
+  }
+
+  // Очистка таймера в GameState
+  private async clearGameStateTimer(roomId: string): Promise<void> {
+    const gameState = await this.redisService.getGameState(roomId);
+    if (gameState) {
+      gameState.timer = undefined;
+      gameState.turnStartTime = undefined;
+      
+      await this.redisService.setGameState(roomId, gameState);
+      await this.redisService.publishGameUpdate(roomId, gameState);
+      
+      console.log(`[TIMER_CLEAR_DEBUG] Cleared timer in game state for room ${roomId}`);
+    }
   }
 }
