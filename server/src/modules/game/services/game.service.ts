@@ -779,7 +779,19 @@ export class GameService {
           return { success: true };
         }
 
-        const callAmount = gameState.lastActionAmount;
+        // ИСПРАВЛЕНИЕ: Правильный расчет callAmount для look -> call
+        let callAmount = gameState.lastActionAmount;
+        
+        // Если нет последней ставки, используем minBet (ante)
+        if (callAmount <= 0) {
+          callAmount = gameState.minBet;
+        }
+        
+        // Если есть blind ставки, call должен быть в 2 раза больше последней blind ставки
+        if (gameState.lastBlindBet > 0) {
+          callAmount = gameState.lastBlindBet * 2;
+        }
+        
         if (callAmount <= 0) {
           return {
             success: false,
