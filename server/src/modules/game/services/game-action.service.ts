@@ -452,8 +452,8 @@ export class GameActionService {
         // Если следующий игрок - якорь, то круг завершается
         if (aboutToActPlayerIndex === anchorPlayerIndex) {
           console.log(`[BLIND_BETTING_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
-          await this.gameEndService.endBettingRound(roomId, gameState);
-          return { success: true, gameState };
+          // Возвращаем флаг для завершения раунда (endBettingRound вызовется в GameService)
+          return { success: true, gameState, shouldEndBettingRound: true };
         } else {
           console.log(`[BLIND_BETTING_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
           gameState.currentPlayerIndex = aboutToActPlayerIndex;
@@ -477,8 +477,8 @@ export class GameActionService {
 
     // Упрощенная проверка завершения круга
     if (this.bettingService.isBettingRoundComplete(gameState)) {
-      await this.gameEndService.endBettingRound(roomId, gameState);
-      return { success: true, gameState };
+      // Возвращаем флаг для завершения раунда (endBettingRound вызовется в GameService)
+      return { success: true, gameState, shouldEndBettingRound: true };
     }
 
     // Передаем ход следующему игроку

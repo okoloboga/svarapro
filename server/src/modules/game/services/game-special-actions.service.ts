@@ -206,8 +206,8 @@ export class GameSpecialActionsService {
     gameState = scoreResult.updatedGameState;
     gameState.log.push(...scoreResult.actions);
 
-    // Устанавливаем текущего игрока как якорного (как в raise)
-    gameState.lastRaiseIndex = playerIndex;
+    // Call НЕ должен создавать новый якорь - якорем остается предыдущий blind bettor
+    // gameState.lastRaiseIndex НЕ изменяется для call
 
     // Анимация и проверка завершения круга (как в processBettingAction)
     // gameState.isAnimating = true;
