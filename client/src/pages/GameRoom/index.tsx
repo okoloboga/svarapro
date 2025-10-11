@@ -658,13 +658,6 @@ export function GameRoom({
     return Math.max(0, TURN_DURATION_SECONDS - elapsed);
   }, [gameState?.turnStartTime]);
 
-  // Функция для вычисления оставшегося времени на основе turnStartTime
-  const calculateRemainingTime = useCallback(() => {
-    if (!gameState?.turnStartTime) return TURN_DURATION_SECONDS;
-    const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
-    return Math.max(0, TURN_DURATION_SECONDS - elapsed);
-  }, [gameState?.turnStartTime]);
-
   useEffect(() => {
     const activeTurn =
       gameState &&
