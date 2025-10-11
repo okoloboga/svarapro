@@ -533,11 +533,11 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'all_in'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'call', 'fold', 'all_in'].includes(action)) {
       return {
         success: false,
         error:
-          'После просмотра карт вы можете только повысить ставку или сбросить карты',
+          'После просмотра карт вы можете только уравнять, повысить ставку или сбросить карты',
       };
     }
 
@@ -877,6 +877,18 @@ export class GameService {
             this.gameStateService.calculateScoresForPlayers(gameState);
           gameState = scoreResult.updatedGameState;
           gameState.log.push(...scoreResult.actions);
+        }
+        
+        // ИСПРАВЛЕНИЕ: Проверяем завершение игры для all-in через raise
+        if (isAllInRaise) {
+          const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
+          const allInPlayers = activePlayers.filter((p) => p.isAllIn);
+          
+          if (allInPlayers.length === activePlayers.length) {
+            // Все игроки сделали all-in - завершаем игру
+            await this.endBettingRound(roomId, gameState);
+            return { success: true, gameState };
+          }
         }
         break;
       }
