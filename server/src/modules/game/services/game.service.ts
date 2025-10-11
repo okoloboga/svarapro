@@ -896,17 +896,6 @@ export class GameService {
           gameState.log.push(...scoreResult.actions);
         }
         
-        // ИСПРАВЛЕНИЕ: Проверяем завершение игры для all-in через raise
-        if (isAllInRaise) {
-          const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
-          const allInPlayers = activePlayers.filter((p) => p.isAllIn);
-          
-          if (allInPlayers.length === activePlayers.length) {
-            // Все игроки сделали all-in - завершаем игру
-            await this.endBettingRound(roomId, gameState);
-            return { success: true, gameState };
-          }
-        }
         break;
       }
     }
