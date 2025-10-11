@@ -181,9 +181,10 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       console.error('Error in handleGameAction:', error);
       client.emit('error', { message: 'Внутренняя ошибка сервера' });
     } finally {
-      // Очищаем ключ через 1 секунду
+      // Очищаем ключи через 1 секунду (дополнительная очистка)
       setTimeout(() => {
-        this.processingActions.delete(simpleKey);
+        this.processingActions.delete(clientKey);
+        this.processingActions.delete(timestampKey);
       }, 1000);
     }
   }
