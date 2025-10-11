@@ -63,12 +63,20 @@ export class BettingService {
     // 1. lastRaiseIndex (последний, кто делал raise)
     // 2. lastBlindBettorIndex (последний, кто делал blind bet)
     // 3. dealerIndex (дилер)
+    console.log(`[ANCHOR_DEBUG] Determining anchor for game state:`);
+    console.log(`[ANCHOR_DEBUG] - lastRaiseIndex: ${gameState.lastRaiseIndex}`);
+    console.log(`[ANCHOR_DEBUG] - lastBlindBettorIndex: ${gameState.lastBlindBettorIndex}`);
+    console.log(`[ANCHOR_DEBUG] - dealerIndex: ${gameState.dealerIndex}`);
+    
     if (gameState.lastRaiseIndex !== undefined) {
+      console.log(`[ANCHOR_DEBUG] Using lastRaiseIndex as anchor: ${gameState.lastRaiseIndex}`);
       return gameState.lastRaiseIndex;
     }
     if (gameState.lastBlindBettorIndex !== undefined) {
+      console.log(`[ANCHOR_DEBUG] Using lastBlindBettorIndex as anchor: ${gameState.lastBlindBettorIndex}`);
       return gameState.lastBlindBettorIndex;
     }
+    console.log(`[ANCHOR_DEBUG] Using dealerIndex as anchor: ${gameState.dealerIndex}`);
     return gameState.dealerIndex;
   }
 

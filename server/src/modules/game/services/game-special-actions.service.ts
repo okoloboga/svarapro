@@ -231,14 +231,24 @@ export class GameSpecialActionsService {
     // Потому что call не создает новый якорь, а только уравнивает
     const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
 
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Player ${playerIndex} made call after look`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] About to act player index: ${aboutToActPlayerIndex}`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Anchor player index: ${anchorPlayerIndex}`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Last raise index: ${gameState.lastRaiseIndex}`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Last blind bettor index: ${gameState.lastBlindBettorIndex}`);
+    console.log(`[BLIND_BETTING_CALL_DEBUG] Dealer index: ${gameState.dealerIndex}`);
+
     // Всегда обновляем currentPlayerIndex перед проверкой
     gameState.currentPlayerIndex = aboutToActPlayerIndex;
     
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
+      console.log(`[BLIND_BETTING_CALL_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
       // Возвращаем флаг для завершения раунда
       return { success: true, gameState, shouldEndBettingRound: true };
     } else {
+      console.log(`[BLIND_BETTING_CALL_DEBUG] Changing turn to ${aboutToActPlayerIndex}`);
       // Возвращаем флаг для запуска таймера
       return { success: true, gameState, shouldStartTimer: true };
     }
@@ -335,6 +345,14 @@ export class GameSpecialActionsService {
     // В blind_betting после look->raise якорем становится сам игрок, который сделал raise
     // Потому что raise создает новый якорь
     const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
+
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Player ${playerIndex} made raise after look`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Current player index: ${gameState.currentPlayerIndex}`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] About to act player index: ${aboutToActPlayerIndex}`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Anchor player index: ${anchorPlayerIndex}`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Last raise index: ${gameState.lastRaiseIndex}`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Last blind bettor index: ${gameState.lastBlindBettorIndex}`);
+    console.log(`[BLIND_BETTING_RAISE_DEBUG] Dealer index: ${gameState.dealerIndex}`);
 
     // Всегда обновляем currentPlayerIndex перед проверкой
     gameState.currentPlayerIndex = aboutToActPlayerIndex;

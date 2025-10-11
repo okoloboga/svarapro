@@ -143,5 +143,5 @@ public
 /bot/dist
 /bot/node_modules
 
-GEMINI.md
-ISSUES.md
+*.md
+
