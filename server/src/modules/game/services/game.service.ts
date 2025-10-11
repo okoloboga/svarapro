@@ -80,6 +80,12 @@ export class GameService {
     if (gameState && gameState.currentPlayerIndex !== undefined) {
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
       if (currentPlayer) {
+        // Проверяем, нет ли уже активного таймера
+        if (this.gameTimerService.hasActiveTimer(roomId)) {
+          console.log(`[TIMER_DEBUG] Timer already exists for room ${roomId} at game start, clearing before starting new one`);
+          this.gameTimerService.clearTurnTimer(roomId);
+        }
+        console.log(`[TIMER_DEBUG] Starting initial timer for player ${currentPlayer.id} in room ${roomId}`);
         this.gameTimerService.startTurnTimer(roomId, currentPlayer.id);
       }
     }
@@ -111,6 +117,12 @@ export class GameService {
       if (result.shouldStartTimer && result.gameState.currentPlayerIndex !== undefined) {
         const currentPlayer = result.gameState.players[result.gameState.currentPlayerIndex];
         if (currentPlayer) {
+          // Проверяем, нет ли уже активного таймера для этой комнаты
+          if (this.gameTimerService.hasActiveTimer(roomId)) {
+            console.log(`[TIMER_DEBUG] Timer already exists for room ${roomId}, clearing before starting new one`);
+            this.gameTimerService.clearTurnTimer(roomId);
+          }
+          console.log(`[TIMER_DEBUG] Starting timer for player ${currentPlayer.id} in room ${roomId}`);
           this.gameTimerService.startTurnTimer(roomId, currentPlayer.id);
         }
       }

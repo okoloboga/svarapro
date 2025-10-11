@@ -22,9 +22,14 @@ export class PotManager {
     const activePlayers = players.filter((p) => !p.hasFolded && p.totalBet > 0);
     if (activePlayers.length === 0) return;
 
-    activePlayers.forEach((p) => {
-      this.playerBets.set(p.id, p.totalBet);
-    });
+    // Валидация: проверяем, что все ставки неотрицательные
+    for (const player of activePlayers) {
+      if (player.totalBet < 0) {
+        console.warn(`[PotManager] Player ${player.id} has negative bet: ${player.totalBet}`);
+        continue;
+      }
+      this.playerBets.set(player.id, player.totalBet);
+    }
 
     this.calculatePots();
   }
@@ -36,6 +41,12 @@ export class PotManager {
     const sortedUniqueBets = [...new Set([...tempBets.values()])].sort(
       (a, b) => a - b,
     );
+
+    // Валидация: проверяем, что есть ставки для обработки
+    if (sortedUniqueBets.length === 0) {
+      console.warn('[PotManager] No bets to process');
+      return;
+    }
 
     for (const betLevel of sortedUniqueBets) {
       if (betLevel <= lastPotLevel) continue;
@@ -50,19 +61,25 @@ export class PotManager {
         }
       }
 
+      // Валидация: проверяем, что банк имеет положительную сумму
       if (pot.amount > 0) {
         this.pots.push(pot);
+      } else {
+        console.warn(`[PotManager] Skipping pot with zero amount at level ${betLevel}`);
       }
       lastPotLevel = betLevel;
     }
 
     // Handle uncalled bet returns
     const allBets = [...this.playerBets.values()];
-    const highestBet = Math.max(...allBets, 0);
+    if (allBets.length === 0) return;
+    
+    const highestBet = Math.max(...allBets);
     const playersWithHighestBet = [...this.playerBets.entries()].filter(
       ([, bet]) => bet === highestBet,
     );
 
+    // Если только один игрок имеет максимальную ставку, и она больше второй по величине
     if (playersWithHighestBet.length === 1) {
       const secondHighestBet = Math.max(
         ...allBets.filter((bet) => bet < highestBet),
@@ -81,6 +98,7 @@ export class PotManager {
         }
       }
     }
+    // Если несколько игроков имеют одинаковую максимальную ставку - возврата нет
   }
 
   public getPots(): Pot[] {

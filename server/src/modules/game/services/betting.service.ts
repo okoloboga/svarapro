@@ -57,6 +57,21 @@ export class BettingService {
     return { updatedGameState, actions };
   }
 
+  // Централизованная функция определения якоря
+  getAnchorPlayerIndex(gameState: GameState): number {
+    // Приоритет якорей:
+    // 1. lastRaiseIndex (последний, кто делал raise)
+    // 2. lastBlindBettorIndex (последний, кто делал blind bet)
+    // 3. dealerIndex (дилер)
+    if (gameState.lastRaiseIndex !== undefined) {
+      return gameState.lastRaiseIndex;
+    }
+    if (gameState.lastBlindBettorIndex !== undefined) {
+      return gameState.lastBlindBettorIndex;
+    }
+    return gameState.dealerIndex;
+  }
+
   // Упрощенная проверка завершения круга ставок
   isBettingRoundComplete(gameState: GameState): boolean {
     const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
@@ -67,8 +82,8 @@ export class BettingService {
       return true;
     }
 
-    // Определяем якорь (последний, кто повышал ставку)
-    const anchorIndex = gameState.lastRaiseIndex ?? gameState.lastBlindBettorIndex ?? gameState.dealerIndex;
+    // Определяем якорь используя централизованную функцию
+    const anchorIndex = this.getAnchorPlayerIndex(gameState);
     
     // Круг окончен, если ход вернулся к якорю
     if (gameState.currentPlayerIndex === anchorIndex) {

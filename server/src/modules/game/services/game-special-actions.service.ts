@@ -33,19 +33,28 @@ export class GameSpecialActionsService {
     }
 
     // Определяем, является ли all-in вынужденным call или добровольным raise
-    const isForcedCall =
-      gameState.lastActionAmount > 0 &&
-      player.balance < gameState.lastActionAmount;
-    const isVoluntaryRaise =
-      !isForcedCall &&
-      (allInAmount > gameState.lastActionAmount ||
-        gameState.lastActionAmount === 0);
+    const currentBetToCall = gameState.lastActionAmount || 0;
+    const canCoverBet = player.balance >= currentBetToCall;
+    
+    // Forced call: игрок не может покрыть ставку, но идет all-in
+    const isForcedCall = currentBetToCall > 0 && !canCoverBet;
+    
+    // Voluntary raise: игрок может покрыть ставку, но выбирает all-in (больше текущей ставки)
+    const isVoluntaryRaise = canCoverBet && allInAmount > currentBetToCall;
+    
+    // Simple call: игрок может покрыть ставку и делает ровно столько, сколько нужно
+    const isSimpleCall = canCoverBet && allInAmount === currentBetToCall && currentBetToCall > 0;
 
     const { updatedPlayer, action: allInAction } =
       this.playerService.processPlayerBet(player, allInAmount, 'all_in');
 
     // Устанавливаем правильный lastAction в зависимости от типа all-in
-    const lastAction = isForcedCall ? 'call' : 'raise';
+    let lastAction: 'call' | 'raise' = 'call';
+    if (isVoluntaryRaise) {
+      lastAction = 'raise';
+    } else if (isForcedCall || isSimpleCall) {
+      lastAction = 'call';
+    }
 
     gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
       updatedPlayer,
@@ -55,11 +64,13 @@ export class GameSpecialActionsService {
       },
     );
 
-    gameState.lastActionAmount = allInAmount;
-
-    // Устанавливаем якорь только для добровольного raise all-in
+    // Обновляем lastActionAmount только если это raise
     if (isVoluntaryRaise) {
+      gameState.lastActionAmount = allInAmount;
       gameState.lastRaiseIndex = playerIndex;
+    } else {
+      // Для call не обновляем lastActionAmount и lastRaiseIndex
+      gameState.lastActionAmount = Math.max(gameState.lastActionAmount, allInAmount);
     }
     // Обновляем банк
     gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
@@ -104,9 +115,9 @@ export class GameSpecialActionsService {
     // Игроки, которые еще могут действовать (не all-in)
     const playersWhoCanStillBet = activePlayers.filter((p) => !p.isAllIn);
 
-    // Если all-in был рейзом, и есть кому на него отвечать, игра продолжается.
-    // `isVoluntaryRaise` был определен ранее в методе.
+    // Логика завершения раунда для all-in
     if (isVoluntaryRaise && playersWhoCanStillBet.length > 0) {
+      // All-in был рейзом, и есть кому на него отвечать - игра продолжается
       this.logger.log(
         `[${roomId}] All-in был рейзом, передаем ход следующему игроку.`,
       );
@@ -118,7 +129,7 @@ export class GameSpecialActionsService {
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     } else {
-      // All-in был коллом, или на рейз некому отвечать. Раунд завершается.
+      // All-in был коллом, или на рейз некому отвечать - раунд завершается
       this.logger.log(
         `[${roomId}] All-in не требует ответа или отвечать некому. Завершение раунда.`,
       );
@@ -218,12 +229,7 @@ export class GameSpecialActionsService {
 
     // В blind_betting после look->call якорем остается предыдущий blind bettor
     // Потому что call не создает новый якорь, а только уравнивает
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      anchorPlayerIndex = gameState.dealerIndex;
-    }
+    const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
 
     // Всегда обновляем currentPlayerIndex перед проверкой
     gameState.currentPlayerIndex = aboutToActPlayerIndex;
@@ -328,14 +334,7 @@ export class GameSpecialActionsService {
 
     // В blind_betting после look->raise якорем становится сам игрок, который сделал raise
     // Потому что raise создает новый якорь
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      anchorPlayerIndex = gameState.dealerIndex;
-    }
+    const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
 
     // Всегда обновляем currentPlayerIndex перед проверкой
     gameState.currentPlayerIndex = aboutToActPlayerIndex;

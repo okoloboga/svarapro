@@ -166,6 +166,24 @@ export class GameStateService {
     return { updatedGameState, actions };
   }
 
+  // Матрица разрешенных переходов между фазами
+  private readonly allowedTransitions: Record<GameState['status'], GameState['status'][]> = {
+    waiting: ['ante'],
+    ante: ['blind_betting', 'finished'],
+    blind_betting: ['betting', 'showdown', 'finished'],
+    betting: ['showdown', 'finished'],
+    showdown: ['svara_pending', 'finished'],
+    svara: ['svara_pending'],
+    svara_pending: ['ante', 'finished'],
+    finished: ['waiting'],
+  };
+
+  // Валидация перехода между фазами
+  private isValidPhaseTransition(currentPhase: GameState['status'], nextPhase: GameState['status']): boolean {
+    const allowedNextPhases = this.allowedTransitions[currentPhase];
+    return allowedNextPhases ? allowedNextPhases.includes(nextPhase) : false;
+  }
+
   // Переход к следующей фазе игры
   moveToNextPhase(
     gameState: GameState,
@@ -177,6 +195,20 @@ export class GameStateService {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
+    // Валидация перехода между фазами
+    if (!this.isValidPhaseTransition(gameState.status, nextPhase)) {
+      console.error(`[PHASE_VALIDATION] Invalid phase transition from ${gameState.status} to ${nextPhase}`);
+      const errorAction: GameAction = {
+        type: 'join',
+        telegramId: 'system',
+        timestamp: Date.now(),
+        message: `Ошибка: недопустимый переход из фазы ${gameState.status} в фазу ${nextPhase}`,
+      };
+      actions.push(errorAction);
+      return { updatedGameState, actions };
+    }
+
+    console.log(`[PHASE_VALIDATION] Valid transition from ${gameState.status} to ${nextPhase}`);
     updatedGameState.status = nextPhase;
 
     // Добавляем действие в лог

@@ -9,6 +9,7 @@ import { PlayerService } from './player.service';
 import { GameStateService } from './game-state.service';
 import { UsersService } from '../../users/users.service';
 import { PotManager } from '../lib/pot-manager';
+import { SvaraService } from './svara.service';
 
 @Injectable()
 export class GameEndService {
@@ -19,6 +20,7 @@ export class GameEndService {
     private readonly playerService: PlayerService,
     private readonly gameStateService: GameStateService,
     private readonly usersService: UsersService,
+    private readonly svaraService: SvaraService,
   ) {}
 
   async endBettingRound(
@@ -243,7 +245,8 @@ export class GameEndService {
         // Основной банк - проверяем на ничью
         if (potWinnerPlayers.length > 1 && amount > 0) {
           // Ничья в основном банке - объявляем свару (только если банк не пустой)
-          // Возвращаем флаг для объявления свары
+          console.log(`[${roomId}] Declaring svara for ${potWinnerPlayers.length} winners with pot ${amount}`);
+          await this.svaraService.declareSvara(roomId, gameState, potWinnerPlayers);
           return;
         } else if (amount > 0) {
           // Один победитель в основном банке - разыгрываем как обычно
