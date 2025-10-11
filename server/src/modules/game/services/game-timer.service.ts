@@ -91,7 +91,7 @@ export class GameTimerService {
     }
 
     // Выполняем fold с обновленным счетчиком
-    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+    gameState.players[currentPlayerIndex] = this.playerService.updatePlayerStatus(
       player,
       {
         hasFolded: true,
