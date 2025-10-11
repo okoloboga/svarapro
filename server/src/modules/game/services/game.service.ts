@@ -98,6 +98,8 @@ export class GameService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log(`[PROCESS_ACTION_DEBUG] Starting processAction for room ${roomId}, telegramId ${telegramId}, action ${action}, amount ${amount}`);
+    console.log(`[PROCESS_ACTION_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     // Специальные действия свары
     if (action === 'join_svara') {
       return this.svaraService.joinSvara(roomId, telegramId);

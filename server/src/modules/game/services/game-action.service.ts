@@ -34,6 +34,8 @@ export class GameActionService {
     action: string,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log(`[GAME_ACTION_DEBUG] Starting GameActionService.processAction for room ${roomId}, telegramId ${telegramId}, action ${action}, amount ${amount}`);
+    console.log(`[GAME_ACTION_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     let gameState: GameState | null;
     try {
       gameState = await this.redisService.getGameState(roomId);

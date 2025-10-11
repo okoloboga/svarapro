@@ -20,9 +20,13 @@ export class GameTimerService {
 
   // Упрощенное управление таймерами
   startTurnTimer(roomId: string, playerId: string): void {
+    console.log(`[TIMER_START_DEBUG] Starting turn timer for room ${roomId}, player ${playerId}`);
+    console.log(`[TIMER_START_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    
     this.clearTurnTimer(roomId); // Всегда очищаем предыдущий
     
     const timer = setTimeout(async () => {
+      console.log(`[TIMER_TIMEOUT_DEBUG] Timer timeout for room ${roomId}, player ${playerId}`);
       await this.handleAutoFold(roomId, playerId);
       this.turnTimers.delete(roomId);
     }, TURN_DURATION_SECONDS * 1000);
@@ -43,6 +47,8 @@ export class GameTimerService {
     roomId: string,
     telegramId: string,
   ): Promise<GameActionResult> {
+    console.log(`[AUTO_FOLD_TIMER_DEBUG] Starting handleAutoFold for room ${roomId}, player ${telegramId}`);
+    console.log(`[AUTO_FOLD_TIMER_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     let gameState: GameState | null;
     try {
       gameState = await this.redisService.getGameState(roomId);

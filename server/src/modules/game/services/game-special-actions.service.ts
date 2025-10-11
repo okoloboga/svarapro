@@ -145,6 +145,8 @@ export class GameSpecialActionsService {
     gameState: GameState,
     playerIndex: number,
   ): Promise<GameActionResult> {
+    console.log(`[BLIND_CALL_DEBUG] Starting processBlindBettingCallAction for room ${roomId}, playerIndex ${playerIndex}`);
+    console.log(`[BLIND_CALL_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     const player = gameState.players[playerIndex];
 
     // В blind_betting call означает оплату просмотра карт. Сумма должна быть равна последней ставке вслепую * 2.
@@ -260,6 +262,8 @@ export class GameSpecialActionsService {
     playerIndex: number,
     amount?: number,
   ): Promise<GameActionResult> {
+    console.log(`[BLIND_RAISE_DEBUG] Starting processBlindBettingRaiseAction for room ${roomId}, playerIndex ${playerIndex}, amount ${amount}`);
+    console.log(`[BLIND_RAISE_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     const player = gameState.players[playerIndex];
     const raiseAmount = amount || 0;
 

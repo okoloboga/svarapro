@@ -124,6 +124,9 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   ): Promise<void> {
     const { roomId, action, amount } = payload;
     const telegramId = this.getTelegramId(client);
+    
+    console.log(`[WEBSOCKET_DEBUG] Received game_action from client ${client.id}, telegramId ${telegramId}, roomId ${roomId}, action ${action}, amount ${amount}`);
+    console.log(`[WEBSOCKET_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
 
     if (telegramId) {
       const result = await this.gameService.processAction(
@@ -158,6 +161,8 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     client: Socket,
     payload: { roomId: string },
   ): Promise<void> {
+    console.log(`[AUTO_FOLD_DEBUG] Received auto_fold from client ${client.id}, roomId ${payload.roomId}`);
+    console.log(`[AUTO_FOLD_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     const { roomId } = payload;
     const telegramId = this.getTelegramId(client);
 
