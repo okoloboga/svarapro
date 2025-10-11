@@ -177,7 +177,6 @@ export function GameRoom({
   const { triggerImpact } = useHapticFeedback();
   const currentUserId =
     window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || "";
-  const currentTurnRef = useRef<string>(""); // Отслеживаем текущий ход
   const [winSequenceStep, setWinSequenceStep] = useState<
     "none" | "showdown" | "winner" | "chips"
   >("none");
@@ -659,7 +658,7 @@ export function GameRoom({
     }
 
     const updateTimer = () => {
-      const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+      const elapsed = Math.floor((Date.now() - (gameState.turnStartTime || 0)) / 1000);
       const remaining = Math.max(0, TURN_DURATION_SECONDS - elapsed);
       setTurnTimer(remaining);
     };
