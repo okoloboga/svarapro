@@ -1773,6 +1773,11 @@ export class GameService {
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      gameState.turnStartTime = Date.now();
+      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (currentPlayer) {
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
@@ -1868,11 +1873,9 @@ export class GameService {
       gameState.currentPlayerIndex,
     );
 
-    // Определяем якорного игрока
+    // Определяем якорного игрока - НЕ текущего, а предыдущего
     let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
+    if (gameState.lastBlindBettorIndex !== undefined) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
     } else {
       anchorPlayerIndex = gameState.dealerIndex;
