@@ -26,6 +26,9 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
 
   socket.on('connect', () => {
     socket.emit('request_rooms');
+    // Добавляем обработчики для баланса
+    socket.emit('join', telegramId || defaultTelegramId);
+    socket.emit('subscribe_balance', telegramId || defaultTelegramId);
   });
 
   socket.on('connect_error', (error) => {
@@ -54,6 +57,21 @@ export const initSocket = (telegramId?: string, userData?: UserData): Socket => 
 
   socket.on('error', (error) => {
     console.error('WebSocket error:', error);
+  });
+
+  // Добавляем обработчики для баланса
+  socket.on('transactionConfirmed', (data: { balance: string; message: string }) => {
+    // Эмитим событие для App.tsx
+    window.dispatchEvent(new CustomEvent('balanceUpdated', { 
+      detail: { balance: data.balance, message: data.message } 
+    }));
+  });
+
+  socket.on('balanceUpdated', (data: { balance: string }) => {
+    // Эмитим событие для App.tsx
+    window.dispatchEvent(new CustomEvent('balanceUpdated', { 
+      detail: { balance: data.balance } 
+    }));
   });
 
   // --- Логика восстановления соединения при возвращении в приложение ---

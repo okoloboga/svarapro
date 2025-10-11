@@ -19,6 +19,9 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
+  // Защита от дублирования действий
+  private processingActions = new Map<string, boolean>();
+
   constructor(
     private readonly gameService: GameService,
     private readonly redisService: RedisService,
@@ -125,10 +128,27 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     const { roomId, action, amount } = payload;
     const telegramId = this.getTelegramId(client);
     
+    // 🔥 ЗАЩИТА ОТ ДУБЛИРОВАНИЯ
+    const actionKey = `${roomId}-${telegramId}-${action}-${amount}-${Date.now()}`;
+    if (this.processingActions.has(actionKey)) {
+      console.log(`[DUPLICATE_ACTION_BLOCKED] Blocked duplicate action: ${actionKey}`);
+      return;
+    }
+    
+    // Более простая защита - по ключу без timestamp
+    const simpleKey = `${roomId}-${telegramId}-${action}-${amount}`;
+    if (this.processingActions.has(simpleKey)) {
+      console.log(`[DUPLICATE_ACTION_BLOCKED] Blocked duplicate action: ${simpleKey}`);
+      return;
+    }
+    
+    this.processingActions.set(simpleKey, true);
+    
     console.log(`[WEBSOCKET_DEBUG] Received game_action from client ${client.id}, telegramId ${telegramId}, roomId ${roomId}, action ${action}, amount ${amount}`);
     console.log(`[WEBSOCKET_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
 
-    if (telegramId) {
+    try {
+      if (telegramId) {
       const result = await this.gameService.processAction(
         roomId,
         telegramId,
@@ -153,6 +173,15 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
     } else {
       console.error('No telegramId provided for game_action');
       client.emit('error', { message: 'Требуется авторизация (telegramId)' });
+    }
+    } catch (error) {
+      console.error('Error in handleGameAction:', error);
+      client.emit('error', { message: 'Внутренняя ошибка сервера' });
+    } finally {
+      // Очищаем ключ через 1 секунду
+      setTimeout(() => {
+        this.processingActions.delete(simpleKey);
+      }, 1000);
     }
   }
 

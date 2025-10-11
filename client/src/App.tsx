@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { isMiniAppDark, retrieveLaunchParams } from "@telegram-apps/sdk-react";
 import { AppRoot } from "@telegram-apps/telegram-ui";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { initSocket } from "./services/websocket";
 import { Dashboard } from "./pages/Dashboard";
 import { Deposit } from "./pages/Deposit";
 import { ConfirmDeposit } from "./pages/ConfirmDeposit";
@@ -220,33 +221,28 @@ function App() {
             }
           }
 
+          // Создаем единое WebSocket соединение
           if (!socket) {
-            const socketInstance = io("https://svarapro.com", {
-              transports: ["websocket"],
-              query: { telegramId: profile.telegramId },
+            const socketInstance = initSocket(profile.telegramId, {
+              username: profile.username || 'Unknown',
+              avatar: profile.avatar || '',
             });
             setSocket(socketInstance);
 
-            socketInstance.on("connect", () => {
-              socketInstance.emit("join", profile.telegramId);
-              socketInstance.emit("subscribe_balance", profile.telegramId);
-            });
-
-            socketInstance.on(
-              "transactionConfirmed",
-              (data: { balance: string; message: string }) => {
-                setBalance(data.balance);
-                setSuccessMessage(data.message);
+            // Добавляем обработчики для баланса
+            const handleBalanceUpdate = (event: CustomEvent) => {
+              setBalance(event.detail.balance);
+              if (event.detail.message) {
+                setSuccessMessage(event.detail.message);
               }
-            );
+            };
 
-            socketInstance.on("balanceUpdated", (data: { balance: string }) => {
-              setBalance(data.balance);
-            });
+            window.addEventListener('balanceUpdated', handleBalanceUpdate as EventListener);
 
-            socketInstance.on("disconnect", () => {
-              setSocket(null);
-            });
+            // Очистка обработчика при размонтировании
+            return () => {
+              window.removeEventListener('balanceUpdated', handleBalanceUpdate as EventListener);
+            };
           }
         } catch (error) {
           const apiError = error as ApiError;
