@@ -17,6 +17,8 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 
 @Injectable()
 export class GameService {
+  private turnTimers = new Map<string, NodeJS.Timeout>(); // Хранение таймеров ходов
+
   constructor(
     private readonly redisService: RedisService,
     private readonly cardService: CardService,
@@ -256,6 +258,16 @@ export class GameService {
 
     console.log(`[startGame] Game successfully started for room ${roomId}, starting ante phase`);
     await this.startAntePhase(roomId);
+    
+    // Запускаем таймер для первого игрока
+    const initialGameState = await this.redisService.getGameState(roomId);
+    if (initialGameState && initialGameState.currentPlayerIndex !== undefined) {
+      const currentPlayer = initialGameState.players[initialGameState.currentPlayerIndex];
+      if (currentPlayer) {
+        console.log(`[TIMER_DEBUG] Starting initial timer for player ${currentPlayer.id} in room ${roomId}`);
+        this.startTurnTimer(roomId, currentPlayer.id);
+      }
+    }
   }
 
   async startAntePhase(roomId: string): Promise<void> {
@@ -704,6 +716,15 @@ export class GameService {
           gameState.players,
           gameState.currentPlayerIndex,
         );
+        
+        // Запускаем таймер для следующего игрока
+        if (gameState.currentPlayerIndex !== undefined) {
+          const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+          if (nextPlayer) {
+            console.log(`[TIMER_DEBUG] Starting timer for player ${nextPlayer.id} in room ${roomId}`);
+            this.startTurnTimer(roomId, nextPlayer.id);
+          }
+        }
         break;
       }
       case 'look': {
@@ -870,6 +891,16 @@ export class GameService {
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
+      
+      // Запускаем таймер для следующего игрока
+      if (gameState.currentPlayerIndex !== undefined) {
+        const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (nextPlayer) {
+          console.log(`[TIMER_DEBUG] Starting timer for player ${nextPlayer.id} in room ${roomId}`);
+          this.startTurnTimer(roomId, nextPlayer.id);
+        }
+      }
+      
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
@@ -1162,6 +1193,9 @@ export class GameService {
   private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
     console.log(`[endGame] Ending game for room ${roomId}, reason: ${reason}`);
 
+    // Очищаем таймер для этой комнаты
+    this.clearTurnTimer(roomId);
+
     const room = await this.redisService.getRoom(roomId);
     if (room) {
       room.status = 'finished';
@@ -1229,5 +1263,78 @@ export class GameService {
     }
 
     return { success: true, gameState };
+  }
+
+  // Методы управления таймерами
+  startTurnTimer(roomId: string, playerId: string): void {
+    console.log(`[TIMER_START_DEBUG] Starting turn timer for room ${roomId}, player ${playerId}`);
+    console.log(`[TIMER_START_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    
+    this.clearTurnTimer(roomId); // Всегда очищаем предыдущий
+    
+    const timer = setTimeout(async () => {
+      console.log(`[TIMER_TIMEOUT_DEBUG] Timer timeout for room ${roomId}, player ${playerId}`);
+      await this.handleAutoFold(roomId, playerId);
+      this.turnTimers.delete(roomId);
+    }, TURN_DURATION_SECONDS * 1000);
+    
+    this.turnTimers.set(roomId, timer);
+  }
+
+  clearTurnTimer(roomId: string): void {
+    const timer = this.turnTimers.get(roomId);
+    if (timer) {
+      clearTimeout(timer);
+      this.turnTimers.delete(roomId);
+    }
+  }
+
+  hasActiveTimer(roomId: string): boolean {
+    return this.turnTimers.has(roomId);
+  }
+
+  // Обработка автоматического fold по таймеру
+  async handleAutoFold(
+    roomId: string,
+    playerId: string,
+  ): Promise<GameActionResult> {
+    console.log(`[AUTO_FOLD_TIMER_DEBUG] Starting handleAutoFold for room ${roomId}, player ${playerId}`);
+    
+    const gameState = await this.redisService.getGameState(roomId);
+    if (!gameState) {
+      console.log(`[AUTO_FOLD_TIMER_DEBUG] Game state not found for room ${roomId}`);
+      return { success: false, error: 'Игра не найдена' };
+    }
+
+    const playerIndex = gameState.players.findIndex((p) => p.id === playerId);
+    if (playerIndex === -1) {
+      console.log(`[AUTO_FOLD_TIMER_DEBUG] Player ${playerId} not found in game state`);
+      return { success: false, error: 'Игрок не найден' };
+    }
+
+    const player = gameState.players[playerIndex];
+    if (!player || player.hasFolded || !player.isActive) {
+      console.log(`[AUTO_FOLD_TIMER_DEBUG] Player ${playerId} is not active or already folded`);
+      return { success: false, error: 'Игрок не активен' };
+    }
+
+    // Проверяем, что это действительно ход этого игрока
+    if (gameState.currentPlayerIndex !== playerIndex) {
+      console.log(`[AUTO_FOLD_TIMER_DEBUG] Not player's turn: currentPlayerIndex=${gameState.currentPlayerIndex}, playerIndex=${playerIndex}`);
+      return { success: false, error: 'Сейчас не ваш ход' };
+    }
+
+    console.log(`[AUTO_FOLD_TIMER_DEBUG] Auto folding player ${playerId} in room ${roomId}`);
+    
+    // Выполняем автоматический fold
+    return this.handleFold(roomId, gameState, playerIndex);
+  }
+
+  // Очистка всех таймеров
+  clearAllTimers(): void {
+    for (const [roomId, timer] of this.turnTimers) {
+      clearTimeout(timer);
+    }
+    this.turnTimers.clear();
   }
 }
