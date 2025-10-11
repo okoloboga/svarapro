@@ -445,7 +445,8 @@ export class GameActionService {
           gameState.currentPlayerIndex,
         );
 
-        // Проверяем, будет ли следующий игрок якорем
+        // После look->raise в blind_betting, игра переходит в betting
+        // В betting якорем становится игрок, который сделал raise
         let anchorPlayerIndex: number | undefined = undefined;
         if (gameState.lastRaiseIndex !== undefined) {
           anchorPlayerIndex = gameState.lastRaiseIndex;

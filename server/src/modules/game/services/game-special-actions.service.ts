@@ -216,11 +216,10 @@ export class GameSpecialActionsService {
       gameState.currentPlayerIndex,
     );
 
-    // Проверяем, будет ли следующий игрок якорем
+    // В blind_betting после look->call якорем остается предыдущий blind bettor
+    // Потому что call не создает новый якорь, а только уравнивает
     let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
+    if (gameState.lastBlindBettorIndex !== undefined) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
     } else {
       anchorPlayerIndex = gameState.dealerIndex;
@@ -327,9 +326,12 @@ export class GameSpecialActionsService {
       gameState.currentPlayerIndex,
     );
 
-    // Определяем якорного игрока - НЕ текущего, а предыдущего
+    // В blind_betting после look->raise якорем становится сам игрок, который сделал raise
+    // Потому что raise создает новый якорь
     let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastBlindBettorIndex !== undefined && gameState.lastBlindBettorIndex !== playerIndex) {
+    if (gameState.lastRaiseIndex !== undefined) {
+      anchorPlayerIndex = gameState.lastRaiseIndex;
+    } else if (gameState.lastBlindBettorIndex !== undefined) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
     } else {
       anchorPlayerIndex = gameState.dealerIndex;
