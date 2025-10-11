@@ -115,4 +115,12 @@ export interface GameActionResult {
   error?: string;
   gameState?: GameState | null;
   events?: { name: string; payload?: any; to?: string | string[] }[];
+  // Дополнительные флаги для координации между сервисами
+  shouldEndGame?: boolean;
+  shouldStartGame?: boolean;
+  shouldEndBettingRound?: boolean;
+  shouldStartTimer?: boolean;
+  shouldKickPlayer?: boolean;
+  shouldProcessFold?: boolean;
+  player?: Player;
 }
