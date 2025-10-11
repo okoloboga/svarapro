@@ -856,10 +856,8 @@ export class GameService {
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.chipCount += 1;
         
-        // ИСПРАВЛЕНИЕ: Устанавливаем lastRaiseIndex только если НЕ all-in
-        if (!isAllInRaise) {
-          gameState.lastRaiseIndex = playerIndex;
-        }
+        // ИСПРАВЛЕНИЕ: ВСЕГДА устанавливаем lastRaiseIndex для raise (включая all-in)
+        gameState.lastRaiseIndex = playerIndex;
         
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
@@ -927,11 +925,8 @@ export class GameService {
     // ИСПРАВЛЕНИЕ: Проверяем, будет ли следующий игрок якорем
     let anchorPlayerIndex: number | undefined = undefined;
     if (gameState.lastRaiseIndex !== undefined) {
-      const lastRaisePlayer = gameState.players[gameState.lastRaiseIndex];
-      // ИСПРАВЛЕНИЕ: Исключаем all-in игроков из якорей
-      if (!lastRaisePlayer.isAllIn) {
-        anchorPlayerIndex = gameState.lastRaiseIndex;
-      }
+      // ИСПРАВЛЕНИЕ: ВСЕГДА используем lastRaiseIndex как якорь (включая all-in через raise)
+      anchorPlayerIndex = gameState.lastRaiseIndex;
     }
     
     if (anchorPlayerIndex === undefined) {
