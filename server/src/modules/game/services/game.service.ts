@@ -136,9 +136,9 @@ export class GameService {
   // Делегируем управление таймерами
   async handleAutoFold(
     roomId: string,
-    telegramId: string,
+    playerId: string,
   ): Promise<GameActionResult> {
-    return this.gameTimerService.handleAutoFold(roomId, telegramId);
+    return this.gameTimerService.handleAutoFold(roomId, playerId);
   }
 
   // Делегируем логику свары

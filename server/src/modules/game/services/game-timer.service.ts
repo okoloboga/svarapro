@@ -45,9 +45,9 @@ export class GameTimerService {
   // Обработка автоматического fold по таймеру
   async handleAutoFold(
     roomId: string,
-    telegramId: string,
+    playerId: string,
   ): Promise<GameActionResult> {
-    console.log(`[AUTO_FOLD_TIMER_DEBUG] Starting handleAutoFold for room ${roomId}, player ${telegramId}`);
+    console.log(`[AUTO_FOLD_TIMER_DEBUG] Starting handleAutoFold for room ${roomId}, player ${playerId}`);
     console.log(`[AUTO_FOLD_TIMER_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     let gameState: GameState | null;
     try {
@@ -60,16 +60,22 @@ export class GameTimerService {
       return { success: false, error: 'Ошибка подключения к серверу' };
     }
 
-    const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
-    const player = gameState.players[playerIndex];
+    // ИСПРАВЛЕНИЕ: Используем currentPlayerIndex вместо поиска по telegramId
+    const currentPlayerIndex = gameState.currentPlayerIndex;
+    if (currentPlayerIndex === undefined || currentPlayerIndex < 0) {
+      console.log(`[AUTO_FOLD_DEBUG] No current player, skipping auto fold`);
+      return { success: true };
+    }
 
+    const player = gameState.players[currentPlayerIndex];
     if (!player) {
-      return { success: false, error: 'Игрок не найден в этой игре' };
+      console.log(`[AUTO_FOLD_DEBUG] Current player not found, skipping auto fold`);
+      return { success: true };
     }
 
     // Проверяем, что это действительно ход этого игрока
-    console.log(`[AUTO_FOLD_DEBUG] Auto fold for player: ${telegramId}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
-    if (gameState.currentPlayerIndex !== playerIndex) {
+    console.log(`[AUTO_FOLD_DEBUG] Auto fold for player: ${player.id}, playerIndex: ${currentPlayerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
+    if (gameState.currentPlayerIndex !== currentPlayerIndex) {
       console.log(`[AUTO_FOLD_DEBUG] Not player's turn, silently skipping auto fold`);
       return { success: true }; // Молча игнорируем, не возвращаем ошибку
     }
