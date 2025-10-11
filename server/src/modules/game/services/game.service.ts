@@ -774,7 +774,8 @@ export class GameService {
         // ИСПРАВЛЕНИЕ: Убираем обработку call для hasLookedAndMustAct
         // В blind_betting можно только raise после look
 
-        if (playerIndex === gameState.lastRaiseIndex) {
+        // ИСПРАВЛЕНИЕ: call после look НЕ завершает игру, а устанавливает якорь
+        if (playerIndex === gameState.lastRaiseIndex && !player.hasLookedAndMustAct) {
           await this.endBettingRound(roomId, gameState);
           return { success: true };
         }
@@ -809,6 +810,12 @@ export class GameService {
         gameState.chipCount += 1;
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
+        
+        // ИСПРАВЛЕНИЕ: call после look устанавливает якорь
+        if (player.hasLookedAndMustAct) {
+          gameState.lastRaiseIndex = playerIndex;
+        }
+        
         break;
       }
       case 'raise': {
