@@ -225,7 +225,7 @@ function App() {
           if (!socket) {
             const socketInstance = initSocket(profile.telegramId, {
               username: profile.username || 'Unknown',
-              avatar: profile.avatar || '',
+              photo_url: profile.avatar || '',
             });
             setSocket(socketInstance);
 
