@@ -923,25 +923,10 @@ export class GameService {
       }
     }
 
-    // ИСПРАВЛЕНИЕ: Проверяем баланс игрока перед завершением
+    // ИСПРАВЛЕНИЕ: Если ход возвращается к якорю - игра завершается ВСЕГДА
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
-      const nextPlayer = gameState.players[aboutToActPlayerIndex];
-      if (nextPlayer.balance === 0 || nextPlayer.isAllIn) {
-        // Игрок не может действовать - завершаем игру
-        await this.endBettingRound(roomId, gameState);
-      } else {
-        // Продолжаем игру
-        gameState.currentPlayerIndex = aboutToActPlayerIndex;
-        
-        // Запускаем таймер для следующего игрока
-        this.startTurnTimer(roomId, nextPlayer.id);
-        // Обновляем GameState с информацией о таймере
-        gameState.timer = TURN_DURATION_SECONDS;
-        gameState.turnStartTime = Date.now();
-        
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-      }
+      // Игра завершается ПЕРЕД якорем (классическая логика покера)
+      await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
       
