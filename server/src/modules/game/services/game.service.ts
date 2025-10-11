@@ -1285,6 +1285,12 @@ export class GameService {
     gameState: GameState,
     winners: Player[],
   ): Promise<void> {
+    // Проверяем, что свара еще не объявлена
+    if (gameState.status === 'svara_pending') {
+      console.log(`[${roomId}] Svara already declared, skipping`);
+      return;
+    }
+
     const phaseResult = this.gameStateService.moveToNextPhase(
       gameState,
       'svara_pending',
@@ -1768,11 +1774,13 @@ export class GameService {
       anchorPlayerIndex = gameState.dealerIndex;
     }
 
+    // Всегда обновляем currentPlayerIndex перед проверкой
+    gameState.currentPlayerIndex = aboutToActPlayerIndex;
+    
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
       await this.endBettingRound(roomId, gameState);
     } else {
-      gameState.currentPlayerIndex = aboutToActPlayerIndex;
       gameState.turnStartTime = Date.now();
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
       if (currentPlayer) {
@@ -1875,21 +1883,23 @@ export class GameService {
 
     // Определяем якорного игрока - НЕ текущего, а предыдущего
     let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastBlindBettorIndex !== undefined) {
+    if (gameState.lastBlindBettorIndex !== undefined && gameState.lastBlindBettorIndex !== playerIndex) {
       anchorPlayerIndex = gameState.lastBlindBettorIndex;
     } else {
       anchorPlayerIndex = gameState.dealerIndex;
     }
 
+    // Всегда обновляем currentPlayerIndex перед проверкой
+    gameState.currentPlayerIndex = aboutToActPlayerIndex;
+    
     // Если следующий игрок - якорь, то круг завершается
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
       console.log(`[BLIND_BETTING_RAISE_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
       await this.endBettingRound(roomId, gameState);
     } else {
-      console.log(`[BLIND_BETTING_RAISE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
+      console.log(`[BLIND_BETTING_RAISE_DEBUG] Changing turn to ${aboutToActPlayerIndex}`);
       // Очищаем старый таймер перед сменой игрока
       this.clearTurnTimer(roomId);
-      gameState.currentPlayerIndex = aboutToActPlayerIndex;
       // Устанавливаем время начала хода и запускаем таймер
       gameState.turnStartTime = Date.now();
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
