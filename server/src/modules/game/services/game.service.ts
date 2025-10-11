@@ -101,7 +101,22 @@ export class GameService {
     }
 
     // Обрабатываем обычные действия
-    return this.gameActionService.processAction(roomId, telegramId, action, amount);
+    const result = await this.gameActionService.processAction(roomId, telegramId, action, amount);
+    
+    // Обрабатываем специальные флаги результата
+    if (result.success && result.gameState) {
+      if (result.shouldEndBettingRound) {
+        await this.gameEndService.endBettingRound(roomId, result.gameState);
+      }
+      if (result.shouldStartTimer && result.gameState.currentPlayerIndex !== undefined) {
+        const currentPlayer = result.gameState.players[result.gameState.currentPlayerIndex];
+        if (currentPlayer) {
+          this.gameTimerService.startTurnTimer(roomId, currentPlayer.id);
+        }
+      }
+    }
+    
+    return result;
   }
 
   // Делегируем управление таймерами
