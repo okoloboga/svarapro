@@ -147,8 +147,6 @@ export class GameGateway implements OnGatewayDisconnect, OnGatewayInit {
       this.processingActions.delete(timestampKey);
     }, 500);
     
-    console.log(`[WEBSOCKET_DEBUG] Received game_action from client ${client.id}, telegramId ${telegramId}, roomId ${roomId}, action ${action}, amount ${amount}`);
-    console.log(`[WEBSOCKET_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
 
     try {
       if (telegramId) {

@@ -264,7 +264,6 @@ export class GameService {
     if (initialGameState && initialGameState.currentPlayerIndex !== undefined) {
       const currentPlayer = initialGameState.players[initialGameState.currentPlayerIndex];
       if (currentPlayer) {
-        console.log(`[TIMER_DEBUG] Starting initial timer for player ${currentPlayer.id} in room ${roomId}`);
         this.startTurnTimer(roomId, currentPlayer.id);
       }
     }
@@ -721,7 +720,6 @@ export class GameService {
         if (gameState.currentPlayerIndex !== undefined) {
           const nextPlayer = gameState.players[gameState.currentPlayerIndex];
           if (nextPlayer) {
-            console.log(`[TIMER_DEBUG] Starting timer for player ${nextPlayer.id} in room ${roomId}`);
             this.startTurnTimer(roomId, nextPlayer.id);
           }
         }
@@ -796,6 +794,7 @@ export class GameService {
       case 'raise': {
         const raiseAmount = amount || 0;
         const isPostLookRaise = player.hasLookedAndMustAct;
+        const isAllInRaise = raiseAmount >= player.balance; // Проверка на all-in через raise
 
         const minRaiseAmount =
           gameState.lastBlindBet > 0
@@ -818,13 +817,30 @@ export class GameService {
 
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
 
-        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-          updatedPlayer,
-          { hasLookedAndMustAct: false },
-        );
+        // ИСПРАВЛЕНИЕ: Устанавливаем isAllIn для all-in через raise
+        if (isAllInRaise) {
+          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+            updatedPlayer,
+            { 
+              isAllIn: true,
+              hasLookedAndMustAct: false 
+            },
+          );
+        } else {
+          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+            updatedPlayer,
+            { hasLookedAndMustAct: false },
+          );
+        }
+
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.chipCount += 1;
-        gameState.lastRaiseIndex = playerIndex;
+        
+        // ИСПРАВЛЕНИЕ: Устанавливаем lastRaiseIndex только если НЕ all-in
+        if (!isAllInRaise) {
+          gameState.lastRaiseIndex = playerIndex;
+        }
+        
         gameState.lastActionAmount = raiseAmount;
         gameState.log.push(raiseAction);
 
@@ -876,19 +892,45 @@ export class GameService {
       gameState.currentPlayerIndex,
     );
 
-    // Проверяем, будет ли следующий игрок якорем
+    // ИСПРАВЛЕНИЕ: Проверяем, будет ли следующий игрок якорем
     let anchorPlayerIndex: number | undefined = undefined;
     if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      anchorPlayerIndex = gameState.dealerIndex;
+      const lastRaisePlayer = gameState.players[gameState.lastRaiseIndex];
+      // ИСПРАВЛЕНИЕ: Исключаем all-in игроков из якорей
+      if (!lastRaisePlayer.isAllIn) {
+        anchorPlayerIndex = gameState.lastRaiseIndex;
+      }
+    }
+    
+    if (anchorPlayerIndex === undefined) {
+      if (gameState.lastBlindBettorIndex !== undefined) {
+        const lastBlindBettor = gameState.players[gameState.lastBlindBettorIndex];
+        if (!lastBlindBettor.isAllIn) {
+          anchorPlayerIndex = gameState.lastBlindBettorIndex;
+        }
+      }
+      
+      if (anchorPlayerIndex === undefined) {
+        anchorPlayerIndex = gameState.dealerIndex;
+      }
     }
 
-    // Если следующий игрок - якорь, то круг завершается
+    // ИСПРАВЛЕНИЕ: Проверяем баланс игрока перед завершением
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
-      await this.endBettingRound(roomId, gameState);
+      const nextPlayer = gameState.players[aboutToActPlayerIndex];
+      if (nextPlayer.balance === 0 || nextPlayer.isAllIn) {
+        // Игрок не может действовать - завершаем игру
+        await this.endBettingRound(roomId, gameState);
+      } else {
+        // Продолжаем игру
+        gameState.currentPlayerIndex = aboutToActPlayerIndex;
+        
+        // Запускаем таймер для следующего игрока
+        this.startTurnTimer(roomId, nextPlayer.id);
+        
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+      }
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
       
@@ -896,7 +938,6 @@ export class GameService {
       if (gameState.currentPlayerIndex !== undefined) {
         const nextPlayer = gameState.players[gameState.currentPlayerIndex];
         if (nextPlayer) {
-          console.log(`[TIMER_DEBUG] Starting timer for player ${nextPlayer.id} in room ${roomId}`);
           this.startTurnTimer(roomId, nextPlayer.id);
         }
       }
@@ -1267,13 +1308,10 @@ export class GameService {
 
   // Методы управления таймерами
   startTurnTimer(roomId: string, playerId: string): void {
-    console.log(`[TIMER_START_DEBUG] Starting turn timer for room ${roomId}, player ${playerId}`);
-    console.log(`[TIMER_START_DEBUG] Stack trace:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
     
     this.clearTurnTimer(roomId); // Всегда очищаем предыдущий
     
     const timer = setTimeout(async () => {
-      console.log(`[TIMER_TIMEOUT_DEBUG] Timer timeout for room ${roomId}, player ${playerId}`);
       await this.handleAutoFold(roomId, playerId);
       this.turnTimers.delete(roomId);
     }, TURN_DURATION_SECONDS * 1000);
@@ -1304,33 +1342,25 @@ export class GameService {
     roomId: string,
     playerId: string,
   ): Promise<GameActionResult> {
-    console.log(`[AUTO_FOLD_TIMER_DEBUG] Starting handleAutoFold for room ${roomId}, player ${playerId}`);
-    
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState) {
-      console.log(`[AUTO_FOLD_TIMER_DEBUG] Game state not found for room ${roomId}`);
       return { success: false, error: 'Игра не найдена' };
     }
 
     const playerIndex = gameState.players.findIndex((p) => p.id === playerId);
     if (playerIndex === -1) {
-      console.log(`[AUTO_FOLD_TIMER_DEBUG] Player ${playerId} not found in game state`);
       return { success: false, error: 'Игрок не найден' };
     }
 
     const player = gameState.players[playerIndex];
     if (!player || player.hasFolded || !player.isActive) {
-      console.log(`[AUTO_FOLD_TIMER_DEBUG] Player ${playerId} is not active or already folded`);
       return { success: false, error: 'Игрок не активен' };
     }
 
     // Проверяем, что это действительно ход этого игрока
     if (gameState.currentPlayerIndex !== playerIndex) {
-      console.log(`[AUTO_FOLD_TIMER_DEBUG] Not player's turn: currentPlayerIndex=${gameState.currentPlayerIndex}, playerIndex=${playerIndex}`);
       return { success: false, error: 'Сейчас не ваш ход' };
     }
-
-    console.log(`[AUTO_FOLD_TIMER_DEBUG] Auto folding player ${playerId} in room ${roomId}`);
     
     // Выполняем автоматический fold
     return this.handleFold(roomId, gameState, playerIndex);
@@ -1353,8 +1383,6 @@ export class GameService {
       
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
-      
-      console.log(`[TIMER_UPDATE_DEBUG] Updated game state with timer: ${duration}s for room ${roomId}`);
     }
   }
 
@@ -1367,8 +1395,6 @@ export class GameService {
       
       await this.redisService.setGameState(roomId, gameState);
       await this.redisService.publishGameUpdate(roomId, gameState);
-      
-      console.log(`[TIMER_CLEAR_DEBUG] Cleared timer in game state for room ${roomId}`);
     }
   }
 }
