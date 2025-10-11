@@ -811,9 +811,37 @@ export class GameService {
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         
-        // ИСПРАВЛЕНИЕ: call после look устанавливает якорь
+        // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
         if (player.hasLookedAndMustAct) {
           gameState.lastRaiseIndex = playerIndex;
+          
+          // Переводим игру в фазу betting для всех игроков
+          const phaseResult = this.gameStateService.moveToNextPhase(
+            gameState,
+            'betting',
+          );
+          gameState = phaseResult.updatedGameState;
+          gameState.log.push(...phaseResult.actions);
+
+          // Устанавливаем hasLooked = true для всех других игроков
+          for (let i = 0; i < gameState.players.length; i++) {
+            if (
+              i !== playerIndex &&
+              gameState.players[i].isActive &&
+              !gameState.players[i].hasFolded
+            ) {
+              gameState.players[i] = this.playerService.updatePlayerStatus(
+                gameState.players[i],
+                { hasLooked: true },
+              );
+            }
+          }
+
+          // Рассчитываем очки для всех игроков
+          const scoreResult =
+            this.gameStateService.calculateScoresForPlayers(gameState);
+          gameState = scoreResult.updatedGameState;
+          gameState.log.push(...scoreResult.actions);
         }
         
         break;
