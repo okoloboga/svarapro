@@ -57,54 +57,26 @@ export class BettingService {
     return { updatedGameState, actions };
   }
 
-  // Проверка, завершился ли круг ставок
+  // Упрощенная проверка завершения круга ставок
   isBettingRoundComplete(gameState: GameState): boolean {
-    // Для проверки завершения круга считаем активными всех игроков, включая all-in
-    const activePlayers = gameState.players.filter(
-      (p) => p.isActive && !p.hasFolded,
-    );
-    // Игроки, которые еще могут действовать (не all-in и есть деньги)
-    const playersWhoCanAct = activePlayers.filter(
-      (p) => !p.isAllIn && p.balance > 0,
-    );
+    const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
+    const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
 
-    // Если действовать может меньше 2-х игроков, раунд ставок окончен.
+    // Если действовать может меньше 2-х игроков - круг окончен
     if (playersWhoCanAct.length < 2) {
       return true;
     }
 
-    // Определяем "якорного" игрока, на котором должен закончиться круг.
-    // `raise` имеет приоритет над `blind`, как уточнил пользователь.
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      // Если не было ни raise, ни blind, якорь - дилер.
-      anchorPlayerIndex = gameState.dealerIndex;
-    }
-
-    // Если якорь не определен, не можем завершить круг (не должно происходить в активной игре)
-    if (anchorPlayerIndex === undefined) {
-      return false;
-    }
-
-    // Круг завершен, если ход должен перейти к "якорному" игроку
-    // и при этом все игроки с деньгами уравняли ставки.
-    // ИСПРАВЛЕНИЕ: Круг должен завершиться ПЕРЕД якорем, а не НА якоре
-    if (gameState.currentPlayerIndex === anchorPlayerIndex) {
-      const playersWithMoney = activePlayers.filter((p) => p.balance > 0);
-      const firstPlayerBet = playersWithMoney[0]?.totalBet;
-      if (firstPlayerBet === undefined) {
-        return false; // Нет игроков с деньгами
-      }
-
-      const allBetsEqual = playersWithMoney.every(
-        (p) => p.totalBet === firstPlayerBet,
-      );
-
-      return allBetsEqual;
+    // Определяем якорь (последний, кто повышал ставку)
+    const anchorIndex = gameState.lastRaiseIndex ?? gameState.lastBlindBettorIndex ?? gameState.dealerIndex;
+    
+    // Круг окончен, если ход вернулся к якорю
+    if (gameState.currentPlayerIndex === anchorIndex) {
+      const playersWithMoney = activePlayers.filter(p => p.balance > 0);
+      if (playersWithMoney.length === 0) return true;
+      
+      const firstBet = playersWithMoney[0].totalBet;
+      return playersWithMoney.every(p => p.totalBet === firstBet);
     }
 
     return false;
@@ -170,12 +142,8 @@ export class BettingService {
     return { updatedGameState, actions };
   }
 
-  // Проверка возможности действия
-  canPerformAction(
-    player: Player,
-    action: string,
-    gameState: GameState,
-  ): {
+  // Упрощенная проверка возможности действия
+  canPerformAction(player: Player, action: string, gameState: GameState): {
     canPerform: boolean;
     error?: string;
   } {
@@ -183,68 +151,28 @@ export class BettingService {
       return { canPerform: false, error: 'Игрок не активен' };
     }
 
+    // Простые проверки по типу действия
     switch (action) {
       case 'blind_bet':
-        if (player.hasLooked) {
-          return { canPerform: false, error: 'Вы уже посмотрели карты' };
-        }
-        return { canPerform: true };
-
+        return { canPerform: !player.hasLooked, error: 'Вы уже посмотрели карты' };
+      
       case 'look':
-        if (player.hasLooked) {
-          return { canPerform: false, error: 'Вы уже посмотрели карты' };
-        }
-        return { canPerform: true };
-
-      case 'call': {
-        // Разрешаем call в фазе betting или в blind_betting после look
-        if (gameState.status === 'betting') {
-          // Разрешаем колл, если игрок является последним, кто повышал ставку.
-          // Это действие завершит раунд торгов.
-          const isLastRaiser =
-            gameState.lastRaiseIndex !== undefined &&
-            gameState.players[gameState.lastRaiseIndex]?.id === player.id;
-
-          if (isLastRaiser) {
-            return { canPerform: true }; // Allow last raiser to "call" to end the round
-          }
-
-          // Under the new rules, you can always call the last bet.
-          // The check for whether a bet exists is handled by game.service.
-          return { canPerform: true };
-        }
-
-        // Разрешаем call в blind_betting только если игрок посмотрел карты
-        if (
-          gameState.status === 'blind_betting' &&
-          player.hasLookedAndMustAct
-        ) {
-          return { canPerform: true };
-        }
-
+        return { canPerform: !player.hasLooked, error: 'Вы уже посмотрели карты' };
+      
+      case 'call':
+        if (gameState.status === 'betting') return { canPerform: true };
+        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) return { canPerform: true };
         return { canPerform: false, error: 'Сейчас нельзя уравнивать' };
-      }
-
-      case 'raise': {
-        if (gameState.status === 'betting') {
-          return { canPerform: true };
-        }
-        // ИСПРАВЛЕНИЕ: В blind_betting raise разрешен только для игроков, которые посмотрели карты
-        if (
-          gameState.status === 'blind_betting' &&
-          player.hasLookedAndMustAct
-        ) {
-          return { canPerform: true };
-        }
+      
+      case 'raise':
+        if (gameState.status === 'betting') return { canPerform: true };
+        if (gameState.status === 'blind_betting' && player.hasLookedAndMustAct) return { canPerform: true };
         return { canPerform: false, error: 'Сейчас нельзя повышать' };
-      }
-
+      
       case 'fold':
-        return { canPerform: true };
-
       case 'all_in':
         return { canPerform: true };
-
+      
       default:
         return { canPerform: false, error: 'Недопустимое действие' };
     }

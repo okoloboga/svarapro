@@ -19,7 +19,7 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
-  private turnTimers = new Map<string, NodeJS.Timeout>(); // Таймеры для ходов игроков
+  private turnTimers = new Map<string, NodeJS.Timeout>(); // Простое хранение таймеров
   
   constructor(
     private readonly redisService: RedisService,
@@ -402,128 +402,64 @@ export class GameService {
 
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
 
-  async joinSvara(
-    roomId: string,
-    telegramId: string,
-  ): Promise<GameActionResult> {
-    let gameState: GameState | null;
-    try {
-      gameState = await this.redisService.getGameState(roomId);
-      if (!gameState) {
-        console.error(
-          `[joinSvara] Game state not found for room ${roomId}, user ${telegramId}`,
-        );
-        return { success: false, error: 'Игра не найдена' };
-      }
-    } catch (error) {
-      console.error(
-        `[joinSvara] Redis error getting game state for room ${roomId}, user ${telegramId}:`,
-        error,
-      );
-      return {
-        success: false,
-        error: 'Ошибка подключения к серверу. Попробуйте еще раз.',
-      };
+  async joinSvara(roomId: string, telegramId: string): Promise<GameActionResult> {
+    const gameState = await this.redisService.getGameState(roomId);
+    if (!gameState || gameState.status !== 'svara_pending') {
+      return { success: false, error: 'Сейчас нельзя присоединиться к сваре' };
     }
 
-    if (gameState.status !== 'svara_pending') {
-      if (gameState.svaraConfirmed?.includes(telegramId)) {
-        return { success: true, gameState };
-      } else {
-        return {
-          success: false,
-          error: 'Сейчас нельзя присоединиться к сваре',
-        };
-      }
-    }
-
-    if (
-      gameState.svaraConfirmed?.includes(telegramId) ||
-      gameState.svaraDeclined?.includes(telegramId)
-    ) {
+    // Если уже участвует - возвращаем успех
+    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
       return { success: true, gameState };
     }
 
-    const player = gameState.players.find((p) => p.id === telegramId);
+    const player = gameState.players.find(p => p.id === telegramId);
     if (!player) {
       return { success: false, error: 'Игрок не найден' };
     }
 
-    const isOriginalWinner =
-      gameState.svaraParticipants &&
-      gameState.svaraParticipants.includes(telegramId);
-
+    // Упрощенная логика: добавляем в подтвержденные
     if (!gameState.svaraConfirmed) {
       gameState.svaraConfirmed = [];
     }
-
-    if (isOriginalWinner) {
-      if (!gameState.svaraConfirmed.includes(telegramId)) {
-        gameState.svaraConfirmed.push(telegramId);
-      }
-    } else {
-      const svaraBuyInAmount = gameState.pot;
-      if (player.balance < svaraBuyInAmount) {
-        return {
-          success: false,
-          error: 'Недостаточно средств для входа в свару',
-        };
-      }
-
-      player.balance -= svaraBuyInAmount;
-      gameState.pot += svaraBuyInAmount;
-      player.totalBet = (player.totalBet || 0) + svaraBuyInAmount;
-
-      if (!gameState.svaraConfirmed.includes(telegramId)) {
-        gameState.svaraConfirmed.push(telegramId);
-      }
-    }
+    gameState.svaraConfirmed.push(telegramId);
 
     const action: GameAction = {
       type: 'join',
       telegramId,
       timestamp: Date.now(),
-      message: isOriginalWinner
-        ? `Игрок ${player.username} участвует в сваре как победитель`
-        : `Игрок ${player.username} присоединился к сваре, добавив в банк ${gameState.pot}`,
+      message: `Игрок ${player.username} присоединился к сваре`,
     };
     gameState.log.push(action);
 
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-
     await this._checkSvaraCompletion(roomId, gameState);
 
     return { success: true, gameState };
   }
 
-  async skipSvara(
-    roomId: string,
-    telegramId: string,
-  ): Promise<GameActionResult> {
+  async skipSvara(roomId: string, telegramId: string): Promise<GameActionResult> {
     const gameState = await this.redisService.getGameState(roomId);
     if (!gameState || gameState.status !== 'svara_pending') {
       return { success: false, error: 'Сейчас нельзя пропустить свару' };
     }
 
-    if (
-      gameState.svaraConfirmed?.includes(telegramId) ||
-      gameState.svaraDeclined?.includes(telegramId)
-    ) {
+    // Если уже участвует - возвращаем успех
+    if (gameState.svaraConfirmed?.includes(telegramId) || gameState.svaraDeclined?.includes(telegramId)) {
       return { success: true, gameState };
     }
 
-    const player = gameState.players.find((p) => p.id === telegramId);
+    const player = gameState.players.find(p => p.id === telegramId);
     if (!player) {
       return { success: false, error: 'Игрок не найден' };
     }
 
+    // Упрощенная логика: добавляем в отказавшиеся
     if (!gameState.svaraDeclined) {
       gameState.svaraDeclined = [];
     }
-    if (!gameState.svaraDeclined.includes(telegramId)) {
-      gameState.svaraDeclined.push(telegramId);
-    }
+    gameState.svaraDeclined.push(telegramId);
 
     const action: GameAction = {
       type: 'fold',
@@ -533,37 +469,23 @@ export class GameService {
     };
     gameState.log.push(action);
 
+    await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
-
     await this._checkSvaraCompletion(roomId, gameState);
 
     return { success: true, gameState };
   }
 
-  // Управление таймерами ходов
+  // Упрощенное управление таймерами
   private startTurnTimer(roomId: string, playerId: string): void {
-    // Очищаем предыдущий таймер для этой комнаты
-    console.log(`[TIMER_DEBUG] Starting timer for room: ${roomId}, player: ${playerId}`);
-    const existingTimer = this.turnTimers.get(roomId);
-    if (existingTimer) {
-      console.log(`[TIMER_DEBUG] Clearing existing timer for room: ${roomId}`);
-      clearTimeout(existingTimer);
-    }
-    this.turnTimers.delete(roomId);
+    this.clearTurnTimer(roomId); // Всегда очищаем предыдущий
     
     const timer = setTimeout(async () => {
-      try {
-        console.log(`[TIMER_DEBUG] Timer expired for room: ${roomId}, player: ${playerId}`);
-        await this.handleAutoFold(roomId, playerId);
-        this.turnTimers.delete(roomId);
-      } catch (error) {
-        console.error(`Error in turn timer for room ${roomId}:`, error);
-        this.turnTimers.delete(roomId);
-      }
+      await this.handleAutoFold(roomId, playerId);
+      this.turnTimers.delete(roomId);
     }, TURN_DURATION_SECONDS * 1000);
     
     this.turnTimers.set(roomId, timer);
-    console.log(`[TIMER_DEBUG] Timer set for room: ${roomId}, player: ${playerId}`);
   }
 
   private clearTurnTimer(roomId: string): void {
@@ -689,27 +611,22 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
-    // Очищаем таймер при любом действии игрока (кроме look)
-    if (action !== 'look') {
-      console.log(`[TIMER_DEBUG] Clearing timer for action: ${action}, player: ${telegramId}`);
-      this.clearTurnTimer(roomId);
-    } else {
-      console.log(`[TIMER_DEBUG] NOT clearing timer for look action, player: ${telegramId}`);
+    // Упрощенная проверка хода
+    if (gameState.currentPlayerIndex !== playerIndex) {
+      return { success: false, error: 'Сейчас не ваш ход' };
     }
 
-    // Сбрасываем счетчик бездействия при любом активном действии
+    // Очищаем таймер при любом действии (кроме look)
+    if (action !== 'look') {
+      this.clearTurnTimer(roomId);
+    }
+
+    // Сбрасываем счетчик бездействия
     if (player.inactivityCount && player.inactivityCount > 0) {
       gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
         player,
         { inactivityCount: 0 },
       );
-    }
-
-    // Проверяем, что это действительно ход игрока
-    console.log(`[TURN_DEBUG] Action: ${action}, playerIndex: ${playerIndex}, currentPlayerIndex: ${gameState.currentPlayerIndex}, playerId: ${telegramId}`);
-    if (gameState.currentPlayerIndex !== playerIndex) {
-      console.log(`[TURN_DEBUG] ERROR: Not player's turn. Expected: ${gameState.currentPlayerIndex}, got: ${playerIndex}`);
-      return { success: false, error: 'Сейчас не ваш ход' };
     }
 
     if (action === 'fold') {
@@ -949,9 +866,6 @@ export class GameService {
           message: `Игрок ${player.username} посмотрел карты и имеет ${calculatedScore} очков`,
         };
         gameState.log.push(lookAction);
-
-        // НЕ устанавливаем turnStartTime для look - это НЕ смена хода!
-        console.log(`[LOOK_DEBUG] Look action completed, player: ${player.id}, currentPlayerIndex: ${gameState.currentPlayerIndex}`);
         break;
       }
     }
@@ -1117,54 +1031,28 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
 
-    // Check for round completion
-    const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
-    const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
-
-    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.length}, playersWhoCanAct: ${playersWhoCanAct.length}`);
-    console.log(`[ROUND_DEBUG] Active players: ${activePlayers.map(p => `${p.username}(${p.id})`).join(', ')}`);
-    console.log(`[ROUND_DEBUG] Players who can act: ${playersWhoCanAct.map(p => `${p.username}(${p.id})`).join(', ')}`);
-
-    if (playersWhoCanAct.length < 2) {
-        console.log(`[ROUND_DEBUG] Ending betting round - not enough players who can act`);
-        await this.endBettingRound(roomId, gameState);
-        return { success: true, gameState };
+    // Упрощенная проверка завершения круга
+    if (this.bettingService.isBettingRoundComplete(gameState)) {
+      await this.endBettingRound(roomId, gameState);
+      return { success: true, gameState };
     }
 
-    // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
-    // Если следующий игрок будет якорем, то круг завершается
-    const aboutToActPlayerIndex = this.playerService.findNextActivePlayer(
+    // Передаем ход следующему игроку
+    const nextPlayerIndex = this.playerService.findNextActivePlayer(
       gameState.players,
       gameState.currentPlayerIndex,
     );
-
-    // Проверяем, будет ли следующий игрок якорем
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    } else if (gameState.lastBlindBettorIndex !== undefined) {
-      anchorPlayerIndex = gameState.lastBlindBettorIndex;
-    } else {
-      anchorPlayerIndex = gameState.dealerIndex;
+    
+    gameState.currentPlayerIndex = nextPlayerIndex;
+    gameState.turnStartTime = Date.now();
+    
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer) {
+      this.startTurnTimer(roomId, currentPlayer.id);
     }
-
-    // Если следующий игрок - якорь, то круг завершается
-    if (aboutToActPlayerIndex === anchorPlayerIndex) {
-      console.log(`[TURN_CHANGE_DEBUG] Ending betting round, aboutToActPlayerIndex: ${aboutToActPlayerIndex}, anchorPlayerIndex: ${anchorPlayerIndex}`);
-      await this.endBettingRound(roomId, gameState);
-    } else {
-      console.log(`[TURN_CHANGE_DEBUG] Changing turn from ${gameState.currentPlayerIndex} to ${aboutToActPlayerIndex}`);
-      gameState.currentPlayerIndex = aboutToActPlayerIndex;
-      // Устанавливаем время начала хода и запускаем таймер
-      gameState.turnStartTime = Date.now();
-      const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-      if (currentPlayer) {
-        console.log(`[TURN_CHANGE_DEBUG] Starting timer for new player: ${currentPlayer.id}`);
-        this.startTurnTimer(roomId, currentPlayer.id);
-      }
-      await this.redisService.setGameState(roomId, gameState);
-      await this.redisService.publishGameUpdate(roomId, gameState);
-    }
+    
+    await this.redisService.setGameState(roomId, gameState);
+    await this.redisService.publishGameUpdate(roomId, gameState);
     return { success: true, gameState };
   }
 
@@ -1256,14 +1144,9 @@ export class GameService {
     }
   }
 
-  private async _checkSvaraCompletion(
-    roomId: string,
-    gameState: GameState,
-  ): Promise<void> {
+  private async _checkSvaraCompletion(roomId: string, gameState: GameState): Promise<void> {
     const totalPlayers = gameState.players.length;
-    const decisionsCount =
-      (gameState.svaraConfirmed?.length || 0) +
-      (gameState.svaraDeclined?.length || 0);
+    const decisionsCount = (gameState.svaraConfirmed?.length || 0) + (gameState.svaraDeclined?.length || 0);
 
     if (decisionsCount >= totalPlayers) {
       await this.resolveSvara(roomId);
@@ -1271,82 +1154,18 @@ export class GameService {
   }
 
   private async resolveSvara(roomId: string): Promise<void> {
-    if (this.svaraTimers.has(roomId)) {
-      clearTimeout(this.svaraTimers.get(roomId));
-      this.svaraTimers.delete(roomId);
-    }
+    this.svaraTimers.delete(roomId); // Очищаем таймер
 
     const gameState = await this.redisService.getGameState(roomId);
-    if (!gameState || gameState.status !== 'svara_pending') {
-      return;
-    }
+    if (!gameState || gameState.status !== 'svara_pending') return;
 
     const participants = gameState.svaraConfirmed || [];
 
+    // Упрощенная логика: если есть 2+ участника - начинаем свару, иначе завершаем игру
     if (participants.length >= 2) {
-      // ИСПРАВЛЕНИЕ: Проверяем, могут ли участники свары внести деньги
-      const svaraPlayers = gameState.players.filter((p) =>
-        participants.includes(p.id),
-      );
-      const playersWithoutMoney = svaraPlayers.filter(
-        (p) => p.balance < gameState.minBet,
-      );
-
-      // Если у всех участников свары нет денег, делим банк пополам
-      if (
-        playersWithoutMoney.length === svaraPlayers.length &&
-        svaraPlayers.length === 2
-      ) {
-        const winAmount = Number((gameState.pot / 2).toFixed(2));
-        const rake = Number((gameState.pot * 0.05).toFixed(2));
-
-        for (const player of svaraPlayers) {
-          const playerIndex = gameState.players.findIndex(
-            (p) => p.id === player.id,
-          );
-          if (playerIndex !== -1) {
-            gameState.players[playerIndex].balance += winAmount;
-
-            const action: GameAction = {
-              type: 'win',
-              telegramId: player.id,
-              amount: winAmount,
-              timestamp: Date.now(),
-              message: `Игрок ${player.username} получил ${winAmount} в сваре (недостаток средств)`,
-            };
-            gameState.log.push(action);
-          }
-        }
-
-        // Добавляем действие о комиссии
-        if (rake > 0) {
-          const action: GameAction = {
-            type: 'join',
-            telegramId: 'system',
-            timestamp: Date.now(),
-            message: `Комиссия: ${rake}`,
-          };
-          gameState.log.push(action);
-        }
-
-        // Завершаем игру
-        gameState.pot = 0;
-        gameState.status = 'finished';
-        gameState.winners = svaraPlayers;
-
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-
-        // Запускаем новую игру через endGame
-        await this.endGame(roomId, gameState, 'svara');
-        return;
-      }
-
       await this.startSvaraGame(roomId, participants);
-    } else if (participants.length === 1) {
-      await this.endGameWithWinner(roomId, gameState);
     } else {
-      await this.endGame(roomId, gameState, 'no_winner');
+      await this.endGame(roomId, gameState, participants.length === 1 ? 'winner' : 'no_winner');
     }
   }
 

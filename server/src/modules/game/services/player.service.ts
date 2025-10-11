@@ -50,7 +50,7 @@ export class PlayerService {
     };
   }
 
-  // Сброс состояния игрока для новой игры
+  // Упрощенный сброс состояния игрока
   resetPlayerForNewGame(player: Player, isActive: boolean = true): Player {
     return {
       ...player,
@@ -60,11 +60,11 @@ export class PlayerService {
       hasLooked: false,
       totalBet: 0,
       score: undefined,
-      lastAction: undefined, // ИСПРАВЛЕНИЕ: Очищаем lastAction для сброса уведомлений
-      hasLookedAndMustAct: false, // ИСПРАВЛЕНИЕ: Также очищаем флаг для свары
-      isAllIn: false, // ИСПРАВЛЕНИЕ: Сбрасываем флаг all-in между раундами
-      tableBalance: 0, // ИСПРАВЛЕНИЕ: Обнуляем баланс на столе
-      inactivityCount: 0, // ИСПРАВЛЕНИЕ: Сбрасываем счетчик бездействия
+      lastAction: undefined,
+      hasLookedAndMustAct: false,
+      isAllIn: false,
+      tableBalance: 0,
+      inactivityCount: 0,
     };
   }
 
@@ -148,26 +148,17 @@ export class PlayerService {
     return winners;
   }
 
-  // Нахождение следующего активного игрока
+  // Упрощенный поиск следующего активного игрока
   findNextActivePlayer(players: Player[], currentIndex: number): number {
-    let nextPlayerIndex = (currentIndex + 1) % players.length;
-
-    // Пропускаем неактивных игроков, тех кто сбросил карты, тех у кого нет денег, и all-in игроков
-    const startIndex = nextPlayerIndex;
-
-    do {
-      if (
-        players[nextPlayerIndex].isActive &&
-        !players[nextPlayerIndex].hasFolded &&
-        players[nextPlayerIndex].balance > 0 &&
-        !players[nextPlayerIndex].isAllIn
-      ) {
-        return nextPlayerIndex;
+    for (let i = 1; i <= players.length; i++) {
+      const nextIndex = (currentIndex + i) % players.length;
+      const player = players[nextIndex];
+      
+      if (player.isActive && !player.hasFolded && player.balance > 0 && !player.isAllIn) {
+        return nextIndex;
       }
-      nextPlayerIndex = (nextPlayerIndex + 1) % players.length;
-    } while (nextPlayerIndex !== startIndex);
-
-    // Если не нашли активного игрока, возвращаем текущий индекс
-    return currentIndex;
+    }
+    
+    return currentIndex; // Если не нашли, возвращаем текущий
   }
 }
