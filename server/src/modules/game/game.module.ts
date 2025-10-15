@@ -11,7 +11,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [UsersModule],
   providers: [
-    // Основной сервис (монолитная архитектура)
+    //  Основной сервис (монолитная архитектура)
     GameService,
     
     // Вспомогательные сервисы
