@@ -834,9 +834,6 @@ export class GameService {
           // Call после look устанавливает якорь ТОЛЬКО если якорь еще не установлен
           if (gameState.lastRaiseIndex === undefined) {
             gameState.lastRaiseIndex = playerIndex;
-            console.log(`[CALL_ANCHOR] Setting anchor to player ${playerIndex} after look->call`);
-          } else {
-            console.log(`[CALL_ANCHOR] Anchor already set to ${gameState.lastRaiseIndex}, not changing`);
           }
           
           // Переводим игру в фазу betting только если мы еще в blind_betting
@@ -1188,12 +1185,10 @@ export class GameService {
 
     // Защита от повторных вызовов
     if (this.endGameInProgress.has(roomId)) {
-      console.log(`[endGameWithWinner] Already in progress for room ${roomId}, skipping`);
       return;
     }
 
     this.endGameInProgress.add(roomId);
-    console.log(`[endGameWithWinner] Starting winner determination for room ${roomId}`);
 
     const scoreResult =
       this.gameStateService.calculateScoresForPlayers(gameState);
@@ -1204,8 +1199,7 @@ export class GameService {
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
     if (overallWinners.length > 1) {
-      console.log(`[endGameWithWinner] Svara detected in room ${roomId}. Pot will be carried over.`);
-      console.log(`[endGameWithWinner] Winners: ${overallWinners.map(w => w.username).join(', ')}`);
+      console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
       
       // Очищаем таймер при переходе в svara_pending
       this.clearTurnTimer(roomId);
@@ -1269,7 +1263,6 @@ export class GameService {
     }
 
     // Очищаем флаг в конце функции
-    console.log(`[endGameWithWinner] Completed for room ${roomId}, clearing flag`);
     this.endGameInProgress.delete(roomId);
   }
 
@@ -1413,7 +1406,6 @@ export class GameService {
     
     // Если у игрока нет денег, автоматически делаем fold
     if (player.balance <= 0) {
-      console.log(`[handleAutoFold] Player ${playerId} has no money, auto-folding`);
       return this.handleFold(roomId, gameState, playerIndex);
     }
     
