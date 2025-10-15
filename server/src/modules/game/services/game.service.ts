@@ -824,9 +824,10 @@ export class GameService {
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         
-        // ИСПРАВЛЕНИЕ: call после look НЕ устанавливает якорь, только переводит в betting
+        // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
         if (player.hasLookedAndMustAct) {
-          // Call не является якорем - якорь устанавливается только при raise
+          // Call после look устанавливает якорь (первое действие после look)
+          gameState.lastRaiseIndex = playerIndex;
           
           // Переводим игру в фазу betting только если мы еще в blind_betting
           if (gameState.status === 'blind_betting') {
@@ -1028,6 +1029,54 @@ export class GameService {
       // ИСПРАВЛЕНИЕ: Проверяем, могут ли участники свары внести деньги
       const svaraPlayers = gameState.players.filter(p => participants.includes(p.id));
       const playersWithoutMoney = svaraPlayers.filter(p => p.balance < gameState.minBet);
+      
+      // Если в сваре только 2 игрока и у одного 0$ - сразу showdown
+      if (svaraPlayers.length === 2 && playersWithoutMoney.length === 1) {
+        console.log(`[resolveSvara] Only 2 players in svara, one with 0$ - going to showdown`);
+        await this.startSvaraGame(roomId, participants);
+        return;
+      }
+      
+      // Если в сваре 2+ игроков и у одного 0$ - автоматический fold
+      if (svaraPlayers.length > 2 && playersWithoutMoney.length > 0) {
+        console.log(`[resolveSvara] Multiple players in svara, some with 0$ - auto-folding players without money`);
+        
+        // Автоматически fold игроков без денег
+        for (const player of playersWithoutMoney) {
+          const playerIndex = gameState.players.findIndex(p => p.id === player.id);
+          if (playerIndex !== -1) {
+            gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+              gameState.players[playerIndex],
+              { hasFolded: true, lastAction: 'fold' }
+            );
+            
+            const action: GameAction = {
+              type: 'fold',
+              telegramId: player.id,
+              timestamp: Date.now(),
+              message: `Игрок ${player.username} автоматически покинул свару (недостаток средств)`,
+            };
+            gameState.log.push(action);
+          }
+        }
+        
+        // Сохраняем изменения в Redis
+        await this.redisService.setGameState(roomId, gameState);
+        await this.redisService.publishGameUpdate(roomId, gameState);
+        
+        // Обновляем список участников свары
+        const remainingParticipants = participants.filter(id => 
+          !playersWithoutMoney.some(p => p.id === id)
+        );
+        
+        if (remainingParticipants.length >= 2) {
+          await this.startSvaraGame(roomId, remainingParticipants);
+        } else {
+          // Если остался только один участник, он выигрывает
+          await this.endGameWithWinner(roomId, gameState);
+        }
+        return;
+      }
       
       // Если у всех участников свары нет денег, делим банк пополам
       if (playersWithoutMoney.length === svaraPlayers.length && svaraPlayers.length === 2) {
