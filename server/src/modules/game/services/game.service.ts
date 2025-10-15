@@ -18,6 +18,7 @@ import { TURN_DURATION_SECONDS } from '../../../constants/game.constants';
 @Injectable()
 export class GameService {
   private turnTimers = new Map<string, NodeJS.Timeout>(); // Хранение таймеров ходов
+  private endGameInProgress = new Set<string>(); // Защита от повторных вызовов endGameWithWinner
 
   constructor(
     private readonly redisService: RedisService,
@@ -1091,6 +1092,13 @@ export class GameService {
   ): Promise<void> {
     if (!gameState) return;
 
+    // Защита от повторных вызовов
+    if (this.endGameInProgress.has(roomId)) {
+      console.log(`[endGameWithWinner] Already in progress for room ${roomId}, skipping`);
+      return;
+    }
+
+    this.endGameInProgress.add(roomId);
     console.log(`[endGameWithWinner] Starting winner determination for room ${roomId}`);
 
     const scoreResult =
@@ -1103,6 +1111,12 @@ export class GameService {
 
     if (overallWinners.length > 1) {
       console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
+      
+      // Очищаем таймер при переходе в svara_pending
+      this.clearTurnTimer(roomId);
+      gameState.timer = undefined;
+      gameState.turnStartTime = undefined;
+      
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
         'svara_pending',
@@ -1158,6 +1172,9 @@ export class GameService {
         });
       }, 3000);
     }
+
+    // Очищаем флаг в конце функции
+    this.endGameInProgress.delete(roomId);
   }
 
   private async distributeWinnings(roomId: string): Promise<void> {

@@ -167,7 +167,7 @@ export class GameStateService {
     waiting: ['ante'],
     ante: ['blind_betting', 'finished'],
     blind_betting: ['betting', 'showdown', 'finished'],
-    betting: ['showdown', 'finished'],
+    betting: ['showdown', 'svara_pending', 'finished'],
     showdown: ['svara_pending', 'finished'],
     svara: ['svara_pending'],
     svara_pending: ['ante', 'finished'],
