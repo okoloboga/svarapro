@@ -526,6 +526,11 @@ export class GameService {
       return { success: false, error: 'Игра не найдена' };
     }
 
+    // Если игра в фазе svara_pending, обычные действия не обрабатываются
+    if (gameState.status === 'svara_pending') {
+      return { success: false, error: 'Игра в фазе ожидания свары' };
+    }
+
     const playerIndex = gameState.players.findIndex((p) => p.id === telegramId);
     const player = gameState.players[playerIndex];
 
@@ -1194,7 +1199,8 @@ export class GameService {
     const overallWinners = this.playerService.determineWinners(activePlayers);
 
     if (overallWinners.length > 1) {
-      console.log(`Svara detected in room ${roomId}. Pot will be carried over.`);
+      console.log(`[endGameWithWinner] Svara detected in room ${roomId}. Pot will be carried over.`);
+      console.log(`[endGameWithWinner] Winners: ${overallWinners.map(w => w.username).join(', ')}`);
       
       // Очищаем таймер при переходе в svara_pending
       this.clearTurnTimer(roomId);
@@ -1258,6 +1264,7 @@ export class GameService {
     }
 
     // Очищаем флаг в конце функции
+    console.log(`[endGameWithWinner] Completed for room ${roomId}, clearing flag`);
     this.endGameInProgress.delete(roomId);
   }
 
