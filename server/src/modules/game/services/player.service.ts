@@ -148,6 +148,19 @@ export class PlayerService {
 
   // Упрощенный поиск следующего активного игрока
   findNextActivePlayer(players: Player[], currentIndex: number): number {
+    const activePlayersWithMoney = players.filter(p => p.isActive && !p.hasFolded && p.balance > 0);
+    
+    // Если нет игроков с деньгами, возвращаем -1 (игра должна завершиться)
+    if (activePlayersWithMoney.length === 0) {
+      return -1;
+    }
+    
+    // Если только один игрок с деньгами, игра должна завершиться
+    if (activePlayersWithMoney.length === 1) {
+      return -1;
+    }
+    
+    // Ищем следующего игрока с деньгами
     for (let i = 1; i <= players.length; i++) {
       const nextIndex = (currentIndex + i) % players.length;
       const player = players[nextIndex];
@@ -157,6 +170,6 @@ export class PlayerService {
       }
     }
     
-    return currentIndex; // Если не нашли, возвращаем текущий
+    return -1; // Если не нашли, возвращаем -1
   }
 }

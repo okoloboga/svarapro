@@ -374,6 +374,12 @@ export class GameService {
       gameState.dealerIndex,
     );
 
+    // Если нет игроков с деньгами, завершаем игру
+    if (gameState.currentPlayerIndex === -1) {
+      await this.endGameWithWinner(roomId, gameState);
+      return;
+    }
+
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
     
@@ -527,6 +533,11 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
+    // Проверяем, что у игрока есть деньги для действий (кроме fold)
+    if (action !== 'fold' && player.balance <= 0) {
+      return { success: false, error: 'Недостаточно средств для выполнения действия' };
+    }
+
     if (action === 'fold') {
       if (gameState.currentPlayerIndex !== playerIndex) {
         return { success: false, error: 'Сейчас не ваш ход' };
@@ -648,6 +659,12 @@ export class GameService {
         gameState.currentPlayerIndex,
       );
       
+      // Если нет игроков с деньгами, завершаем игру
+      if (aboutToActPlayerIndex === -1) {
+        await this.endGameWithWinner(roomId, gameState);
+        return { success: true };
+      }
+      
       // Проверяем завершение круга ставок
       const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
       
@@ -710,6 +727,12 @@ export class GameService {
           gameState.players,
           gameState.currentPlayerIndex,
         );
+        
+        // Если нет игроков с деньгами, завершаем игру
+        if (gameState.currentPlayerIndex === -1) {
+          await this.endGameWithWinner(roomId, gameState);
+          return { success: true, gameState };
+        }
         
         // Запускаем таймер для следующего игрока
         if (gameState.currentPlayerIndex !== undefined) {
@@ -929,6 +952,12 @@ export class GameService {
       gameState.currentPlayerIndex,
     );
 
+    // Если нет игроков с деньгами, завершаем игру
+    if (aboutToActPlayerIndex === -1) {
+      await this.endGameWithWinner(roomId, gameState);
+      return { success: true, gameState };
+    }
+
     // Проверяем завершение круга ставок
     const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
     
@@ -1079,6 +1108,12 @@ export class GameService {
       gameState.players,
       gameState.dealerIndex,
     );
+
+    // Если нет игроков с деньгами, завершаем игру
+    if (gameState.currentPlayerIndex === -1) {
+      await this.endGameWithWinner(roomId, gameState);
+      return;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -1313,6 +1348,12 @@ export class GameService {
     // Проверяем, что это действительно ход этого игрока
     if (gameState.currentPlayerIndex !== playerIndex) {
       return { success: false, error: 'Сейчас не ваш ход' };
+    }
+    
+    // Если у игрока нет денег, автоматически делаем fold
+    if (player.balance <= 0) {
+      console.log(`[handleAutoFold] Player ${playerId} has no money, auto-folding`);
+      return this.handleFold(roomId, gameState, playerIndex);
     }
     
     // Выполняем автоматический fold
