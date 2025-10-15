@@ -539,8 +539,8 @@ export class GameService {
       return { success: false, error: 'Игрок не найден в этой игре' };
     }
 
-    // Проверяем, что у игрока есть деньги для действий (кроме fold)
-    if (action !== 'fold' && player.balance <= 0) {
+    // Проверяем, что у игрока есть деньги для действий (кроме fold и raise)
+    if (action !== 'fold' && action !== 'raise' && player.balance <= 0) {
       return { success: false, error: 'Недостаточно средств для выполнения действия' };
     }
 
