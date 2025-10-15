@@ -831,8 +831,13 @@ export class GameService {
         
         // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
         if (player.hasLookedAndMustAct) {
-          // Call после look устанавливает якорь (первое действие после look)
-          gameState.lastRaiseIndex = playerIndex;
+          // Call после look устанавливает якорь ТОЛЬКО если якорь еще не установлен
+          if (gameState.lastRaiseIndex === undefined) {
+            gameState.lastRaiseIndex = playerIndex;
+            console.log(`[CALL_ANCHOR] Setting anchor to player ${playerIndex} after look->call`);
+          } else {
+            console.log(`[CALL_ANCHOR] Anchor already set to ${gameState.lastRaiseIndex}, not changing`);
+          }
           
           // Переводим игру в фазу betting только если мы еще в blind_betting
           if (gameState.status === 'blind_betting') {
