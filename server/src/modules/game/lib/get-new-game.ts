@@ -21,7 +21,6 @@ export const getNewGame = (
     isActive: true,
     hasFolded: false,
     hasLooked: false,
-    isAllIn: false,
     totalBet: 0,
     // Properties from the official type that need a default value
     tableBalance: p.balance, // Assuming tableBalance starts equal to balance

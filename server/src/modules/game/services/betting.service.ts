@@ -83,7 +83,7 @@ export class BettingService {
   // Упрощенная проверка завершения круга ставок
   isBettingRoundComplete(gameState: GameState): boolean {
     const activePlayers = gameState.players.filter(p => p.isActive && !p.hasFolded);
-    const playersWhoCanAct = activePlayers.filter(p => !p.isAllIn && p.balance > 0);
+    const playersWhoCanAct = activePlayers.filter(p => p.balance > 0);
 
     // Если действовать может меньше 2-х игроков - круг окончен
     if (playersWhoCanAct.length < 2) {
@@ -193,7 +193,6 @@ export class BettingService {
         return { canPerform: false, error: 'Сейчас нельзя повышать' };
       
       case 'fold':
-      case 'all_in':
         return { canPerform: true };
       
       default:

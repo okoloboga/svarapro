@@ -916,25 +916,7 @@ export function GameRoom({
   const blindButtonsDisabled = !!(effectiveGameStatus !== "blind_betting");
   // Карты показываются только после затемнения экрана
   const showCards = winSequenceStep === "showdown";
-  const canAllIn = !!(
-    isCurrentUserTurn &&
-    currentPlayer &&
-    ((effectiveGameStatus === "betting" &&
-      currentPlayer.balance < callAmount) ||
-      (effectiveGameStatus === "blind_betting" &&
-        (currentPlayer.balance < blindBetAmount ||
-          (postLookActions && currentPlayer.balance < postLookCallAmount)))) &&
-    currentPlayer.balance > 0
-  );
 
-  const handleAllInClick = () => {
-    if (!currentPlayer || !currentPlayer.isActive || !isCurrentUserTurn) {
-      return;
-    }
-    handlePlayerBet(currentPlayer.id);
-    actions.allIn(currentPlayer.balance);
-    setShowBetSlider(false);
-  };
 
   const handleRaiseClick = () => setShowBetSlider(true);
   const handleBlindBetClick = () => {
@@ -1235,17 +1217,14 @@ export function GameRoom({
                 <ActionButtons
                   postLookActions={postLookActions}
                   canFold={canFold}
-                  canCall={!canAllIn && canCall}
-                  canRaise={!canAllIn && canRaise}
+                  canCall={canCall}
+                  canRaise={canRaise}
                   canLook={canLook}
                   canBlindBet={canBlindBet}
-                  canAllIn={canAllIn}
                   callAmount={
-                    canAllIn
-                      ? currentPlayer.balance
-                      : postLookActions
-                        ? postLookCallAmount
-                        : callAmount
+                    postLookActions
+                      ? postLookCallAmount
+                      : callAmount
                   }
                   turnTimer={turnTimer}
                   onFold={actions.fold}
@@ -1253,7 +1232,6 @@ export function GameRoom({
                   onRaise={handleRaiseClick}
                   onLook={actions.lookCards}
                   onBlindBet={handleBlindBetClick}
-                  onAllIn={handleAllInClick}
                   blindButtonsDisabled={blindButtonsDisabled || isProcessing}
                   isCallDisabled={isCallDisabled || isProcessing}
                   isRaiseDisabled={isRaiseDisabled || isProcessing}
@@ -1283,7 +1261,6 @@ export function GameRoom({
         maxBet={maxRaise}
         initialBet={minRaiseAmount}
         onConfirm={handleBetConfirm}
-        onAllIn={handleAllInClick}
         isTurn={isCurrentUserTurn}
         turnTimer={turnTimer}
         isProcessing={isProcessing}

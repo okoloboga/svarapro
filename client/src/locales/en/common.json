@@ -209,7 +209,6 @@
     "phrase17": "Faster!",
     "phrase18": "What a sly one!",
     "phrase19": "Damn!",
-    "phrase20": "All-in!"
   },
   "confirmation": "Confirmation",
   "exit_confirmation_text": "Are you sure you want to exit the game?",
@@ -235,5 +234,4 @@
   "waiting_for_players": "Waiting for players",
   "waiting_for_next_round": "Waiting for the next round",
   "sec": "sec",
-  "all_in": "All-In"
 }

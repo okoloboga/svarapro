@@ -40,7 +40,6 @@ export class PlayerService {
       isDealer?: boolean;
       lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look';
       hasLookedAndMustAct?: boolean;
-      isAllIn?: boolean;
       inactivityCount?: number;
     },
   ): Player {
@@ -62,7 +61,6 @@ export class PlayerService {
       score: undefined,
       lastAction: undefined,
       hasLookedAndMustAct: false,
-      isAllIn: false,
       tableBalance: 0,
       inactivityCount: 0,
     };
@@ -154,7 +152,7 @@ export class PlayerService {
       const nextIndex = (currentIndex + i) % players.length;
       const player = players[nextIndex];
       
-      if (player.isActive && !player.hasFolded && player.balance > 0 && !player.isAllIn) {
+      if (player.isActive && !player.hasFolded && player.balance > 0) {
         return nextIndex;
       }
     }

@@ -41,7 +41,6 @@ export interface Player {
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
-  isAllIn?: boolean; // игрок пошел ва-банк
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
   lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
   lastWinAmount?: number;
@@ -102,7 +101,6 @@ export interface GameAction {
     | 'fold'
     | 'win'
     | 'svara'
-    | 'all_in'
     | 'return_bet';
   telegramId: string;
   amount?: number;

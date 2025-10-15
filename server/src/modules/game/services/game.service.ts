@@ -533,7 +533,7 @@ export class GameService {
       return this.handleFold(roomId, gameState, playerIndex);
     }
 
-    if (player.hasLookedAndMustAct && !['raise', 'call', 'fold', 'all_in'].includes(action)) {
+    if (player.hasLookedAndMustAct && !['raise', 'call', 'fold'].includes(action)) {
       return {
         success: false,
         error:
@@ -572,8 +572,6 @@ export class GameService {
           action,
           amount,
         );
-      case 'all_in':
-        return this.handleAllIn(roomId, gameState, playerIndex, amount);
       default:
         return {
           success: false,
@@ -649,18 +647,9 @@ export class GameService {
         gameState.currentPlayerIndex,
       );
       
-      // ИСПРАВЛЕНИЕ: Проверяем завершение круга ДО передачи хода
-      // Если следующий игрок будет якорем, то круг завершается
-      let anchorPlayerIndex: number | undefined = undefined;
-      if (gameState.lastRaiseIndex !== undefined) {
-        anchorPlayerIndex = gameState.lastRaiseIndex;
-      } else if (gameState.lastBlindBettorIndex !== undefined) {
-        anchorPlayerIndex = gameState.lastBlindBettorIndex;
-      } else {
-        anchorPlayerIndex = gameState.dealerIndex;
-      }
-
-      // Если следующий игрок - якорь, то круг завершается
+      // Проверяем завершение круга ставок
+      const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
+      
       if (aboutToActPlayerIndex === anchorPlayerIndex) {
         await this.endBettingRound(roomId, gameState);
         return { success: true };
@@ -849,7 +838,6 @@ export class GameService {
       case 'raise': {
         const raiseAmount = amount || 0;
         const isPostLookRaise = player.hasLookedAndMustAct;
-        const isAllInRaise = raiseAmount >= player.balance; // Проверка на all-in через raise
 
         const minRaiseAmount =
           gameState.lastBlindBet > 0
@@ -872,26 +860,15 @@ export class GameService {
 
         raiseAction.message = `Игрок ${player.username} повысил до ${raiseAmount}`;
 
-        // ИСПРАВЛЕНИЕ: Устанавливаем isAllIn для all-in через raise
-        if (isAllInRaise) {
-          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-            updatedPlayer,
-            { 
-              isAllIn: true,
-              hasLookedAndMustAct: false 
-            },
-          );
-        } else {
-          gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
-            updatedPlayer,
-            { hasLookedAndMustAct: false },
-          );
-        }
+        gameState.players[playerIndex] = this.playerService.updatePlayerStatus(
+          updatedPlayer,
+          { hasLookedAndMustAct: false },
+        );
 
         gameState.pot = Number((gameState.pot + raiseAmount).toFixed(2));
         gameState.chipCount += 1;
         
-        // ИСПРАВЛЕНИЕ: ВСЕГДА устанавливаем lastRaiseIndex для raise (включая all-in)
+        // Устанавливаем lastRaiseIndex для raise
         gameState.lastRaiseIndex = playerIndex;
         
         gameState.lastActionAmount = raiseAmount;
@@ -946,29 +923,10 @@ export class GameService {
       gameState.currentPlayerIndex,
     );
 
-    // ИСПРАВЛЕНИЕ: Проверяем, будет ли следующий игрок якорем
-    let anchorPlayerIndex: number | undefined = undefined;
-    if (gameState.lastRaiseIndex !== undefined) {
-      // ИСПРАВЛЕНИЕ: ВСЕГДА используем lastRaiseIndex как якорь (включая all-in через raise)
-      anchorPlayerIndex = gameState.lastRaiseIndex;
-    }
+    // Проверяем завершение круга ставок
+    const anchorPlayerIndex = this.bettingService.getAnchorPlayerIndex(gameState);
     
-    if (anchorPlayerIndex === undefined) {
-      if (gameState.lastBlindBettorIndex !== undefined) {
-        const lastBlindBettor = gameState.players[gameState.lastBlindBettorIndex];
-        if (!lastBlindBettor.isAllIn) {
-          anchorPlayerIndex = gameState.lastBlindBettorIndex;
-        }
-      }
-      
-      if (anchorPlayerIndex === undefined) {
-        anchorPlayerIndex = gameState.dealerIndex;
-      }
-    }
-
-    // ИСПРАВЛЕНИЕ: Если ход возвращается к якорю - игра завершается ВСЕГДА
     if (aboutToActPlayerIndex === anchorPlayerIndex) {
-      // Игра завершается ПЕРЕД якорем (классическая логика покера)
       await this.endBettingRound(roomId, gameState);
     } else {
       gameState.currentPlayerIndex = aboutToActPlayerIndex;
@@ -1205,7 +1163,6 @@ export class GameService {
       p.lastWinAmount = 0;
     }
 
-    const isAllInGame = gameState.players.some((p) => p.isAllIn);
     const winners = gameState.winners || [];
 
     if (winners.length === 0) {
@@ -1214,28 +1171,7 @@ export class GameService {
       return;
     }
 
-    if (isAllInGame) {
-      console.log(`[distributeWinnings] All-in game detected in room ${roomId}.`);
-      const potManager = new PotManager();
-      potManager.processBets(gameState.players);
-      const potWinnersList = potManager.getWinners(gameState.players);
-
-      for (const potResult of potWinnersList) {
-        const { winners: potWinnerPlayers, amount } = potResult;
-        if (potWinnerPlayers.length > 0) {
-          const winAmount = Number((amount / potWinnerPlayers.length).toFixed(2));
-          for (const winner of potWinnerPlayers) {
-            const playerInState = gameState.players.find((p) => p.id === winner.id);
-            if (playerInState) {
-              playerInState.balance += winAmount;
-              playerInState.lastWinAmount = (playerInState.lastWinAmount || 0) + winAmount;
-            }
-          }
-        }
-      }
-      gameState.pot = 0;
-      gameState.chipCount = 0;
-    } else if (winners.length === 1) {
+    if (winners.length === 1) {
       console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
       const winnerId = winners[0].id;
       const winnerBefore = gameState.players.find(p => p.id === winnerId);
@@ -1301,56 +1237,6 @@ export class GameService {
     }, 5000);
   }
 
-  private async handleAllIn(
-    roomId: string,
-    gameState: GameState,
-    playerIndex: number,
-    amount?: number,
-  ): Promise<GameActionResult> {
-    const player = gameState.players[playerIndex];
-    const allInAmount = amount ?? player.balance;
-
-    if (allInAmount > player.balance) {
-      return { success: false, error: 'Недостаточно средств' };
-    }
-
-    const { updatedPlayer, action: allInAction } = this.playerService.processPlayerBet(
-      player,
-      allInAmount,
-      'all_in',
-    );
-
-    gameState.players[playerIndex] = this.playerService.updatePlayerStatus(updatedPlayer, {
-      isAllIn: true,
-      lastAction: 'raise',
-    });
-
-    gameState.pot = Number((gameState.pot + allInAmount).toFixed(2));
-    gameState.chipCount += 1;
-    gameState.lastActionAmount = allInAmount;
-    gameState.lastRaiseIndex = playerIndex;
-    gameState.log.push(allInAction);
-
-    const activePlayers = gameState.players.filter((p) => p.isActive && !p.hasFolded);
-    const allInPlayers = activePlayers.filter((p) => p.isAllIn);
-
-    if (allInPlayers.length === activePlayers.length) {
-      await this.endBettingRound(roomId, gameState);
-    } else {
-      gameState.currentPlayerIndex = this.playerService.findNextActivePlayer(
-        gameState.players,
-        gameState.currentPlayerIndex,
-      );
-      if (this.bettingService.isBettingRoundComplete(gameState)) {
-        await this.endBettingRound(roomId, gameState);
-      } else {
-        await this.redisService.setGameState(roomId, gameState);
-        await this.redisService.publishGameUpdate(roomId, gameState);
-      }
-    }
-
-    return { success: true, gameState };
-  }
 
   // Методы управления таймерами
   startTurnTimer(roomId: string, playerId: string): void {

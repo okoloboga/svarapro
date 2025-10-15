@@ -22,7 +22,6 @@ interface ActionButtonsProps {
   canRaise: boolean;
   canLook: boolean;
   canBlindBet: boolean;
-  canAllIn: boolean;
   callAmount: number;
   minBet: number;
   turnTimer: number;
@@ -31,7 +30,6 @@ interface ActionButtonsProps {
   onRaise: () => void;
   onLook: () => void;
   onBlindBet: () => void;
-  onAllIn: () => void;
   blindButtonsDisabled?: boolean;
   isCallDisabled?: boolean;
   isRaiseDisabled?: boolean;
@@ -45,7 +43,6 @@ export function ActionButtons({
   canRaise,
   canLook,
   canBlindBet,
-  canAllIn,
   callAmount,
   minBet,
   turnTimer,
@@ -54,7 +51,6 @@ export function ActionButtons({
   onRaise,
   onLook,
   onBlindBet,
-  onAllIn,
   blindButtonsDisabled,
   isCallDisabled,
   isRaiseDisabled,
@@ -70,7 +66,6 @@ export function ActionButtons({
     raise: false,
     look: false,
     blindBet: false,
-    allIn: false,
   });
 
   const handleButtonPress = (buttonType: keyof typeof isPressed, callback: () => void) => {
@@ -115,44 +110,31 @@ export function ActionButtons({
             </div>
           </div>
 
-          {canAllIn ? (
-            <button
-                onClick={() => handleButtonPress('allIn', onAllIn)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${isPressed.allIn ? 'button-press' : ''}`}
-                style={{ backgroundColor: '#0E5C89' }}
-            >
-                <span>${formatAmount(callAmount)}</span>
-                <span className="-mt-1">{t('all_in')}</span>
-            </button>
-          ) : (
-            <>
-              {/* Call Button */}
-              <button
-                onClick={() => handleButtonPress('call', onCall)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${
-                  isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                } ${isPressed.call ? 'button-press' : ''}`}
-                style={{ backgroundColor: '#0E5C89' }}
-                disabled={isCallDisabled}
-              >
-                <span>${formatAmount(callAmount)}</span>
-                <span className="-mt-1">{t('pay')}</span>
-              </button>
+          {/* Call Button */}
+          <button
+            onClick={() => handleButtonPress('call', onCall)}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${
+              isCallDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            } ${isPressed.call ? 'button-press' : ''}`}
+            style={{ backgroundColor: '#0E5C89' }}
+            disabled={isCallDisabled}
+          >
+            <span>${formatAmount(callAmount)}</span>
+            <span className="-mt-1">{t('pay')}</span>
+          </button>
 
-              {/* Raise Button */}
-              <button
-                onClick={() => handleButtonPress('raise', onRaise)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${
-                  isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                } ${isPressed.raise ? 'button-press' : ''}`}
-                style={{ backgroundColor: '#56BF00' }}
-                disabled={isRaiseDisabled}
-              >
-                <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
-                <span className="-mt-1">{t('raise')}</span>
-              </button>
-            </>
-          )}
+          {/* Raise Button */}
+          <button
+            onClick={() => handleButtonPress('raise', onRaise)}
+            className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${
+              isRaiseDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            } ${isPressed.raise ? 'button-press' : ''}`}
+            style={{ backgroundColor: '#56BF00' }}
+            disabled={isRaiseDisabled}
+          >
+            <img src={raiseIcon} alt={t('raise')} style={{ width: '19px', height: '14px' }} />
+            <span className="-mt-1">{t('raise')}</span>
+          </button>
         </div>
       </div>
     );
@@ -215,16 +197,6 @@ export function ActionButtons({
           </button>
         )}
 
-        {canAllIn && (
-            <button
-                onClick={() => handleButtonPress('allIn', onAllIn)}
-                className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${isPressed.allIn ? 'button-press' : ''}`}
-                style={{ backgroundColor: '#0E5C89' }}
-            >
-                <span>${formatAmount(callAmount)}</span>
-                <span className="-mt-1">{t('all_in')}</span>
-            </button>
-        )}
         
         {canLook && (
           <button
@@ -240,7 +212,7 @@ export function ActionButtons({
           </button>
         )}
 
-        {canBlindBet && !canAllIn && (
+        {canBlindBet && (
           <button
             onClick={() => handleButtonPress('blindBet', onBlindBet)}
             className={`flex flex-col items-center justify-center w-[95px] h-[42px] text-white rounded-lg action-button-shadow  ${

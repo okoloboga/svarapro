@@ -37,7 +37,6 @@ export interface Player {
   totalBet: number; // общая ставка в игре
   score?: number; // очки игрока (вычисляются при вскрытии)
   position: number; // позиция за столом (0-5)
-  isAllIn?: boolean; // игрок пошел ва-банк
   lastAction?: 'fold' | 'check' | 'call' | 'raise' | 'blind' | 'look'; // последнее действие
   hasLookedAndMustAct?: boolean; // флаг для игрока, который посмотрел карты и должен действовать
   lastWinAmount?: number;
@@ -78,7 +77,7 @@ export interface GameState {
 export type GameStatuses = 'waiting' | 'ante' | 'blind_betting' | 'betting' | 'showdown' | 'svara' | 'svara_pending' | 'finished';
 
 export interface GameAction {
-  type: 'join' | 'leave' | 'ante' | 'blind_bet' | 'look' | 'bet' | 'call' | 'raise' | 'fold' | 'win' | 'svara' | 'all_in' | 'return_bet';
+  type: 'join' | 'leave' | 'ante' | 'blind_bet' | 'look' | 'bet' | 'call' | 'raise' | 'fold' | 'win' | 'svara' | 'return_bet';
   telegramId: string;
   amount?: number;
   timestamp: number;

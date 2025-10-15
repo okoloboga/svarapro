@@ -10,7 +10,6 @@ interface BetSliderProps {
   initialBet?: number;
   onChange?: (value: number) => void;
   onConfirm: (value: number) => void;
-  onAllIn: () => void;
   isOpen: boolean;
   onClose: () => void;
   isTurn?: boolean;
@@ -24,7 +23,6 @@ export function BetSlider({
   initialBet, 
   onChange, 
   onConfirm,
-  onAllIn,
   isOpen,
   onClose,
   isTurn = false,
@@ -93,11 +91,7 @@ export function BetSlider({
 
   // Обработчик подтверждения ставки
   const handleConfirm = () => {
-    if (value === maxBet) {
-      onAllIn();
-    } else {
-      onConfirm(value);
-    }
+    onConfirm(value);
   };
 
   return (
@@ -150,7 +144,7 @@ export function BetSlider({
             }}
             disabled={value > maxBet || isProcessing}
           >
-            {value === maxBet ? t('all_in') : t('raise')}
+            {t('raise')}
           </button>
         </div>
 

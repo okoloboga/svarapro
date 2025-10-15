@@ -1,14 +1,12 @@
 import { GameState } from '../../../types/game';
-import { getAmountToCall } from './get-amount-to-call';
-import { getMinRaise } from './get-min-raise';
-import { getMaxRaise } from './get-max-raise';
+import { getAmountToCall, getMinRaise, getMaxRaise } from './betting-utils';
 
 export const getBettingActions = (
   gameState: GameState,
   playerId: string,
 ): any[] => {
   const player = gameState.players.find((p) => p.id === playerId);
-  if (!player || !player.isActive || player.isAllIn) {
+  if (!player || !player.isActive) {
     return [];
   }
 
@@ -20,8 +18,6 @@ export const getBettingActions = (
   if (amountToCall > 0) {
     if (player.balance > amountToCall) {
       actions.push({ type: 'call', amount: amountToCall });
-    } else if (player.balance > 0) {
-      actions.push({ type: 'call', amount: player.balance, isAllIn: true });
     }
   } else {
     actions.push({ type: 'check' });

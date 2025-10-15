@@ -17,7 +17,7 @@ export function ChatMenu({ isOpen, onClose, onSelectPhrase }: ChatMenuProps) {
     t('chat.phrase5'), t('chat.phrase6'), t('chat.phrase7'), t('chat.phrase8'),
     t('chat.phrase9'), t('chat.phrase10'), t('chat.phrase11'), t('chat.phrase12'),
     t('chat.phrase13'), t('chat.phrase14'), t('chat.phrase15'), t('chat.phrase16'),
-    t('chat.phrase17'), t('chat.phrase18'), t('chat.phrase19'), t('chat.phrase20'),
+    t('chat.phrase17'), t('chat.phrase18'), t('chat.phrase19'),
   ];
 
   const buttonTextStyle: React.CSSProperties = {

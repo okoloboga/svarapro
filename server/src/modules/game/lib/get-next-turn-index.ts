@@ -15,7 +15,7 @@ export const getNextTurnIndex = (
     const nextPlayer = players[nextIndex];
 
     if (skipInactive) {
-      if (nextPlayer.isActive && !nextPlayer.hasFolded && !nextPlayer.isAllIn) {
+      if (nextPlayer.isActive && !nextPlayer.hasFolded) {
         return nextIndex;
       }
     } else {
