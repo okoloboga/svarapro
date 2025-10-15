@@ -430,7 +430,8 @@ export class GameService {
         gameState.svaraConfirmed.push(telegramId);
       }
     } else {
-      const svaraBuyInAmount = gameState.pot;
+      // Используем изначальный банк свары для входа
+      const svaraBuyInAmount = gameState.svaraOriginalPot || gameState.pot;
       if (player.balance < svaraBuyInAmount) {
         return {
           success: false,
@@ -1218,6 +1219,7 @@ export class GameService {
       gameState.winners = overallWinners;
       gameState.svaraConfirmed = [];
       gameState.svaraDeclined = [];
+      gameState.svaraOriginalPot = gameState.pot; // Сохраняем изначальный банк свары
 
       const svaraAction: GameAction = {
         type: 'svara',

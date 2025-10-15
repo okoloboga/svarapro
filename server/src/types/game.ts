@@ -77,6 +77,7 @@ export interface GameState {
   svaraParticipants?: string[]; // Игроки, участвующие в сваре (включая тех, кто докупил)
   svaraConfirmed?: string[]; // Игроки, подтвердившие участие в сваре
   svaraDeclined?: string[]; // Игроки, отказавшиеся от свары
+  svaraOriginalPot?: number; // Изначальный банк свары для расчета входа
   round: number; // номер раунда
   timer?: number; // таймер для хода
   turnStartTime?: number; // время начала текущего хода (timestamp)
