@@ -800,17 +800,19 @@ export class GameService {
         gameState.lastActionAmount = callAmount;
         gameState.log.push(callAction);
         
-        // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
+        // ИСПРАВЛЕНИЕ: call после look НЕ устанавливает якорь, только переводит в betting
         if (player.hasLookedAndMustAct) {
-          gameState.lastRaiseIndex = playerIndex;
+          // Call не является якорем - якорь устанавливается только при raise
           
-          // Переводим игру в фазу betting для всех игроков
-          const phaseResult = this.gameStateService.moveToNextPhase(
-            gameState,
-            'betting',
-          );
-          gameState = phaseResult.updatedGameState;
-          gameState.log.push(...phaseResult.actions);
+          // Переводим игру в фазу betting только если мы еще в blind_betting
+          if (gameState.status === 'blind_betting') {
+            const phaseResult = this.gameStateService.moveToNextPhase(
+              gameState,
+              'betting',
+            );
+            gameState = phaseResult.updatedGameState;
+            gameState.log.push(...phaseResult.actions);
+          }
 
           // Устанавливаем hasLooked = true для всех других игроков
           for (let i = 0; i < gameState.players.length; i++) {
@@ -875,12 +877,15 @@ export class GameService {
         gameState.log.push(raiseAction);
 
         if (isPostLookRaise) {
-          const phaseResult = this.gameStateService.moveToNextPhase(
-            gameState,
-            'betting',
-          );
-          gameState = phaseResult.updatedGameState;
-          gameState.log.push(...phaseResult.actions);
+          // Переводим игру в фазу betting только если мы еще в blind_betting
+          if (gameState.status === 'blind_betting') {
+            const phaseResult = this.gameStateService.moveToNextPhase(
+              gameState,
+              'betting',
+            );
+            gameState = phaseResult.updatedGameState;
+            gameState.log.push(...phaseResult.actions);
+          }
 
           for (let i = 0; i < gameState.players.length; i++) {
             if (
@@ -1130,6 +1135,12 @@ export class GameService {
       this.svaraTimers.set(roomId, timer);
     } else {
       console.log(`Winner determined in room ${roomId}. Publishing 'showdown' state.`);
+      
+      // Очищаем таймер при переходе в showdown
+      this.clearTurnTimer(roomId);
+      gameState.timer = undefined;
+      gameState.turnStartTime = undefined;
+      
       const phaseResult = this.gameStateService.moveToNextPhase(
         gameState,
         'showdown',

@@ -59,24 +59,26 @@ export class BettingService {
 
   // Централизованная функция определения якоря
   getAnchorPlayerIndex(gameState: GameState): number {
-    // Приоритет якорей:
-    // 1. lastRaiseIndex (последний, кто делал raise)
-    // 2. lastBlindBettorIndex (последний, кто делал blind bet)
-    // 3. dealerIndex (дилер)
     console.log(`[ANCHOR_DEBUG] Determining anchor for game state:`);
+    console.log(`[ANCHOR_DEBUG] - status: ${gameState.status}`);
     console.log(`[ANCHOR_DEBUG] - lastRaiseIndex: ${gameState.lastRaiseIndex}`);
     console.log(`[ANCHOR_DEBUG] - lastBlindBettorIndex: ${gameState.lastBlindBettorIndex}`);
     console.log(`[ANCHOR_DEBUG] - dealerIndex: ${gameState.dealerIndex}`);
     
-    if (gameState.lastRaiseIndex !== undefined) {
-      console.log(`[ANCHOR_DEBUG] Using lastRaiseIndex as anchor: ${gameState.lastRaiseIndex}`);
+    // В betting фазе якорем является последний raise
+    if (gameState.status === 'betting' && gameState.lastRaiseIndex !== undefined) {
+      console.log(`[ANCHOR_DEBUG] Using lastRaiseIndex as anchor (betting phase): ${gameState.lastRaiseIndex}`);
       return gameState.lastRaiseIndex;
     }
-    if (gameState.lastBlindBettorIndex !== undefined) {
-      console.log(`[ANCHOR_DEBUG] Using lastBlindBettorIndex as anchor: ${gameState.lastBlindBettorIndex}`);
+    
+    // В blind_betting фазе якорем является последний blind bettor
+    if (gameState.status === 'blind_betting' && gameState.lastBlindBettorIndex !== undefined) {
+      console.log(`[ANCHOR_DEBUG] Using lastBlindBettorIndex as anchor (blind_betting phase): ${gameState.lastBlindBettorIndex}`);
       return gameState.lastBlindBettorIndex;
     }
-    console.log(`[ANCHOR_DEBUG] Using dealerIndex as anchor: ${gameState.dealerIndex}`);
+    
+    // Fallback к дилеру
+    console.log(`[ANCHOR_DEBUG] Using dealerIndex as anchor (fallback): ${gameState.dealerIndex}`);
     return gameState.dealerIndex;
   }
 
