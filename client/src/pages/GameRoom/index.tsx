@@ -913,11 +913,13 @@ export function GameRoom({
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
-  const isCallDisabled = !!(effectiveGameStatus === "betting" ||
-  effectiveGameStatus === "blind_betting"
-    ? false
-    : (currentPlayer?.currentBet ?? 0) >= gameState.currentBet);
-  const isRaiseDisabled = !!((currentPlayer?.balance || 0) < minRaiseAmount);
+  // ИСПРАВЛЕНИЕ: Правильная логика disabled кнопок с проверкой баланса
+  const isCallDisabled = !!(
+    (currentPlayer?.balance || 0) < callAmount
+  );
+  const isRaiseDisabled = !!(
+    (currentPlayer?.balance || 0) < minRaiseAmount
+  );
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
 
   const blindButtonsDisabled = !!(effectiveGameStatus !== "blind_betting");
