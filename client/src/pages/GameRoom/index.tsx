@@ -913,6 +913,10 @@ export function GameRoom({
   const canLook = canPerformBlindActions;
   const canBlindBet = canPerformBlindActions;
 
+  // ИСПРАВЛЕНИЕ: Дополнительная проверка для look в blind_betting
+  // Если у игрока нет денег на blind, но есть на look, то после look call/raise будут disabled
+  const canMakeCallAfterLook = (currentPlayer?.balance || 0) >= (blindBetAmount * 2);
+
   // ИСПРАВЛЕНИЕ: Правильная логика disabled кнопок с проверкой баланса
   const isCallDisabled = !!(
     (currentPlayer?.balance || 0) < callAmount ||
@@ -924,11 +928,6 @@ export function GameRoom({
     (postLookActions && !canMakeCallAfterLook)
   );
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
-  
-  // ИСПРАВЛЕНИЕ: Дополнительная проверка для look в blind_betting
-  // Если у игрока нет денег на blind, но есть на look, то после look call/raise будут disabled
-  const canMakeBlindBet = (currentPlayer?.balance || 0) >= blindBetAmount;
-  const canMakeCallAfterLook = (currentPlayer?.balance || 0) >= (blindBetAmount * 2);
 
   const blindButtonsDisabled = !!(effectiveGameStatus !== "blind_betting");
   // Карты показываются только после затемнения экрана
