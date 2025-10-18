@@ -1019,6 +1019,11 @@ export class GameService {
           gameState.timer = undefined;
           gameState.turnStartTime = undefined;
           
+          // ИСПРАВЛЕНИЕ: Сначала показываем карты и рассчитываем очки
+          const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
+          gameState = scoreResult.updatedGameState;
+          gameState.log.push(...scoreResult.actions);
+          
           // Переходим в showdown с одним победителем
           const phaseResult = this.gameStateService.moveToNextPhase(
             gameState,
