@@ -78,6 +78,8 @@ export interface GameState {
   svaraConfirmed?: string[]; // Игроки, подтвердившие участие в сваре
   svaraDeclined?: string[]; // Игроки, отказавшиеся от свары
   svaraOriginalPot?: number; // Изначальный банк свары для расчета входа
+  hasRaiseMax?: boolean; // Флаг того, что кто-то сделал raise max (баланс = 0)
+  raiseMaxPlayerIndex?: number; // Индекс игрока, который сделал raise max
   round: number; // номер раунда
   timer?: number; // таймер для хода
   turnStartTime?: number; // время начала текущего хода (timestamp)

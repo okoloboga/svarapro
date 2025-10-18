@@ -918,7 +918,8 @@ export function GameRoom({
     (currentPlayer?.balance || 0) < callAmount
   );
   const isRaiseDisabled = !!(
-    (currentPlayer?.balance || 0) < minRaiseAmount
+    (currentPlayer?.balance || 0) < minRaiseAmount ||
+    gameState.hasRaiseMax
   );
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
 

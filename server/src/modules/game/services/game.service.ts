@@ -908,6 +908,13 @@ export class GameService {
         gameState.lastRaiseIndex = playerIndex;
         
         gameState.lastActionAmount = raiseAmount;
+        
+        // ИСПРАВЛЕНИЕ: Проверяем, является ли это raise max
+        if (updatedPlayer.balance === 0) {
+          gameState.hasRaiseMax = true;
+          gameState.raiseMaxPlayerIndex = playerIndex;
+        }
+        
         gameState.log.push(raiseAction);
 
         if (isPostLookRaise) {

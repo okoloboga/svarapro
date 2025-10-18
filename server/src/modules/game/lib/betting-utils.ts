@@ -44,6 +44,11 @@ export const getMaxRaise = (gameState: GameState, playerId: string): number => {
     return 0;
   }
 
+  // ИСПРАВЛЕНИЕ: Если кто-то уже сделал raise max, блокируем raise
+  if (gameState.hasRaiseMax) {
+    return 0;
+  }
+
   const amountToCall = getAmountToCall(gameState, playerId);
 
   // Если игрок не может покрыть ставку, он не может повышать

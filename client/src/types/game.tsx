@@ -64,6 +64,8 @@ export interface GameState {
   svaraParticipants?: string[]; // участники свары
   svaraConfirmed?: string[]; // игроки, подтвердившие участие в сваре
   svaraDeclined?: string[]; // игроки, отказавшиеся от свары
+  hasRaiseMax?: boolean; // флаг того, что кто-то сделал raise max (баланс = 0)
+  raiseMaxPlayerIndex?: number; // индекс игрока, который сделал raise max
   round: number; // номер раунда
   timer?: number; // таймер для хода
   turnStartTime?: number; // время начала текущего хода (timestamp)
