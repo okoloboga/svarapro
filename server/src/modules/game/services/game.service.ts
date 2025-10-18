@@ -1024,12 +1024,12 @@ export class GameService {
             gameState,
             'showdown',
           );
-          gameState = phaseResult.updatedGameState;
-          gameState.log.push(...phaseResult.actions);
-          gameState.winners = [winnerWithMoney];
+          const updatedGameState = phaseResult.updatedGameState;
+          updatedGameState.log.push(...phaseResult.actions);
+          updatedGameState.winners = [winnerWithMoney];
           
-          await this.redisService.setGameState(roomId, gameState);
-          await this.redisService.publishGameUpdate(roomId, gameState);
+          await this.redisService.setGameState(roomId, updatedGameState);
+          await this.redisService.publishGameUpdate(roomId, updatedGameState);
           
           // Распределяем выигрыш
           setTimeout(() => {
