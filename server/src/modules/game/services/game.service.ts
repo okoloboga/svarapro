@@ -781,8 +781,15 @@ export class GameService {
         gameState.players[playerIndex] = updatedPlayer;
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
         gameState.chipCount += 1;
-        gameState.lastActionAmount = callAmount;
-        console.log(`[LAST_ACTION_AMOUNT_DEBUG] Set lastActionAmount to ${callAmount} after call by ${player.username}`);
+        
+        // ИСПРАВЛЕНИЕ: Не обновляем lastActionAmount при call после raise max
+        if (!gameState.hasRaiseMax) {
+          gameState.lastActionAmount = callAmount;
+          console.log(`[LAST_ACTION_AMOUNT_DEBUG] Set lastActionAmount to ${callAmount} after call by ${player.username}`);
+        } else {
+          console.log(`[LAST_ACTION_AMOUNT_DEBUG] Skipping lastActionAmount update after call by ${player.username} because hasRaiseMax=true`);
+        }
+        
         gameState.log.push(callAction);
         
         // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
