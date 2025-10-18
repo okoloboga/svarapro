@@ -57,7 +57,6 @@ export class GameService {
     if (room) {
       room.players = room.players.filter((pId) => pId !== telegramId);
       if (room.players.length === 0) {
-        console.log(`Room ${roomId} is now empty, removing it.`);
         await this.redisService.removeRoom(roomId);
         await this.redisService.clearGameData(roomId);
         await this.redisService.publishRoomUpdate(roomId, null);
@@ -199,14 +198,8 @@ export class GameService {
   }
 
   async startGame(roomId: string): Promise<void> {
-    console.log(`[startGame] Starting game for room ${roomId}`);
     const room = await this.redisService.getRoom(roomId);
     if (!room || (room.status !== 'waiting' && room.status !== 'finished')) {
-      console.log(`[startGame] Cannot start game for room ${roomId}:`, {
-        hasRoom: !!room,
-        roomStatus: room?.status,
-        allowedStatuses: ['waiting', 'finished']
-      });
       return;
     }
 
@@ -224,9 +217,6 @@ export class GameService {
     }
 
     if (!gameState || gameState.players.length < 2) {
-      console.log(
-        `Not enough players to start/continue game in room ${roomId}. Going to waiting state.`,
-      );
       room.status = 'waiting';
       await this.redisService.setRoom(roomId, room);
       if (gameState) {
@@ -257,7 +247,6 @@ export class GameService {
     await this.redisService.setGameState(roomId, finalGameState);
     await this.redisService.publishGameUpdate(roomId, finalGameState);
 
-    console.log(`[startGame] Game successfully started for room ${roomId}, starting ante phase`);
     await this.startAntePhase(roomId);
     
     // Запускаем таймер для первого игрока
@@ -295,7 +284,6 @@ export class GameService {
       // Если у участников свары нет денег для анте, делим банк пополам
       const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState!.minBet);
       if (participantsWithoutMoney.length === svaraParticipants.length && svaraParticipants.length === 2) {
-        console.log(`[startAntePhase] Svara participants have no money, splitting pot between ${svaraParticipants.length} players`);
         
         const winAmount = Number((gameState!.pot / 2).toFixed(2));
         const rake = Number((gameState!.pot * 0.05).toFixed(2));
@@ -383,7 +371,6 @@ export class GameService {
     await this.redisService.setGameState(roomId, gameState);
     await this.redisService.publishGameUpdate(roomId, gameState);
     
-    console.log(`[startAntePhase] Ante phase completed for room ${roomId}, moved to blind_betting`);
   }
 
   private svaraTimers: Map<string, NodeJS.Timeout> = new Map();
@@ -911,6 +898,7 @@ export class GameService {
         
         // ИСПРАВЛЕНИЕ: Проверяем, является ли это raise max
         if (updatedPlayer.balance === 0) {
+          console.log(`[RAISE_MAX_DEBUG] Player ${player.username} made raise max! Setting hasRaiseMax=true`);
           gameState.hasRaiseMax = true;
           gameState.raiseMaxPlayerIndex = playerIndex;
         }
@@ -1247,7 +1235,6 @@ export class GameService {
       }, TURN_DURATION_SECONDS * 1000);
       this.svaraTimers.set(roomId, timer);
     } else {
-      console.log(`Winner determined in room ${roomId}. Publishing 'showdown' state.`);
       
       // Очищаем таймер при переходе в showdown
       this.clearTurnTimer(roomId);
@@ -1283,7 +1270,6 @@ export class GameService {
       return;
     }
 
-    console.log(`[distributeWinnings] Distributing winnings for room ${roomId}`);
 
     // Reset lastWinAmount for all players
     for (const p of gameState.players) {
@@ -1299,7 +1285,6 @@ export class GameService {
     }
 
     if (winners.length === 1) {
-      console.log(`[distributeWinnings] Standard win in room ${roomId}.`);
       const winnerId = winners[0].id;
       const winnerBefore = gameState.players.find(p => p.id === winnerId);
       const balanceBefore = winnerBefore ? winnerBefore.balance : 0;
@@ -1337,7 +1322,6 @@ export class GameService {
   }
 
   private async endGame(roomId: string, gameState: GameState, reason: 'winner' | 'no_winner' | 'svara'): Promise<void> {
-    console.log(`[endGame] Ending game for room ${roomId}, reason: ${reason}`);
 
     // Очищаем таймер для этой комнаты
     this.clearTurnTimer(roomId);
@@ -1355,9 +1339,7 @@ export class GameService {
       await this.redisService.publishRoomUpdate(roomId, room);
     }
 
-    console.log(`[endGame] Scheduling auto-restart for room ${roomId} in 5 seconds`);
     setTimeout(() => {
-      console.log(`[endGame] Auto-restarting game for room ${roomId}`);
       this.startGame(roomId).catch((err) =>
         console.error(`Failed to auto-restart game ${roomId}`, err),
       );

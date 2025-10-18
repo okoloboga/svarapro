@@ -927,6 +927,11 @@ export function GameRoom({
     gameState.hasRaiseMax ||
     (postLookActions && !canMakeCallAfterLook)
   );
+  
+  // ОТЛАДОЧНЫЕ ЛОГИ для проблемы 3
+  if (gameState.hasRaiseMax) {
+    console.log(`[RAISE_MAX_DEBUG] Client: hasRaiseMax=true, isRaiseDisabled=${isRaiseDisabled}, playerBalance=${currentPlayer?.balance}, minRaiseAmount=${minRaiseAmount}`);
+  }
   const isBlindBetDisabled = !!((currentPlayer?.balance || 0) < blindBetAmount);
 
   const blindButtonsDisabled = !!(effectiveGameStatus !== "blind_betting");

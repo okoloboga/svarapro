@@ -30,6 +30,9 @@ export const getBlindBettingActions = (
 
     const minRaise = getMinRaise(gameState);
     const maxRaise = getMaxRaise(gameState, playerId);
+    
+    console.log(`[RAISE_MAX_DEBUG] getBlindBettingActions for player ${playerId}: hasRaiseMax=${gameState.hasRaiseMax}, maxRaise=${maxRaise}`);
+    
     if (maxRaise > 0) {
       actions.push({
         type: 'raise',

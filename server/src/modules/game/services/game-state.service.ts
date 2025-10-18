@@ -208,7 +208,6 @@ export class GameStateService {
       return { updatedGameState, actions };
     }
 
-    console.log(`[PHASE_VALIDATION] Valid transition from ${gameState.status} to ${nextPhase}`);
     updatedGameState.status = nextPhase;
 
     // Добавляем действие в лог
