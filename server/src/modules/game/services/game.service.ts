@@ -761,8 +761,8 @@ export class GameService {
           callAmount = gameState.minBet;
         }
         
-        // Если есть blind ставки, call должен быть в 2 раза больше последней blind ставки
-        if (gameState.lastBlindBet > 0) {
+        // ТОЛЬКО если нет lastActionAmount, используем blind ставки
+        if (callAmount <= 0 && gameState.lastBlindBet > 0) {
           callAmount = gameState.lastBlindBet * 2;
         }
         
