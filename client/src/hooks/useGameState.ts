@@ -38,9 +38,10 @@ export const useGameState = (roomId: string, socket: Socket | null) => {
     
     socket.on('game_update', (state: GameState) => {
       console.log(`[GAME_UPDATE_DEBUG] Received game update, log length: ${state.log.length}`);
+      console.log(`[LAST_ACTION_AMOUNT_DEBUG] lastActionAmount: ${state.lastActionAmount}, lastBlindBet: ${state.lastBlindBet}`);
       if (state.log.length > 0) {
         const lastAction = state.log[state.log.length - 1];
-        console.log(`[GAME_UPDATE_DEBUG] Last action: ${lastAction.type} by ${lastAction.telegramId}`);
+        console.log(`[GAME_UPDATE_DEBUG] Last action: ${lastAction.type} by ${lastAction.telegramId}, amount: ${lastAction.amount}`);
       }
       setGameState(state);
       setLoading(false);

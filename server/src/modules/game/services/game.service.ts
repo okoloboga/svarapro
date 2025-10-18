@@ -816,6 +816,7 @@ export class GameService {
         gameState.pot = Number((gameState.pot + callAmount).toFixed(2));
         gameState.chipCount += 1;
         gameState.lastActionAmount = callAmount;
+        console.log(`[LAST_ACTION_AMOUNT_DEBUG] Set lastActionAmount to ${callAmount} after call by ${player.username}`);
         gameState.log.push(callAction);
         
         // ИСПРАВЛЕНИЕ: call после look устанавливает якорь и переводит в betting
@@ -895,6 +896,7 @@ export class GameService {
         gameState.lastRaiseIndex = playerIndex;
         
         gameState.lastActionAmount = raiseAmount;
+        console.log(`[LAST_ACTION_AMOUNT_DEBUG] Set lastActionAmount to ${raiseAmount} after raise by ${player.username}`);
         
         // ИСПРАВЛЕНИЕ: Проверяем, является ли это raise max
         if (updatedPlayer.balance === 0) {
@@ -983,6 +985,7 @@ export class GameService {
       }
       
       await this.redisService.setGameState(roomId, gameState);
+      console.log(`[LAST_ACTION_AMOUNT_DEBUG] Publishing game update after raise with lastActionAmount=${gameState.lastActionAmount}`);
       await this.redisService.publishGameUpdate(roomId, gameState);
     }
     return { success: true, gameState };

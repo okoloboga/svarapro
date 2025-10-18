@@ -876,8 +876,11 @@ export function GameRoom({
   // ИСПРАВЛЕНИЕ: Улучшенный расчет callAmount с учетом blind ставок
   const callAmount = (() => {
     if (postLookActions) {
-      return gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+      const result = gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+      console.log(`[CALL_AMOUNT_DEBUG] postLookActions: lastBlindBet=${gameState.lastBlindBet}, result=${result}`);
+      return result;
     }
+    console.log(`[CALL_AMOUNT_DEBUG] normal betting: lastActionAmount=${gameState.lastActionAmount}`);
     return gameState.lastActionAmount;
   })();
 
