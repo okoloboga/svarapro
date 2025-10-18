@@ -14,22 +14,29 @@ export class BettingService {
     const updatedGameState = { ...gameState };
     const actions: GameAction[] = [];
 
+    // ПРАВИЛЬНО: Считаем активных игроков для определения логики fold
+    const activePlayers = updatedGameState.players.filter(p => p.isActive && !p.hasFolded);
+
     for (let i = 0; i < updatedGameState.players.length; i++) {
       const player = updatedGameState.players[i];
       if (player.isActive) {
         // Проверяем, достаточно ли у игрока баланса
         if (player.balance < minBet) {
-          player.isActive = false;
-          player.hasFolded = true;
+          // ПРАВИЛЬНО: Fold только если в игре 3+ игроков
+          if (activePlayers.length > 2) {
+            player.isActive = false;
+            player.hasFolded = true;
 
-          // Добавляем действие в лог
-          const action: GameAction = {
-            type: 'fold',
-            telegramId: player.id,
-            timestamp: Date.now(),
-            message: `Игрок ${player.username} не имеет достаточно средств для анте`,
-          };
-          actions.push(action);
+            // Добавляем действие в лог
+            const action: GameAction = {
+              type: 'fold',
+              telegramId: player.id,
+              timestamp: Date.now(),
+              message: `Игрок ${player.username} не имеет достаточно средств для анте`,
+            };
+            actions.push(action);
+          }
+          // Если 2 игрока - не fold, а сразу showdown (обрабатывается в startAntePhase)
         } else {
           // Снимаем анте с баланса игрока
           const roundedMinBet = Number(minBet.toFixed(2));
