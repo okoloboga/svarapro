@@ -1010,7 +1010,34 @@ export class GameService {
       // Если в сваре только 2 игрока и у одного 0$ - сразу showdown
       if (svaraPlayers.length === 2 && playersWithoutMoney.length === 1) {
         console.log(`[resolveSvara] Only 2 players in svara, one with 0$ - going to showdown`);
-        await this.endGameWithWinner(roomId, gameState);
+        
+        // Принудительно завершаем игру с победителем (игрок с деньгами)
+        const winnerWithMoney = svaraPlayers.find(p => p.balance >= gameState.minBet);
+        if (winnerWithMoney) {
+          // Очищаем таймер
+          this.clearTurnTimer(roomId);
+          gameState.timer = undefined;
+          gameState.turnStartTime = undefined;
+          
+          // Переходим в showdown с одним победителем
+          const phaseResult = this.gameStateService.moveToNextPhase(
+            gameState,
+            'showdown',
+          );
+          gameState = phaseResult.updatedGameState;
+          gameState.log.push(...phaseResult.actions);
+          gameState.winners = [winnerWithMoney];
+          
+          await this.redisService.setGameState(roomId, gameState);
+          await this.redisService.publishGameUpdate(roomId, gameState);
+          
+          // Распределяем выигрыш
+          setTimeout(() => {
+            this.distributeWinnings(roomId).catch((error) => {
+              console.error(`Failed to distribute winnings for room ${roomId}:`, error);
+            });
+          }, 3000);
+        }
         return;
       }
       
