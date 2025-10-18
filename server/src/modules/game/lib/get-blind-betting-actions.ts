@@ -21,7 +21,8 @@ export const getBlindBettingActions = (
       if (player.balance >= amountToCall) {
         actions.push({ type: 'call', amount: amountToCall });
       } else {
-        actions.push({ type: 'call', amount: player.balance });
+        // ИСПРАВЛЕНИЕ: Если недостаточно денег на call, добавляем call с disabled флагом
+        actions.push({ type: 'call', amount: player.balance, disabled: true });
       }
     } else {
       actions.push({ type: 'check' });
@@ -36,6 +37,15 @@ export const getBlindBettingActions = (
         max: maxRaise,
         step: gameState.minBet,
       });
+    } else {
+      // ИСПРАВЛЕНИЕ: Если нет денег на raise, добавляем raise с disabled флагом
+      actions.push({
+        type: 'raise',
+        min: minRaise,
+        max: 0,
+        step: gameState.minBet,
+        disabled: true,
+      });
     }
   } else {
     // Player has not seen their cards
@@ -48,6 +58,8 @@ export const getBlindBettingActions = (
     if (player.balance >= nextBlindBet) {
       actions.push({ type: 'blind', amount: nextBlindBet });
     }
+    // ИСПРАВЛЕНИЕ: Если у игрока нет денег на blind, то и на call после look не хватит
+    // В этом случае look будет доступен, но call/raise будут disabled
   }
 
   return actions;
