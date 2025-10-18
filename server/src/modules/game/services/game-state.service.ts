@@ -57,6 +57,8 @@ export class GameStateService {
     updatedGameState.lastActionAmount = 0; // Инициализируем сумму последнего действия
     updatedGameState.winners = [];
     updatedGameState.isSvara = false;
+    updatedGameState.hasRaiseMax = false; // ИСПРАВЛЕНИЕ: Сбрасываем флаг raise max при новой игре
+    updatedGameState.raiseMaxPlayerIndex = undefined; // ИСПРАВЛЕНИЕ: Сбрасываем индекс raise max игрока
     updatedGameState.chipCount = 0;
 
     // Выбираем дилера на основе правил
@@ -128,6 +130,8 @@ export class GameStateService {
     updatedGameState.lastActionAmount = 0;
     updatedGameState.winners = [];
     updatedGameState.isSvara = true; // Флаг, что это раунд свары
+    updatedGameState.hasRaiseMax = false; // ИСПРАВЛЕНИЕ: Сбрасываем флаг raise max при сваре
+    updatedGameState.raiseMaxPlayerIndex = undefined; // ИСПРАВЛЕНИЕ: Сбрасываем индекс raise max игрока
     updatedGameState.svaraParticipants = []; // Очищаем после использования
 
     // Дилер не меняется при сваре

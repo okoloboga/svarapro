@@ -60,6 +60,8 @@ export const getNewGame = (
     rake: 0,
     winners: [],
     isSvara: false,
+    hasRaiseMax: false, // ИСПРАВЛЕНИЕ: Сбрасываем флаг raise max при новой игре
+    raiseMaxPlayerIndex: undefined, // ИСПРАВЛЕНИЕ: Сбрасываем индекс raise max игрока
     round: 1,
     log: [],
     chipCount: 0,
