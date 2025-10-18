@@ -275,32 +275,12 @@ export class GameService {
       return;
     }
 
-    // ИСПРАВЛЕНИЕ: Проверяем случай свары с недостатком средств
-    if (gameState!.isSvara) {
-      const svaraParticipants = gameState!.players.filter(p => 
-        gameState!.svaraParticipants?.includes(p.id) && p.isActive
-      );
-      
-      // ПРАВИЛЬНО: Если в сваре 2 игрока и у хотя бы одного нет денег - сразу showdown
-      if (svaraParticipants.length === 2) {
-        const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState!.minBet);
-        if (participantsWithoutMoney.length > 0) {
-          // Сразу showdown, не предлагать ходы
-          await this.endGameWithWinner(roomId, gameState);
-          return;
-        }
-      }
-    }
-
     const { updatedGameState, actions } = this.bettingService.processAnte(
       gameState,
       gameState.minBet,
     );
     gameState = updatedGameState;
     gameState.log.push(...actions);
-
-    await this.redisService.setGameState(roomId, gameState);
-    await this.redisService.publishGameUpdate(roomId, gameState);
 
     const activePlayers = gameState.players.filter((p) => p.isActive);
     if (activePlayers.length < 2) {
@@ -332,6 +312,23 @@ export class GameService {
     if (gameState.currentPlayerIndex === -1) {
       await this.endGameWithWinner(roomId, gameState);
       return;
+    }
+
+    // ИСПРАВЛЕНИЕ: Проверяем случай свары с недостатком средств ПОСЛЕ установки currentPlayerIndex
+    if (gameState.isSvara) {
+      const svaraParticipants = gameState.players.filter(p => 
+        gameState.svaraParticipants?.includes(p.id) && p.isActive
+      );
+      
+      // ПРАВИЛЬНО: Если в сваре 2 игрока и у хотя бы одного нет денег - сразу showdown
+      if (svaraParticipants.length === 2) {
+        const participantsWithoutMoney = svaraParticipants.filter(p => p.balance < gameState.minBet);
+        if (participantsWithoutMoney.length > 0) {
+          // Сразу showdown, не предлагать ходы
+          await this.endGameWithWinner(roomId, gameState);
+          return;
+        }
+      }
     }
 
     await this.redisService.setGameState(roomId, gameState);
