@@ -1010,7 +1010,7 @@ export class GameService {
       // Если в сваре только 2 игрока и у одного 0$ - сразу showdown
       if (svaraPlayers.length === 2 && playersWithoutMoney.length === 1) {
         console.log(`[resolveSvara] Only 2 players in svara, one with 0$ - going to showdown`);
-        await this.startSvaraGame(roomId, participants);
+        await this.endGameWithWinner(roomId, gameState);
         return;
       }
       
