@@ -867,12 +867,19 @@ export function GameRoom({
     );
   }
 
-  const callAmount = gameState.lastActionAmount;
   const isAnimating = !!gameState.isAnimating;
   const postLookActions =
     isCurrentUserTurn && !!currentPlayer?.hasLookedAndMustAct;
   const postLookCallAmount =
     gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+
+  // ИСПРАВЛЕНИЕ: Улучшенный расчет callAmount с учетом blind ставок
+  const callAmount = (() => {
+    if (postLookActions) {
+      return gameState.lastBlindBet > 0 ? gameState.lastBlindBet * 2 : gameState.minBet;
+    }
+    return gameState.lastActionAmount;
+  })();
 
   const minRaiseAmount = (() => {
     if (postLookActions) {

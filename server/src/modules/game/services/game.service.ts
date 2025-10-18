@@ -717,6 +717,7 @@ export class GameService {
         gameState.chipCount += 1;
         gameState.lastBlindBet = blindBetAmount;
         gameState.lastBlindBettorIndex = playerIndex;
+        gameState.lastActionAmount = blindBetAmount; // ИСПРАВЛЕНИЕ: Обновляем lastActionAmount при blind_bet
         gameState.log.push(blindAction);
         gameState.isAnimating = true;
         gameState.animationType = 'chip_fly';
