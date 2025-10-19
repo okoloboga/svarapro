@@ -1021,20 +1021,20 @@ export class GameService {
           
           // ИСПРАВЛЕНИЕ: Сначала показываем карты и рассчитываем очки
           const scoreResult = this.gameStateService.calculateScoresForPlayers(gameState);
-          gameState = scoreResult.updatedGameState;
-          gameState.log.push(...scoreResult.actions);
+          const updatedGameState = scoreResult.updatedGameState;
+          updatedGameState.log.push(...scoreResult.actions);
           
           // Переходим в showdown с одним победителем
           const phaseResult = this.gameStateService.moveToNextPhase(
-            gameState,
+            updatedGameState,
             'showdown',
           );
-          const updatedGameState = phaseResult.updatedGameState;
-          updatedGameState.log.push(...phaseResult.actions);
-          updatedGameState.winners = [winnerWithMoney];
+          const finalGameState = phaseResult.updatedGameState;
+          finalGameState.log.push(...phaseResult.actions);
+          finalGameState.winners = [winnerWithMoney];
           
-          await this.redisService.setGameState(roomId, updatedGameState);
-          await this.redisService.publishGameUpdate(roomId, updatedGameState);
+          await this.redisService.setGameState(roomId, finalGameState);
+          await this.redisService.publishGameUpdate(roomId, finalGameState);
           
           // Распределяем выигрыш
           setTimeout(() => {
