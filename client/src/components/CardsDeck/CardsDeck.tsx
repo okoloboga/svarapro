@@ -6,6 +6,7 @@ import { PositionsContext } from "@/context/PositionsContext";
 import { createPortal } from "react-dom";
 import { GameStatuses } from "@/types/game";
 import { useSoundContext } from "@/context/SoundContext";
+import WebApp from "@twa-dev/sdk";
 
 interface AnimatedCard {
   id: number;
@@ -33,23 +34,25 @@ export function CardsDeck({ className, gameStatus }: Props) {
   const { playSound } = useSoundContext();
 
   useEffect(() => {
-    const onResizeHandler = () => {
+    const handleViewportChange = () => {
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
       changeDeckPosition({ x: rect.x, y: rect.y });
     };
-    onResizeHandler();
-    window.addEventListener("resize", onResizeHandler);
-    return () => window.removeEventListener("resize", onResizeHandler);
+
+    WebApp.onEvent("viewportChanged", handleViewportChange);
+    handleViewportChange();
+
+    return () => WebApp.offEvent("viewportChanged", handleViewportChange);
   }, []);
 
   useEffect(() => {
-    if (gameStatus === "ante" && !distributionTriggered.current) {
+    if (gameStatus === "blind_betting" && !distributionTriggered.current) {
       setIsDeckVisible(true);
       setIsStartDistribution(true);
       distributionTriggered.current = true;
     }
-  }, [gameStatus]);
+  }, [gameStatus, distributionTriggered]);
 
   useEffect(() => {
     if (!isStartDistribution || !isDeckVisible) return;
@@ -84,7 +87,9 @@ export function CardsDeck({ className, gameStatus }: Props) {
 
     setAnimatedCards(cards);
     requestAnimationFrame(() =>
-      setAnimatedCards(cards.map((c) => ({ ...c, animate: true })))
+      setTimeout(() => {
+        setAnimatedCards(cards.map((c) => ({ ...c, animate: true })));
+      }, 10)
     );
 
     cards.forEach((card) => {
@@ -121,19 +126,19 @@ export function CardsDeck({ className, gameStatus }: Props) {
         ))}
 
         {deckPosition &&
-          animatedCards.map((card) => {
+          animatedCards.map((card, index) => {
             return createPortal(
               <BackCard
-                key={card.id}
-                className="fixed w-8 h-11"
+                key={index}
+                className="absolute w-8 h-11"
                 data-name="animate-card"
                 style={{
                   zIndex: 30,
-                  left: deckPosition.x + "px",
-                  top: deckPosition.y - 6 + "px",
+                  left: deckPosition.x + window.scrollX + "px",
+                  top: deckPosition.y + window.scrollY - 6 + "px",
                   transform: card.animate
-                    ? `translate(${card.x - (deckPosition?.x || 0)}px, ${
-                        card.y - (deckPosition?.y || 0)
+                    ? `translate(${card.x - deckPosition.x}px, ${
+                        card.y - deckPosition.y
                       }px)`
                     : "translate(0, 0)",
                   transition: "transform 0.5s ease",
