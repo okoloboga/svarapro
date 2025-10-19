@@ -106,7 +106,7 @@ export function CardsDeck({ className, gameStatus }: Props) {
   return (
     <div
       className={cn(
-        "absolute bottom-40 left-1/2 -translate-x-1/2 z-30",
+        "absolute bottom-44 left-1/2 -translate-x-1/2 z-30",
         className
       )}
       ref={ref}

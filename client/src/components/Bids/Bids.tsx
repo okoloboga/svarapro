@@ -1,16 +1,19 @@
 import { PositionsContext } from "@/context/PositionsContext";
 import { cn } from "@/utils/cn";
-import { HTMLAttributes, useContext, useEffect, useRef } from "react";
+import { HTMLAttributes, useContext, useEffect, useRef, useState } from "react";
 import { Coin } from "../Coin/Coin";
+import { GameStatuses } from "@/types/game";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   bet?: number;
+  gameStatus?: GameStatuses;
 }
 
-export function Bids({ className }: Props) {
+export function Bids({ className, gameStatus }: Props) {
   const { changeBidsPosition } = useContext(PositionsContext);
   const ref = useRef<HTMLDivElement>(null);
   const chipsArray = new Array(2).fill(1);
+  const [showBids, setShowBids] = useState(false);
 
   useEffect(() => {
     const onResizeHandler = () => {
@@ -30,6 +33,18 @@ export function Bids({ className }: Props) {
 
     return () => document.removeEventListener("resize", onResizeHandler);
   }, []);
+
+  useEffect(() => {
+    if(gameStatus !== 'ante') return;
+
+    const timeout = setTimeout(() => {
+      setShowBids(true);
+    }, 1000)
+
+    return () => clearTimeout(timeout);
+  }, [gameStatus])
+
+  if(!showBids) return null;
 
   return (
     <div
