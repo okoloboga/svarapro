@@ -1,50 +1,58 @@
 import { PositionsContext } from "@/context/PositionsContext";
 import { cn } from "@/utils/cn";
-import { HTMLAttributes, useContext, useEffect, useRef, useState } from "react";
+import {
+  HTMLAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Coin } from "../Coin/Coin";
 import { GameStatuses } from "@/types/game";
+import WebApp from "@twa-dev/sdk";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
-  bet?: number;
   gameStatus?: GameStatuses;
 }
+
+const CHIPS_COUNT = 2;
+const chipsArray = new Array(CHIPS_COUNT).fill(1);
 
 export function Bids({ className, gameStatus }: Props) {
   const { changeBidsPosition } = useContext(PositionsContext);
   const ref = useRef<HTMLDivElement>(null);
-  const chipsArray = new Array(2).fill(1);
   const [showBids, setShowBids] = useState(false);
 
-  useEffect(() => {
-    const onResizeHandler = () => {
-      if (!ref.current) return;
+  const handleViewportChange = useCallback(() => {
+    if (!ref.current) return;
 
-      const refPosition = ref.current.getBoundingClientRect();
+    const refPosition = ref.current.getBoundingClientRect();
 
-      changeBidsPosition({
-        x: refPosition.x,
-        y: refPosition.y,
-      });
-    };
-
-    onResizeHandler();
-
-    document.addEventListener("resize", onResizeHandler);
-
-    return () => document.removeEventListener("resize", onResizeHandler);
-  }, []);
+    changeBidsPosition({
+      x: refPosition.x,
+      y: refPosition.y,
+    });
+  }, [changeBidsPosition]);
 
   useEffect(() => {
-    if(gameStatus !== 'ante') return;
+    WebApp.onEvent("viewportChanged", handleViewportChange);
+    handleViewportChange();
+
+    return () => WebApp.offEvent("viewportChanged", handleViewportChange);
+  }, [handleViewportChange]);
+
+  useEffect(() => {
+    if (gameStatus !== "ante") return;
 
     const timeout = setTimeout(() => {
       setShowBids(true);
-    }, 1000)
+    }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [gameStatus])
+  }, [gameStatus]);
 
-  if(!showBids) return null;
+  if (!showBids) return null;
 
   return (
     <div

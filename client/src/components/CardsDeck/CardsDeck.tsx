@@ -1,4 +1,11 @@
-import { HTMLAttributes, useContext, useEffect, useRef, useState } from "react";
+import {
+  HTMLAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { BackCard } from "../BackCard/BackCard";
 import { cn } from "@/utils/cn";
@@ -33,18 +40,18 @@ export function CardsDeck({ className, gameStatus }: Props) {
   const distributionTriggered = useRef(false);
   const { playSound } = useSoundContext();
 
-  useEffect(() => {
-    const handleViewportChange = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      changeDeckPosition({ x: rect.x, y: rect.y });
-    };
+  const handleViewportChange = useCallback(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    changeDeckPosition({ x: rect.x, y: rect.y });
+  }, [changeDeckPosition]);
 
+  useEffect(() => {
     WebApp.onEvent("viewportChanged", handleViewportChange);
     handleViewportChange();
 
     return () => WebApp.offEvent("viewportChanged", handleViewportChange);
-  }, []);
+  }, [handleViewportChange]);
 
   useEffect(() => {
     if (gameStatus === "blind_betting" && !distributionTriggered.current) {

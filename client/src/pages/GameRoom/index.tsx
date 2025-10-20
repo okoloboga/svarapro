@@ -639,7 +639,7 @@ export function GameRoom({
         setWinSoundPlayed(true);
       }
     } else if (winSequenceStep === "none") {
-      setWinSoundPlayed(false); 
+      setWinSoundPlayed(false);
     }
   }, [
     winSequenceStep,
@@ -880,7 +880,7 @@ export function GameRoom({
         <div className="relative flex justify-center items-center min-h-[70vh] w-full p-4 sm:p-5 lg:p-6 game-table-container -mt-8">
           <div className="relative flex justify-center items-center w-full h-full">
             {gameState.status && <CardsDeck gameStatus={gameState.status} />}
-            <Bids />
+            <Bids gameStatus={gameState.status} />
 
             <div className="flex-shrink-0 relative z-10">
               <GameTable

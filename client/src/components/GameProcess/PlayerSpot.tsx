@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { GameStatuses, Player } from "@/types/game";
 import { CardComponent } from "./CardComponent";
 import { ActionNotification } from "./ActionNotification";
@@ -10,6 +10,7 @@ import { PositionElement, PositionsContext } from "@/context/PositionsContext";
 import { PlayerBetAnimation } from "./PlayerBetAnimation";
 import { WithNull } from "@/types/mainTypes";
 import { cn } from "@/utils/cn";
+import WebApp from "@twa-dev/sdk";
 
 const formatAmount = (amount: number): string => {
   const num = Number(amount);
@@ -167,9 +168,8 @@ export function PlayerSpot({
     transformOrigin: "center center",
   };
 
-  useEffect(() => {
-    const onResizeHandler = () => {
-      if (!ref.current) return;
+  const handleViewportChange = useCallback(() => {
+     if (!ref.current) return;
 
       const playerPosition = ref.current.getBoundingClientRect();
       addPlayerPosition({
@@ -183,13 +183,14 @@ export function PlayerSpot({
         x: playerPosition.x,
         y: playerPosition.y,
       });
-    };
+  }, [addPlayerPosition, setPlayerPosition])
 
-    onResizeHandler();
-    window.addEventListener("resize", onResizeHandler);
+  useEffect(() => {
+    WebApp.onEvent("viewportChanged", handleViewportChange);
+    handleViewportChange();
 
-    return () => window.removeEventListener("resize", onResizeHandler);
-  }, []);
+    return () => WebApp.offEvent("viewportChanged", handleViewportChange);
+  }, [handleViewportChange]);
 
   const TotalBetComponent = player.totalBet > 0 && !showCards && (
     <div
